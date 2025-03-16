@@ -14,25 +14,29 @@ dotenv.config();
 const app = express();
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({ extended: true }));
 
-app.use(cors({
+console.log(process.env.FRONTEND_URL);
+
+app.use(
+  cors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
-}))
+  })
+);
 
 const postLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 10,
-    message: "Too many requests, please try again.",
-    headers: true
-})
+  windowMs: 60 * 1000,
+  max: 10,
+  message: "Too many requests, please try again.",
+  headers: true,
+});
 
 app.use((req, res, next) => {
-    if (req.method === "POST") {
-      return postLimiter(req, res, next);
-    }
-    next();
+  if (req.method === "POST") {
+    return postLimiter(req, res, next);
+  }
+  next();
 });
 
 app.use("/auth", authenticationRouter);
@@ -46,6 +50,5 @@ app.use("/payingup", payingUpRoutes);
 const Port = process.env.SERVER_PORT || 5000;
 
 app.listen(Port, () => {
-    console.log("Server running on", Port);
-    
+  console.log("Server running on", Port);
 });

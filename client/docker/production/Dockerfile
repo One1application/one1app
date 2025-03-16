@@ -13,7 +13,7 @@ RUN npm install
 
 # Copy all the source code
 COPY . .
-COPY .env.prod .env.prod
+COPY .env .env
 
 # Increase memory limit to 4GB (adjust as needed)
 RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build

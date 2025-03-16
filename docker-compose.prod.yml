@@ -13,18 +13,18 @@ services:
     networks:
       - app-network
 
-  bot:
-    build:
-      context: ./server
-      dockerfile: docker/production/BotDockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-    env_file:
-      - .env.production
-    networks:
-      - app-network
+  # bot:
+  #   build:
+  #     context: ./server
+  #     dockerfile: docker/production/BotDockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #   env_file:
+  #     - .env.production
+  #   networks:
+  #     - app-network
 
   admin:
     build:
@@ -57,12 +57,12 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      # - /etc/letsencrypt/live/www.one1app.com/fullchain.pem:/etc/letsencrypt/live/www.one1app.com/fullchain.pem:ro
-      # - /etc/letsencrypt/live/www.one1app.com/privkey.pem:/etc/letsencrypt/live/www.one1app.com/privkey.pem:ro
+      - /etc/letsencrypt/live/1appdemo.one1app.com/fullchain.pem:/etc/letsencrypt/live/1appdemo.one1app.com/fullchain.pem:ro
+      - /etc/letsencrypt/live/1appdemo.one1app.com/privkey.pem:/etc/letsencrypt/live/1appdemo.one1app.com/privkey.pem:ro
     restart: always
     depends_on:
       - server
-      - bot
+      # - bot
       - admin
       - client
     networks:
