@@ -1,8 +1,6 @@
 import axios from "axios";
 
 const baseURL = import.meta.env.VITE_SERVER_URL || "/api";
-// const baseURL = "/api";
-console.log("BASE URL IS", import.meta.env.VITE_SERVER_URL, baseURL);
 
 if (!baseURL) {
   throw new Error(

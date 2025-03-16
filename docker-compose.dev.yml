@@ -39,7 +39,7 @@ services:
       dockerfile: docker/development/Dockerfile
     ports:
       - "5000:5000"
-      - "3000:3000"
+      # - "3000:3000"
     # depends_on:
     #   - postgres
     env_file:
@@ -64,8 +64,8 @@ services:
     env_file:
       - ./.env.development
     volumes:
-      - ./admin/src:/usr/src/app/src
-      - ./admin/package.json:/usr/src/app/package.json
+      - ./oneappAdmin/src:/usr/src/app/src
+      - ./oneappAdmin/package.json:/usr/src/app/package.json
     depends_on:
       - server
     networks:
