@@ -1,0 +1,135 @@
+/* AppearanceContent.css */
+.appearance-container {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.theme-title {
+  margin: 0 0 24px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.theme-card {
+  aspect-ratio: 3/4;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-card.active {
+  border: 2px solid #2563eb;
+}
+
+.create-theme {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  text-align: center;
+  gap: 4px;
+}
+
+.theme-preview {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.preview-line {
+  height: 8px;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.theme-name {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+/* Hover and Active states */
+.theme-card:hover {
+  border-color: #2563eb;
+}
+
+.theme-card:active {
+  transform: scale(0.98);
+}
+
+/* Theme variations */
+.theme-card[data-theme="dark"] {
+  color: white;
+}
+
+.theme-card[data-theme="dark"] .theme-name {
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .themes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .appearance-container {
+    padding: 16px;
+  }
+}
+
+/* Animation for selection */
+@keyframes themeSelect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.theme-card:active {
+  animation: themeSelect 0.2s ease;
+}
+
+/* Theme preview variations */
+.theme-preview.with-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e5e7eb;
+}

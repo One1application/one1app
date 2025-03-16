@@ -1,0 +1,73 @@
+version: "3.8"
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: docker/production/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.production
+    networks:
+      - app-network
+
+  bot:
+    build:
+      context: ./server
+      dockerfile: docker/production/BotDockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.production
+    networks:
+      - app-network
+
+  admin:
+    build:
+      context: ./oneappAdmin
+      dockerfile: docker/production/Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      - app-network
+
+  client:
+    build:
+      context: ./client
+      dockerfile: docker/production/Dockerfile
+    ports:
+      - "5173:80"
+    env_file:
+      - .env.production
+    mem_limit: 8g
+    networks:
+      - app-network
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # - /etc/letsencrypt/live/www.one1app.com/fullchain.pem:/etc/letsencrypt/live/www.one1app.com/fullchain.pem:ro
+      # - /etc/letsencrypt/live/www.one1app.com/privkey.pem:/etc/letsencrypt/live/www.one1app.com/privkey.pem:ro
+    restart: always
+    depends_on:
+      - server
+      - bot
+      - admin
+      - client
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

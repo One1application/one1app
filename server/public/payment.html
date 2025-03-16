@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Payment</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        /* General page styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .payment-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .payment-info {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        .payment-info p {
+            margin: 10px 0;
+        }
+
+        .btn-payment {
+            background-color: #F37254;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-payment:hover {
+            background-color: #e65c43;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Small screen (mobile) styling */
+        @media (max-width: 600px) {
+            .payment-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .btn-payment {
+                font-size: 16px;
+                padding: 12px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <h1>Complete Your Payment</h1>
+
+        <div class="payment-info">
+            <p><strong>Order ID:</strong> <span id="order-id"></span></p>
+            <p><strong>Amount:</strong> ₹<span id="amount"></span></p>
+        </div>
+
+        <button id="rzp-button1" class="btn-payment">Pay Now</button>
+
+        <div class="footer">
+            <p>&copy; 2025 Your Company | All Rights Reserved</p>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const order_id = urlParams.get('order_id');
+        const amount = urlParams.get('amount');
+        const webinarId = urlParams.get('webinarId');
+        const courseId = urlParams.get('courseId');
+        const payingUpId = urlParams.get('payingUpId');
+        const userId = urlParams.get('userId')
+        const walletId   = urlParams.get('walletId')
+
+        console.log(urlParams);
+        document.getElementById('order-id').textContent = order_id;
+        document.getElementById('amount').textContent = (amount / 100).toFixed(2);
+        
+        console.log('Order ID:', order_id);
+        console.log('Amount:', amount);
+        console.log('webinarId:', webinarId);
+        console.log('courseId:', courseId);
+        console.log('payingUpId:', payingUpId); 
+        console.log('userId:', userId);
+        console.log('walletId:', walletId);
+
+        var options = {
+            "key": "rzp_test_1C4SVtMx6mc2jh",
+            "amount": amount,
+            "currency": "INR",
+            "name": "One App",
+            "description": "Complete Your Purchase",
+            "order_id": order_id,
+            "handler": function (response) {
+                fetch('/wallet/verify-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM2NDUyNDY2LCJleHAiOjE3MzY0NTYwNjZ9.IHR0OtKt4RA2QbA8ZoS9nt0T3YPi1Wd3-clI0BggJWM'
+                    },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        webinarId: webinarId || null,
+                        courseId: courseId || null,
+                        payingUpId: payingUpId || null,
+                        userId,
+                        walletId: walletId || null
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.inviteLink) {
+                        window.location.href = data.inviteLink;  // Redirect to invite link if present
+                    }
+                })
+                .catch(err => {
+                    alert('Error: ' + err.message);
+                });
+            },
+            "prefill": {
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "contact": "9999999999"
+            },
+            "theme": {
+                "color": "#F37254"
+            }
+        };
+
+        const rzp1 = new Razorpay(options);
+        document.getElementById('rzp-button1').onclick = function (e) {
+            rzp1.open();
+            e.preventDefault();
+        };
+    </script>
+</body>
+</html>

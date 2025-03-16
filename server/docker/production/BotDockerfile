@@ -1,0 +1,41 @@
+# Use a full node version for stability, with OpenSSL added
+FROM node:20
+
+# Switch to root to install system dependencies
+USER root
+
+# Install OpenSSL 1.1.x
+RUN apt-get update -y && \
+    apt-get install -y openssl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set working directory and grant ownership to node user
+WORKDIR /usr/src/app
+RUN chown -R node:node /usr/src/app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies, including Prisma CLI as a dev dependency
+RUN npm install && \
+    npm install -D prisma
+
+# Copy Prisma schema and bot.js
+COPY prisma/ ./prisma/
+COPY bot.js ./
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Switch back to node user for security
+USER node
+
+# Expose port
+EXPOSE 3000
+
+# Set production environment
+ENV NODE_ENV=production
+
+# Start the application
+CMD ["node", "bot.js"]

@@ -1,0 +1,124 @@
+.carousel-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    margin: 2rem auto;
+    /* Default (small screens): 1 card */
+    max-width: 400px;
+}
+
+.carousel-container {
+    overflow: hidden;
+}
+
+.carousel-track {
+    display: grid;
+    grid-auto-flow: column;
+    /* Default for small screens: 1 card fits the entire width */
+    grid-auto-columns: 100%;
+    gap: 0;
+    transition: transform 0.3s ease-in-out;
+    align-items: stretch;
+}
+
+.carousel-item {
+    background-color: #0a0a0a;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 350px;
+}
+
+.testimonial {
+    margin-bottom: 1rem;
+}
+
+.user {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    background-color: #0a0909;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.user img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+}
+
+.user_inner {
+    background-color: #090808;
+    padding: 0.5rem;
+    border-radius: 5px;
+    text-align: left;
+}
+
+.stp {
+    color: #f1ecec;
+    font-family: "Roboto";
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.ndp {
+    color: #ede4e4;
+    font-family: "Roboto";
+    margin: 0.25rem 0 0 0;
+    font-size: 1.1rem;
+}
+
+/* ----- Breakpoints ----- */
+/* Extra Large (≥1600px): 4 cards */
+@media (min-width: 1600px) {
+    .carousel-wrapper {
+        max-width: 1460px; /* 4 cards: (350px *4) + (20px *3) = 1460px */
+    }
+    .carousel-track {
+        grid-auto-columns: 350px;
+        gap: 20px;
+    }
+}
+
+/* Large (≥1200px and <1600px): 3 cards */
+@media (min-width: 1200px) and (max-width: 1599px) {
+    .carousel-wrapper {
+        max-width: 1260px; /* 3 cards: (400px *3) + (30px *2) = 1260px */
+    }
+    .carousel-track {
+        grid-auto-columns: 400px;
+        gap: 30px;
+    }
+}
+
+/* Medium (≥768px and <1200px): 2 cards */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .carousel-wrapper {
+        max-width: 860px; /* 2 cards: (400px *2) + (30px *1) = 830px, a bit extra */
+    }
+    .carousel-track {
+        grid-auto-columns: 400px;
+        gap: 30px;
+    }
+}
+
+/* Small (<768px): 1 card */
+@media (max-width: 767px) {
+    .carousel-wrapper {
+        width: 90%;        /* Take less than full width to add spacing */
+        max-width: 400px;  /* Cap the width at 400px */
+        margin: 0 auto;    /* Center it horizontally */
+        padding: 0 1rem;   /* Add some horizontal padding for spacing */
+    }
+    .carousel-track {
+        grid-auto-columns: 100%;
+        gap: 0;
+    }
+}

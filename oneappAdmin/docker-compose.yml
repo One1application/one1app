@@ -1,0 +1,20 @@
+version: '3.9'
+
+services:
+  admin:
+    container_name: admin
+    build:
+      context: .
+    ports:
+      - '8000:8000'
+    restart: always
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - queue-net
+
+networks:
+  queue-net:
+    external: true
+    name: queue-net

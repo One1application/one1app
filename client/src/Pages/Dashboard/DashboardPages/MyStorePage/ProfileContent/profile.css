@@ -1,0 +1,322 @@
+.profile-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+/* Follow Section */
+.follow-section {
+  margin-bottom: 32px;
+}
+
+.follow-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+}
+
+.follow-button svg {
+  color: #6b7280;
+  width: 16px;
+  height: 16px;
+}
+
+/* Profile Info */
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin-bottom: 32px;
+}
+
+.profile-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #8b5cf6;
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.profile-tagline {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Social Links */
+.social-links {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+  gap: 5px;
+}
+
+.instagram-icon-wrapper {
+  padding: 8px;
+  background: radial-gradient(
+    circle at 30% 107%,
+    #fdf497 0%,
+    #fdf497 5%,
+    #fd5949 45%,
+    #d6249f 60%,
+    #285aeb 90%
+  );
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.instagram-icon {
+  color: #ffffff;
+  width: 20px;
+  height: 20px;
+}
+
+/* Edit Button */
+.edit-button {
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+/* Contact Section */
+.contact-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.contact-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.contact-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #111827;
+  font-size: 14px;
+}
+
+.contact-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: #dc2626;
+  border-radius: 4px;
+}
+
+.contact-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.more-icon {
+  color: #6b7280;
+  width: 16px;
+  height: 16px;
+}
+
+.add-button {
+  width: 100%;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Highlights Section */
+.highlights-section {
+  margin-bottom: 32px;
+}
+
+.highlights-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.highlights-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.star-icon,
+.info-icon {
+  color: #6b7280;
+}
+
+/* Action Buttons */
+.add-product-button {
+  width: 100%;
+  padding: 12px;
+  background: #000000;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.add-header-button {
+  width: 100%;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Hover States */
+.follow-button:hover {
+  background: #f9fafb;
+}
+
+.edit-button:hover {
+  background: #e5e7eb;
+}
+
+.contact-button:hover {
+  background: #f9fafb;
+}
+
+.add-button:hover {
+  background: #f9fafb;
+}
+
+.highlights-header:hover {
+  background: #f9fafb;
+}
+
+.add-product-button:hover {
+  opacity: 0.9;
+}
+
+.add-header-button:hover {
+  background: #f9fafb;
+}
+
+/* Focus States */
+.follow-button:focus,
+  .edit-button:focus,
+  .contact-button:focus,
+  .add-button:focus,
+  .highlights-header:focus,
+  .add-product-button:focus,
+  
+  /* Transition Effects */
+  .follow-button,
+  .edit-button,
+  .contact-button,
+  .add-button,
+  .highlights-header,
+  .add-product-button,
+  .add-header-button {
+  transition: all 0.2s ease-in-out;
+}
+
+/* SVG Icons */
+svg {
+  flex-shrink: 0;
+}
+
+.profile-user {
+  position: relative;
+  display: inline-block;
+  margin: auto;
+  margin-bottom: 10px;
+}
+
+.profile-user .profile-photo-edit {
+  position: absolute;
+  right: 6px;
+  bottom: 3px;
+  cursor: pointer;
+  border: 2px solid black;
+  border-radius: 50%;
+  padding: 4px;
+  background-color: #fff;
+}
+
+.profile-user .user-profile-image {
+  object-fit: cover;
+  border: 1px solid black;
+  background: transparent;
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  margin: auto;
+  background: #8b5cf6;
+}
+
+.profile-user .profile-img-file-input {
+  display: none;
+}
+
+.drop-zone__input {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  opacity: 0;
+  top: 0;
+  left: 0;
+}
+
+@media (max-width: 900px) {
+  .profile-card {
+    width: 100%;
+  }
+}

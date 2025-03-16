@@ -1,0 +1,115 @@
+/* store.css */
+.app-container {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  position: relative;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+}
+.main-content.full-width {
+  display: block; /* Changes from grid to block when preview is hidden */
+  padding: 20px; /* Add padding when in full-width mode */
+}
+.content-area.no-preview {
+  max-width: 100%; /* Allow content to take full width */
+  padding-right: 0; /* Remove right padding when preview is hidden */
+}
+
+.content-area {
+  width: 100%;
+  min-width: 0; /* Prevents grid blowout */
+}
+
+/* Coming soon placeholder */
+.coming-soon {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  color: #6b7280;
+  text-align: center;
+  font-size: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Checklist button */
+.checklist-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.checklist-button:hover {
+  background: #1d4ed8;
+}
+
+/* Responsive styles */
+@media (max-width: 1280px) {
+  .main-content {
+    max-width: 100%;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+
+  .content-area {
+    max-width: 100%;
+  }
+
+  /* Hide mobile preview on smaller screens */
+  .mobile-preview {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .main-content {
+    padding: 16px;
+  }
+
+  .checklist-button {
+    bottom: 16px;
+    right: 16px;
+  }
+}
+
+/* Theme transition */
+.content-area > * {
+  transition: background-color 0.3s ease;
+}
+
+/* Ensure proper stacking context */
+.app-container {
+  z-index: 0;
+}
+
+.main-content {
+  position: relative;
+  z-index: 1;
+}
+
+.checklist-button {
+  z-index: 2;
+}

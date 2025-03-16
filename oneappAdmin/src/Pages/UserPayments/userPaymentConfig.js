@@ -1,0 +1,52 @@
+export const userPaymentConfig = {
+  title: "User Payments",
+  tableHeader: [
+    "Amount Paid",
+    "Payment Method",
+    "Creators ID",
+    "Product ID",
+    "User Number",
+    "User Email ID",
+    "Status",
+  ],
+  tableData: [
+    {
+      amountPaid: 14255,
+      paymentMethod: "Credit Card",
+      creatorsID: "#QEUJIO890",
+      productID: "#UODHWM90",
+      userNumber: "+917089098798",
+      userEmailID: "jane@example.com",
+      status: "Success",
+    },
+    {
+      amountPaid: 124356,
+      paymentMethod: "PayPal",
+      creatorsID: "#KJSD87323",
+      productID: "#ABFDM932",
+      userNumber: "+14155552671",
+      userEmailID: "john.doe@example.com",
+      status: "Pending",
+    },
+    {
+      amountPaid: 63200,
+      paymentMethod: "PayPal",
+      creatorsID: "#KJSD87323",
+      productID: "#ABFDM932",
+      userNumber: "+14155552671",
+      userEmailID: "john.doe@example.com",
+      status: "Pending",
+    },
+  ],
+  config: {
+    fields: [
+      "amountPaid",
+      "paymentMethod",
+      "creatorsID",
+      "productID",
+      "userNumber",
+      "userEmailID",
+      "status",
+    ],
+  },
+};

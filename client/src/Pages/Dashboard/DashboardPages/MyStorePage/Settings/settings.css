@@ -1,0 +1,162 @@
+/* settings.css */
+.settings-page {
+  @apply max-w-5xl mx-auto p-6 bg-gray-50;
+}
+
+.section-card {
+  @apply mb-8 bg-white rounded-lg border border-gray-200;
+}
+
+.section-header {
+  @apply flex items-center gap-1.5 px-6 pt-6 pb-4;
+}
+
+.section-title {
+  @apply text-lg font-medium text-gray-900 flex items-center gap-1.5;
+}
+
+.info-icon-wrapper {
+  @apply flex items-center;
+}
+
+.info-icon {
+  @apply w-4 h-4 text-gray-400 cursor-help mt-0.5;
+}
+
+.store-url-container {
+  @apply px-6 py-2;
+}
+
+.store-url-field {
+  @apply flex items-stretch rounded-lg border border-gray-200 bg-white relative;
+}
+
+.url-prefix {
+  @apply px-4 py-2.5 text-gray-500 bg-gray-50 border-r border-gray-200 rounded-l-lg text-sm font-normal;
+}
+
+.url-input {
+  @apply flex-1 px-3 py-2.5 bg-white text-gray-800 text-sm outline-none rounded-r-lg;
+}
+
+.edit-button-container {
+  @apply absolute right-3 top-1/2 -translate-y-1/2 flex items-center;
+}
+
+.edit-button {
+  @apply flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm font-medium px-2;
+}
+
+.edit-icon {
+  @apply w-4 h-4;
+}
+
+.section-description {
+  @apply text-sm text-gray-600 px-6 py-4;
+}
+
+/* Switch styles */
+.switch {
+  @apply relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+  transition-colors duration-200 ease-in-out focus:outline-none;
+}
+
+.switch[data-state='unchecked'] {
+  @apply bg-gray-200;
+}
+
+.switch[data-state='checked'] {
+  @apply bg-blue-600;
+}
+
+.switch-thumb {
+  @apply pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg 
+  ring-0 transition duration-200 ease-in-out;
+}
+
+.switch[data-state='checked'] .switch-thumb {
+  @apply translate-x-5;
+}
+
+.switch[data-state='unchecked'] .switch-thumb {
+  @apply translate-x-0;
+}
+
+/* Analytics section styles */
+.analytics-section {
+  @apply mb-8 bg-white rounded-lg border border-gray-200;
+}
+
+.tracking-group {
+  @apply px-6 py-4;
+}
+
+.tracking-title {
+  @apply text-base text-gray-700 font-medium mb-4;
+}
+
+.input-stack {
+  @apply space-y-3;
+}
+
+.input-field {
+  @apply w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.learn-more {
+  @apply px-6 py-4 text-sm;
+}
+
+.learn-more-text {
+  @apply text-gray-600;
+}
+
+.learn-more-link {
+  @apply text-blue-600 hover:text-blue-700 ml-1;
+}
+
+/* Referral section styles */
+.referral-section {
+  @apply mb-8 bg-white rounded-lg border border-gray-200;
+}
+
+.footer-controls {
+  @apply px-6 py-4 space-y-4;
+}
+
+.control-row {
+  @apply flex items-center justify-between;
+}
+
+.control-label {
+  @apply text-sm text-gray-700;
+}
+
+.pro-badge {
+  @apply ml-2 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full inline-flex items-center gap-1;
+}
+
+.pro-icon {
+  @apply w-3.5 h-3.5;
+}
+
+/* Select styles */
+.select-container {
+  @apply relative;
+}
+
+.select-button {
+  @apply relative w-48 flex items-center justify-between px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white;
+}
+
+.select-icon {
+  @apply w-4 h-4 text-gray-500;
+}
+
+.select-options {
+  @apply absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10;
+}
+
+.select-option {
+  @apply w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50;
+}

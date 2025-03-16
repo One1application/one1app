@@ -1,0 +1,226 @@
+/* styles.module.css */
+.dashboard {
+  @apply p-4 md:p-6 max-w-6xl mx-auto space-y-4;
+}
+
+/* Header Section */
+.header {
+  @apply flex flex-col md:flex-row justify-between items-start md:items-center mb-4;
+}
+
+.title {
+  @apply text-xl font-medium text-gray-900;
+}
+
+.dropdown {
+  @apply rounded-full bg-gray-100 px-4 py-2 text-sm w-full md:w-auto focus:outline-none border-0;
+}
+
+/* Metrics Grid */
+.metricsGrid {
+  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4;
+}
+
+.metricCard {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4 relative;
+}
+
+.metricContent {
+  @apply flex flex-col;
+}
+
+.metricIcon {
+  @apply flex items-center gap-2 mb-1;
+}
+
+.metricValue {
+  @apply text-2xl font-semibold;
+}
+
+.metricLabel {
+  @apply text-sm text-gray-600;
+}
+
+.dotsButton {
+  @apply absolute top-3 right-3 text-gray-400 hover:text-gray-500 transition-colors;
+}
+
+/* Chart Section */
+.chartCard {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4;
+}
+
+.chartHeader {
+  @apply mb-6;
+}
+
+.chartLegend {
+  @apply flex flex-wrap items-center gap-4 mb-4 text-sm text-gray-600;
+}
+
+.legendItem {
+  @apply flex items-center gap-2;
+}
+
+.legendDot {
+  @apply w-2 h-2 rounded-full;
+}
+
+.chartContainer {
+  @apply relative h-64 md:h-80;
+}
+
+.noDataMessage {
+  @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center;
+}
+
+.noDataTitle {
+  @apply font-medium text-gray-900 mb-1;
+}
+
+.noDataText {
+  @apply text-gray-500;
+}
+
+/* Donut Charts Section */
+.donutGrid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+}
+
+.donutSection {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+}
+
+.donutHeader {
+  @apply flex justify-between items-center mb-6;
+}
+
+.donutTitle {
+  @apply text-sm text-gray-600;
+}
+
+.toggleContainer {
+  @apply inline-flex bg-gray-100 rounded-lg p-1;
+}
+
+.toggleButton {
+  @apply px-4 py-1 text-sm text-gray-600 rounded-md transition-colors;
+}
+
+.toggleButtonActive {
+  @apply bg-white shadow-sm;
+}
+
+.donutContainer {
+  @apply relative flex justify-center items-center h-[300px];
+}
+
+.donutLegend {
+  @apply absolute right-0 top-1/2 -translate-y-1/2 flex flex-col gap-3;
+}
+
+/* Bottom Navigation */
+.bottomNav {
+  @apply flex flex-col md:flex-row justify-between items-start md:items-center mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4;
+}
+
+.bottomTitle {
+  @apply text-sm text-gray-600;
+}
+
+.buttonGroup {
+  @apply flex gap-2;
+}
+
+.button {
+  @apply px-3 py-1 rounded-full text-sm transition-colors;
+}
+
+.buttonDefault {
+  @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+}
+
+.buttonPrimary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .header {
+    @apply gap-2;
+  }
+
+  .dropdown {
+    @apply w-full;
+  }
+
+  .chartLegend {
+    @apply gap-2;
+  }
+
+  .donutGrid {
+    @apply gap-2;
+  }
+
+  .bottomNav {
+    @apply gap-2;
+  }
+}
+
+/* Chart Customization */
+:global(.recharts-cartesian-grid-horizontal) line,
+:global(.recharts-cartesian-grid-vertical) line {
+  @apply stroke-gray-200;
+}
+
+:global(.recharts-xaxis) text,
+:global(.recharts-yaxis) text {
+  @apply fill-gray-500 text-xs;
+}
+
+/* Animation */
+.fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Card Hover Effects */
+.metricCard:hover,
+.donutSection:hover,
+.chartCard:hover {
+  @apply shadow-md transition-shadow duration-200;
+}
+
+/* Button Focus States */
+.button:focus,
+.dropdown:focus,
+.toggleButton:focus {
+  @apply outline-none ring-2 ring-blue-200;
+}
+
+/* Loading States */
+.loading {
+  @apply animate-pulse bg-gray-100;
+}
+
+.loadingText {
+  @apply h-4 bg-gray-200 rounded;
+}
+
+/* Error States */
+.error {
+  @apply text-red-500 text-sm mt-2;
+}
+
+/* Empty States */
+.empty {
+  @apply text-center py-8 text-gray-500;
+}
