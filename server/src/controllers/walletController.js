@@ -659,6 +659,13 @@ export async function addBankDetails(req, res) {
             return res.status(400).json({ success: false, message: "User wallet not found." });
         }
 
+        if(!userWallet.isKycVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Kyc is not verified."
+            })
+        }
+
 
         const existingBankDetails = await prisma.bankDetails.findFirst({
             where: {
@@ -684,7 +691,7 @@ export async function addBankDetails(req, res) {
         if (!contactResponse) {
             return res.status(400).json({ success: false, message: "Failed to create contact." });
         }
-
+        
         contactId = contactResponse.id;
 
         const bankFundAccountData = {
@@ -743,20 +750,6 @@ export async function addBankDetails(req, res) {
 
         if (!updateUpiId) {
             return res.status(400).json({ success: false, message: "Failed to add UPI ID." });
-        }
-
-
-        const updateKycStatus = await prisma.wallet.update({
-            where: {
-                id: userWallet.id
-            },
-            data: {
-                isKycVerified: true
-            }
-        })
-
-        if (!updateKycStatus) {
-            return res.status(400).json({ success: false, message: "Failed to update KYC status." });
         }
 
         return res.status(200).json({

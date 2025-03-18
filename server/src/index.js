@@ -38,13 +38,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/api/auth", authenticationRouter);
-app.use("/api/webinar", webinarRouter);
-app.use("/api/course", courseRouter);
-app.use("/api/telegram", telegramRouter);
-app.use("/api/wallet", walletRoutes);
-app.use("/api/upload", uploadRouter);
-app.use("/api/payingup", payingUpRoutes);
+app.use("/auth", authenticationRouter);
+app.use("/webinar", webinarRouter);
+app.use("/course", courseRouter);
+app.use("/telegram", telegramRouter);
+app.use("/wallet", walletRoutes);
+app.use("/upload", uploadRouter);
+app.use("/payingup", payingUpRoutes);
 
 const Port = process.env.SERVER_PORT || 5000;
 
