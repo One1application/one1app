@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Outlet  ,Navigate} from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SignInPage from "./Pages/Authentication/SigninPage/SignInPage";
@@ -42,8 +42,13 @@ import RefundCancellation from "./Pages/Welcome/Terms&Policy/RefundCancellation.
 import TelegramFormPrev from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramFormPrev";
 import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramForm";
 import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
-
+import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes";
+import { useAuth } from "./context/AuthContext.jsx";
 const App = () => {
+
+  const { currentUser, authenticated, logout } = useAuth(); 
+
+  
   return (
     <>
       <ToastContainer
@@ -61,60 +66,9 @@ const App = () => {
 
       <Routes>
         {/* Welcome Page */}
-        <Route path="/" element={<HomePages />} />
+        <Route path="/" element={ authenticated ? <Navigate to="/dashboard" /> : <HomePages />} />
         <Route path="plugins" element={<PluginsPage />} />
-
         <Route path="TelegramsPages" element={<TelegramsPages />} />
-
-        {/* Authentication Pages */}
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-
-        {/* <Route path="/" element={<AuthenticatedRoutes />}> */}
-        {/* Dashboard Pages */}
-        <Route path="dashboard" element={<DashboardPage />}>
-          <Route path="" element={<HomePage />} />
-          <Route path="mystore" element={<MyStorePage />} />
-          <Route path="your-customers" element={<AudiencePage />} />
-          <Route path="wallets" element={<WalletPage />} />
-          <Route path="payingup" element={<PayingUpPage />} />
-          <Route path="appointment" element={<AppointementPage />} />
-          <Route path="webinar" element={<WebinarPage />} />
-          <Route path="courses" element={<CoursesPage />} />
-          <Route path="telegram" element={<TelegramPage />} />
-          <Route path="locked-content" element={<LockedContentPage />} />
-          <Route path="discord" element={<DiscordPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="superlinks" element={<SuperLinkPage />} />
-          <Route path="chat" element={<ChatPage />} />
-          <Route path="whatsapp" element={<WhatsAppPage />} />
-          <Route path="plugin" element={<PluginPage />} />
-          <Route path="withdrawal" element={<WithdrawalPage />} />
-          <Route path="all-transactions" element={<AllTransactionsPage />} />
-          <Route path="kyc-setting" element={<KYCpage />} />
-        </Route>
-
-        {/* Sub-Pages for App-Specific Routes */}
-        <Route path="app" element={<Outlet />}>
-          <Route path="create-webinar" element={<CreateWebinarPage />} />
-          <Route path="create-course" element={<CreateCoursePage />} />
-          <Route path="create-pay-up" element={<CreatePayUp />} />
-          <Route path="create-telegram" element={<TelegramForm />} />
-          <Route
-            path="create-premium-content"
-            element={<CreateLockedContentPage />}
-          />
-          <Route path="paying-up" element={<PayingUpPages />} />
-          <Route path="course" element={<NewCourse />} />
-          <Route path="webinar" element={<WebinarPages />} />
-          <Route path="telegram" element={<TelegramFormPrev />} />
-
-          <Route path="edit-course" element={<CreateCoursePage />} />
-          <Route path="edit-webinar" element={<CreateWebinarPage />} />
-          <Route path="edit-payingup" element={<CreatePayUp />} />
-        </Route>
-
-        {/* </Route> */}
         <Route path="/about-us" element={<AboutUsPage />} />
         <Route path="/hiring" element={<HiringPage />} />
         <Route path="/contactus" element={<ContactUsPage />} />
@@ -123,6 +77,66 @@ const App = () => {
         <Route path="/refund-cancellation" element={<RefundCancellation />} />
         <Route path="/TermCondition" element={<TermCondition />} />
 
+
+        {/* Authentication Pages */}
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+
+        <Route path="/" element={<AuthenticatedRoutes />}>
+        
+          {/* Dashboard Pages */}
+          <Route path="dashboard" element={<DashboardPage />}>
+            <Route path="" element={<HomePage />} />
+            <Route path="mystore" element={<MyStorePage />} />
+            <Route path="your-customers" element={<AudiencePage />} />
+            <Route path="wallets" element={<WalletPage />} />
+            <Route path="payingup" element={<PayingUpPage />} />
+            <Route path="appointment" element={<AppointementPage />} />
+            <Route path="webinar" element={<WebinarPage />} />
+            <Route path="courses" element={<CoursesPage />} />
+            <Route path="telegram" element={<TelegramPage />} />
+            <Route path="locked-content" element={<LockedContentPage />} />
+            <Route path="discord" element={<DiscordPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="superlinks" element={<SuperLinkPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="whatsapp" element={<WhatsAppPage />} />
+            <Route path="plugin" element={<PluginPage />} />
+            <Route path="withdrawal" element={<WithdrawalPage />} />
+            <Route path="all-transactions" element={<AllTransactionsPage />} />
+            <Route path="kyc-setting" element={<KYCpage />} />
+          </Route>
+
+          {/* Sub-Pages for App-Specific Routes */}
+          <Route path="app" element={<Outlet />}>
+            <Route path="create-webinar" element={<CreateWebinarPage />} />
+            <Route path="create-course" element={<CreateCoursePage />} />
+            <Route path="create-pay-up" element={<CreatePayUp />} />
+            <Route path="create-telegram" element={<TelegramForm />} />
+            <Route
+              path="create-premium-content"
+              element={<CreateLockedContentPage />}
+            />
+            
+
+            <Route path="edit-course" element={<CreateCoursePage />} />
+            <Route path="edit-webinar" element={<CreateWebinarPage />} />
+            <Route path="edit-payingup" element={<CreatePayUp />} />
+          </Route >
+        
+        </Route>
+
+
+        {/* </Route> */}
+        <Route path="app" element={<Outlet />}> 
+          <Route path="paying-up" element={<PayingUpPages />} />
+          <Route path="course" element={<NewCourse />} />
+          <Route path="webinar" element={<WebinarPages />} />
+          <Route path="telegram" element={<TelegramFormPrev />} />
+        
+        </Route>
+        
+        
         
 
       </Routes>

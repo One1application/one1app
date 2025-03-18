@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Settings } from "lucide-react"; // Ensure lucide-react is installed for icons
 import { useNavigate, Outlet } from "react-router-dom";
 import { dashboardConfig } from "./dashboardConfig";
+import { useAuth } from "../../context/AuthContext"
 
 const DashboardPage = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({}); // Tracks open submenus
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const toggleSettings = () => {
     setIsSettingsOpen((prev) => !prev);
@@ -25,7 +27,10 @@ const DashboardPage = () => {
   };
 
   const handleSettingItemClick = (item) => {
-    if (item.path.startsWith("http")) {
+    if (item.action === "signout") {
+      logout();
+      navigate("/signin");
+    } else if (item.path.startsWith("http")) {
       window.open(item.path, "_blank");
     } else if (item.path === "/signin") {
       navigate("/signin");

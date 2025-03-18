@@ -21,6 +21,7 @@ import {
 } from "../../../services/auth/api.services";
 import Lottie from "lottie-react";
 import animation from "../../../assets/Animation - 4.json";
+import { useAuth } from '../../../context/AuthContext';
 
 const SignInPage = () => {
   const [email, setEmail] = useState("");
@@ -33,6 +34,7 @@ const SignInPage = () => {
   const [showOTPInput, setShowOTPInput] = useState(false);
   const [otp, setOtp] = useState("");
   const navigate = useNavigate();
+  const { verifyToken } = useAuth();
 
   // const images = [
   //   "https://d3qp9zvlyuxos1.cloudfront.net/Group+46944GlobalSignin4.png",
@@ -99,7 +101,7 @@ const SignInPage = () => {
       if (data.success) {
         toast.success("OTP Verified Successfully!");
         localStorage.setItem("AuthToken", data.token);
-        console.log("token Set deone");
+        await verifyToken();
         navigate("/dashboard");
       } else {
         toast.error("Invalid OTP. Please try again");
@@ -119,8 +121,7 @@ const SignInPage = () => {
       }}
     >
       <div className="flex justify-center items-start min-h-screen pt-8 mt-16">
-        <div
-          className="shadow-xl flex flex-col lg:flex-row bg-white rounded-[24px] w-full max-w-[1000px] relative"
+        <div className="shadow-xl flex flex-col lg:flex-row bg-white rounded-[24px] w-full max-w-[1000px] relative"
           style={{ height: "auto" }}
         >
           <div className="relative flex flex-col flex-1 p-6 md:p-12 pb-6 rounded-l-[24px] lg:rounded-l-[24px] w-full">
@@ -164,7 +165,7 @@ const SignInPage = () => {
                     className="w-full mt-2.5 text-sm p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
-                    className="mt-2 w-[85%] flex justify-center text-sm items-center gap-2 bg-slate-900 text-white py-2 px-4 rounded-full"
+                    className="mt-2 w-[100%] flex justify-center text-sm items-center gap-2 bg-slate-900 text-white py-2 px-4 rounded-full"
                     onClick={handleOTPSubmit}
                   >
                     Submit OTP

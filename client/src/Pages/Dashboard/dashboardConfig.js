@@ -45,6 +45,6 @@ export const dashboardConfig = {
     // commented out for now, as we don't have a superlinks dashboard yet
     // { label: "Feature Requests", icon: FaChartBar, path: "https://www.google.com" },
     { label: "Help Center", icon: FaUsers, path: "https://www.google.com" },
-    { label: "Sign Out", icon: FaCog, path: "/signin"  },
+    { label: "Sign Out", icon: FaCog, path: "/signin" , action: "signout"},
   ]
 };
