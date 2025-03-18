@@ -5,6 +5,8 @@ import { createContact, createFundAccount, createPayout, razorpay } from '../con
 import { fetchPaymentDetails } from '../config/razorpay.js';
 import axios from 'axios';
 import { generateSignedUrl } from '../config/imagekit.js';
+import dotenv from "dotenv";
+dotenv.config();
 
 
 

@@ -282,9 +282,9 @@ export async function purchasePayingUp(req, res) {
             currency: "INR",
             payment_capture: 1
         }
-
+        
         const order = await razorpay.orders.create(option);
-
+        
         return res.status(200).json({
             success: true,
             payload: {
