@@ -1,17 +1,15 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 const AuthenticatedRoutes = () => {
-  const [Authenticated, setAuthenticated] = useState(true);
+  const { authenticated, loading } = useAuth();
 
-  useEffect(() => {
-    const token = localStorage.getItem("AuthToken");
-    const isAuthenticated = token ? true : false;
-    console.log(isAuthenticated);
-    setAuthenticated(isAuthenticated);
-  }, []);
+  if (loading) {
+    // Show a loading spinner or skeleton while verifying
+    return <div className="flex justify-center items-center h-screen">Verifying your session...</div>;
+  }
 
-  return Authenticated ? <Outlet /> : <Navigate to="/signin" />;
+  return authenticated ? <Outlet /> : <Navigate to="/signin" />;
 };
 
 export default AuthenticatedRoutes;

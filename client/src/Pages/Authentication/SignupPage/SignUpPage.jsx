@@ -26,6 +26,7 @@ import {
 } from "../../../services/auth/api.services";
 import Lottie from "lottie-react";
 import animation from "../../../assets/animation3.json";
+import { useAuth } from "../../../context/AuthContext";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
@@ -52,6 +53,9 @@ const SignUpPage = () => {
 
   const [heardFromDropdownOpen, setHeardFromDropdownOpen] = useState(false);
   const [customHeardFrom, setCustomHeardFrom] = useState(false);
+
+  const { verifyToken } = useAuth();
+
 
   const countryCodes = ["+1", "+91", "+44", "+61"];
   const socialMediaOptions = [
@@ -192,6 +196,7 @@ const SignUpPage = () => {
     if (data.success) {
       localStorage.setItem("AuthToken", data.token);
       toast.success("OTP verified successfully");
+      await verifyToken();
       navigate("/dashboard");
     } else {
       toast.error("Invalid OTP");
@@ -257,7 +262,7 @@ const SignUpPage = () => {
         <SubscriptionPage />
       ) : (
         <div className="flex justify-center items-start min-h-screen pt-8">
-          <div className="shadow-xl flex flex-col lg:flex-row bg-white rounded-[24px] w-full max-w-[1000px] h-[692px] relative ">
+          <div className="shadow-xl h-auto flex flex-col lg:flex-row bg-white rounded-[24px] w-full max-w-[1000px]  relative ">
             <div
               className="relative flex flex-col flex-1 lg:w-1/2 p-6 md:p-12 pb-6 rounded-tl-[24px] rounded-bl-[24px] w-full"
               style={{ paddingBottom: "24px" }}
