@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import ReactQuill from "react-quill";
 import {

@@ -4,7 +4,7 @@ import { courseConfig } from "./courseConfig";
 import oneApp from "../../../../assets/oneapp.jpeg";
 import { useSearchParams } from "react-router-dom";
 import { fetchCourse, purchaseCourse, verifyPayment } from "../../../../services/auth/api.services";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
 
@@ -21,6 +21,7 @@ const NewCourse = () => {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showSigninModal, setShowSigninModal] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [isPurchased, setIsPurchased] = useState(false);
 
   const handleAuthError = (error) => {
     if (error?.response?.data?.message === "Token not found, Access Denied!" || 
@@ -96,7 +97,6 @@ const NewCourse = () => {
   const handlePayment = async () => {
     try {
       const response = await purchaseCourse(courseId);
-      console.log(response);
       const orderDetails = response.data.payload;
 
       var options = {
@@ -116,11 +116,18 @@ const NewCourse = () => {
 
           try {
             setIsPaymentVerifying(true);
-            await verifyPayment(body);
-            toast("Payment successful!");
+            const response = await verifyPayment(body);
+            console.log(response);
+            if (response.success === true) {
+              setIsPurchased(true);
+              // Fetch updated course details with lessons/videos
+              const updatedCourse = await fetchCourse(courseId);
+              setCourseDetails(updatedCourse.data.payload.course);
+              toast.success("Payment successful!");
+            }
           } catch (error) {
             console.error("Error while verifying payment.", error);
-            toast("Payment Failed");
+            toast.error("Payment Failed");
           } finally {
             setIsPaymentVerifying(false);
           }
@@ -203,6 +210,58 @@ const NewCourse = () => {
           </button>
         </div>
       </section>
+
+      {/* Lessons Section - Moved to top and modified */}
+      {courseDetails?.lessons?.[0]?.isActive && (
+        <section className="py-10 px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+              Course Content
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {courseDetails.lessons[0].lessonData.map((lesson, index) => (
+                lesson.lessonName && (
+                  <div
+                    key={index}
+                    className="block p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 relative group border border-orange-500/20"
+                  >
+                    <h3 className="text-xl font-semibold mb-3 text-white">
+                      {lesson.lessonName}
+                    </h3>
+                    <div className="space-y-2">
+                      {lesson.videos.map((video, vIndex) => (
+                        video && (
+                          <a
+                            key={vIndex}
+                            href={isPurchased ? video : '#'}
+                            onClick={e => !isPurchased && e.preventDefault()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`flex items-center ${
+                              isPurchased 
+                                ? "text-orange-500 hover:text-orange-400" 
+                                : "text-gray-500 cursor-not-allowed"
+                            }`}
+                          >
+                            {isPurchased ? (
+                              <Icons.Play className="w-5 h-5 mr-2" />
+                            ) : (
+                              <Icons.Lock className="w-5 h-5 mr-2" />
+                            )}
+                            <span>
+                              {isPurchased ? `Watch Video ${vIndex + 1}` : `Video ${vIndex + 1} (Locked)`}
+                            </span>
+                          </a>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                )
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* About Section */}
       <section className="py-10 px-4">
@@ -419,47 +478,6 @@ const NewCourse = () => {
                     </div>
                     <Icons.ArrowRight className="w-6 h-6 text-orange-500 absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </a>
-                )
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Lessons Section */}
-      {courseDetails.lessons?.[0]?.isActive && (
-        <section className="py-10 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-              Lessons
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {courseDetails.lessons[0].lessonData.map((lesson, index) => (
-                lesson.lessonName && (
-                  <div
-                    key={index}
-                    className="block p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 relative group border border-orange-500/20"
-                  >
-                    <h3 className="text-xl font-semibold mb-3 text-white">
-                      {lesson.lessonName}
-                    </h3>
-                    <div className="space-y-2">
-                      {lesson.videos.map((video, vIndex) => (
-                        video && (
-                          <a
-                            key={vIndex}
-                            href={video}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center text-gray-300 hover:text-orange-500"
-                          >
-                            <Icons.Play className="w-5 h-5 mr-2" />
-                            <span>Watch Video {vIndex + 1}</span>
-                          </a>
-                        )
-                      ))}
-                    </div>
-                  </div>
                 )
               ))}
             </div>

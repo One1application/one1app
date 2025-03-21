@@ -6,7 +6,7 @@ import { fetchWebinar, purchaseWebinar, verifyPayment } from "../../../../servic
 import { IndianRupee } from "lucide-react"; 
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import { useAuth } from "../../../../context/AuthContext";
 
 

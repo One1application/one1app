@@ -6,7 +6,7 @@ import { fetchTelegram, purchaseTelegram, verifyPayment } from "../../../../serv
 import { useSearchParams } from "react-router-dom";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 
 const TelegramFormPrev = () => {
   // Mock Data

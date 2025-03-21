@@ -18,7 +18,7 @@ import { PiIdentificationBadgeFill } from "react-icons/pi";
 import { CiBank } from "react-icons/ci";
 import UPIModal from "../../../../components/Modal/UPIModal";
 import MPINModal from "../../../../components/Modal/MPINModal";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import { Calendar } from "lucide-react";
 import { fetchBalanceDetails } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";

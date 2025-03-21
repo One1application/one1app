@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { PlusCircle, Upload, X, ChevronDown, Loader2 } from "lucide-react";
 import { createTelegram, handelUplaodFile, verifyInviteLink } from "../../../../services/auth/api.services";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 // Discount Form Component
 const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
   const [discountCode, setDiscountCode] = useState("");

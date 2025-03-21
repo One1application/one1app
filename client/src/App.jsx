@@ -1,6 +1,5 @@
 import { Routes, Route, Outlet  ,Navigate} from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import SignInPage from "./Pages/Authentication/SigninPage/SignInPage";
 import SignUpPage from "./Pages/Authentication/SignupPage/SignUpPage";
 import DashboardPage from "./Pages/Dashboard/DashboardPage";
@@ -51,17 +50,9 @@ const App = () => {
   
   return (
     <>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
+      <Toaster
+        reverseOrder={false}
+
       />
 
       <Routes>

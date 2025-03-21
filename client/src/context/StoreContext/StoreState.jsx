@@ -6,8 +6,8 @@ import {
   fetchTransactionsPage,
   fetchWithdrawalPage,
 } from "../../services/auth/api.services.js";
-import { toast } from "react-toastify";
-
+import toast from "react-hot-toast";
+ 
 const initialState = {
   user: {
     username: "Manish",

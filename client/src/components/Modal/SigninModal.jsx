@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { signInUser, verifyLoginUser } from "../../services/auth/api.services";
 
-const SigninModal = ({ open, handleClose, onSuccessfulLogin }) => {
+const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}) => {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -176,9 +176,9 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin }) => {
 
             <p className="text-center text-gray-600 font-medium text-sm mt-4">
               Don't have an account?{" "}
-              <a href="#" className="text-blue-500">
+              <button onClick={onSwitchToSignup} className="text-blue-500">
                 Sign up
-              </a>
+              </button>
             </p>
           </div>
         </div>

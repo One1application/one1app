@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 // import Card from "../../../../components/Cards/Card";
 import NoContentComponent from "../../../../components/NoContent/NoContentComponent";
 import Table from "../../../../components/Table/TableComponent";

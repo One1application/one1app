@@ -9,7 +9,7 @@ import {
   faTelegram,
   faLinkedin,
 } from "@fortawesome/free-brands-svg-icons";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import SubscriptionPage from "./SubscriptionsPage";
 
 // import Photo1 from "../../../assets/1.png";

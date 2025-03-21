@@ -14,7 +14,7 @@ import {
   Check,
   IndianRupee,
 } from "lucide-react";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import Pagination from "@mui/material/Pagination";
 
 const AudienceTableComponent = ({ data }) => {

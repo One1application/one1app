@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
 import { fetchAllPayingUpsData } from "../../../../services/auth/api.services";
 import PayingUpTable from "../../../../components/Table/PayingUpTable";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 
 const PayingUpPage = () => {
   const [activeTab, setActiveTab] = useState(0);

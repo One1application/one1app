@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import { Pencil, Trash2, Plus } from 'lucide-react';
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import {
   createNewWebinarRequest,
   handelUplaodFile,

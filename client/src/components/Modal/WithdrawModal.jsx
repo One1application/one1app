@@ -1,7 +1,7 @@
 import { CiBank } from "react-icons/ci";
 import { saveSecondaryBankorUpiAccount } from "../../services/auth/api.services";
 import { useState } from "react";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 const WithdrawModal = () => {
   const [SecondaryBank, setSecondaryBank] = useState({
     accountNumber: "",

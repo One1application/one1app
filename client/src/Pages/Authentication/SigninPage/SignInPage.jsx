@@ -8,7 +8,7 @@ import {
   faMobileScreenButton,
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 // import Photo1 from "../../../assets/1.png";
 // import Photo2 from "../../../assets/2.png";
 // import Photo3 from "../../../assets/3.png";

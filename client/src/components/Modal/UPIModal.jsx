@@ -1,7 +1,7 @@
 import { useState } from "react";
 import UPI from "../../assets/UPI.png";
 import { saveSecondaryBankorUpiAccount } from "../../services/auth/api.services";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 const UPIModal = () => {
   const [UPIid, setUPIid] = useState("");
   const addSecondaryUpi = async () => {

@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from "react";
 import { Modal } from "@mui/material";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 
 const UpdateUsernameModal = ({ open, handleClose, label, value, onSave }) => {
   const [tempValue, setTempValue] = useState(value);

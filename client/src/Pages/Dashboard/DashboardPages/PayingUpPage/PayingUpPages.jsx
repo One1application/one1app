@@ -5,7 +5,7 @@ import oneApp from "../../../../assets/oneapp.jpeg";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchPayingUp, purchasePayingUp, verifyPayment } from "../../../../services/auth/api.services";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
 import { useAuth } from "../../../../context/AuthContext";
