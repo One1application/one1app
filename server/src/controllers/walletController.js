@@ -91,7 +91,6 @@ export async function verifyPayment(req, res) {
             days,
             channelId
         } = req.body;
-        console.log(req.body);
         
         const user = req.user;
 

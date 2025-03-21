@@ -4,8 +4,13 @@ export const payingUpSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters long"),
     description: z.string().min(10, "Description must be at least 10 characters long"),
     paymentDetails: z.object({
+        currencySymbol: z.string(),
         paymentEnabled: z.boolean(),
-        totalAmount: z.preprocess((val) => Number(val), z.number().optional()) 
+        paymentLink: z.string().optional(),
+        totalAmount: z.preprocess((val) => Number(val), z.number().optional()),
+        paymentButtonTitle: z.string(),
+        ownerEmail: z.string().email(),
+        ownerPhone: z.string()
     }),
     category: z.object({
         title: z.string(),
@@ -18,10 +23,13 @@ export const payingUpSchema = z.object({
         testimonialsMetaData: z.array(
             z.object({
                 name: z.string(),
-                testimonial: z.string()
+                statement: z.string(),
+                profilePic: z.string().url(),
+                rating: z.number(),
+                id: z.string()
             })
         )
-    }),
+    }).optional(),
     faqs: z.object({
         title: z.string(),
         isActive: z.boolean(),
@@ -31,7 +39,7 @@ export const payingUpSchema = z.object({
                 answer: z.string()
             })
         )
-    }),
+    }).optional(),
     refundPolicies: z.object({
         title: z.string(),
         isActive: z.boolean(),
@@ -49,7 +57,6 @@ export const payingUpSchema = z.object({
     }),
     files: z.object({
         title: z.string(),
-        isActive: z.boolean(),
         value: z.array(
             z.object({
                 name: z.string(),
@@ -58,5 +65,5 @@ export const payingUpSchema = z.object({
             })
         )
     }),
-    discounts: z.array(z.unknown()) 
-});
+    discounts: z.array(z.unknown())
+})

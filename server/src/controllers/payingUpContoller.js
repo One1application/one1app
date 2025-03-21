@@ -4,8 +4,6 @@ import prisma from "../db/dbClient.js";
 export async function createPayingUp(req, res) {
 
     try {
-        
-        console.log(req.body);
 
         const { title, description, paymentDetails, category, testimonials, faqs, refundPolicies, tacs, coverImage, files} = req.body;
     

@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/auth/verify-token`, {
+      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}auth/verify-token`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
