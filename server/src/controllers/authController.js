@@ -85,7 +85,7 @@ export const register = async (req, res) => {
         console.error("Error registering user", error);
         res
             .status(500)
-            .json({ message: "Error registering user", error })
+            .json({ message: "Internal server Error." })
     }
 }
 
@@ -148,7 +148,7 @@ export const verifyOtpForRegister = async (req, res) => {
         console.error("Error verifying otp for register", error);
         res
             .status(500)
-            .json({ message: "Error verifying otp for register", error })
+            .json({ message: "Internal Server Error." })
     }
 }
 
@@ -192,7 +192,7 @@ export async function signIn(req, res) {
         console.error("Error in checking user for signIn.", error);
         return res.status(500).json({
             success: false,
-            message: "Error in checking user for signIn."
+            message: "Internal Server Error."
         })
 
     }
@@ -256,7 +256,7 @@ export async function verifyOtpForLogin(req, res) {
         console.error("Error in verifying otp.", error);
         return res.status(500).json({
             success: false,
-            message: "Error in verifying otp."
+            message: "Internal Server Error."
         })
     }
 
