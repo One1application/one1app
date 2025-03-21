@@ -7,13 +7,13 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
 
   const logout = () => {
     localStorage.removeItem("AuthToken");
-    setCurrentUser(null);
+    setCurrentUserId(null);
     setAuthenticated(false);
   };
 
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
       });
       
       if (response.data.success) {
-        setCurrentUser(response.data.user);
+        setCurrentUserId(response.data.user.id);
         setAuthenticated(true);
         setLoading(false);
         return true;
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const value = {
-    currentUser,
+    currentUserId,
     authenticated,
     loading,
     logout,

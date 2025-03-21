@@ -46,7 +46,7 @@ import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedR
 import { useAuth } from "./context/AuthContext.jsx";
 const App = () => {
 
-  const { currentUser, authenticated, logout } = useAuth(); 
+  const {  authenticated, logout } = useAuth(); 
 
   
   return (

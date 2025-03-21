@@ -8,6 +8,7 @@ import { fetchPayingUp, purchasePayingUp, verifyPayment } from "../../../../serv
 import { toast } from "react-toastify";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
+import { useAuth } from "../../../../context/AuthContext";
 
 const PayingUpPages = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -26,13 +27,26 @@ const PayingUpPages = () => {
   const [showSigninModal, setShowSigninModal] = useState(false);
   const [userEmail, setUserEmail] = useState("");
 
+  const { currentUserId } = useAuth();
+
   useEffect(() => {
     const payup = async() => {
       setIsLoading(true);
       try {
         const response = await fetchPayingUp(payingUpId)
-        // console.log(response);
         setPayingUpDetails(response.data.payload.payingUp)
+        
+        // Check if files exists in the response to determine if already purchased
+        if (response.data.payload.payingUp.files) {
+          setIsPurchased(true);
+          // Handle both single and multiple file URLs
+          const files = response.data.payload.payingUp.files.value;
+          if (Array.isArray(files)) {
+            setPaymentUrl(files.map(file => file.url)); // Store array of file URLs
+          } else {
+            setPaymentUrl(files.url); // Store single file URL
+          }
+        }
       } catch (error) {
         console.error("Error while fetching paying up.", error);
         if (!handleAuthError(error)) {
@@ -214,32 +228,56 @@ const PayingUpPages = () => {
               {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
               <span>{payingUpDetails.paymentDetails.totalAmount}</span>
             </button>
+          ) : currentUserId === payingUpDetails.createdById ? (
+            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
+              <Icons.CheckCircle className="w-5 h-5 mr-2" />
+              <span>You Created This</span>
+            </div>
           ) : (
             <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
               <Icons.CheckCircle className="w-5 h-5 mr-2" />
-              <span>Payed</span>
+              <span>Already Purchased</span>
             </div>
           )}
         </div>
       </section>
 
       {/* Payment Data URL Section */}
-      {paymentUrl && (
+      {isPurchased && paymentUrl && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-              Your Data
+            <h2 className="text-3xl font-bold mb-8  text-orange-500">
+              Your Files
             </h2>
             <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500/20">
-              <div className="text-center">
-                <a 
-                  href={paymentUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-orange-500 hover:text-orange-400 underline text-xl break-all"
-                >
-                  {paymentUrl}
-                </a>
+              <div className="space-y-4">
+                {Array.isArray(paymentUrl) ? (
+                  paymentUrl.map((file, index) => (
+                    <div key={index} className="text-center">
+                      <a 
+                        href={file} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-orange-500 hover:text-orange-400 underline text-xl break-all flex items-center justify-center gap-2"
+                      >
+                        <Icons.FileDown className="w-6 h-6" />
+                        Download File {index + 1}
+                      </a>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center">
+                    <a 
+                      href={paymentUrl} 
+                      target="_blank" 
+                      // rel="noopener noreferrer"
+                      className="text-orange-500 hover:text-orange-400 underline text-xl break-all flex items-center justify-center gap-2"
+                    >
+                      <Icons.FileDown className="w-6 h-6" />
+                      Download File
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -249,7 +287,7 @@ const PayingUpPages = () => {
       {/* Description Section */}
       <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto">
-        <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+        <h2 className="text-3xl font-bold mb-8  text-orange-500">
               Overview
             </h2>
           <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500/20">
@@ -266,7 +304,7 @@ const PayingUpPages = () => {
       {payingUpDetails.coverImage.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500">
               Cover Image
             </h2>
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-orange-500/20">
@@ -284,7 +322,7 @@ const PayingUpPages = () => {
          {payingUpDetails.category.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500">
               Categories
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -305,7 +343,7 @@ const PayingUpPages = () => {
       {payingUpDetails.testimonials.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500">
               {payingUpDetails.testimonials.title}
             </h2>
             <div className="relative">
@@ -366,7 +404,7 @@ const PayingUpPages = () => {
       {payingUpDetails.faqs.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500">
               Frequently Asked Questions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -396,7 +434,7 @@ const PayingUpPages = () => {
       {payingUpDetails.refundPolicies.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500">
               Refund Policies
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -414,7 +452,7 @@ const PayingUpPages = () => {
       {payingUpDetails.tacs.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500">
               Terms & Conditions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -430,8 +468,8 @@ const PayingUpPages = () => {
 
       {/* Contact Footer */}
       <section className="py-12 px-4 bg-gradient-to-r from-orange-600 to-orange-500">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-8 text-white">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl font-bold mb-8 text-center text-white">
             Need Help?
           </h2>
           <div className="flex justify-center gap-8">

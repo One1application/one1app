@@ -29,7 +29,7 @@ const CreateWebinarPage = () => {
     quantity: 0,
     amount: 0,
     startDateTime: "",
-    occurrence: "weekly",
+    occurrence: "",
     endDateTime: "",
     coverImage: null,
   });
@@ -104,7 +104,7 @@ const CreateWebinarPage = () => {
         setActiveTab(webinarData.isOnline ? (webinarData.link.platformLink ? 1 : 0) : 2);
         setActiveTabPay(webinarData.isPaid ? 1 : 0);
         setEventTab(webinarData.occurrence ? 1 : 0);
-        setSelectedOccurrence(webinarData.occurrence || "weekly");
+        setSelectedOccurrence(webinarData.occurrence || "");
         
         // Load coupons if available
         if (webinarData.coupons && webinarData.coupons.length > 0) {
@@ -276,16 +276,16 @@ const CreateWebinarPage = () => {
             <div
               className={`${
                 imagePreview ? "h-auto" : "h-80"
-              } w-full border-2 border-dashed border-orange-500/30 rounded-lg hover:border-orange-500 transition-all relative`}
+              } w-full border-2 border-dashed overflow-hidden   border-orange-500/30 rounded-lg hover:border-orange-500 transition-all relative`}
             >
               {EventDetails.coverImage ? (
-                <div className="w-full h-full relative">
+                <div className="w-full h-full  relative">
                   {/* Image Preview */}
-                  <div className="relative w-full h-80 object-contain">
+                  <div className="relative w-full h-80 object-contain  ">
                     <img
                       src={EventDetails.coverImage}
                       alt="Event Cover Preview"
-                      className="relative w-full h-full object-contain rounded-lg"
+                      className="relative w-full h-full p-4 object-contain rounded-lg"
                     />
                   </div>
                   {/* Delete Button */}
