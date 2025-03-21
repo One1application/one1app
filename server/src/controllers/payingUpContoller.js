@@ -65,7 +65,7 @@ export async function editPayingUpDetails(req, res) {
                 })
             }
     
-            const resdd = await prisma.payingUp.update({
+            await prisma.payingUp.update({
                 where: {
                     id: payingUpId
                 },
@@ -82,7 +82,6 @@ export async function editPayingUpDetails(req, res) {
                     files,
                 }
             })
-            console.log(resdd);
             
             const updatedPayingUp = await prisma.payingUp.findUnique({
                 where: {

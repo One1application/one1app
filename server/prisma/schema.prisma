@@ -166,6 +166,8 @@ model Webinar {
   tickets           WebinarTicket[]
   createdById       String
   createdBy         User            @relation(fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model WebinarTicket {
@@ -247,6 +249,8 @@ model PayingUp {
   createdById     String
   createdBy       User             @relation(fields: [createdById], references: [id])
   payingUpTickets PayingUpTicket[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt()
 }
 
 model PayingUpTicket {

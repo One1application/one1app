@@ -7,7 +7,7 @@ export const payingUpSchema = z.object({
         currencySymbol: z.string(),
         paymentEnabled: z.boolean(),
         paymentLink: z.string().optional(),
-        totalAmount: z.preprocess((val) => Number(val), z.number().optional()),
+        totalAmount: z.preprocess((val) => parseFloat(val), z.number().optional()),
         paymentButtonTitle: z.string(),
         ownerEmail: z.string().email(),
         ownerPhone: z.string()

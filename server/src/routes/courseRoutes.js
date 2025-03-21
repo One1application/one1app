@@ -4,16 +4,10 @@ import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 export const courseRouter = express.Router();
 
+courseRouter.use(authMiddleware);
 
-courseRouter.post('/create-course', 
-    authMiddleware,            
-    createCourse            
-);
-
-
-courseRouter.post('/edit-course/:courseId',authMiddleware,editCourseDetails);
-
-courseRouter.get('/get-creator-courses',authMiddleware,getCreatorCourses);
+courseRouter.post('/create-course', createCourse);
+courseRouter.post('/edit-course/:courseId', editCourseDetails);
+courseRouter.get('/get-creator-courses', getCreatorCourses);
 courseRouter.get('/get-course-by-id/:courseId',getCourseById)
-
-courseRouter.post('/purchase-course',authMiddleware,purchaseCourse)
+courseRouter.post('/purchase-course', purchaseCourse)
