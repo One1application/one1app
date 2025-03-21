@@ -1,4 +1,3 @@
-import { imagekit } from "../config/imagekit.js";
 import { razorpay } from "../config/razorpay.js";
 import prisma from "../db/dbClient.js";
 
@@ -41,7 +40,7 @@ export async function createPayingUp(req, res) {
         console.error("Error while creating paying Up.", error);
         res.status(500).json({
             success: false,
-            message: "Please try again later."
+            message: "Internal Server Error."
         })
         
     }
@@ -107,7 +106,7 @@ export async function editPayingUpDetails(req, res) {
             console.error("Error while updating paying Up.", error);
             res.status(500).json({
                 success: false,
-                message: "Please try again later."
+                message: "Internal Server Error."
             })
             
         }
