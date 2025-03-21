@@ -9,7 +9,7 @@ const DashboardPage = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({}); // Tracks open submenus
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout   } = useAuth();
 
   const toggleSettings = () => {
     setIsSettingsOpen((prev) => !prev);
@@ -29,7 +29,7 @@ const DashboardPage = () => {
   const handleSettingItemClick = (item) => {
     if (item.action === "signout") {
       logout();
-      navigate("/signin");
+      navigate("/");
     } else if (item.path.startsWith("http")) {
       window.open(item.path, "_blank");
     } else if (item.path === "/signin") {

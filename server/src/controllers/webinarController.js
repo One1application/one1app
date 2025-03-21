@@ -50,7 +50,7 @@ export async function editWebinar(req,res){
     try {
         const { webinarId } = req.params;
 
-        const {title, category, isOnline, venue, link, isPaid, quantity, amount, startDate, endTime, coverImage, occurrence} = req.body;
+        const {title, category, isOnline, venue, link, isPaid, quantity, amount, startDateTime, endDateTime, coverImage, occurrence} = req.body;
 
         const user = req.user;
 
@@ -78,8 +78,8 @@ export async function editWebinar(req,res){
                 isPaid: isPaid ,
                 quantity: parseInt(quantity, 10),
                 amount: parseFloat(amount),
-                startDate: new Date(startDate),
-                endDate: new Date(endTime),
+                startDate: new Date(startDateTime),
+                endDate: new Date(endDateTime),
                 createdById: user.id
             }
         });

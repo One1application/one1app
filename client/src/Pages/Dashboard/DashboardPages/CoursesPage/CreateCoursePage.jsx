@@ -164,7 +164,7 @@ const NewCoursePage = () => {
     },
     gallery: {
       title: "Gallery",
-      isActive: true,
+      isActive: false,
       imageMetaData: [
         { name: "", image: "" },
         { name: "", image: "" },
@@ -1597,7 +1597,7 @@ const NewCoursePage = () => {
               <div className="flex justify-center w-full">
                 <div className="sticky top-[80px] z-[5] bg-[#111827]/90 backdrop-blur-sm p-4 rounded-xl border border-orange-500/20 w-[900px] mb-6">
                   {/* Validity Section */}
-                  <div className="mt-4">
+                  <div className="">
                     <label className="block text-orange-500 text-[15px] mb-4">
                       Validity
                     </label>
@@ -1608,7 +1608,7 @@ const NewCoursePage = () => {
                       }
                       className="w-full h-11 bg-[#1a1b1e] text-gray-300 rounded-lg border border-orange-500/20 px-4 text-sm focus:outline-none focus:border-orange-500/50"
                     >
-                      <option value="">Select validity</option>
+                      <option value="" >Select validity</option>
                       {validity.map((validityOption) => (
                         <option key={validityOption} value={validityOption}>
                           {validityOption}
@@ -1623,7 +1623,7 @@ const NewCoursePage = () => {
               <div className="flex justify-center w-full">
                 <div className="sticky top-[50px] z-[5] bg-[#111827]/90 backdrop-blur-sm p-3 rounded-xl border border-orange-500/20 w-[900px] mb-6">
                   {/* Features Section */}
-                  <div className="mt-6">
+                  <div className="">
                     <label className="block text-orange-500 text-[15px] mb-4">
                       Features
                     </label>

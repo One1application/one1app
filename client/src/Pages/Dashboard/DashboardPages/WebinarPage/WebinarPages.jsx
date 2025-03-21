@@ -7,6 +7,8 @@ import { IndianRupee } from "lucide-react";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
 import { toast } from "react-toastify";
+import { useAuth } from "../../../../context/AuthContext";
+
 
 const WebinarPages = () => {
   const navigate = useNavigate();
@@ -21,6 +23,11 @@ const WebinarPages = () => {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showSigninModal, setShowSigninModal] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [isCreator, setIsCreator] = useState(false);
+
+  const { currentUserId } = useAuth();
+
+  
 
   const handleAuthError = (error) => {
     if (error?.response?.data?.message === "Token not found, Access Denied!" || 
@@ -39,6 +46,16 @@ const WebinarPages = () => {
         const response = await fetchWebinar(webinarId);
         console.log(response);
         setWebinarData(response.data.payload.webinar);
+        
+        // If link exists, set as purchased
+        if (response.data.payload.webinar.link) {
+          setIsPurchased(true);
+          setMeetingDetails({
+            ...response.data.payload.webinar.link,
+            venue: response.data.payload.webinar.venue
+          });
+          
+        }
       } catch (error) {
         console.error("Error in fetching webinar", error);
         if (!handleAuthError(error)) {
@@ -184,7 +201,17 @@ const WebinarPages = () => {
           <h2 className="text-2xl font-bold  mb-3">
           Webinar Event 
             </h2>
-          {!isPurchased ? (
+          {currentUserId === webinarData.createdById ? (
+            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
+              <Icons.CheckCircle className="w-5 h-5 mr-2" />
+              <span>You Created This</span>
+            </div>
+          ) : isPurchased ? (
+            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
+              <Icons.CheckCircle className="w-5 h-5 mr-2" />
+              <span>Already Purchased</span>
+            </div>
+          ) : (
             <button
               onClick={handlePayment}
               disabled={isVerifying || !webinarData.isPaid}
@@ -209,11 +236,6 @@ const WebinarPages = () => {
                 </>
               )}
             </button>
-          ) : (
-            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
-              <Icons.CheckCircle className="w-5 h-5 mr-2" />
-              <span>Enrolled Successfully</span>
-            </div>
           )}
         </div>
       </section>
