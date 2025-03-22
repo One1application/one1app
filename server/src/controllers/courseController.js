@@ -407,6 +407,15 @@ export const purchaseCourse = async (req, res) => {
         const course = await prisma.course.findUnique({
             where: {
                 id: courseId
+            },
+            include:{
+                products: true,
+                lessons: true,
+                purchasedBy: user ? {
+                    where: {
+                        purchaserId: user.id
+                    }
+                }: false
             }
         })
 
@@ -414,6 +423,13 @@ export const purchaseCourse = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: "No course found"
+            })
+        }
+
+        if(course.purchasedBy.length > 0) {
+            return res.status(403).json({
+                success: false,
+                message: "You have already purchased the course."
             })
         }
 
