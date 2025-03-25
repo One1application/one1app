@@ -2,7 +2,8 @@ import prisma from "../db/dbClient.js";
 import { imagekit } from "../config/imagekit.js";
 import multer from "multer";
 import { razorpay } from "../config/razorpay.js";
-
+import dotenv from "dotenv";
+dotenv.config();
 
 
 

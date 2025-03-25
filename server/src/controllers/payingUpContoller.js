@@ -1,6 +1,7 @@
 import { razorpay } from "../config/razorpay.js";
 import prisma from "../db/dbClient.js";
-
+import dotenv from "dotenv";
+dotenv.config();
 export async function createPayingUp(req, res) {
 
     try {

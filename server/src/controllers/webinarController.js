@@ -1,6 +1,7 @@
 import  prisma  from '../db/dbClient.js';
 import { razorpay } from '../config/razorpay.js';
-
+import dotenv from "dotenv";
+dotenv.config();
 
 export async function createWebinar(req, res) {
     
