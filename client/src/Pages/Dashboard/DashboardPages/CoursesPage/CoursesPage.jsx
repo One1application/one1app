@@ -56,7 +56,7 @@ const CoursesPage = () => {
           <Card key={index} title={card.title} value={card.value} description={card.description} />
         ))}
       </div> */}
-
+{/* 
       <div className="flex justify-start items-center gap-4 p-6">
         {tabs.map((tab, index) => (
           <div
@@ -72,7 +72,7 @@ const CoursesPage = () => {
             {tab.title}({tab.value})
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Tab Content */}
       <div className="p-6 h-full w-full flex items-center justify-center">
