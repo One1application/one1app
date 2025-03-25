@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import  toast  from "react-hot-toast";
+
 
 const AuthContext = createContext();
 
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}auth/verify-token`, {
+      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/auth/verify-token`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

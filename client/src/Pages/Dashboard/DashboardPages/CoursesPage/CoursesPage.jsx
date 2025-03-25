@@ -11,8 +11,7 @@ const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { title, button, bgGradient, noContent, tabs, path, cardData } =
-    pagesConfig.coursesPage;
+  const { title, button, bgGradient, noContent, tabs, path, cardData } = pagesConfig.coursesPage;
   const navigate = useNavigate();
 
   const [AllCourses, setAllCourses] = useState([]);
@@ -21,7 +20,6 @@ const CoursesPage = () => {
     setIsLoading(true);
     try {
       const response = await fetchAllCoursesData();
-      console.log(response);
       setAllCourses(response.data.payload.courses);
     } catch (e) {
       console.log(e);

@@ -1,7 +1,8 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect, useRef } from 'react';
 import { Modal } from "@mui/material";
-import { toast } from 'react-toastify';
+import  toast  from "react-hot-toast";
+
 import { 
   ChevronDown, 
   Instagram, 
@@ -32,6 +33,8 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
   const [nameError, setNameError] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
   
   const containerRef = useRef(null);
   const heardFromRef = useRef(null);
@@ -134,6 +137,7 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
       return;
     }
     
+    setIsLoading(true);
     const userData = {
       email,
       phoneNumber: selectedCountryCode + phoneNumber,
@@ -156,10 +160,13 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
     } catch (error) {
       console.error("API call error:", error);
       toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOTPSubmit = async () => {
+    setIsOtpLoading(true);
     try {
       const { data } = await verifyEnteredOTP({
         otp,
@@ -177,6 +184,8 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
     } catch (error) {
       console.error("API call error:", error);
       toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsOtpLoading(false);
     }
   };
 
@@ -256,9 +265,10 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
               
               <button
                 onClick={handleOTPSubmit}
+                disabled={isOtpLoading}
                 className="mt-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 w-full rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105"
               >
-                Verify OTP
+                {isOtpLoading ? "Verifying..." : "Verify OTP"}
               </button>
               
               <p className="text-gray-600 text-sm mt-2">
@@ -439,11 +449,11 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
               <button
                 onClick={handleGetStarted}
                 className={`mt-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 w-full rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 ${
-                  !isFormValid() ? "opacity-50 cursor-not-allowed" : ""
+                  !isFormValid() || isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
-                disabled={!isFormValid()}
+                disabled={!isFormValid() || isLoading}
               >
-                Get Started
+                {isLoading ? "Processing..." : "Get Started"}
               </button>
 
               <p className="text-center text-gray-600 font-medium text-sm mt-2">

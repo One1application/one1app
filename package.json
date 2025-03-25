@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "react-hot-toast": "^2.5.2"
+    "react-hot-toast": "^2.5.2",
+    "react-player": "^2.16.0"
   }
 }

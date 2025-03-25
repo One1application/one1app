@@ -1,7 +1,8 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react';
 import { Modal } from "@mui/material";
-import { toast } from 'react-toastify';
+import  toast  from "react-hot-toast";
+
 import { 
   Smartphone, 
   Mail, 
@@ -18,6 +19,8 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
   const [isUsingEmail, setIsUsingEmail] = useState(true);
   const [showOTPInput, setShowOTPInput] = useState(false);
   const [otp, setOtp] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
   
   useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,8 +41,8 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
   };
 
   const handleSendOTP = async () => {
+    setIsLoading(true);
     const userData = isUsingEmail ? { email } : { phoneNumber };
-    console.log("User input:", userData);
 
     try {
       const { data } = await signInUser(userData);
@@ -52,10 +55,13 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
     } catch (error) {
       console.error("API call error:", error);
       toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOTPSubmit = async () => {
+    setIsOtpLoading(true);
     const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber }) };
     
     try {
@@ -71,6 +77,8 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
     } catch (error) {
       console.error("API call error:", error);
       toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsOtpLoading(false);
     }
   };
 
@@ -128,8 +136,9 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
                 <button
                   className="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105"
                   onClick={handleOTPSubmit}
+                  disabled={isOtpLoading}
                 >
-                  Submit OTP
+                  {isOtpLoading ? "Verifying..." : "Submit OTP"}
                 </button>
               </div>
             )}
@@ -138,17 +147,19 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
               <button
                 className={`w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 ${
                   (isUsingEmail && !isEmailValid) ||
-                  (!isUsingEmail && !isPhoneNumberValid)
+                  (!isUsingEmail && !isPhoneNumberValid) ||
+                  isLoading
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
                 disabled={
                   (isUsingEmail && !isEmailValid) ||
-                  (!isUsingEmail && !isPhoneNumberValid)
+                  (!isUsingEmail && !isPhoneNumberValid) ||
+                  isLoading
                 }
                 onClick={handleSendOTP}
               >
-                {isUsingEmail ? "Send OTP to Email" : "Send OTP to Phone"}
+                {isLoading ? "Sending..." : isUsingEmail ? "Send OTP to Email" : "Send OTP to Phone"}
               </button>
             )}
 

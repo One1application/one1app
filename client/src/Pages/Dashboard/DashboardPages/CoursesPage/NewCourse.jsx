@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import * as Icons from "lucide-react";
 import { courseConfig } from "./courseConfig";
 import oneApp from "../../../../assets/oneapp.jpeg";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchCourse, purchaseCourse, verifyPayment } from "../../../../services/auth/api.services";
 import  toast  from "react-hot-toast";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
+import { useAuth } from "../../../../context/AuthContext";
 
 const NewCourse = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -22,6 +23,8 @@ const NewCourse = () => {
   const [showSigninModal, setShowSigninModal] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [isPurchased, setIsPurchased] = useState(false);
+  const navigate = useNavigate();
+  const { currentUserId } = useAuth();
 
   const handleAuthError = (error) => {
     if (error?.response?.data?.message === "Token not found, Access Denied!" || 
@@ -60,8 +63,13 @@ const NewCourse = () => {
       setIsLoading(true);
       try {
         const response = await fetchCourse(courseId);
-        console.log(response);
         setCourseDetails(response.data.payload.course);
+        
+        // Check if the course has been purchased
+        if (response.data.payload.course.lessons || 
+            response.data.payload.course.createdBy=== currentUserId) {
+          setIsPurchased(true);
+        }
       } catch (error) {
         console.error("Error while fetching course.", error);
         if (!handleAuthError(error)) {
@@ -72,7 +80,7 @@ const NewCourse = () => {
       }
     }
     getCourse();
-  }, [courseId]);
+  }, [courseId, currentUserId]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -116,14 +124,12 @@ const NewCourse = () => {
 
           try {
             setIsPaymentVerifying(true);
-            const response = await verifyPayment(body);
-            console.log(response);
-            if (response.success === true) {
+            const verifyResponse = await verifyPayment(body);
+            if (verifyResponse.data.success) {
               setIsPurchased(true);
-              // Fetch updated course details with lessons/videos
-              const updatedCourse = await fetchCourse(courseId);
-              setCourseDetails(updatedCourse.data.payload.course);
+              
               toast.success("Payment successful!");
+              window.location.href = `/app/course/lessons?courseid=${courseId}`;
             }
           } catch (error) {
             console.error("Error while verifying payment.", error);
@@ -200,68 +206,60 @@ const NewCourse = () => {
           <h1 className="text-5xl sm:text-6xl font-bold mb-8 text-white">
             {courseDetails.title}
           </h1>
-          <button
-            onClick={handlePayment}
-            className="bg-black text-orange-500 py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
-          >
-            <span>Enroll for</span>
-            {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
-            <span>{courseDetails.price}</span>
-          </button>
+          {!isPurchased ? (
+            <button
+              onClick={handlePayment}
+              className="bg-black text-orange-500 py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
+            >
+              <span>Enroll for</span>
+              {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
+              <span>{courseDetails.price}</span>
+            </button>
+          ) : courseDetails.createdBy === currentUserId ? (
+            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
+              <Icons.CheckCircle className="w-5 h-5 mr-2" />
+              <span>You Created This</span>
+            </div>
+          ) : (
+            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
+              <Icons.CheckCircle className="w-5 h-5 mr-2" />
+              <span>Already Purchased</span>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Lessons Section - Moved to top and modified */}
-      {courseDetails?.lessons?.[0]?.isActive && (
+     
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
               Course Content
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {courseDetails.lessons[0].lessonData.map((lesson, index) => (
-                lesson.lessonName && (
-                  <div
-                    key={index}
-                    className="block p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 relative group border border-orange-500/20"
-                  >
-                    <h3 className="text-xl font-semibold mb-3 text-white">
-                      {lesson.lessonName}
-                    </h3>
-                    <div className="space-y-2">
-                      {lesson.videos.map((video, vIndex) => (
-                        video && (
-                          <a
-                            key={vIndex}
-                            href={isPurchased ? video : '#'}
-                            onClick={e => !isPurchased && e.preventDefault()}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`flex items-center ${
-                              isPurchased 
-                                ? "text-orange-500 hover:text-orange-400" 
-                                : "text-gray-500 cursor-not-allowed"
-                            }`}
-                          >
-                            {isPurchased ? (
-                              <Icons.Play className="w-5 h-5 mr-2" />
-                            ) : (
-                              <Icons.Lock className="w-5 h-5 mr-2" />
-                            )}
-                            <span>
-                              {isPurchased ? `Watch Video ${vIndex + 1}` : `Video ${vIndex + 1} (Locked)`}
-                            </span>
-                          </a>
-                        )
-                      ))}
-                    </div>
-                  </div>
-                )
-              ))}
+            <div className="flex justify-center">
+              {isPurchased ? (
+                <button
+                  onClick={() => navigate(`/app/course/lessons?courseid=${courseId}`)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white py-4 px-10 rounded-lg font-bold transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
+                >
+                  <Icons.BookOpen className="w-6 h-6 mr-2" />
+                  <span>Go to Course Lessons</span>
+                </button>
+              ) : (
+                <div className="p-6 bg-gray-900 rounded-xl shadow-xl border border-orange-500/20 text-center">
+                  <Icons.Lock className="w-10 h-10 text-orange-500 mx-auto mb-3" />
+                  <h3 className="text-xl font-semibold mb-2 text-white">
+                    Course Content Locked
+                  </h3>
+                  <p className="text-gray-300">
+                    Purchase this course to access all lessons and materials
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </section>
-      )}
+      
 
       {/* About Section */}
       <section className="py-10 px-4">
@@ -274,6 +272,14 @@ const NewCourse = () => {
               className="text-gray-300 mb-6 leading-relaxed text-lg"
               dangerouslySetInnerHTML={{ __html: courseDetails.aboutThisCourse.description }}
             />
+            {courseDetails.validity && (
+              <div className="mb-6">
+                <h3 className="text-2xl font-semibold mb-3 text-orange-500">Course Validity : <span className="text-white text-xl">  {courseDetails.validity} </span> </h3>
+                
+              </div>
+            )}
+            <h3 className="text-2xl font-semibold mb-3 text-orange-500"> Features : </h3>
+
             <ul className="space-y-4">
               {courseDetails.aboutThisCourse.features.map((feature, index) => (
                 feature && (
@@ -518,7 +524,7 @@ const NewCourse = () => {
       )}
 
       {/* Call to Action */}
-      <section className="py-12 px-4 bg-gradient-to-r from-orange-600 to-orange-500">
+      {/* <section className="py-12 px-4 bg-gradient-to-r from-orange-600 to-orange-500">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-8 text-white">
             Ready to Transform Your Skills?
@@ -532,7 +538,7 @@ const NewCourse = () => {
             <span>{courseDetails.price}</span>
           </button>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 };

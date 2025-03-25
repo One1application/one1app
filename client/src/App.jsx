@@ -43,6 +43,7 @@ import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram
 import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes";
 import { useAuth } from "./context/AuthContext.jsx";
+import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
 const App = () => {
 
   const {  authenticated, logout } = useAuth(); 
@@ -113,6 +114,8 @@ const App = () => {
             <Route path="edit-course" element={<CreateCoursePage />} />
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
+
+            <Route path="course/lessons" element={<LessonsPage />} />
           </Route >
         
         </Route>

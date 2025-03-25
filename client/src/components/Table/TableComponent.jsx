@@ -2,7 +2,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp } from 'lucide-react';
-import { toast } from 'react-toastify';
+import  toast  from "react-hot-toast";
+
 import Pagination from '@mui/material/Pagination';
 
 const Table = ({ data }) => {

@@ -35,6 +35,8 @@ const SignInPage = () => {
   const [otp, setOtp] = useState("");
   const navigate = useNavigate();
   const { verifyToken } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
 
   // const images = [
   //   "https://d3qp9zvlyuxos1.cloudfront.net/Group+46944GlobalSignin4.png",
@@ -76,8 +78,8 @@ const SignInPage = () => {
 
   const handleFormSubmit = async () => {
     const userData = isUsingEmail ? { email } : { phoneNumber };
-    console.log("User input:", userData);
-
+    setIsLoading(true);
+    
     try {
       const { data } = await signInUser(userData);
       if (data.success) {
@@ -89,12 +91,14 @@ const SignInPage = () => {
     } catch (error) {
       console.error("API call error:", error);
       toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOTPSubmit = async () => {
+    setIsOtpLoading(true);
     const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber }) };
-    console.log("OTP submission:", otpData);
 
     try {
       const { data } = await verifyLoginUser(otpData);
@@ -109,6 +113,8 @@ const SignInPage = () => {
     } catch (error) {
       console.error("API call error:", error);
       toast.error("An error occurred. Please try again.");
+    } finally {
+      setIsOtpLoading(false);
     }
   };
 
@@ -167,8 +173,9 @@ const SignInPage = () => {
                   <button
                     className="mt-2 w-[100%] flex justify-center text-sm items-center gap-2 bg-slate-900 text-white py-2 px-4 rounded-full"
                     onClick={handleOTPSubmit}
+                    disabled={isOtpLoading}
                   >
-                    Submit OTP
+                    {isOtpLoading ? "Verifying..." : "Submit OTP"}
                   </button>
                 </div>
               )}
@@ -183,11 +190,12 @@ const SignInPage = () => {
                   } py-2 px-4 rounded-full`}
                   disabled={
                     (isUsingEmail && !isEmailValid) ||
-                    (!isUsingEmail && !isPhoneNumberValid)
+                    (!isUsingEmail && !isPhoneNumberValid) ||
+                    isLoading
                   }
                   onClick={handleFormSubmit}
                 >
-                  {isUsingEmail ? "Send OTP to Email" : "Send OTP to Phone"}
+                  {isLoading ? "Sending..." : isUsingEmail ? "Send OTP to Email" : "Send OTP to Phone"}
                 </button>
               )}
 

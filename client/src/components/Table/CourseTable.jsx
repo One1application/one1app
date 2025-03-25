@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ArrowUpDown, Pencil, ChevronRight, Mail, SortAsc, ArrowDown, ArrowUp } from 'lucide-react';
 import { Pagination } from '@mui/material';
-import { toast } from 'react-toastify';
+import  toast  from "react-hot-toast";
+
 
 const CourseTable = ({ data }) => {
   const navigate = useNavigate();
