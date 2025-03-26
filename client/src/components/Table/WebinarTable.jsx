@@ -280,7 +280,7 @@ const WebinarTable = ({ data }) => {
                   <td className="px-6 py-4 text-sm text-gray-500">{webinar._count.tickets}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">₹{calculateRevenue(webinar)}</td>
                   <td className="px-6 py-4">
-                    {webinar.isPaid ? (
+                    {webinar.paymentEnabled ? (
                       <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800">
                         Enabled
                       </span>
@@ -373,7 +373,7 @@ const WebinarTable = ({ data }) => {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigator.clipboard.writeText(`${window.location.origin}/webinar/${webinar.id}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/app/webinar?id=${webinar.id}`);
                     toast.success('Link copied to clipboard');
                   }}
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"

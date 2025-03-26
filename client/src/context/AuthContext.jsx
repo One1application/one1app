@@ -11,11 +11,13 @@ export const AuthProvider = ({ children }) => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   const logout = () => {
     localStorage.removeItem("AuthToken");
     setCurrentUserId(null);
     setAuthenticated(false);
+    setUserRole(null);
   };
 
   const verifyToken = async () => {
@@ -32,6 +34,7 @@ export const AuthProvider = ({ children }) => {
       
       if (response.data.success) {
         setCurrentUserId(response.data.user.id);
+        setUserRole(response.data.user.role);
         setAuthenticated(true);
         setLoading(false);
         return true;
@@ -55,7 +58,8 @@ export const AuthProvider = ({ children }) => {
     authenticated,
     loading,
     logout,
-    verifyToken
+    verifyToken,
+    userRole
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

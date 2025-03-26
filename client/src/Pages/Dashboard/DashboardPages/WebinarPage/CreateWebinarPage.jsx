@@ -25,7 +25,7 @@ const CreateWebinarPage = () => {
     isOnline: true,
     venue: "",
     link: "",
-    isPaid: true,
+    isPaid: false,
     quantity: 0,
     amount: 0,
     startDateTime: "",

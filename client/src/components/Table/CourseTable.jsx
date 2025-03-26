@@ -109,7 +109,7 @@ const CourseTable = ({ data }) => {
   };
 
   const filteredData = useMemo(() => {
-    return data.reverse().filter(course => 
+    return data.filter(course => 
       course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.price?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.validity?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -366,7 +366,7 @@ const CourseTable = ({ data }) => {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigator.clipboard.writeText(`${window.location.origin}/course/${course.id}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/app/course?id=${course.id}`);
                     toast.success('Link copied to clipboard');
                   }}
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"

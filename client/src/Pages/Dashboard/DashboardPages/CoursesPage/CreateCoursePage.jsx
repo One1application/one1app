@@ -390,7 +390,7 @@ const NewCoursePage = () => {
       }));
       toast.success("Image uploaded successfully");
     } else {
-      toast.error("Image upload failed");
+      toast.error("Image upload failed" );
     }
   };
 
@@ -974,7 +974,7 @@ const NewCoursePage = () => {
           toast.success("Course updated successfully");
           navigate("/dashboard/courses");
         } else {
-          toast.error("Course update failed");
+          toast.error("Course update failed", );
         }
       } else {
         response = await createNewCourseRequest(transformedData);

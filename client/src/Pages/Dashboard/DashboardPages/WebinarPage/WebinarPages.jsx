@@ -59,7 +59,7 @@ const WebinarPages = () => {
       } catch (error) {
         console.error("Error in fetching webinar", error);
         if (!handleAuthError(error)) {
-          toast("Failed to fetch webinar.");
+          toast("Failed to fetch webinar." );
         }
       } finally {
         setIsLoading(false);
@@ -99,7 +99,6 @@ const WebinarPages = () => {
           try {
             setIsVerifying(true);
             const verificationResponse = await verifyPayment(body);
-            console.log(verificationResponse);
             if (verificationResponse.data?.payload?.webinarDetail) { 
               setMeetingDetails(verificationResponse.data.payload.webinarDetail);
               setIsPurchased(true);
@@ -214,9 +213,9 @@ const WebinarPages = () => {
           ) : (
             <button
               onClick={handlePayment}
-              disabled={isVerifying || !webinarData.isPaid}
+              disabled={isVerifying || !webinarData.paymentEnabled}
               className={`py-4 px-10 rounded-lg font-bold transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg ${
-                !webinarData.isPaid 
+                !webinarData.paymentEnabled 
                   ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                   : "bg-black text-orange-500 hover:bg-gray-900"
               }`}
@@ -226,7 +225,7 @@ const WebinarPages = () => {
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600 mr-2"></div>
                   <span>Processing...</span>
                 </>
-              ) : !webinarData.isPaid ? (
+              ) : !webinarData.paymentEnabled ? (
                 <span>Payment Disabled</span>
               ) : (
                 <>

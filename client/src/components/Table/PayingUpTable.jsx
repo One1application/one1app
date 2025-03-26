@@ -385,7 +385,7 @@ const PayingUpTable = ({ data }) => {
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigator.clipboard.writeText(`${window.location.origin}/paying-up/${item.id}`);
+                      navigator.clipboard.writeText(`${window.location.origin}/app/paying-up?id=${item.id}`);
                       toast.success('Link copied to clipboard');
                     }}
                     className="text-blue-600 hover:text-blue-700 text-sm font-medium"

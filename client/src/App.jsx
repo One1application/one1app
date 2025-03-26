@@ -115,7 +115,7 @@ const App = () => {
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
 
-            <Route path="course/lessons" element={<LessonsPage />} />
+           
           </Route >
         
         </Route>
@@ -127,6 +127,8 @@ const App = () => {
           <Route path="course" element={<NewCourse />} />
           <Route path="webinar" element={<WebinarPages />} />
           <Route path="telegram" element={<TelegramFormPrev />} />
+
+          <Route path="course/lessons" element={<LessonsPage />} />
         
         </Route>
         
