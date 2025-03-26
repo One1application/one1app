@@ -1,7 +1,8 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react';
 import { Modal } from "@mui/material";
-import { toast } from 'react-toastify';
+import  toast  from "react-hot-toast";
+
 
 const SupportModal = ({ open, handleClose,value,label, onSave }) => {
   console.log(label, value);

@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp } from 'lucide-react';
-import { toast } from 'react-toastify';
 import Pagination from '@mui/material/Pagination';
+import  toast  from "react-hot-toast";
 
 const WebinarTable = ({ data }) => {
   const navigate = useNavigate();

@@ -11,8 +11,7 @@ const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { title, button, bgGradient, noContent, tabs, path, cardData } =
-    pagesConfig.coursesPage;
+  const { title, button, bgGradient, noContent, tabs, path, cardData } = pagesConfig.coursesPage;
   const navigate = useNavigate();
 
   const [AllCourses, setAllCourses] = useState([]);
@@ -21,7 +20,6 @@ const CoursesPage = () => {
     setIsLoading(true);
     try {
       const response = await fetchAllCoursesData();
-      console.log(response);
       setAllCourses(response.data.payload.courses);
     } catch (e) {
       console.log(e);
@@ -58,7 +56,7 @@ const CoursesPage = () => {
           <Card key={index} title={card.title} value={card.value} description={card.description} />
         ))}
       </div> */}
-
+{/* 
       <div className="flex justify-start items-center gap-4 p-6">
         {tabs.map((tab, index) => (
           <div
@@ -74,7 +72,7 @@ const CoursesPage = () => {
             {tab.title}({tab.value})
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Tab Content */}
       <div className="p-6 h-full w-full flex items-center justify-center">

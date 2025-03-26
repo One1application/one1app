@@ -57,7 +57,7 @@ const PayingUpPage = () => {
       <PaymentGraph cardData={cardData} />
 
       {/* Tabs */}
-      <div className="flex justify-start items-center gap-4 p-6">
+      {/* <div className="flex justify-start items-center gap-4 p-6">
         {tabs.map((tab, index) => (
           <div
             key={index}
@@ -72,7 +72,7 @@ const PayingUpPage = () => {
             {tab.title}({AllPayingUps.length})
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Tab Content */}
       <div className="p-6 h-full w-full flex items-center justify-center">

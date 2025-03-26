@@ -152,12 +152,12 @@ export const fetchAllWebinarsData = async () => {
 }
 
 export const fetchWebinar = async (id) => {
-  const response = await servicesAxiosInstance.get(`webinar/get-webinar-by-id/${id}`)
+  const response = await servicesAxiosInstance.get(`/webinar/get-webinar-by-id/${id}`)
   return response;
 }
 
 export const purchaseWebinar = async (id) => {
-  const response = await servicesAxiosInstance.post('webinar/purchase-webinar', {
+  const response = await servicesAxiosInstance.post('/webinar/purchase-webinar', {
     webinarId: id
   })
   return response
@@ -172,28 +172,28 @@ export const fetchAllCoursesData = async () => {
   return response;
 }
 export const fetchCourse = async (id) => {
-  const response = await servicesAxiosInstance.get(`course/get-course-by-id/${id}`)
+  const response = await servicesAxiosInstance.get(`/course/get-course-by-id/${id}`)
   return response;
 }
 export const purchaseCourse = async (id) => {
-  const response = await servicesAxiosInstance.post('course/purchase-course', {
+  const response = await servicesAxiosInstance.post('/course/purchase-course', {
     courseId: id
   })
   return response
 }
 
 export const editCourse = async (courseId, data) => {
-  const response = await servicesAxiosInstance.post(`course/edit-course/${courseId}`, data);
+  const response = await servicesAxiosInstance.post(`/course/edit-course/${courseId}`, data);
   return response;
 }
 
 export const fetchPayingUp = async (id) => {
-  const response = await servicesAxiosInstance.get(`payingup/get-payingup-by-id/${id}`)
+  const response = await servicesAxiosInstance.get(`/payingup/get-payingup-by-id/${id}`)
   return response;
 }
 
 export const purchasePayingUp = async (id) => {
-  const response = await servicesAxiosInstance.post('payingup/purchase-payingup', {
+  const response = await servicesAxiosInstance.post('/payingup/purchase-payingup', {
     payingUpId: id
   })
   return response
@@ -222,12 +222,12 @@ export const fetchAllTelegramData = async () => {
 }
 
 export const fetchTelegram = async (id) => {
-  const response = await servicesAxiosInstance.get(`telegram/get-telegram-by-id/${id}`)
+  const response = await servicesAxiosInstance.get(`/telegram/get-telegram-by-id/${id}`)
   return response;
 }
 
 export const purchaseTelegram = async ({telegramId, days}) => {
-  const response = await servicesAxiosInstance.post('telegram/purchase-telegram', {
+  const response = await servicesAxiosInstance.post('/telegram/purchase-telegram', {
     telegramId,
     days
   })

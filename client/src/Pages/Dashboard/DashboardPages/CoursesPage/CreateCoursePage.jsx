@@ -809,7 +809,8 @@ const NewCoursePage = () => {
                 benefitsActive: false,
                 benefitsMetaData: [{ emoji: "", title: "" }],
               },
-              faQ: courseData.faQ || {
+              // Fix for faQ vs faqs mismatch
+              faQ: courseData.faqs || courseData.faQ || {
                 title: "Frequently Asked Questions",
                 isActive: false,
                 faQMetaData: [{ question: "", answer: "" }],
@@ -819,14 +820,14 @@ const NewCoursePage = () => {
                 isActive: false,
                 imageMetaData: Array(6).fill({ name: "", image: "" }),
               },
-              products: courseData.products || {
-                title: "Products",
-                isActive: false,
-                productMetaData: Array(2).fill({
-                  name: "",
-                  price: "",
-                  productLink: "",
-                }),
+              // Fix for products structure
+              products: {
+                title: courseData.products?.[0]?.title || "Products",
+                isActive: courseData.products?.[0]?.isActive || false,
+                productMetaData: courseData.products?.[0]?.productMetaData || [
+                  { name: "", price: "", productLink: "" },
+                  { name: "", price: "", productLink: "" },
+                ],
               },
               language: courseData.language || {
                 title: "Language",
@@ -837,20 +838,13 @@ const NewCoursePage = () => {
                 value: "",
                 isActive: false,
               },
-              lessons: courseData.lessons || {
-                isActive: false,
-                lessonData: [{ lessonName: "", videos: [""] }],
+              // Fix for lessons array structure
+              lessons: {
+                isActive: courseData.lessons?.[0]?.isActive || false,
+                lessonData: courseData.lessons?.[0]?.lessonData || [
+                  { lessonName: "", videos: [""] }
+                ],
               },
-              // refundPolicies: courseData.refundPolicies || {
-              //   title: "Refund Policies",
-              //   isActive: true,
-              //   refundPoliciesMetaData: [],
-              // },
-              // termAndConditions: courseData.termAndConditions || {
-              //   title: "Terms & Conditions",
-              //   isActive: true,
-              //   termAndConditionsMetaData: [],
-              // },
             });
 
             // Set discounts if available
@@ -863,8 +857,42 @@ const NewCoursePage = () => {
               setImagePreview(courseData.coverImage.value);
             }
 
-            // Set other previews as needed
-            // ... populate image previews, video previews, etc.
+            // Populate image previews for gallery
+            if (courseData.gallery?.imageMetaData) {
+              const galleryPreviews = {};
+              courseData.gallery.imageMetaData.forEach((img, index) => {
+                if (img.image) {
+                  galleryPreviews[index] = img.image;
+                }
+              });
+              setImagePreviews(galleryPreviews);
+            }
+
+            // Populate testimonial image previews
+            if (courseData.testimonials?.testimonialsMetaData) {
+              const testimonialsImgPreviews = {};
+              courseData.testimonials.testimonialsMetaData.forEach((testimonial, index) => {
+                if (testimonial.profilePic) {
+                  testimonialsImgPreviews[index] = testimonial.profilePic;
+                }
+              });
+              setTestimonialImagePreviews(testimonialsImgPreviews);
+            }
+
+            // Populate video previews for lessons
+            if (courseData.lessons?.[0]?.lessonData) {
+              const videoPrevs = {};
+              courseData.lessons[0].lessonData.forEach((lesson, lessonIndex) => {
+                if (lesson.videos && Array.isArray(lesson.videos)) {
+                  lesson.videos.forEach((video, videoIndex) => {
+                    if (video) {
+                      videoPrevs[`${lessonIndex}-${videoIndex}`] = video;
+                    }
+                  });
+                }
+              });
+              setVideoPreviews(videoPrevs);
+            }
 
             toast.success("Course data loaded successfully");
           } else {
@@ -920,15 +948,28 @@ const NewCoursePage = () => {
     setIsSubmitting(true);
 
     try {
-      // Include discounts in the data being sent
-      const dataToSend = {
+      // Transform data structure to match API expectations before sending
+      const transformedData = {
         ...formData,
         discounts: discounts,
+        // Convert lessons object to array format for API
+        lessons: formData.lessons.isActive ? [{
+          isActive: formData.lessons.isActive,
+          lessonData: formData.lessons.lessonData,
+        }] : [],
+        // Convert products object to array format for API
+        products: formData.products.isActive ? [{
+          title: formData.products.title,
+          isActive: formData.products.isActive,
+          productMetaData: formData.products.productMetaData,
+        }] : [],
+        // Use faqs instead of faQ for API consistency
+        faqs: formData.faQ,
       };
 
       let response;
       if (isEditMode) {
-        response = await editCourse(courseId, dataToSend);
+        response = await editCourse(courseId, transformedData);
         if (response.status === 200) {
           toast.success("Course updated successfully");
           navigate("/dashboard/courses");
@@ -936,7 +977,7 @@ const NewCoursePage = () => {
           toast.error("Course update failed");
         }
       } else {
-        response = await createNewCourseRequest(dataToSend);
+        response = await createNewCourseRequest(transformedData);
         if (response.status === 200) {
           toast.success("Course created successfully");
           navigate("/dashboard/courses");
@@ -1062,7 +1103,7 @@ const NewCoursePage = () => {
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black">
         {/* Left Side */}
-
+          {console.log(formData)}
         {/* Video Modal */}
         {modalVideo && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50 p-4">

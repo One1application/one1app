@@ -80,7 +80,7 @@ const TelegramPage = () => {
       </div> */}
 
       {/* Tabs */}
-      <div className="flex justify-start items-center gap-4 p-6">
+      {/* <div className="flex justify-start items-center gap-4 p-6">
         {tabs.map((tab, index) => (
           <div
             key={index}
@@ -95,7 +95,7 @@ const TelegramPage = () => {
             {tab.title}({tab.value})
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Tab Content */}
       <div className="p-6 h-full w-full flex items-center justify-center">
