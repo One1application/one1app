@@ -138,7 +138,7 @@ export async function getCreatorPayingUps(req, res) {
             success: true,
             message: "Fetched webinars successfully.",
             payload: {
-                payingUps: payingUps.createdPayingUps
+                payingUps: payingUps.createdPayingUps || []
             }
         })
 

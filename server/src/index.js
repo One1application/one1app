@@ -14,8 +14,9 @@ dotenv.config();
 const app = express();
 
 app.set("trust proxy", 1);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1gb' }));
+app.use(express.urlencoded({ limit: '1gb', extended: true }));
+
 
 app.use(
   cors({
