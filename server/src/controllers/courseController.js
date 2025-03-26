@@ -47,82 +47,64 @@ export const createCourse = async (req, res) => {
             lessons,
         } = req.body;
 
-
         const { startDate, endDate } = getCourseDuration(validity);
 
-        const course = await prisma.course.create({
-            data:{
-                title,
-                price:parseFloat(price),
-                validity,
-                aboutThisCourse,
-                testimonials,
-                courseBenefits,
-                faqs: faQ,
-                gallery,
-                coverImage,
-                language,
-                startDate,
-                endDate,
-                createdBy: user.id
+        const transactionResult = await prisma.$transaction(async (prisma) => {
+            const course = await prisma.course.create({
+                data: {
+                    title,
+                    price: parseFloat(price),
+                    validity,
+                    aboutThisCourse,
+                    testimonials,
+                    courseBenefits,
+                    faqs: faQ,
+                    gallery,
+                    coverImage,
+                    language,
+                    startDate,
+                    endDate,
+                    createdBy: user.id
+                }
+            });
+        
+            if (!course) {
+                throw new Error("Failed to create course.");
             }
-        })
-
-        if(!course){
-            return res.status(400).json({
-                success: false,
-                message: "Failed to create course."
-            })
-        }
-
-        const saveCourseProducts = await prisma.courseProduct.createMany({
-            data: {
-                courseId: course.id,
-                isActive: products.isActive,
-                title: products.title,
-                productMetaData: products.productMetaData
+        
+            const saveCourseProducts = await prisma.courseProduct.createMany({
+                data: products.map(product => ({
+                    courseId: course.id,
+                    isActive: product.isActive,
+                    title: product.title,
+                    productMetaData: product.productMetaData
+                }))
+            });
+        
+            if (!saveCourseProducts) {
+                throw new Error("Failed to save course products.");
             }
-        })
-
-        if(!saveCourseProducts){
-            return res.status(400).json({
-                success: false,
-                message: "Failed to save course products."
-            })
-        }
-
-        const saveCourseLessons = await prisma.lessons.create({
-            data:{
-                isActive: lessons.isActive,
-                lessonData: lessons.lessonData,
-                courseId: course.id
+        
+            const saveCourseLessons = await prisma.lessons.create({
+                data: {
+                    isActive: lessons.isActive,
+                    lessonData: lessons.lessonData,
+                    courseId: course.id
+                }
+            });
+        
+            if (!saveCourseLessons) {
+                throw new Error("Failed to save course lessons.");
             }
-            })
+        
+            return { course, saveCourseProducts, saveCourseLessons };
+        });
 
-        if(!saveCourseLessons){
-            return res.status(400).json({
-                success: false,
-                message: "Failed to save course lessons."
-            })
-        }
-
-
-        const fetchedCourse = await prisma.course.findUnique({
-            where: {
-                id: course.id
-            },
-            include:{
-                products: true,
-                lessons: true
-            }
-        })
 
         return res.status(200).json({
             success: true,
             message: "Course created successfully.",
-            payload: {
-                course:fetchedCourse,
-            }
+            payload: null
         });
 
 

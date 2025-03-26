@@ -953,10 +953,10 @@ const NewCoursePage = () => {
         ...formData,
         discounts: discounts,
         // Convert lessons object to array format for API
-        lessons: formData.lessons.isActive ? [{
+        lessons: {
           isActive: formData.lessons.isActive,
           lessonData: formData.lessons.lessonData,
-        }] : [],
+        },
         // Convert products object to array format for API
         products: formData.products.isActive ? [{
           title: formData.products.title,
