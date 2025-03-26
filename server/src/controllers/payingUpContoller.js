@@ -129,6 +129,9 @@ export async function getCreatorPayingUps(req, res) {
                                 payingUpTickets: true
                             }
                         }
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
                     }
                 }
             }

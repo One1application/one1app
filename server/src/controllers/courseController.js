@@ -294,6 +294,9 @@ export const getCreatorCourses = async (req, res) => {
             },
             include: {
                 purchasedBy: true
+            },
+            orderBy: {
+                createdAt: 'desc'
             }
         })
 

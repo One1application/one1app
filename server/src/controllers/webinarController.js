@@ -130,6 +130,9 @@ export async function getCreatorWebinars(req, res) {
                                 tickets: true
                             }
                         }
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
                     }
                 }
             }

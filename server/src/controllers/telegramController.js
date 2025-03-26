@@ -68,6 +68,9 @@ export async function getCreatorTelegram(req, res) {
                                 telegramSubscriptions: true
                             }
                         }
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
                     }
                 }
             }
