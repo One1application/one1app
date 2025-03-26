@@ -3,7 +3,8 @@ import { z } from "zod";
 const linkSchema = z.object({
   meetingId: z.string().optional(),  
   meetingLink: z.string().optional(),
-  meetingPassword: z.string().optional()
+  meetingPassword: z.string().optional(),
+  platformLink: z.string().optional()
 });
 
 export const webinarSchema = z.object({
