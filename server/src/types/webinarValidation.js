@@ -22,5 +22,5 @@ export const webinarSchema = z.object({
   venue: z.string().optional(),
   link: linkSchema.optional(),
   quantity: z.preprocess((val) => Number(val), z.number().min(1, "Quantity must be at least 1")),
-  amount: z.preprocess((val) => parseFloat(val), z.number().positive("Amount must be a positive number").optional()),
+  amount: z.preprocess((val) => parseFloat(val), z.number().nonnegative("Amount must be a positive number").optional()),
 });
