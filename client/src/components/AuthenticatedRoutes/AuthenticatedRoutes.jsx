@@ -11,7 +11,7 @@ const AuthenticatedRoutes = () => {
   }
 
   if (authenticated && userRole === "User") {
-    toast.error("Please sign up as a creator to access this page");
+    toast.error("Please sign up as a creator to access this dashboard pages");
     return <Navigate to="/signup" />;
   }
   return authenticated && userRole === "Creator" ? <Outlet /> : <Navigate to="/signin" />;

@@ -56,6 +56,8 @@ const SignUpPage = () => {
 
   const { verifyToken } = useAuth();
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
 
   const countryCodes = ["+1", "+91", "+44", "+61"];
   const socialMediaOptions = [
@@ -165,41 +167,52 @@ const SignUpPage = () => {
       toast.error("Please fix the errors");
       return;
     }
-    const userData = {
-      email,
-      phoneNumber: selectedCountryCode + phoneNumber,
-      username,
-      role: "Creator",
-      name,
-      goals: selectedGoals,
-      heardAboutUs: heardFrom,
-      socialMedia: username,
-    };
-    console.log("User Data:---", userData);
-    const { data, status } = await registerAndGetOTP(userData);
-    console.log("------", data);
-    if (status === 201) {
-      setOtpScreen(true);
-    } else {
-      toast.error("Something went wrong");
+
+    setIsLoading(true);
+    try {
+      const userData = {
+        email,
+        phoneNumber: selectedCountryCode + phoneNumber,
+        username,
+        role: "Creator",
+        name,
+        goals: selectedGoals,
+        heardAboutUs: heardFrom,
+        socialMedia: username,
+      };
+      const { data, status } = await registerAndGetOTP(userData);
+      if (status === 201) {
+        setOtpScreen(true);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOTPSubmit = async () => {
-    const enteredOtp = otp.join("");
-    console.log("Entered OTP: ", enteredOtp);
-    const { data } = await verifyEnteredOTP({
-      otp: enteredOtp,
-      phoneNumber: selectedCountryCode + phoneNumber,
-    });
-    console.log("OTP Verification: ", data);
-    if (data.success) {
-      localStorage.setItem("AuthToken", data.token);
-      toast.success("OTP verified successfully");
-      await verifyToken();
-      navigate("/dashboard");
-    } else {
-      toast.error("Invalid OTP");
+    setIsOtpLoading(true);
+    try {
+      const enteredOtp = otp.join("");
+      const { data } = await verifyEnteredOTP({
+        otp: enteredOtp,
+        phoneNumber: selectedCountryCode + phoneNumber,
+      });
+      if (data.success) {
+        localStorage.setItem("AuthToken", data.token);
+        toast.success("OTP verified successfully");
+        await verifyToken();
+        navigate("/dashboard");
+      } else {
+        toast.error("Invalid OTP");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+    } finally {
+      setIsOtpLoading(false);
     }
   };
 
@@ -293,8 +306,9 @@ const SignUpPage = () => {
                   <button
                     className="mt-6 w-[85%] bg-orange-600 text-white py-2 px-4 rounded-full text-sm font-semibold active:bg-orange-600 transition duration-200"
                     onClick={handleOTPSubmit}
+                    disabled={isOtpLoading}
                   >
-                    Confirm OTP
+                    {isOtpLoading ? "Verifying..." : "Confirm OTP"}
                   </button>
 
                   <p className="text-gray-600 text-sm mt-4">
@@ -495,9 +509,9 @@ const SignUpPage = () => {
                       !isFormValid() ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                     onClick={handleGetStarted}
-                    disabled={!isFormValid()}
+                    disabled={!isFormValid() || isLoading}
                   >
-                    Get Started
+                    {isLoading ? "Loading..." : "Get Started"}
                   </button>
 
                   <p className="text-center text-gray-600 font-medium text-sm mt-2">

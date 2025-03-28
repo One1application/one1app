@@ -153,7 +153,7 @@ const SignInPage = () => {
                 <div className="flex flex-col gap-1 w-[85%]">
                   <input
                     type="text"
-                    placeholder="Phone Number"
+                    placeholder="Phone Number With Country Code"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className="w-full mt-2.5 text-sm p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -217,10 +217,10 @@ const SignInPage = () => {
                 />
                 Continue with {isUsingEmail ? "Phone Number" : "Email"}
               </button>
-              <button className="w-[85%] flex justify-center text-sm items-center gap-2 text-black py-2 px-4 rounded-full border border-slate-900">
+              {/* <button className="w-[85%] flex justify-center text-sm items-center gap-2 text-black py-2 px-4 rounded-full border border-slate-900">
                 <FontAwesomeIcon icon={faGoogle} />
                 Continue with Google
-              </button>
+              </button> */}
 
               <p className="text-center text-gray-600 font-medium text-sm mt-2">
                 Don't have an account?{" "}

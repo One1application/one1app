@@ -46,7 +46,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
 const App = () => {
 
-  const {  authenticated, logout } = useAuth(); 
+  const { userRole , authenticated, logout } = useAuth(); 
 
   
   return (
@@ -58,7 +58,7 @@ const App = () => {
 
       <Routes>
         {/* Welcome Page */}
-        <Route path="/" element={ authenticated ? <Navigate to="/dashboard" /> : <HomePages />} />
+        <Route path="/" element={ authenticated && userRole === "Creator" ? <Navigate to="/dashboard" /> : <HomePages />} />
         <Route path="plugins" element={<PluginsPage />} />
         <Route path="TelegramsPages" element={<TelegramsPages />} />
         <Route path="/about-us" element={<AboutUsPage />} />

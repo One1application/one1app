@@ -116,7 +116,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
               <div className="flex flex-col gap-1 w-full">
                 <input
                   type="text"
-                  placeholder="Phone Number"
+                  placeholder="Phone Number With Country Code"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -179,11 +179,11 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
               {isUsingEmail ? <Smartphone size={20} /> : <Mail size={20} />}
               Continue with {isUsingEmail ? "Phone Number" : "Email"}
             </button>
-
+{/* 
             <button className="w-full flex justify-center items-center gap-2 text-gray-700 py-3 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-300">
               <Github size={20} />
               Continue with Google
-            </button>
+            </button> */}
 
             <p className="text-center text-gray-600 font-medium text-sm mt-4">
               Don't have an account?{" "}

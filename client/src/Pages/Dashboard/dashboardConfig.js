@@ -28,17 +28,15 @@ export const dashboardConfig = {
   
   appItems: [
     { label: "Paying Up", icon: FaChartBar, path: "/payingup" },
-    { label: "Appointment", icon: FaCalendarAlt, path: "/appointment" },
+    // { label: "Appointment", icon: FaCalendarAlt, path: "/appointment" },
     { label: "Webinar", icon: RiPresentationFill, path: "/webinar" },
     { label: "Courses", icon: FaBookOpen, path: "/courses" },
     { label: "Telegram", icon: FaTelegramPlane, path: "/telegram" },
-    // commented out for now, as we don't have a superlinks dashboard yet
     { label: "Premium Content", icon: FaLock, path: "/locked-content" },
-    { label: "Discord", icon: FaDiscord, path: "/discord" },
-    // commented out for now, as we don't have a chat dashboard yet
+    // { label: "Discord", icon: FaDiscord, path: "/discord" },
     // { label: "Chat", icon: FaRocketchat, path: "/chat" },
-    { label: "WhatsApp", icon: FaWhatsapp, path: "/whatsapp" },
-    { label: "Plugin", icon: BsPlugin, path: "/plugin" },
+    // { label: "WhatsApp", icon: FaWhatsapp, path: "/whatsapp" },
+    // { label: "Plugin", icon: BsPlugin, path: "/plugin" },
   ],
   settingItems: [
     { label: "Account Setting", icon: FaCog, path: "/profile" },
