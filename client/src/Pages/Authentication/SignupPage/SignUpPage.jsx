@@ -438,6 +438,11 @@ const SignUpPage = () => {
                         {selectedGoals.length > 0
                           ? `${selectedGoals.length} goals selected`
                           : "select goals"}
+
+                        <FontAwesomeIcon
+                          icon={faChevronDown}
+                          className="text-gray-400"
+                        />
                       </button>
 
                       {goalDropdownOpen && (

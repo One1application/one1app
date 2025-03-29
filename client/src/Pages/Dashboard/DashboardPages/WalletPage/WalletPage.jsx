@@ -22,8 +22,10 @@ import  toast  from "react-hot-toast";
 import { Calendar } from "lucide-react";
 import { fetchBalanceDetails } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
-
+import { useAuth } from "../../../../context/AuthContext";
 const WalletPage = () => {
+
+  const { userDetails } = useAuth();
   const {
     AllTransaction,
     getNextTransactionPage,
@@ -99,18 +101,30 @@ const WalletPage = () => {
   };
 
   const openWithdrawalModal = () => {
-    setOpenWithdrawal(true);
-    setOpenModal(false);
+    return userDetails?.verified  
+      ? (() => {
+          setOpenWithdrawal(true);
+          setOpenModal(false);
+        })()
+      : toast.error("Please complete your KYC verification first!");
   };
 
   const openUPIModal = () => {
-    setOpenUPI(true);
-    setOpenModal(false);
+    return userDetails?.verified
+      ? (() => {
+          setOpenUPI(true);
+          setOpenModal(false);
+        })()
+      : toast.error("Please complete your KYC verification first!");
   };
 
   const openMPINModal = () => {
-    setOpenMPIN(true);
-    setOpenModal(false);
+    return userDetails?.verified
+      ? (() => {
+          setOpenMPIN(true);
+          setOpenModal(false);
+        })()
+      : toast.error("Please complete your KYC verification first!");
   };
 
   const getWalletBalanceDetails = async () => {

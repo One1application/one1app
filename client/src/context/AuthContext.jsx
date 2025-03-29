@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import  toast  from "react-hot-toast";
+import { fetchUserDetails } from '../services/auth/api.services';
 
 
 const AuthContext = createContext();
@@ -18,6 +19,7 @@ export const AuthProvider = ({ children }) => {
     setCurrentUserId(null);
     setAuthenticated(false);
     setUserRole(null);
+    setUserDetails(null);
   };
 
   const verifyToken = async () => {
@@ -49,6 +51,27 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
+  const [userDetails, setUserDetails] = useState("");
+  const [userdetailloading, userdetailsetLoading] = useState(true);
+
+  useEffect(() => {
+    const getUserDetails = async () => {
+      try {
+        userdetailsetLoading(true);
+        const response = await fetchUserDetails();
+        console.log("User Details Response:", response.data);
+        setUserDetails(response.data.userDetails);
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      } finally {
+        userdetailsetLoading(false);
+      }
+    };
+
+    getUserDetails();
+  }, []);
+
+
   useEffect(() => {
     verifyToken();
   }, []);
@@ -59,8 +82,11 @@ export const AuthProvider = ({ children }) => {
     loading,
     logout,
     verifyToken,
-    userRole
+    userRole,
+    userDetails,
+    userdetailloading
   };
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

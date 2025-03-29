@@ -6,8 +6,11 @@ const AuthenticatedRoutes = () => {
   const { authenticated, loading ,userRole } = useAuth();
 
   if (loading) {
-    // Show a loading spinner or skeleton while verifying
-    return <div className="flex justify-center items-center h-screen">Verifying your session...</div>;
+    return (
+      <div className="min-h-screen w-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      </div>
+    );
   }
 
   if (authenticated && userRole === "User") {

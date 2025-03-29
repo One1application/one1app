@@ -2,8 +2,12 @@ import { useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import SigninModal from "../../../../../components/Modal/SigninModal";
 import SupportModal from "../../../../../components/Modal/SupportModal";
+import { useAuth } from "../../../../../context/AuthContext";
 
 const ProfileTab = () => {
+
+  const { userDetails , userdetailloading } = useAuth();
+
   const [firstName, setFirstName] = useState("Manish");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("manish@example.com");
@@ -49,27 +53,37 @@ const ProfileTab = () => {
     setIsSupportModalOpen(false);
   };
 
+  if (userdetailloading) {
+    return (
+      <div className="min-h-screen w-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      
       <div className="shadow-md rounded-lg p-6 w-full">
         <h2 className="text-sm font-semibold mb-4 text-orange-500">
           Basic Information
         </h2>
         <hr className="border-gray-600 mb-4" />
         <div className="flex gap-6">
-          <div className="w-1/2">
+          <div className="w-full">
             <label className="block text-sm font-medium text-orange-500 mb-1">
-              First Name
+              User Name
             </label>
             <input
               type="text"
-              value={firstName}
+              disabled
+              value={userDetails.name}
               onChange={(e) => setFirstName(e.target.value)}
               className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
               placeholder="Enter your First name"
             />
           </div>
-          <div className="w-1/2">
+          {/* <div className="w-1/2">
             <label className="block text-sm font-medium text-orange-500 mb-1">
               Last Name
             </label>
@@ -80,7 +94,7 @@ const ProfileTab = () => {
               className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
               placeholder="Enter your last name"
             />
-          </div>
+          </div> */}
         </div>
         {isLastNameChanged && (
           <div className="flex justify-end mt-4">
@@ -107,11 +121,12 @@ const ProfileTab = () => {
             </label>
             <input
               type="text"
-              value={email}
+              value={userDetails.email}
+              disabled
               readOnly
               className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
             />
-            <div className="absolute right-2 top-5 bottom-0 flex items-center gap-2">
+            {/* <div className="absolute right-2 top-5 bottom-0 flex items-center gap-2">
               <EditIcon
                 className="cursor-pointer text-orange-700"
                 onClick={() => handleEditClick("email")}
@@ -122,7 +137,7 @@ const ProfileTab = () => {
               >
                 Edit
               </span>
-            </div>
+            </div> */}
           </div>
           <div className="w-full relative">
             <label className="block text-sm font-medium text-orange-500 mb-1">
@@ -130,11 +145,12 @@ const ProfileTab = () => {
             </label>
             <input
               type="text"
-              value={phone}
+              disabled
+              value={userDetails.phone}
               readOnly
               className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
             />
-            <div className="absolute right-2 top-5 bottom-0 flex items-center gap-2">
+            {/* <div className="absolute right-2 top-5 bottom-0 flex items-center gap-2">
               <EditIcon
                 className="cursor-pointer text-orange-700"
                 onClick={() => handleEditClick("phone")}
@@ -145,12 +161,12 @@ const ProfileTab = () => {
               >
                 Edit
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
 
-      <div className="shadow-md rounded-lg p-6 w-full">
+      {/* <div className="shadow-md rounded-lg p-6 w-full">
         <h2 className="text-sm font-semibold mb-4 text-orange-500">
           Support Channel
         </h2>
@@ -189,7 +205,7 @@ const ProfileTab = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <SigninModal
         open={isModalOpen}

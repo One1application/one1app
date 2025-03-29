@@ -298,8 +298,6 @@ const PayingUpPages = () => {
         </div>
       </section>
 
-   
-
       {/* Cover Image Section */}
       {payingUpDetails.coverImage.isActive && (
         <section className="py-10 px-4">
@@ -318,8 +316,8 @@ const PayingUpPages = () => {
         </section>
       )}
 
-         {/* Categories Section */}
-         {payingUpDetails.category.isActive && (
+      {/* Categories Section */}
+      {payingUpDetails.category.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold mb-8  text-orange-500">
@@ -399,7 +397,6 @@ const PayingUpPages = () => {
         </section>
       )}
 
-      {/* Rest of the sections remain the same... */}
       {/* FAQ Section */}
       {payingUpDetails.faqs.isActive && (
         <section className="py-10 px-4">

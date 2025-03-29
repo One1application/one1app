@@ -374,10 +374,10 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1" ref={containerRef}>
+              <div className="flex flex-col gap-1 relative" ref={containerRef}>
                 <button
                   type="button"
-                  className="w-full p-3 border border-gray-300 rounded-lg flex justify-between items-center"
+                  className="w-full p-3 border border-gray-300 rounded-lg flex justify-between items-center "
                   onClick={toggleGoalDropdown}
                 >
                   <span>
@@ -389,7 +389,7 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
                 </button>
 
                 {goalDropdownOpen && (
-                  <div className="bg-white border border-gray-300 rounded-lg shadow-md mt-1 absolute z-10 w-[calc(100%-3rem)]">
+                  <div className="bg-white border border-gray-300 rounded-lg shadow-md mt-[50px] absolute z-10 w-full  ">
                     {goals.map((goal) => (
                       <div
                         key={goal}
@@ -411,7 +411,7 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
                 )}
               </div>
 
-              <div className="flex flex-col gap-1" ref={heardFromRef}>
+              <div className="flex flex-col gap-1 relative" ref={heardFromRef}>
                 <button
                   type="button"
                   className="w-full p-3 border border-gray-300 rounded-lg flex justify-between items-center"
@@ -422,7 +422,7 @@ const SignupModal = ({ open, handleClose, onSuccessfulSignup, onSwitchToSignin }
                 </button>
 
                 {heardFromDropdownOpen && (
-                  <div className="bg-white border border-gray-300 rounded-lg shadow-md mt-1 absolute z-10 w-[calc(100%-3rem)]">
+                  <div className="bg-white border border-gray-300 rounded-lg shadow-md mt-[50px] absolute z-10 w-full">
                     {heardFromOptions.map((option) => (
                       <div
                         key={option}

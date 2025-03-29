@@ -21,7 +21,6 @@ import {
   editCourse,
 } from "../../../../services/auth/api.services";
 import { BsPlusSquareDotted } from "react-icons/bs";
-
 const DiscountForm = ({
   isOpen,
   onClose,
@@ -122,7 +121,7 @@ const NewCoursePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const courseId = queryParams.get("id"); // Get course ID from URL query parameter
+  const courseId = queryParams.get("id"); 
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
@@ -131,7 +130,6 @@ const NewCoursePage = () => {
   const validity = ["Monthly", "Half-Yearly", "Yearly", "Lifetime"];
   const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [formData, setFormData] = useState({
     title: "",
     price: "",
@@ -216,17 +214,17 @@ const NewCoursePage = () => {
   const [videoPreviews, setVideoPreviews] = useState({});
   const [error, setError] = useState("");
   const [isCoverImageUploading, setIsCoverImageUploading] = useState(false);
-
-
+  const [testimonialImageUploading, setTestimonialImageUploading] = useState({});
+  const [videoUploading, setVideoUploading] = useState({});
   // const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   // const [discounts, setDiscounts] = useState([]);
   // const handleDiscountSubmit = (discountData) => {
   //   setDiscounts([...discounts, discountData]);
   // };
-
   const [discounts, setDiscounts] = useState([]);
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState(null);
+
 
   const handleDiscountSubmit = (discountData) => {
     if (discountData.id) {
@@ -394,9 +392,6 @@ const NewCoursePage = () => {
     }
   };
 
-  // Add this state for tracking testimonial image uploads
-  const [testimonialImageUploading, setTestimonialImageUploading] = useState({});
-  
   const handleTestimonialImageUpload = async (index, event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -528,6 +523,7 @@ const NewCoursePage = () => {
       products: { ...formData.products, productMetaData: updatedProducts },
     });
   };
+
   const handleCoverImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -567,8 +563,6 @@ const NewCoursePage = () => {
       };
     });
   };
-
-  const [videoUploading, setVideoUploading] = useState({});
 
   const handleVideoUpload = async (lessonIndex, videoIndex, event) => {
     const file = event.target.files[0];
@@ -731,7 +725,6 @@ const NewCoursePage = () => {
 
     try {
       const response = await handelUplaodFile(coverImageFile);
-      console.log(response);
       
       if (response.status === 200) {
         setFormData((prev) => ({
@@ -760,8 +753,6 @@ const NewCoursePage = () => {
     }
   };
 
-
-
   const handelVideoTitleChange = async (e, index) => {
     const value = e.target.value;
 
@@ -785,7 +776,6 @@ const NewCoursePage = () => {
           const response = await fetchCourse(courseId);
           if (response.status === 200) {
             const courseData = response.data.payload.course;
-            console.log(response.data.payload.course);
 
             // Update form data with existing course data
             setFormData({
@@ -936,7 +926,6 @@ const NewCoursePage = () => {
     );
   };
 
-  // Helper function to check if Quill editor content is empty
   const isQuillContentEmpty = (html) => {
     if (!html) return true;
 
@@ -973,7 +962,7 @@ const NewCoursePage = () => {
         // If all testimonials are empty, set to null
         transformedData.testimonials = {
           ...transformedData.testimonials,
-          testimonialsMetaData: null
+          testimonialsMetaData: []
         };
       }
       
@@ -986,7 +975,7 @@ const NewCoursePage = () => {
         // If all gallery items are empty, set to null
         transformedData.gallery = {
           ...transformedData.gallery,
-          imageMetaData: null
+          imageMetaData: []
         };
       }
       
@@ -1003,7 +992,6 @@ const NewCoursePage = () => {
       }] : [];
       transformedData.faqs = transformedData.faQ;
 
-      console.log("Transformed data:", transformedData); // For debugging
 
       let response;
       if (isEditMode) {
@@ -1024,7 +1012,7 @@ const NewCoursePage = () => {
         }
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       toast.error(
         isEditMode ? "Course update failed" : "Course creation failed"
       );
@@ -1141,7 +1129,6 @@ const NewCoursePage = () => {
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black">
         {/* Left Side */}
-          {console.log(formData)}
         {/* Video Modal */}
         {modalVideo && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50 p-4">
@@ -1162,8 +1149,8 @@ const NewCoursePage = () => {
         )}
 
         {/* Main */}
-        <div className="flex justify-center w-full px-4 sm:px-6 lg:px-8"> {/* Add padding */}
-          <div className="w-full max-w-[900px]"> {/* Replace fixed width with max-width */}
+        <div className="flex justify-center w-full px-4 sm:px-6 lg:px-8"> 
+          <div className="w-full max-w-[900px]"> 
             {/* Form sections */}
             <div className="sticky top-0 z-10 bg-black/90 backdrop-blur-sm mb-8 rounded-xl border border-orange-500/20 w-full">
               <div className="flex items-center justify-between px-6 py-4">
@@ -1181,7 +1168,7 @@ const NewCoursePage = () => {
             </div>
 
             {/* Update all form section containers to use responsive widths */}
-            <div className="w-full space-y-6 mb-10"> {/* Add spacing between sections */}
+            <div className="w-full space-y-6 mb-10"> 
               {/* Each form section */}
               <div className="bg-[#111827]/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl border border-orange-500/20">
                 {/* Event Title Section */}
@@ -2224,7 +2211,7 @@ const NewCoursePage = () => {
                 </div>
               )}
 
-              {/* Button */}
+              {/*  Button */}
               <div className="flex justify-center pt-8 mb-10 ">
                 <button
                   type="button"

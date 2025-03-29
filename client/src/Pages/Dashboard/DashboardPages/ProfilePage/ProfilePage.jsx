@@ -1,17 +1,28 @@
 // src/ProfilePage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PiIdentificationCardThin } from "react-icons/pi";
 import ProfileTab from "./components/ProfileTab";
 import BillingTab from "./components/BillingTab";
 import BrandingTab from "./components/BrandingTab";
 import PaymentTab from "./components/PaymentTab";
+import { fetchUserDetails } from "../../../../services/auth/api.services";
+import { useAuth } from "../../../../context/AuthContext";
 
 const ProfilePage = () => {
   const [value, setValue] = useState("1");
+  const { userDetails, userdetailloading } = useAuth();
 
   const handleChange = (newValue) => {
     setValue(newValue);
   };
+
+  if (userdetailloading) {
+    return (
+      <div className="min-h-screen w-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-full min-h-screen md:px-5 md:py-3 px-2 py-2 bg-[#0F1418]">

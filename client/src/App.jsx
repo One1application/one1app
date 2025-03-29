@@ -46,9 +46,8 @@ import { useAuth } from "./context/AuthContext.jsx";
 import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
 const App = () => {
 
-  const { userRole , authenticated, logout } = useAuth(); 
+  const { userRole , authenticated, logout , loading } = useAuth(); 
 
-  
   return (
     <>
       <Toaster

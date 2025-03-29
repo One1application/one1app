@@ -243,3 +243,8 @@ export const editWebinar = async (webinarId, data) => {
   const response = await servicesAxiosInstance.post(`/webinar/edit-webinar/${webinarId}`, data);
   return response;
 }
+
+export const fetchUserDetails = async () => {
+  const response = await servicesAxiosInstance.get("/self/details");
+  return response;
+};

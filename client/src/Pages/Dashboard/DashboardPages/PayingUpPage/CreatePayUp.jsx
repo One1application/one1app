@@ -14,7 +14,6 @@ import {
 import axios from "axios";
 import  toast  from "react-hot-toast";
 import { PlusCircle, Upload, ChevronDown } from "lucide-react";
-
 import { X, Edit, Trash } from "lucide-react";
 
 const DiscountForm = ({

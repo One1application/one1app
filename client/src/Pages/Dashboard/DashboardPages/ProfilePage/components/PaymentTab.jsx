@@ -11,14 +11,19 @@ import { IoBookmarkOutline } from "react-icons/io5";
 import Drawer from "@mui/material/Drawer";
 import PaymentDrawer from "./PaymentDrawer";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../../../context/AuthContext";
 
 const PaymentTab = () => {
-  const [userKYCStatus, setUserKYCStatus] = useState(KYCStatus[0]);
+  const { userDetails } = useAuth();
+  const [userKYCStatus, setUserKYCStatus] = useState(
+    userDetails?.verified ? KYCStatus[1] : KYCStatus[0]
+  );
   const [isGSTChanged, setIsGSTChangeI] = useState(false);
   const [isGSTNumber, setIsGSTNumber] = useState("");
   const [open, setOpen] = useState(false);
   const drawerRef = useRef(null);
   const navigate = useNavigate();
+
 
   const paymentCardData = [
     {
