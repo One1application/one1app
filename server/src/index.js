@@ -9,6 +9,7 @@ import { walletRoutes } from "./routes/walletRoutes.js";
 import { payingUpRoutes } from "./routes/payingUpRoutes.js";
 import { telegramRouter } from "./routes/telegramRouter.js";
 import rateLimit from "express-rate-limit";
+import { userRouter } from "./routes/userRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -47,6 +48,7 @@ app.use("/telegram", telegramRouter);
 app.use("/wallet", walletRoutes);
 app.use("/upload", uploadRouter);
 app.use("/payingup", payingUpRoutes);
+app.use("/self", userRouter);
 
 const Port = process.env.SERVER_PORT || 5000;
 
