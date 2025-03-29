@@ -192,7 +192,7 @@ const NewCoursePage = () => {
       isActive: true,
     },
     lessons: {
-      isActive: false,
+      isActive: true,
       lessonData: [
         {
           lessonName: "",
@@ -815,7 +815,11 @@ const NewCoursePage = () => {
                 isActive: false,
                 faQMetaData: [{ question: "", answer: "" }],
               },
-              gallery: courseData.gallery || {
+              gallery: courseData.gallery ? {
+                title: courseData.gallery.title || "Gallery",
+                isActive: courseData.gallery.isActive || false,
+                imageMetaData: courseData.gallery.imageMetaData || Array(6).fill({ name: "", image: "" }),
+              } : {
                 title: "Gallery",
                 isActive: false,
                 imageMetaData: Array(6).fill({ name: "", image: "" }),
@@ -840,7 +844,7 @@ const NewCoursePage = () => {
               },
               // Fix for lessons array structure
               lessons: {
-                isActive: courseData.lessons?.[0]?.isActive || false,
+                isActive: courseData.lessons?.[0]?.isActive || true,
                 lessonData: courseData.lessons?.[0]?.lessonData || [
                   { lessonName: "", videos: [""] }
                 ],
@@ -917,8 +921,15 @@ const NewCoursePage = () => {
     // Check if all required fields are filled
     return (
       formData.title.trim() !== "" &&
-      formData.price > 0 &&
-      !isQuillContentEmpty(formData.aboutThisCourse.description) 
+      formData.price !== "" && 
+      !isNaN(Number(formData.price)) && 
+      Number(formData.price) > 0 &&
+      !isQuillContentEmpty(formData.aboutThisCourse.description) &&
+      // Validate that there's at least one lesson with name and video
+      formData.lessons.lessonData.some(lesson => 
+        lesson.lessonName.trim() !== "" && 
+        lesson.videos.some(video => video.trim() !== "")
+      )
       // &&
       // formData.refundPolicies.refundPoliciesMetaData.length > 0 &&
       // formData.termAndConditions.termAndConditionsMetaData.length > 0
@@ -948,24 +959,51 @@ const NewCoursePage = () => {
     setIsSubmitting(true);
 
     try {
-      // Transform data structure to match API expectations before sending
-      const transformedData = {
-        ...formData,
-        discounts: discounts,
-        // Convert lessons object to array format for API
-        lessons: {
-          isActive: formData.lessons.isActive,
-          lessonData: formData.lessons.lessonData,
-        },
-        // Convert products object to array format for API
-        products: formData.products.isActive ? [{
-          title: formData.products.title,
-          isActive: formData.products.isActive,
-          productMetaData: formData.products.productMetaData,
-        }] : [],
-        // Use faqs instead of faQ for API consistency
-        faqs: formData.faQ,
+      // Create a copy of the form data to transform
+      let transformedData = { ...formData };
+      
+      // Handle testimonials data - check if all fields are empty
+      const hasAnyTestimonialData = formData.testimonials.testimonialsMetaData.some(
+        item => (item.name && item.name.trim() !== "") || 
+                (item.description && item.description.trim() !== "") || 
+                item.profilePic
+      );
+      
+      if (!hasAnyTestimonialData) {
+        // If all testimonials are empty, set to null
+        transformedData.testimonials = {
+          ...transformedData.testimonials,
+          testimonialsMetaData: null
+        };
+      }
+      
+      // Handle gallery data - check if all fields are empty
+      const hasAnyGalleryData = formData.gallery.imageMetaData.some(
+        item => (item.name && item.name.trim() !== "") || item.image
+      );
+      
+      if (!hasAnyGalleryData) {
+        // If all gallery items are empty, set to null
+        transformedData.gallery = {
+          ...transformedData.gallery,
+          imageMetaData: null
+        };
+      }
+      
+      // Add other transform properties
+      transformedData.discounts = discounts;
+      transformedData.lessons = {
+        isActive: transformedData.lessons.isActive,
+        lessonData: transformedData.lessons.lessonData,
       };
+      transformedData.products = transformedData.products.isActive ? [{
+        title: transformedData.products.title,
+        isActive: transformedData.products.isActive,
+        productMetaData: transformedData.products.productMetaData,
+      }] : [];
+      transformedData.faqs = transformedData.faQ;
+
+      console.log("Transformed data:", transformedData); // For debugging
 
       let response;
       if (isEditMode) {
@@ -974,7 +1012,7 @@ const NewCoursePage = () => {
           toast.success("Course updated successfully");
           navigate("/dashboard/courses");
         } else {
-          toast.error("Course update failed", );
+          toast.error("Course update failed");
         }
       } else {
         response = await createNewCourseRequest(transformedData);
@@ -1143,7 +1181,7 @@ const NewCoursePage = () => {
             </div>
 
             {/* Update all form section containers to use responsive widths */}
-            <div className="w-full space-y-6"> {/* Add spacing between sections */}
+            <div className="w-full space-y-6 mb-10"> {/* Add spacing between sections */}
               {/* Each form section */}
               <div className="bg-[#111827]/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl border border-orange-500/20">
                 {/* Event Title Section */}
@@ -1516,14 +1554,14 @@ const NewCoursePage = () => {
                   {/* Enable Syllabus Section */}
                   <div className="flex justify-between items-center">
                     <label className="block text-orange-500 text-[15px]">
-                      Enable Syllabus
+                      Enable Syllabus  <span className="text-red-500">*</span>
                     </label>
-                    <input
+                    {/* <input
                       type="checkbox"
                       checked={formData.lessons.isActive}
                       onChange={handleLessonToggle}
                       className="w-5 h-5 rounded cursor-pointer border border-orange-500/20 bg-[#1a1b1e] text-orange-500 focus:outline-none focus:ring-orange-500/50"
-                    />
+                    /> */}
                   </div>
 
                   {formData.lessons.isActive && (
@@ -2172,12 +2210,22 @@ const NewCoursePage = () => {
                   <p className="text-red-500 text-sm">
                     Please fill in all required fields marked with * before
                     submitting:
+                    <ul className="list-disc ml-5 mt-2">
+                      {formData.title.trim() === "" && <li>Course title is required</li>}
+                      {(formData.price === "" || isNaN(Number(formData.price)) || Number(formData.price) <= 0) && 
+                        <li>Price must be a valid number greater than 0</li>}
+                      {isQuillContentEmpty(formData.aboutThisCourse.description) && <li>Course description is required</li>}
+                      {!formData.lessons.lessonData.some(lesson => 
+                        lesson.lessonName.trim() !== "" && 
+                        lesson.videos.some(video => video.trim() !== "")
+                      ) && <li>At least one lesson with name and video is required</li>}
+                    </ul>
                   </p>
                 </div>
               )}
 
               {/* Button */}
-              <div className="flex justify-center pt-8 mb-10">
+              <div className="flex justify-center pt-8 mb-10 ">
                 <button
                   type="button"
                   onClick={handelCreateCourseRequest}
