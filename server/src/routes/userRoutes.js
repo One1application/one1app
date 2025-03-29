@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
-import { selfIdentification } from "../controllers/userController.js";
+import { selfIdentification, userCustomers } from "../controllers/userController.js";
 
 
 
@@ -13,3 +13,4 @@ userRouter.use(authMiddleware);
 
 
 userRouter.get('/details', selfIdentification);
+userRouter.get('/customers/:param', userCustomers);
