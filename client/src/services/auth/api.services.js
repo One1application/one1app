@@ -1,5 +1,8 @@
 import axios from "axios";
-import { servicesAxiosInstance, servicesAxiosInstanceForFileUpload } from "../config";
+import {
+  servicesAxiosInstance,
+  servicesAxiosInstanceForFileUpload,
+} from "../config";
 /**
  *
  * Registers a new user with the provided details.
@@ -84,169 +87,253 @@ export const verifyLoginUser = async (data) => {
 };
 
 export const handelUplaodFile = async (formdata) => {
-  const response = await servicesAxiosInstanceForFileUpload.post("/upload/file", formdata);
+  const response = await servicesAxiosInstanceForFileUpload.post(
+    "/upload/file",
+    formdata
+  );
   return response;
 };
 
 export const handelUplaodFileS3 = async (formdata) => {
-  const response = await servicesAxiosInstanceForFileUpload.post("/upload/video", formdata );
+  console.log("FORMA DATA ", formdata);
+
+  const response = await servicesAxiosInstanceForFileUpload.post(
+    "/upload/video",
+    {
+      fileName: formdata.get("fileName"),
+      fileType: formdata.get("fileType"),
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
   return response;
 };
+
 export const createPayUpContent = async (data) => {
-  const response = await servicesAxiosInstance.post("/payingup/create-payingup", data);
+  const response = await servicesAxiosInstance.post(
+    "/payingup/create-payingup",
+    data
+  );
   return response;
-}
+};
 export const createNewWebinarRequest = async (data) => {
-  const response = await servicesAxiosInstance.post("/webinar/create-webinar", data);
+  const response = await servicesAxiosInstance.post(
+    "/webinar/create-webinar",
+    data
+  );
   return response;
-}
+};
 
 export const createNewCourseRequest = async (data) => {
-  const response = await servicesAxiosInstance.post("/course/create-course", data);
+  const response = await servicesAxiosInstance.post(
+    "/course/create-course",
+    data
+  );
   return response;
-}
+};
 
 export const fetchBalanceDetails = async () => {
   const response = await servicesAxiosInstance.get("/wallet/balance");
   return response;
-}
+};
 
 export const saveBusinessInformation = async (data) => {
-  const response = await servicesAxiosInstance.post("/wallet/add-business-info", data);
+  const response = await servicesAxiosInstance.post(
+    "/wallet/add-business-info",
+    data
+  );
   return response;
-}
+};
 
 export const fetchBusinessInformation = async () => {
   const response = await servicesAxiosInstance.get("/wallet/get-business-info");
   return response;
-}
+};
 
 export const saveVerificationInformation = async (data) => {
-  const response = await servicesAxiosInstance.post("/wallet/add-verfication-details", data);
+  const response = await servicesAxiosInstance.post(
+    "/wallet/add-verfication-details",
+    data
+  );
   return response;
-}
+};
 export const fetchVerificationInformation = async () => {
-  const response = await servicesAxiosInstance.get("/wallet/get-verification-details");
+  const response = await servicesAxiosInstance.get(
+    "/wallet/get-verification-details"
+  );
   return response;
-}
+};
 export const savePrimaryPaymentInformation = async (data) => {
-  const response = await servicesAxiosInstance.post("/wallet/add-bank-details", data);
+  const response = await servicesAxiosInstance.post(
+    "/wallet/add-bank-details",
+    data
+  );
   return response;
-}
+};
 export const fetchPrimaryPaymentInformation = async () => {
   const response = await servicesAxiosInstance.get("/wallet/get-bank-details");
   return response;
-}
+};
 
 export const fetchTransactionsPage = async (data) => {
-  const response = await servicesAxiosInstance.get("/wallet/get-transactions", { params: data });
+  const response = await servicesAxiosInstance.get("/wallet/get-transactions", {
+    params: data,
+  });
   return response;
-}
+};
 export const fetchWithdrawalPage = async (data) => {
-  const response = await servicesAxiosInstance.get("/wallet/get-withdrawals", { params: data });
+  const response = await servicesAxiosInstance.get("/wallet/get-withdrawals", {
+    params: data,
+  });
   return response;
-}
+};
 export const saveSecondaryBankorUpiAccount = async (data) => {
-  const response = await servicesAxiosInstance.post("/wallet/add-bank-or-upi", data);
+  const response = await servicesAxiosInstance.post(
+    "/wallet/add-bank-or-upi",
+    data
+  );
   return response;
-}
+};
 export const fetchAllWebinarsData = async () => {
-  const response = await servicesAxiosInstance.get("/webinar/get-creator-webinars");
+  const response = await servicesAxiosInstance.get(
+    "/webinar/get-creator-webinars"
+  );
   return response;
-}
+};
 
 export const fetchWebinar = async (id) => {
-  const response = await servicesAxiosInstance.get(`/webinar/get-webinar-by-id/${id}`)
+  const response = await servicesAxiosInstance.get(
+    `/webinar/get-webinar-by-id/${id}`
+  );
   return response;
-}
+};
 
 export const purchaseWebinar = async (id) => {
-  const response = await servicesAxiosInstance.post('/webinar/purchase-webinar', {
-    webinarId: id
-  })
-  return response
-}
+  const response = await servicesAxiosInstance.post(
+    "/webinar/purchase-webinar",
+    {
+      webinarId: id,
+    }
+  );
+  return response;
+};
 
 export const fetchAllPayingUpsData = async () => {
-  const response = await servicesAxiosInstance.get("/payingup/get-creator-payingups");
+  const response = await servicesAxiosInstance.get(
+    "/payingup/get-creator-payingups"
+  );
   return response;
-}
+};
 export const fetchAllCoursesData = async () => {
-  const response = await servicesAxiosInstance.get("/course/get-creator-courses");
+  const response = await servicesAxiosInstance.get(
+    "/course/get-creator-courses"
+  );
   return response;
-}
+};
 export const fetchCourse = async (id) => {
-  const response = await servicesAxiosInstance.get(`/course/get-course-by-id/${id}`)
+  const response = await servicesAxiosInstance.get(
+    `/course/get-course-by-id/${id}`
+  );
   return response;
-}
+};
 export const purchaseCourse = async (id) => {
-  const response = await servicesAxiosInstance.post('/course/purchase-course', {
-    courseId: id
-  })
-  return response
-}
+  const response = await servicesAxiosInstance.post("/course/purchase-course", {
+    courseId: id,
+  });
+  return response;
+};
 
 export const editCourse = async (courseId, data) => {
-  const response = await servicesAxiosInstance.post(`/course/edit-course/${courseId}`, data);
+  const response = await servicesAxiosInstance.post(
+    `/course/edit-course/${courseId}`,
+    data
+  );
   return response;
-}
+};
 
 export const fetchPayingUp = async (id) => {
-  const response = await servicesAxiosInstance.get(`/payingup/get-payingup-by-id/${id}`)
+  const response = await servicesAxiosInstance.get(
+    `/payingup/get-payingup-by-id/${id}`
+  );
   return response;
-}
+};
 
 export const purchasePayingUp = async (id) => {
-  const response = await servicesAxiosInstance.post('/payingup/purchase-payingup', {
-    payingUpId: id
-  })
-  return response
-}
+  const response = await servicesAxiosInstance.post(
+    "/payingup/purchase-payingup",
+    {
+      payingUpId: id,
+    }
+  );
+  return response;
+};
 
 export const verifyPayment = async (body) => {
-  const response = await servicesAxiosInstance.post('wallet/verify-payment', body)
+  const response = await servicesAxiosInstance.post(
+    "wallet/verify-payment",
+    body
+  );
   return response;
-}
+};
 
 export const verifyInviteLink = async (inviteLink) => {
-  const response = await axios.post('http://localhost:3000/verify-channel', {
-    inviteLink
-  })
-  return response
-}
+  const response = await axios.post("http://localhost:3000/verify-channel", {
+    inviteLink,
+  });
+  return response;
+};
 
 export const createTelegram = async (body) => {
-  const response = await servicesAxiosInstance.post('/telegram/create-telegram', body)
-  return response
-}
+  const response = await servicesAxiosInstance.post(
+    "/telegram/create-telegram",
+    body
+  );
+  return response;
+};
 
 export const fetchAllTelegramData = async () => {
-  const response = await servicesAxiosInstance.get("/telegram/get-creator-telegrams");
+  const response = await servicesAxiosInstance.get(
+    "/telegram/get-creator-telegrams"
+  );
   return response;
-}
+};
 
 export const fetchTelegram = async (id) => {
-  const response = await servicesAxiosInstance.get(`/telegram/get-telegram-by-id/${id}`)
+  const response = await servicesAxiosInstance.get(
+    `/telegram/get-telegram-by-id/${id}`
+  );
   return response;
-}
+};
 
-export const purchaseTelegram = async ({telegramId, days}) => {
-  const response = await servicesAxiosInstance.post('/telegram/purchase-telegram', {
-    telegramId,
-    days
-  })
-  return response
-}
+export const purchaseTelegram = async ({ telegramId, days }) => {
+  const response = await servicesAxiosInstance.post(
+    "/telegram/purchase-telegram",
+    {
+      telegramId,
+      days,
+    }
+  );
+  return response;
+};
 
 export const editPayingUp = async (payingUpId, data) => {
-  const response = await servicesAxiosInstance.post(`/payingup/edit-payingup/${payingUpId}`, data);
+  const response = await servicesAxiosInstance.post(
+    `/payingup/edit-payingup/${payingUpId}`,
+    data
+  );
   return response;
-}
+};
 
 export const editWebinar = async (webinarId, data) => {
-  const response = await servicesAxiosInstance.post(`/webinar/edit-webinar/${webinarId}`, data);
+  const response = await servicesAxiosInstance.post(
+    `/webinar/edit-webinar/${webinarId}`,
+    data
+  );
   return response;
-}
+};
 
 export const fetchUserDetails = async () => {
   const response = await servicesAxiosInstance.get("/self/details");

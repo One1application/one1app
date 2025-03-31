@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import ReactQuill from "react-quill";
 import {
@@ -122,7 +122,7 @@ const NewCoursePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const courseId = queryParams.get("id"); 
+  const courseId = queryParams.get("id");
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
@@ -389,7 +389,7 @@ const NewCoursePage = () => {
       }));
       toast.success("Image uploaded successfully");
     } else {
-      toast.error("Image upload failed" );
+      toast.error("Image upload failed");
     }
   };
 
@@ -398,13 +398,13 @@ const NewCoursePage = () => {
     if (!file) return;
     const filedata = new FormData();
     filedata.append("file", file);
-    
+
     // Set uploading state for this specific testimonial image
     setTestimonialImageUploading(prev => ({
       ...prev,
       [index]: true
     }));
-    
+
     try {
       const response = await handelUplaodFile(filedata);
       if (response.status === 200) {
@@ -426,7 +426,7 @@ const NewCoursePage = () => {
         toast.success("Image uploaded successfully");
       } else {
         toast.error("Image upload failed");
-        
+
         // Reset file input
         if (event.target) {
           event.target.value = '';
@@ -435,7 +435,7 @@ const NewCoursePage = () => {
     } catch (error) {
       console.error(error);
       toast.error("Image upload failed");
-      
+
       // Reset file input
       if (event.target) {
         event.target.value = '';
@@ -443,7 +443,7 @@ const NewCoursePage = () => {
     } finally {
       // Clear uploading state
       setTestimonialImageUploading(prev => {
-        const updated = {...prev};
+        const updated = { ...prev };
         delete updated[index];
         return updated;
       });
@@ -568,28 +568,38 @@ const NewCoursePage = () => {
   const handleVideoUpload = async (lessonIndex, videoIndex, event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     // Set uploading state for this specific video
     setVideoUploading(prev => ({
       ...prev,
       [`${lessonIndex}-${videoIndex}`]: true
     }));
-    
+
     try {
       // First get the upload URL from your backend
       const filedata = new FormData();
-      filedata.append("file", file);
+      filedata.append("fileName", file.name); // Use file name here
+      filedata.append("fileType", file.type); // Use file type here
+
+      // Fetch the signed URL from the backend
       const response = await handelUplaodFileS3(filedata);
-      console.log(response)
+
+      console.log("Response is", response);
 
       if (response.status === 200 && response.data.uploadURL) {
-        // Upload the file directly to the provided URL
-        await fetch(response.data.uploadURL, {
-
+        const uploadResponse = await fetch(response.data.uploadURL, {
           method: "PUT",
           body: file,
-          headers: { "Content-Type": file.type },
+          headers: {
+            "Content-Type": file.type,
+          },
         });
+        console.log("UP", uploadResponse);
+
+
+        if (!uploadResponse.ok) {
+          throw new Error("File upload failed");
+        }
 
         // Update the form data with the video URL
         setFormData((prevState) => {
@@ -614,7 +624,7 @@ const NewCoursePage = () => {
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Video upload failed");
-      
+
       // Reset file input
       if (event.target) {
         event.target.value = '';
@@ -622,7 +632,7 @@ const NewCoursePage = () => {
     } finally {
       // Clear uploading state
       setVideoUploading(prev => {
-        const updated = {...prev};
+        const updated = { ...prev };
         delete updated[`${lessonIndex}-${videoIndex}`];
         return updated;
       });
@@ -733,7 +743,7 @@ const NewCoursePage = () => {
 
     try {
       const response = await handelUplaodFile(coverImageFile);
-      
+
       if (response.status === 200) {
         setFormData((prev) => ({
           ...prev,
@@ -751,7 +761,7 @@ const NewCoursePage = () => {
       console.error(error);
       toast.error("Image upload failed");
       setImagePreview(null);
-      
+
       // Reset file input
       if (e.target) {
         e.target.value = '';
@@ -799,8 +809,8 @@ const NewCoursePage = () => {
                 isActive: courseData.testimonials?.isActive || false,
                 testimonialsMetaData: courseData.testimonials
                   ?.testimonialsMetaData || [
-                  { name: "", profilePic: null, description: "", rating: "" },
-                ],
+                    { name: "", profilePic: null, description: "", rating: "" },
+                  ],
               },
               courseBenefits: courseData.courseBenefits || {
                 title: "Course Benefits",
@@ -919,13 +929,13 @@ const NewCoursePage = () => {
     // Check if all required fields are filled
     return (
       formData.title.trim() !== "" &&
-      formData.price !== "" && 
-      !isNaN(Number(formData.price)) && 
+      formData.price !== "" &&
+      !isNaN(Number(formData.price)) &&
       Number(formData.price) > 0 &&
       !isQuillContentEmpty(formData.aboutThisCourse.description) &&
       // Validate that there's at least one lesson with name and video
-      formData.lessons.lessonData.some(lesson => 
-        lesson.lessonName.trim() !== "" && 
+      formData.lessons.lessonData.some(lesson =>
+        lesson.lessonName.trim() !== "" &&
         lesson.videos.some(video => video.trim() !== "")
       )
       // &&
@@ -958,14 +968,14 @@ const NewCoursePage = () => {
     try {
       // Create a copy of the form data to transform
       let transformedData = { ...formData };
-      
+
       // Handle testimonials data - check if all fields are empty
       const hasAnyTestimonialData = formData.testimonials.testimonialsMetaData.some(
-        item => (item.name && item.name.trim() !== "") || 
-                (item.description && item.description.trim() !== "") || 
-                item.profilePic
+        item => (item.name && item.name.trim() !== "") ||
+          (item.description && item.description.trim() !== "") ||
+          item.profilePic
       );
-      
+
       if (!hasAnyTestimonialData) {
         // If all testimonials are empty, set to null
         transformedData.testimonials = {
@@ -973,12 +983,12 @@ const NewCoursePage = () => {
           testimonialsMetaData: []
         };
       }
-      
+
       // Handle gallery data - check if all fields are empty
       const hasAnyGalleryData = formData.gallery.imageMetaData.some(
         item => (item.name && item.name.trim() !== "") || item.image
       );
-      
+
       if (!hasAnyGalleryData) {
         // If all gallery items are empty, set to null
         transformedData.gallery = {
@@ -986,7 +996,7 @@ const NewCoursePage = () => {
           imageMetaData: []
         };
       }
-      
+
       // Add other transform properties
       transformedData.discounts = discounts;
       transformedData.lessons = {
@@ -1157,8 +1167,8 @@ const NewCoursePage = () => {
         )}
 
         {/* Main */}
-        <div className="flex justify-center w-full px-4 sm:px-6 lg:px-8"> 
-          <div className="w-full max-w-[900px]"> 
+        <div className="flex justify-center w-full px-4 sm:px-6 lg:px-8">
+          <div className="w-full max-w-[900px]">
             {/* Form sections */}
             <div className="sticky top-0 z-10 bg-black/90 backdrop-blur-sm mb-8 rounded-xl border border-orange-500/20 w-full">
               <div className="flex items-center justify-between px-6 py-4">
@@ -1176,7 +1186,7 @@ const NewCoursePage = () => {
             </div>
 
             {/* Update all form section containers to use responsive widths */}
-            <div className="w-full space-y-6 mb-10"> 
+            <div className="w-full space-y-6 mb-10">
               {/* Each form section */}
               <div className="bg-[#111827]/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl border border-orange-500/20">
                 {/* Event Title Section */}
@@ -1300,29 +1310,29 @@ const NewCoursePage = () => {
                         accept="image/*"
                         className="w-full h-11 pt-2 bg-gray-800 rounded-lg border border-orange-500/20 px-4 text-gray-300 text-sm focus:outline-none focus:border-orange-500/50"
                       />
-                       {isCoverImageUploading ? (
-                    <div className="flex items-center gap-2 text-orange-500 mt-2">
-                      <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
-                      <span>Uploading cover image...</span>
-                    </div>
-                  ) : imagePreview && (
-                    <div className="mt-4 flex flex-col items-center">
-                      {/* Image Preview */}
-                      <img
-                        src={imagePreview}
-                        alt="Cover Preview"
-                        className="w-32 h-32 rounded-lg border border-orange-500/20 mb-2"
-                      />
-                      {/* Delete Button */}
-                      <button
-                        onClick={handleDeleteImage}
-                        className="text-sm text-orange-500 bg-[#1a1b1e] border border-orange-500/20 px-4 py-1 rounded-lg hover:bg-orange-500/20 transition-colors"
-                      >
-                        Delete Image
-                      </button>
-                    </div>
-                  )}
-                      
+                      {isCoverImageUploading ? (
+                        <div className="flex items-center gap-2 text-orange-500 mt-2">
+                          <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
+                          <span>Uploading cover image...</span>
+                        </div>
+                      ) : imagePreview && (
+                        <div className="mt-4 flex flex-col items-center">
+                          {/* Image Preview */}
+                          <img
+                            src={imagePreview}
+                            alt="Cover Preview"
+                            className="w-32 h-32 rounded-lg border border-orange-500/20 mb-2"
+                          />
+                          {/* Delete Button */}
+                          <button
+                            onClick={handleDeleteImage}
+                            className="text-sm text-orange-500 bg-[#1a1b1e] border border-orange-500/20 px-4 py-1 rounded-lg hover:bg-orange-500/20 transition-colors"
+                          >
+                            Delete Image
+                          </button>
+                        </div>
+                      )}
+
                     </div>
                   )}
                 </div>
@@ -1609,20 +1619,20 @@ const NewCoursePage = () => {
                                   {videoPreviews[
                                     `${lessonIndex}-${videoIndex}`
                                   ] && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleVideoPreview(
-                                          videoPreviews[
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleVideoPreview(
+                                            videoPreviews[
                                             `${lessonIndex}-${videoIndex}`
-                                          ]
-                                        )
-                                      }
-                                      className="ml-2 text-orange-500 hover:text-orange-400"
-                                    >
-                                      View
-                                    </button>
-                                  )}
+                                            ]
+                                          )
+                                        }
+                                        className="ml-2 text-orange-500 hover:text-orange-400"
+                                      >
+                                        View
+                                      </button>
+                                    )}
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -1633,7 +1643,7 @@ const NewCoursePage = () => {
                                     <MinusCircle size={18} />
                                   </button>
                                 </div>
-                                
+
                                 {videoUploading[`${lessonIndex}-${videoIndex}`] && (
                                   <div className="flex items-center gap-2 text-orange-500 mt-2">
                                     <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
@@ -1813,9 +1823,9 @@ const NewCoursePage = () => {
                             ></textarea>
 
                             {/* Testimonial Image Upload */}
-                              <label className="block text-orange-500 text-sm mb-2">
-                                Profile Image
-                              </label>
+                            <label className="block text-orange-500 text-sm mb-2">
+                              Profile Image
+                            </label>
                             <div className="flex items-center">
                               <input
                                 type="file"
@@ -1833,7 +1843,7 @@ const NewCoursePage = () => {
                                 />
                               )}
                             </div>
-                            
+
                             {testimonialImageUploading[index] && (
                               <div className="flex items-center gap-2 text-orange-500 mt-2">
                                 <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
@@ -2207,11 +2217,11 @@ const NewCoursePage = () => {
                     submitting:
                     <ul className="list-disc ml-5 mt-2">
                       {formData.title.trim() === "" && <li>Course title is required</li>}
-                      {(formData.price === "" || isNaN(Number(formData.price)) || Number(formData.price) <= 0) && 
+                      {(formData.price === "" || isNaN(Number(formData.price)) || Number(formData.price) <= 0) &&
                         <li>Price must be a valid number greater than 0</li>}
                       {isQuillContentEmpty(formData.aboutThisCourse.description) && <li>Course description is required</li>}
-                      {!formData.lessons.lessonData.some(lesson => 
-                        lesson.lessonName.trim() !== "" && 
+                      {!formData.lessons.lessonData.some(lesson =>
+                        lesson.lessonName.trim() !== "" &&
                         lesson.videos.some(video => video.trim() !== "")
                       ) && <li>At least one lesson with name and video is required</li>}
                     </ul>
@@ -2224,11 +2234,10 @@ const NewCoursePage = () => {
                 <button
                   type="button"
                   onClick={handelCreateCourseRequest}
-                  className={`px-8 py-3 ${
-                    validateForm() && !isSubmitting
-                      ? "bg-orange-500 hover:bg-orange-600 text-white font-medium"
-                      : "bg-gray-500 text-gray-300 cursor-not-allowed"
-                  } rounded-lg shadow-lg shadow-orange-500/30 transition-all transform hover:scale-105 flex items-center gap-2`}
+                  className={`px-8 py-3 ${validateForm() && !isSubmitting
+                    ? "bg-orange-500 hover:bg-orange-600 text-white font-medium"
+                    : "bg-gray-500 text-gray-300 cursor-not-allowed"
+                    } rounded-lg shadow-lg shadow-orange-500/30 transition-all transform hover:scale-105 flex items-center gap-2`}
                   disabled={!validateForm() || isSubmitting}
                 >
                   {isSubmitting ? (
