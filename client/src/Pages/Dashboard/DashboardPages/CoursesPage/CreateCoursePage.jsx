@@ -19,6 +19,7 @@ import {
   handelUplaodFile,
   fetchCourse,
   editCourse,
+  handelUplaodFileS3,
 } from "../../../../services/auth/api.services";
 import { BsPlusSquareDotted } from "react-icons/bs";
 const DiscountForm = ({
@@ -568,9 +569,6 @@ const NewCoursePage = () => {
     const file = event.target.files[0];
     if (!file) return;
     
-    const filedata = new FormData();
-    filedata.append("file", file);
-    
     // Set uploading state for this specific video
     setVideoUploading(prev => ({
       ...prev,
@@ -578,17 +576,32 @@ const NewCoursePage = () => {
     }));
     
     try {
-      const response = await handelUplaodFile(filedata);
-      if (response.status === 200) {
+      // First get the upload URL from your backend
+      const filedata = new FormData();
+      filedata.append("file", file);
+      const response = await handelUplaodFileS3(filedata);
+      console.log(response)
+
+      if (response.status === 200 && response.data.uploadURL) {
+        // Upload the file directly to the provided URL
+        await fetch(response.data.uploadURL, {
+
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type },
+        });
+
+        // Update the form data with the video URL
         setFormData((prevState) => {
           const updatedLessons = [...prevState.lessons.lessonData];
-          updatedLessons[lessonIndex].videos[videoIndex] = response.data.url;
+          updatedLessons[lessonIndex].videos[videoIndex] = response.data.url; // Use the final URL from response
           return {
             ...prevState,
             lessons: { ...prevState.lessons, lessonData: updatedLessons },
           };
         });
 
+        // Update video previews
         setVideoPreviews((prevPreviews) => ({
           ...prevPreviews,
           [`${lessonIndex}-${videoIndex}`]: response.data.url,
@@ -596,15 +609,10 @@ const NewCoursePage = () => {
 
         toast.success("Video uploaded successfully");
       } else {
-        toast.error("Video upload failed");
-        
-        // Reset file input
-        if (event.target) {
-          event.target.value = '';
-        }
+        throw new Error("Failed to get upload URL");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Upload error:", error);
       toast.error("Video upload failed");
       
       // Reset file input

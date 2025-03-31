@@ -88,6 +88,10 @@ export const handelUplaodFile = async (formdata) => {
   return response;
 };
 
+export const handelUplaodFileS3 = async (formdata) => {
+  const response = await servicesAxiosInstanceForFileUpload.post("/upload/video", formdata );
+  return response;
+};
 export const createPayUpContent = async (data) => {
   const response = await servicesAxiosInstance.post("/payingup/create-payingup", data);
   return response;
@@ -246,5 +250,10 @@ export const editWebinar = async (webinarId, data) => {
 
 export const fetchUserDetails = async () => {
   const response = await servicesAxiosInstance.get("/self/details");
+  return response;
+};
+
+export const fetchCustomers = async (page = 1) => {
+  const response = await servicesAxiosInstance.get(`/self/customers/${page}`);
   return response;
 };

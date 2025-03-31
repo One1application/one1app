@@ -13,6 +13,11 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [userDetails, setUserDetails] = useState("");
+  const [userdetailloading, userdetailsetLoading] = useState(true);
+  const [customers, setCustomers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const logout = () => {
     localStorage.removeItem("AuthToken");
@@ -39,6 +44,7 @@ export const AuthProvider = ({ children }) => {
         setUserRole(response.data.user.role);
         setAuthenticated(true);
         setLoading(false);
+        getUserDetails();
         return true;
       }
     } catch (error) {
@@ -51,26 +57,22 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
-  const [userDetails, setUserDetails] = useState("");
-  const [userdetailloading, userdetailsetLoading] = useState(true);
+   const getUserDetails = async () => {
+    try {
+      userdetailsetLoading(true);
+      const response = await fetchUserDetails();
+      console.log("User Details Response:", response.data);
+      setUserDetails(response.data.userDetails);
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    } finally {
+      userdetailsetLoading(false);
+    }
+  };
 
-  useEffect(() => {
-    const getUserDetails = async () => {
-      try {
-        userdetailsetLoading(true);
-        const response = await fetchUserDetails();
-        console.log("User Details Response:", response.data);
-        setUserDetails(response.data.userDetails);
-      } catch (error) {
-        console.error("Error fetching user details:", error);
-      } finally {
-        userdetailsetLoading(false);
-      }
-    };
-
-    getUserDetails();
-  }, []);
-
+  const updateCustomers = (newCustomers) => {
+    setCustomers(prev => [...prev, ...newCustomers]);
+  };
 
   useEffect(() => {
     verifyToken();
@@ -84,7 +86,13 @@ export const AuthProvider = ({ children }) => {
     verifyToken,
     userRole,
     userDetails,
-    userdetailloading
+    userdetailloading,
+    customers,
+    updateCustomers,
+    currentPage,
+    setCurrentPage,
+    hasMore,
+    setHasMore
   };
 
 

@@ -1,12 +1,69 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NoAudienceComponent from "../../../../components/NoContent/NoAudienceComponent";
 import yourCustomerConfig from "./yourCustomerConfig";
 import AudienceTableComponent from "../../../../components/Table/AudienceTableComponent";
 import { PiUsers } from "react-icons/pi"; // Added for user icon
+import { fetchCustomers } from "../../../../services/auth/api.services";
+import { useAuth } from "../../../../context/AuthContext";
 
 const AudiencePage = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const { customers, updateCustomers, currentPage, setCurrentPage, hasMore, setHasMore } = useAuth();
+  
   const currentTab = yourCustomerConfig.tabs[activeTab];
+
+  // Modified fetch function to handle pagination
+  const fetchCustomerData = async (page) => {
+    if (loading || !hasMore) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetchCustomers(page);
+      if (response.data.success) {
+        const formattedCustomers = response.data.customers.map(customer => ({
+          name: customer.name || "N/A",
+          email: customer.email || "N/A",
+          phone: customer.phone || "N/A",
+          purchasedProducts: customer.product ? [customer.product] : [],
+          amountSpent: customer.amountSpent || 0,
+          activeSubscriptions: customer.activeSubscriptions || 0,
+          rawData: customer
+        }));
+
+        // Update context with new customers
+        updateCustomers(formattedCustomers);
+        
+        // Check if we have more data to load
+        setHasMore(formattedCustomers.length === 20);
+        
+        // Update tab content with total customers count
+        yourCustomerConfig.tabs.forEach((tab, index) => {
+          if (index === 0) {
+            tab.value = customers.length + formattedCustomers.length;
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching customer data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    if (customers.length === 0) {
+      fetchCustomerData(1);
+    }
+  }, []);
+
+  // Handle load more
+  const handleLoadMore = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchCustomerData(nextPage);
+  };
 
   return (
     <div className="p-6 space-y-6 bg-[#0F1418] min-h-screen">
@@ -39,11 +96,28 @@ const AudiencePage = () => {
       {/* Content Section - Styled like AllTransactionsPage */}
       <section className="bg-[#1A1D21] rounded-lg border border-gray-700">
         <div className="p-6 h-full w-full">
-          {currentTab.content.length > 0 ? (
-            <AudienceTableComponent 
-              data={currentTab.content}
-              className="text-white" 
-            />
+          {customers.length > 0 ? (
+            <>
+              <AudienceTableComponent 
+                data={customers}
+                className="text-white" 
+              />
+              {hasMore && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={loading}
+                    className={`px-4 py-2 rounded-full text-white 
+                      ${loading ? 'bg-gray-600' : 'bg-orange-600 hover:bg-orange-700'}
+                      transition duration-200`}
+                  >
+                    {loading ? 'Loading...' : 'Load More'}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : loading ? (
+            <div className="text-white text-center py-10">Loading customers...</div>
           ) : (
             <NoAudienceComponent
               title={yourCustomerConfig.noContentData[currentTab.title.toLowerCase()].title}
