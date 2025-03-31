@@ -1,8 +1,6 @@
 import prisma from "../db/dbClient.js";
 
 
-
-
 export const selfIdentification = async (req, res) => {
     try {
 

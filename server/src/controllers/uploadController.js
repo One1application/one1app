@@ -1,4 +1,5 @@
 
+import { s3 } from "../config/aws.js";
 import { uploadOnImageKit } from "../config/imagekit.js";
 
 export const uploadUtil = async (req, res) => {
@@ -19,5 +20,28 @@ export const uploadUtil = async (req, res) => {
     } catch (error) {
         console.error("Error uploading image:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+export const uploadVideo = async (req, res) => {
+    try {
+        const { fileName, fileType } = req.body;
+        const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: `uploads/${Date.now()}_${fileName}`,
+            Expires: 120,
+            ContentType: fileType,
+            ACL: "public-read",
+        };
+        const uploadURL = await s3.getSignedUrlPromise("putObject", params);
+
+        return res.status(200).json({
+            success: true,
+            uploadURL
+        })
+
+    } catch (error) {
+        console.error("Error uploading video:", error);
+        res.status(500).json({ error: "Internal Server Error." });
     }
 }
