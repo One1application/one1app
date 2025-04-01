@@ -604,7 +604,7 @@ const NewCoursePage = () => {
         // Update the form data with the video URL
         setFormData((prevState) => {
           const updatedLessons = [...prevState.lessons.lessonData];
-          updatedLessons[lessonIndex].videos[videoIndex] = response.data.url; // Use the final URL from response
+          updatedLessons[lessonIndex].videos[videoIndex] = uploadResponse.url; // Use the final URL from uploadResponse
           return {
             ...prevState,
             lessons: { ...prevState.lessons, lessonData: updatedLessons },
@@ -614,7 +614,7 @@ const NewCoursePage = () => {
         // Update video previews
         setVideoPreviews((prevPreviews) => ({
           ...prevPreviews,
-          [`${lessonIndex}-${videoIndex}`]: response.data.url,
+          [`${lessonIndex}-${videoIndex}`]: uploadResponse.url,
         }));
 
         toast.success("Video uploaded successfully");
@@ -928,7 +928,7 @@ const NewCoursePage = () => {
   const validateForm = () => {
     // Check if all required fields are filled
     return (
-      formData.title.trim() !== "" &&
+      formData.title !== "" &&
       formData.price !== "" &&
       !isNaN(Number(formData.price)) &&
       Number(formData.price) > 0 &&
@@ -936,7 +936,7 @@ const NewCoursePage = () => {
       // Validate that there's at least one lesson with name and video
       formData.lessons.lessonData.some(lesson =>
         lesson.lessonName.trim() !== "" &&
-        lesson.videos.some(video => video.trim() !== "")
+        lesson.videos.some(video => video !== "")
       )
       // &&
       // formData.refundPolicies.refundPoliciesMetaData.length > 0 &&
@@ -2216,13 +2216,13 @@ const NewCoursePage = () => {
                     Please fill in all required fields marked with * before
                     submitting:
                     <ul className="list-disc ml-5 mt-2">
-                      {formData.title.trim() === "" && <li>Course title is required</li>}
+                      {formData.title === "" && <li>Course title is required</li>}
                       {(formData.price === "" || isNaN(Number(formData.price)) || Number(formData.price) <= 0) &&
                         <li>Price must be a valid number greater than 0</li>}
                       {isQuillContentEmpty(formData.aboutThisCourse.description) && <li>Course description is required</li>}
                       {!formData.lessons.lessonData.some(lesson =>
                         lesson.lessonName.trim() !== "" &&
-                        lesson.videos.some(video => video.trim() !== "")
+                        lesson.videos.some(video => video !== "")
                       ) && <li>At least one lesson with name and video is required</li>}
                     </ul>
                   </p>
