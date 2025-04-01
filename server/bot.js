@@ -21,7 +21,7 @@ const prisma = new PrismaClient();
 
 const token = '7656770449:AAEKUv5Jlj4nRB1t9R-gsVI0sngBF9cGsYQ';
 const TELEGRAM_API = `https://api.telegram.org/bot${token}`;
-const SERVER_URL = 'https://607e-2409-40e3-3018-f33e-b805-2db-526e-5a85.ngrok-free.app';
+const SERVER_URL = 'https://1appdemo.one1app.com/api/';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -46,7 +46,7 @@ const askQuestion = (query) => {
 
 const login = async () => {
   try {
-    const phone_number = "+919653092873";
+    const phone_number = "+919253436309";
 
     let result = await mtproto.call('auth.sendCode', {
       phone_number,
