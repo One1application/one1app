@@ -1033,14 +1033,6 @@ const TermCondition = () => {
               approached in writing or through email to the below:
             </p>
 
-            
-            <h3 className="text-2xl font-bold text-orange-500 mt-8">
-              20. Refund & Return
-            </h3>
-            <p className="mb-4">
-            We don't entertain any refund and return on our website. Kindly contact us for more details.
-            </p>
-
             <div className="p-4 ">
               <h4 className="text-lg font-semibold text-orange-500 mb-4">
                 Nodal Officer
@@ -1066,6 +1058,14 @@ const TermCondition = () => {
               will acknowledge the receipt of any compliant within 48 hours and
               redress the complaint within 30 days from receipt of the
               complaint.
+            </p>
+
+
+            <h3 className="text-2xl font-bold text-orange-500 mt-8">
+              20. Refund & Return
+            </h3>
+            <p className="mb-4">
+            We don't entertain any refund and return on our website. Kindly contact us for more details.
             </p>
           </div>
         </div>
