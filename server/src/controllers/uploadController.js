@@ -1,4 +1,6 @@
 import { s3 } from "../config/aws.js";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { uploadOnImageKit } from "../config/imagekit.js";
 
 export const uploadUtil = async (req, res) => {
@@ -26,16 +28,16 @@ export const uploadVideo = async (req, res) => {
     const { fileName, fileType } = req.body;
 
     const params = {
-      Bucket: process.env.AWS_BUCKET_NAME,
+      Bucket: "my-app-bucket-1743423461630",
       Key: `uploads/${Date.now()}_${fileName}`,
-      Expires: 1200,
       ContentType: fileType,
     };
-    const uploadURL = await s3.getSignedUrlPromise("putObject", params);
+    const command = new PutObjectCommand(params);
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
 
     return res.status(200).json({
       success: true,
-      uploadURL,
+      uploadURL: signedUrl,
     });
   } catch (error) {
     console.error("Error uploading video:", error);
