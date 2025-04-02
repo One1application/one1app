@@ -1,10 +1,17 @@
 import prisma from "../db/dbClient.js";
-import { imagekit } from "../config/imagekit.js";
-import multer from "multer";
 import { razorpay } from "../config/razorpay.js";
 import dotenv from "dotenv";
+import { s3 } from "../config/aws.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { json } from "stream/consumers";
 dotenv.config();
 
+function extractS3Key(url) {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname; 
+    return decodeURIComponent(pathname.substring(1)); 
+  }
 
 
 const getCourseDuration = (validity) => {
@@ -452,4 +459,40 @@ export const purchaseCourse = async (req, res) => {
 
     }
 
+}
+
+export const playVideo = async (req, res) => {
+
+    try {
+        const { url } = req.query;
+
+        const key = extractS3Key(url);
+        console.log(key, "key");
+        
+        if(!key) return res.status(400),json({
+            success: false,
+            message: "Invalid url."
+        })
+        
+        const command = new GetObjectCommand({
+            Bucket: "my-app-bucket-1743423461630",
+            Key: key,
+        });
+        console.log(command, "co");
+        console.log(s3, "s3");
+        
+        const signedUrl = await getSignedUrl(s3, command, { expiresIn: 5 });
+        console.log(signedUrl);
+        return res.status(200).json({
+            success: true,
+            signedUrl
+        })
+
+    } catch (error) {
+        console.error("Error in generating url.", error);
+        res.status(500).json({
+            success: false,
+            message: "Error in generating url."
+        })
+    }
 }
