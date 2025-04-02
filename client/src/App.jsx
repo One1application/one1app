@@ -65,7 +65,7 @@ const App = () => {
         <Route path="/contactus" element={<ContactUsPage />} />
         <Route path="/publicpolicy" element={<PrivacyPolicy />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
-        <Route path="/refund-cancellation" element={<RefundCancellation />} />
+        {/* <Route path="/refund-cancellation" element={<RefundCancellation />} /> */}
         <Route path="/TermCondition" element={<TermCondition />} />
 
 
