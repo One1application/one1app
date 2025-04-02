@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import ReactPlayer from "react-player";
 import * as Icons from "lucide-react";
-import { fetchCourse } from "../../../../services/auth/api.services";
+import { fetchCourse, getSignedVideoUrl } from "../../../../services/auth/api.services";
 import toast from "react-hot-toast";
 
 const LessonsPage = () => {
@@ -12,7 +12,19 @@ const LessonsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [currentLessonName, setCurrentLessonName] = useState("");
+  const [signedUrl, setSignedUrl] = useState(null);
   const playerRef = useRef(null);
+
+  const handleGetSignedUrl = async (videoUrl) => {
+    try {
+      const response = await getSignedVideoUrl(videoUrl);
+      return response.data.signedUrl;
+    } catch (error) {
+      console.error("Error fetching signed URL:", error);
+      toast.error("Failed to load video");
+      return null;
+    }
+  };
 
   useEffect(() => {
     const getCourse = async () => {
@@ -23,8 +35,11 @@ const LessonsPage = () => {
         
         // Set first video as default if available
         if (response.data.payload.course.lessons?.[0]?.lessonData?.[0]?.videos?.[0]) {
-          setCurrentVideo(response.data.payload.course.lessons[0].lessonData[0].videos[0]);
+          const firstVideo = response.data.payload.course.lessons[0].lessonData[0].videos[0];
+          setCurrentVideo(firstVideo);
           setCurrentLessonName(response.data.payload.course.lessons[0].lessonData[0].lessonName);
+          const signedUrl = await handleGetSignedUrl(firstVideo);
+          setSignedUrl(signedUrl);
         }
       } catch (error) {
         console.error("Error while fetching course.", error);
@@ -39,9 +54,11 @@ const LessonsPage = () => {
     }
   }, [courseId]);
 
-  const handleVideoSelect = (video, lessonName) => {
+  const handleVideoSelect = async (video, lessonName) => {
     setCurrentVideo(video);
     setCurrentLessonName(lessonName);
+    const signedUrl = await handleGetSignedUrl(video);
+    setSignedUrl(signedUrl);
   };
 
   // Custom right-click prevention
@@ -82,7 +99,7 @@ const LessonsPage = () => {
                 >
                   <ReactPlayer
                     ref={playerRef}
-                    url={currentVideo}
+                    url={signedUrl || currentVideo}
                     className="absolute top-0 left-0"
                     width="100%"
                     height="100%"

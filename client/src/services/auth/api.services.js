@@ -344,3 +344,8 @@ export const fetchCustomers = async (page = 1) => {
   const response = await servicesAxiosInstance.get(`/self/customers/${page}`);
   return response;
 };
+
+export const getSignedVideoUrl = async (videoUrl) => {
+  const response = await servicesAxiosInstance.get(`/course/playVideo?url=${encodeURIComponent(videoUrl)}`);
+  return response;
+};
