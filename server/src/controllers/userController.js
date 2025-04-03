@@ -63,6 +63,9 @@ export const userCustomers = async (req, res) => {
                     } },
                   },
                 },
+                orderBy: {
+                    createdAt: 'desc'
+                },
                 take: pageSize,
                 skip: (page - 1) * pageSize,
               },
@@ -73,10 +76,13 @@ export const userCustomers = async (req, res) => {
                         select: {
                             email: true,
                             phone: true,
-                            name: true
+                            name: true,
                         }
                     } },
                   },
+                },
+                orderBy: {
+                    createdAt: 'desc'
                 },
                 take: pageSize,
                 skip: (page - 1) * pageSize,
@@ -93,6 +99,9 @@ export const userCustomers = async (req, res) => {
                     } },
                   },
                 },
+                orderBy: {
+                    createdAt: 'desc'
+                },
                 take: pageSize,
                 skip: (page - 1) * pageSize,
               },
@@ -107,6 +116,9 @@ export const userCustomers = async (req, res) => {
                         }
                     } },
                   },
+                },
+                orderBy: {
+                    createdAt: 'desc'
                 },
                 take: pageSize,
                 skip: (page - 1) * pageSize,
