@@ -92,9 +92,12 @@ function Navbar({scrollToFeatures}) {
               </NavLink>
             </li>
             <li>
-              <NavLink className="md:block bg-orange-500 hover:bg-orange-600 text-white py-2 px-6 rounded-lg" to="/signup">
-                Get Started
-              </NavLink>
+              <Link to='/signup' className="w-fit bg-orange-500 hover:bg-orange-600 text-white py-2 px-6 rounded-lg">
+                Get started
+              </Link>
+            </li>
+            <li>
+                
             </li>
           </ul>
         </div>

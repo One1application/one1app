@@ -4,11 +4,16 @@ import { payingUpConfig } from "./payingUpConfig";
 import oneApp from "../../../../assets/oneapp.jpeg";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchPayingUp, purchasePayingUp, verifyPayment } from "../../../../services/auth/api.services";
-import  toast  from "react-hot-toast";
+import {
+  fetchPayingUp,
+  purchasePayingUp,
+  verifyPayment,
+} from "../../../../services/auth/api.services";
+import toast from "react-hot-toast";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
 import { useAuth } from "../../../../context/AuthContext";
+import PageFooter from "./PageFooter";
 
 const PayingUpPages = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -19,8 +24,8 @@ const PayingUpPages = () => {
   const itemsPerView = 3;
   const CurrencyIcon = Icons[payingUpConfig.paymentDetails.currencySymbol];
   const [params] = useSearchParams();
-  const payingUpId = params.get('id');
-  const token = localStorage.getItem('AuthToken')
+  const payingUpId = params.get("id");
+  const token = localStorage.getItem("AuthToken");
   const [payingUpDetails, setPayingUpDetails] = useState(null);
   const [isPurchased, setIsPurchased] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -30,19 +35,19 @@ const PayingUpPages = () => {
   const { currentUserId } = useAuth();
 
   useEffect(() => {
-    const payup = async() => {
+    const payup = async () => {
       setIsLoading(true);
       try {
-        const response = await fetchPayingUp(payingUpId)
-        setPayingUpDetails(response.data.payload.payingUp)
-        
+        const response = await fetchPayingUp(payingUpId);
+        setPayingUpDetails(response.data.payload.payingUp);
+
         // Check if files exists in the response to determine if already purchased
         if (response.data.payload.payingUp.files) {
           setIsPurchased(true);
           // Handle both single and multiple file URLs
           const files = response.data.payload.payingUp.files.value;
           if (Array.isArray(files)) {
-            setPaymentUrl(files.map(file => file.url)); // Store array of file URLs
+            setPaymentUrl(files.map((file) => file.url)); // Store array of file URLs
           } else {
             setPaymentUrl(files.url); // Store single file URL
           }
@@ -50,14 +55,14 @@ const PayingUpPages = () => {
       } catch (error) {
         console.error("Error while fetching paying up.", error);
         if (!handleAuthError(error)) {
-          toast("Please try later.")
+          toast("Please try later.");
         }
       } finally {
         setIsLoading(false);
       }
-    }
-    payup()
-  }, [payingUpId])
+    };
+    payup();
+  }, [payingUpId]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -65,12 +70,13 @@ const PayingUpPages = () => {
     script.async = true;
     document.body.appendChild(script);
   }, []);
-  
-  
 
   const nextSlide = () => {
-    setCurrentTestimonialIndex((prevIndex) => 
-      Math.min(prevIndex + 1, payingUpDetails.testimonials.testimonialsMetaData.length - itemsPerView)
+    setCurrentTestimonialIndex((prevIndex) =>
+      Math.min(
+        prevIndex + 1,
+        payingUpDetails.testimonials.testimonialsMetaData.length - itemsPerView
+      )
     );
   };
 
@@ -79,8 +85,10 @@ const PayingUpPages = () => {
   };
 
   const handleAuthError = (error) => {
-    if (error?.response?.data?.message === "Token not found, Access Denied!" || 
-        error?.message === "Token not found, Access Denied!") {
+    if (
+      error?.response?.data?.message === "Token not found, Access Denied!" ||
+      error?.message === "Token not found, Access Denied!"
+    ) {
       setShowSignupModal(true);
       return true;
     }
@@ -113,54 +121,59 @@ const PayingUpPages = () => {
   const handlePayment = async () => {
     try {
       const response = await purchasePayingUp(payingUpId);
-      const orderDetails = response.data.payload
+      const orderDetails = response.data.payload;
 
       var options = {
-        "key": import.meta.env.VITE_RAZORPAY_KEY,
-        "amount": orderDetails.amount,
-        "currency": orderDetails.currency,
-        "name": "One App",
-        "description": "Complete Your Purchase",
-        "order_id": orderDetails.orderId,
-        "handler": async function (response) {
+        key: import.meta.env.VITE_RAZORPAY_KEY,
+        amount: orderDetails.amount,
+        currency: orderDetails.currency,
+        name: "One App",
+        description: "Complete Your Purchase",
+        order_id: orderDetails.orderId,
+        handler: async function (response) {
           console.log("payment");
           const body = {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            webinarId: orderDetails.webinarId? orderDetails.webinarId : null,
-            courseId: orderDetails.courseId? orderDetails.courseId : null,
-            payingUpId: orderDetails.payingUpId? orderDetails.payingUpId : null,
-          }; 
+            webinarId: orderDetails.webinarId ? orderDetails.webinarId : null,
+            courseId: orderDetails.courseId ? orderDetails.courseId : null,
+            payingUpId: orderDetails.payingUpId
+              ? orderDetails.payingUpId
+              : null,
+          };
 
           try {
             setIsPaymentVerifying(true);
             const response = await verifyPayment(body);
-            if (response.data && response.data.payload && response.data.payload.urls) {
+            if (
+              response.data &&
+              response.data.payload &&
+              response.data.payload.urls
+            ) {
               setPaymentUrl(response.data.payload.urls);
               setIsPurchased(true);
               toast.success("Payment successful!");
             }
           } catch (error) {
             console.error("Error while verifying payment.", error);
-            toast("Payment Failed")
+            toast("Payment Failed");
           } finally {
             setIsPaymentVerifying(false);
           }
         },
-        "prefill": {
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "contact": "9999999999"
+        prefill: {
+          name: "John Doe",
+          email: "john.doe@example.com",
+          contact: "9999999999",
         },
-        "theme": {
-            "color": "#F37254"
-        }
-    };
+        theme: {
+          color: "#F37254",
+        },
+      };
 
-    const rzp1 = new window.Razorpay(options);
-    rzp1.open()
-      
+      const rzp1 = new window.Razorpay(options);
+      rzp1.open();
     } catch (error) {
       if (!handleAuthError(error)) {
         toast.error("Error during payment of paying up.", error);
@@ -186,14 +199,14 @@ const PayingUpPages = () => {
 
   return (
     <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
-      <SignupModal 
+      <SignupModal
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
         onSuccessfulSignup={handleSuccessfulSignup}
         onSwitchToSignin={handleSwitchToSignin}
       />
 
-      <SigninModal 
+      <SigninModal
         open={showSigninModal}
         handleClose={() => setShowSigninModal(false)}
         label="Email"
@@ -211,7 +224,7 @@ const PayingUpPages = () => {
           </div>
         </div>
       )}
-      
+
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-orange-600 to-orange-500 text-white py-12 px-4">
         <div className="max-w-6xl mx-auto text-center">
@@ -254,9 +267,9 @@ const PayingUpPages = () => {
                 {Array.isArray(paymentUrl) ? (
                   paymentUrl.map((file, index) => (
                     <div key={index} className="text-center">
-                      <a 
-                        href={file} 
-                        target="_blank" 
+                      <a
+                        href={file}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-orange-500 hover:text-orange-400 underline text-xl break-all flex items-center justify-center gap-2"
                       >
@@ -267,9 +280,9 @@ const PayingUpPages = () => {
                   ))
                 ) : (
                   <div className="text-center">
-                    <a 
-                      href={paymentUrl} 
-                      target="_blank" 
+                    <a
+                      href={paymentUrl}
+                      target="_blank"
                       // rel="noopener noreferrer"
                       className="text-orange-500 hover:text-orange-400 underline text-xl break-all flex items-center justify-center gap-2"
                     >
@@ -283,17 +296,16 @@ const PayingUpPages = () => {
           </div>
         </section>
       )}
-      
+
       {/* Description Section */}
       <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold mb-8  text-orange-500">
-              Overview
-            </h2>
+          <h2 className="text-3xl font-bold mb-8  text-orange-500">Overview</h2>
           <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500/20">
-            <div className="text-gray-300 mb-6 leading-relaxed text-lg" 
-              dangerouslySetInnerHTML={{ __html: payingUpDetails.description }}>
-            </div>
+            <div
+              className="text-gray-300 mb-6 leading-relaxed text-lg"
+              dangerouslySetInnerHTML={{ __html: payingUpDetails.description }}
+            ></div>
           </div>
         </div>
       </section>
@@ -324,14 +336,18 @@ const PayingUpPages = () => {
               Categories
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {payingUpDetails.category.categoryMetaData.map((category, index) => (
-                <div
-                  key={index}
-                  className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
-                >
-                  <span className="text-xl font-semibold text-white">{category}</span>
-                </div>
-              ))}
+              {payingUpDetails.category.categoryMetaData.map(
+                (category, index) => (
+                  <div
+                    key={index}
+                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                  >
+                    <span className="text-xl font-semibold text-white">
+                      {category}
+                    </span>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </section>
@@ -346,17 +362,21 @@ const PayingUpPages = () => {
             </h2>
             <div className="relative">
               {/* Navigation Buttons */}
-              <button 
+              <button
                 onClick={prevSlide}
                 disabled={currentTestimonialIndex === 0}
                 className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-orange-500 p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Icons.ChevronLeft className="w-6 h-6 text-white" />
               </button>
-              
-              <button 
+
+              <button
                 onClick={nextSlide}
-                disabled={currentTestimonialIndex >= payingUpDetails.testimonials.testimonialsMetaData.length - itemsPerView}
+                disabled={
+                  currentTestimonialIndex >=
+                  payingUpDetails.testimonials.testimonialsMetaData.length -
+                    itemsPerView
+                }
                 className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-orange-500 p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Icons.ChevronRight className="w-6 h-6 text-white" />
@@ -365,7 +385,10 @@ const PayingUpPages = () => {
               {/* Testimonials Container */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {payingUpDetails.testimonials.testimonialsMetaData
-                  .slice(currentTestimonialIndex, currentTestimonialIndex + itemsPerView)
+                  .slice(
+                    currentTestimonialIndex,
+                    currentTestimonialIndex + itemsPerView
+                  )
                   .map((testimonial, index) => (
                     <div
                       key={index}
@@ -383,7 +406,10 @@ const PayingUpPages = () => {
                           </h3>
                           <div className="flex text-orange-500">
                             {[...Array(testimonial.rating)].map((_, i) => (
-                              <Icons.Star key={i} className="w-4 h-4 fill-current" />
+                              <Icons.Star
+                                key={i}
+                                className="w-4 h-4 fill-current"
+                              />
                             ))}
                           </div>
                         </div>
@@ -406,18 +432,24 @@ const PayingUpPages = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {payingUpDetails.faqs.faQMetaData.map((faq, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
                   onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
                 >
                   <h3 className="text-xl font-semibold mb-3 text-white flex justify-between items-center cursor-pointer">
                     {faq.question}
                     <Icons.ChevronDown
-                      className={`w-5 h-5 transition-transform ${openFaq === index ? "rotate-180" : ""}`}
+                      className={`w-5 h-5 transition-transform ${
+                        openFaq === index ? "rotate-180" : ""
+                      }`}
                     />
                   </h3>
-                  <div className={`overflow-hidden transition-all ${openFaq === index ? "block" : "hidden"}`}>
+                  <div
+                    className={`overflow-hidden transition-all ${
+                      openFaq === index ? "block" : "hidden"
+                    }`}
+                  >
                     <p className="text-gray-300">{faq.answer}</p>
                   </div>
                 </div>
@@ -435,11 +467,16 @@ const PayingUpPages = () => {
               Refund Policies
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {payingUpDetails.refundPolicies.refundPoliciesMetaData.map((policy, index) => (
-                <div key={index} className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20">
-                  <p className="text-gray-300">{policy}</p>
-                </div>
-              ))}
+              {payingUpDetails.refundPolicies.refundPoliciesMetaData.map(
+                (policy, index) => (
+                  <div
+                    key={index}
+                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                  >
+                    <p className="text-gray-300">{policy}</p>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </section>
@@ -453,40 +490,56 @@ const PayingUpPages = () => {
               Terms & Conditions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {payingUpDetails.tacs.termAndConditionsMetaData.map((term, index) => (
-                <div key={index} className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20">
-                  <p className="text-gray-300">{term}</p>
-                </div>
-              ))}
+              {payingUpDetails.tacs.termAndConditionsMetaData.map(
+                (term, index) => (
+                  <div
+                    key={index}
+                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                  >
+                    <p className="text-gray-300">{term}</p>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </section>
       )}
 
-      {/* Contact Footer */}
-      <section className="py-12 px-4 bg-gradient-to-r from-orange-600 to-orange-500">
+      {/* Need Help */}
+      <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold mb-8 text-center text-white">
-            Need Help?
+          <h2 className="text-3xl font-bold mb-8  text-orange-500">
+            Need Help
           </h2>
-          <div className="flex justify-center gap-8">
-            <a
-              href={`mailto:${payingUpDetails.paymentDetails.ownerEmail}`}
-              className="bg-black text-orange-500 py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
-            >
-              <Icons.Mail className="w-6 h-6" />
-              <span>{payingUpDetails.paymentDetails.ownerEmail}</span>
-            </a>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20">
+              <a
+                href={`mailto:${payingUpDetails.paymentDetails.ownerEmail}`}
+                className=" text-orange-500  rounded-lg font-bold   shadow-xl inline-flex items-center space-x-3 text-lg"
+              >
+                <Icons.Mail className="w-6 h-6" />
+                <span>{payingUpDetails.paymentDetails.ownerEmail}</span>
+              </a>
+            </div>
+            <div className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20">
             <a
               href={`tel:${payingUpDetails.paymentDetails.ownerPhone}`}
-              className="bg-black text-orange-500 py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
+              className=" text-orange-500  font-bold shadow-xl inline-flex items-center space-x-3 text-lg"
             >
               <Icons.Phone className="w-6 h-6" />
               <span>{payingUpDetails.paymentDetails.ownerPhone}</span>
             </a>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Contact Footer */}
+
+      <PageFooter/>
+      {/* <section className="py-12 px-4 bg-gradient-to-r from-orange-600 to-orange-500">
+
+      </section> */}
     </div>
   );
 };

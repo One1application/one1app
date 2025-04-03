@@ -24,7 +24,7 @@ const AudienceTableComponent = ({ data }) => {
   const itemsPerPage = 10;
 
   // State for sorting and dropdown visibility
-  const [sortDirection, setSortDirection] = useState("alphabetical");
+  const [sortDirection, setSortDirection] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Reference for clicking outside
@@ -51,18 +51,51 @@ const AudienceTableComponent = ({ data }) => {
     }
   };
 
-  const handleExport = async () => {
-    toast.info("Starting export...", {
+  const handleExport = () => {
+    toast('Starting export...', {
       position: "top-right",
       autoClose: 1000,
     });
 
-    setTimeout(() => {
-      toast.success("Export sent to your email!", {
+    try {
+      // Convert data to CSV format
+      const headers = ['Customer Name', 'Email', 'Phone Number', 'Purchased Products', 'Amount Spent', 'Active Subscriptions'];
+      const csvData = [
+        headers.join(','),
+        ...data.map(item => [
+          item.name.replace(/,/g, ';'),
+          item.email.replace(/,/g, ';'),
+          item.phone,
+          item.purchasedProducts.join(';'),
+          item.amountSpent,
+          item.activeSubscriptions
+        ].join(','))
+      ].join('\n');
+
+      // Create blob and download link
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `audience_export_${new Date().toLocaleDateString()}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Export completed successfully!', {
         position: "top-right",
-        autoClose: 5000,
+        autoClose: 3000,
       });
-    }, 2000);
+    } catch (error) {
+      toast.error('Export failed. Please try again.', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      console.error('Export error:', error);
+    }
   };
 
   const handleSearchChange = (e) => {

@@ -44,7 +44,7 @@ const Table = ({ data }) => {
 
   const handleEdit = (e, item) => {
     e.stopPropagation();
-    toast.info('Editing: ' + item.title);
+    toast('Editing: ' + item.title);
   };
 
   // Add sort handler
@@ -56,7 +56,7 @@ const Table = ({ data }) => {
   };
 
   const handleExport = () => {
-    toast.info('Starting export...', {
+    toast('Starting export...', {
       position: "top-right",
       autoClose: 1000,
     });

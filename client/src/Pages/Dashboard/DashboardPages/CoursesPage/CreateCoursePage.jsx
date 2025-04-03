@@ -20,6 +20,7 @@ import {
   fetchCourse,
   editCourse,
   handelUplaodFileS3,
+  getSignedVideoUrl,
 } from "../../../../services/auth/api.services";
 import { BsPlusSquareDotted } from "react-icons/bs";
 const DiscountForm = ({
@@ -215,7 +216,9 @@ const NewCoursePage = () => {
   const [videoPreviews, setVideoPreviews] = useState({});
   const [error, setError] = useState("");
   const [isCoverImageUploading, setIsCoverImageUploading] = useState(false);
-  const [testimonialImageUploading, setTestimonialImageUploading] = useState({});
+  const [testimonialImageUploading, setTestimonialImageUploading] = useState(
+    {}
+  );
   const [videoUploading, setVideoUploading] = useState({});
   // const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   // const [discounts, setDiscounts] = useState([]);
@@ -225,7 +228,10 @@ const NewCoursePage = () => {
   const [discounts, setDiscounts] = useState([]);
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState(null);
-
+  // First, let's add a state for local video previews
+  const [localVideoPreviews, setLocalVideoPreviews] = useState({});
+  // Add a new state to track filenames
+  const [videoFileNames, setVideoFileNames] = useState({});
 
   const handleDiscountSubmit = (discountData) => {
     if (discountData.id) {
@@ -400,9 +406,9 @@ const NewCoursePage = () => {
     filedata.append("file", file);
 
     // Set uploading state for this specific testimonial image
-    setTestimonialImageUploading(prev => ({
+    setTestimonialImageUploading((prev) => ({
       ...prev,
-      [index]: true
+      [index]: true,
     }));
 
     try {
@@ -429,7 +435,7 @@ const NewCoursePage = () => {
 
         // Reset file input
         if (event.target) {
-          event.target.value = '';
+          event.target.value = "";
         }
       }
     } catch (error) {
@@ -438,11 +444,11 @@ const NewCoursePage = () => {
 
       // Reset file input
       if (event.target) {
-        event.target.value = '';
+        event.target.value = "";
       }
     } finally {
       // Clear uploading state
-      setTestimonialImageUploading(prev => {
+      setTestimonialImageUploading((prev) => {
         const updated = { ...prev };
         delete updated[index];
         return updated;
@@ -533,8 +539,25 @@ const NewCoursePage = () => {
     }
   };
 
-  const handleVideoPreview = (videoSrc) => {
-    setModalVideo(videoSrc);
+  const handleVideoPreview = async (videoUrl) => {
+    try {
+      // If it's a local preview (blob URL), use it directly
+      if (videoUrl.startsWith('blob:')) {
+        setModalVideo(videoUrl);
+        return;
+      }
+
+      // For API videos, get the signed URL first
+      const response = await getSignedVideoUrl(videoUrl);
+      if (response.status === 200) {
+        setModalVideo(response.data.signedUrl);
+      } else {
+        toast.error("Failed to load video preview");
+      }
+    } catch (error) {
+      console.error("Error getting signed URL:", error);
+      toast.error("Failed to load video preview");
+    }
   };
 
   const handleCloseModal = () => {
@@ -569,22 +592,34 @@ const NewCoursePage = () => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Set uploading state for this specific video
-    setVideoUploading(prev => ({
+    // Store filename
+    setVideoFileNames(prev => ({
       ...prev,
-      [`${lessonIndex}-${videoIndex}`]: true
+      [`${lessonIndex}-${videoIndex}`]: file.name
+    }));
+
+    // Create local preview URL
+    const localPreviewUrl = URL.createObjectURL(file);
+    
+    // Update local video previews
+    setLocalVideoPreviews((prev) => ({
+      ...prev,
+      [`${lessonIndex}-${videoIndex}`]: localPreviewUrl,
+    }));
+
+    // Set uploading state for this specific video
+    setVideoUploading((prev) => ({
+      ...prev,
+      [`${lessonIndex}-${videoIndex}`]: true,
     }));
 
     try {
       // First get the upload URL from your backend
       const filedata = new FormData();
-      filedata.append("fileName", file.name); // Use file name here
-      filedata.append("fileType", file.type); // Use file type here
+      filedata.append("fileName", file.name);
+      filedata.append("fileType", file.type);
 
-      // Fetch the signed URL from the backend
       const response = await handelUplaodFileS3(filedata);
-
-      console.log("Response is", response);
 
       if (response.status === 200 && response.data.uploadURL) {
         const uploadResponse = await fetch(response.data.uploadURL, {
@@ -594,8 +629,6 @@ const NewCoursePage = () => {
             "Content-Type": file.type,
           },
         });
-        console.log("UP", uploadResponse);
-
 
         if (!uploadResponse.ok) {
           throw new Error("File upload failed");
@@ -604,18 +637,18 @@ const NewCoursePage = () => {
         // Update the form data with the video URL
         setFormData((prevState) => {
           const updatedLessons = [...prevState.lessons.lessonData];
-          updatedLessons[lessonIndex].videos[videoIndex] = uploadResponse.url; // Use the final URL from uploadResponse
+          updatedLessons[lessonIndex].videos[videoIndex] = uploadResponse.url;
           return {
             ...prevState,
             lessons: { ...prevState.lessons, lessonData: updatedLessons },
           };
         });
 
-        // Update video previews
-        setVideoPreviews((prevPreviews) => ({
-          ...prevPreviews,
-          [`${lessonIndex}-${videoIndex}`]: uploadResponse.url,
-        }));
+        // // Update video previews with the uploaded URL
+        // setVideoPreviews((prevPreviews) => ({
+        //   ...prevPreviews,
+        //   [`${lessonIndex}-${videoIndex}`]: uploadResponse.url,
+        // }));
 
         toast.success("Video uploaded successfully");
       } else {
@@ -625,13 +658,20 @@ const NewCoursePage = () => {
       console.error("Upload error:", error);
       toast.error("Video upload failed");
 
+      // Clean up local preview on error
+      setLocalVideoPreviews((prev) => {
+        const updated = { ...prev };
+        delete updated[`${lessonIndex}-${videoIndex}`];
+        return updated;
+      });
+
       // Reset file input
       if (event.target) {
-        event.target.value = '';
+        event.target.value = "";
       }
     } finally {
       // Clear uploading state
-      setVideoUploading(prev => {
+      setVideoUploading((prev) => {
         const updated = { ...prev };
         delete updated[`${lessonIndex}-${videoIndex}`];
         return updated;
@@ -659,6 +699,9 @@ const NewCoursePage = () => {
   };
 
   const handleRemoveVideo = (lessonIndex, videoIndex) => {
+    const lessonVideos = formData.lessons.lessonData[lessonIndex].videos;
+    
+    // Remove the video from formData
     setFormData((prevState) => {
       const updatedLessons = [...prevState.lessons.lessonData];
       updatedLessons[lessonIndex].videos.splice(videoIndex, 1);
@@ -668,10 +711,67 @@ const NewCoursePage = () => {
       };
     });
 
-    setVideoPreviews((prevPreviews) => {
-      const updatedPreviews = { ...prevPreviews };
-      delete updatedPreviews[`${lessonIndex}-${videoIndex}`];
-      return updatedPreviews;
+    // Cleanup old preview URLs
+    if (localVideoPreviews[`${lessonIndex}-${videoIndex}`]) {
+      URL.revokeObjectURL(localVideoPreviews[`${lessonIndex}-${videoIndex}`]);
+    }
+
+    // Reindex filenames
+    setVideoFileNames(prev => {
+      const updated = {};
+      // Copy all filenames except for the current lesson
+      Object.keys(prev).forEach(key => {
+        if (!key.startsWith(`${lessonIndex}-`)) {
+          updated[key] = prev[key];
+        }
+      });
+      
+      // Reindex the remaining filenames for this lesson
+      lessonVideos.forEach((_, index) => {
+        if (index >= videoIndex) {
+          const oldKey = `${lessonIndex}-${index + 1}`;
+          const newKey = `${lessonIndex}-${index}`;
+          if (prev[oldKey]) {
+            updated[newKey] = prev[oldKey];
+          }
+        } else {
+          const key = `${lessonIndex}-${index}`;
+          if (prev[key]) {
+            updated[key] = prev[key];
+          }
+        }
+      });
+      
+      return updated;
+    });
+
+    // Similarly reindex the video previews
+    setVideoPreviews((prev) => {
+      const updated = {};
+      // Copy all previews except for the current lesson
+      Object.keys(prev).forEach(key => {
+        if (!key.startsWith(`${lessonIndex}-`)) {
+          updated[key] = prev[key];
+        }
+      });
+      
+      // Reindex the remaining previews for this lesson
+      lessonVideos.forEach((_, index) => {
+        if (index >= videoIndex) {
+          const oldKey = `${lessonIndex}-${index + 1}`;
+          const newKey = `${lessonIndex}-${index}`;
+          if (prev[oldKey]) {
+            updated[newKey] = prev[oldKey];
+          }
+        } else {
+          const key = `${lessonIndex}-${index}`;
+          if (prev[key]) {
+            updated[key] = prev[key];
+          }
+        }
+      });
+      
+      return updated;
     });
   };
 
@@ -737,7 +837,7 @@ const NewCoursePage = () => {
 
     const coverImageFile = new FormData();
     coverImageFile.append("file", file);
-    coverImageFile.append("isPrivateFile", false)
+    coverImageFile.append("isPrivateFile", false);
 
     setIsCoverImageUploading(true);
 
@@ -749,8 +849,8 @@ const NewCoursePage = () => {
           ...prev,
           coverImage: {
             ...prev.coverImage,
-            value: response.data.url
-          }
+            value: response.data.url,
+          },
         }));
         setImagePreview(response.data.url);
         toast.success("Image uploaded successfully");
@@ -764,7 +864,7 @@ const NewCoursePage = () => {
 
       // Reset file input
       if (e.target) {
-        e.target.value = '';
+        e.target.value = "";
       }
     } finally {
       setIsCoverImageUploading(false);
@@ -809,8 +909,8 @@ const NewCoursePage = () => {
                 isActive: courseData.testimonials?.isActive || false,
                 testimonialsMetaData: courseData.testimonials
                   ?.testimonialsMetaData || [
-                    { name: "", profilePic: null, description: "", rating: "" },
-                  ],
+                  { name: "", profilePic: null, description: "", rating: "" },
+                ],
               },
               courseBenefits: courseData.courseBenefits || {
                 title: "Course Benefits",
@@ -818,20 +918,25 @@ const NewCoursePage = () => {
                 benefitsMetaData: [{ emoji: "", title: "" }],
               },
               // Fix for faQ vs faqs mismatch
-              faQ: courseData.faqs || courseData.faQ || {
-                title: "Frequently Asked Questions",
-                isActive: false,
-                faQMetaData: [{ question: "", answer: "" }],
-              },
-              gallery: courseData.gallery ? {
-                title: courseData.gallery.title || "Gallery",
-                isActive: courseData.gallery.isActive || false,
-                imageMetaData: courseData.gallery.imageMetaData || Array(6).fill({ name: "", image: "" }),
-              } : {
-                title: "Gallery",
-                isActive: false,
-                imageMetaData: Array(6).fill({ name: "", image: "" }),
-              },
+              faQ: courseData.faqs ||
+                courseData.faQ || {
+                  title: "Frequently Asked Questions",
+                  isActive: false,
+                  faQMetaData: [{ question: "", answer: "" }],
+                },
+              gallery: courseData.gallery
+                ? {
+                    title: courseData.gallery.title || "Gallery",
+                    isActive: courseData.gallery.isActive || false,
+                    imageMetaData:
+                      courseData.gallery.imageMetaData ||
+                      Array(6).fill({ name: "", image: "" }),
+                  }
+                : {
+                    title: "Gallery",
+                    isActive: false,
+                    imageMetaData: Array(6).fill({ name: "", image: "" }),
+                  },
               // Fix for products structure
               products: {
                 title: courseData.products?.[0]?.title || "Products",
@@ -854,7 +959,7 @@ const NewCoursePage = () => {
               lessons: {
                 isActive: courseData.lessons?.[0]?.isActive || true,
                 lessonData: courseData.lessons?.[0]?.lessonData || [
-                  { lessonName: "", videos: [""] }
+                  { lessonName: "", videos: [""] },
                 ],
               },
             });
@@ -883,26 +988,30 @@ const NewCoursePage = () => {
             // Populate testimonial image previews
             if (courseData.testimonials?.testimonialsMetaData) {
               const testimonialsImgPreviews = {};
-              courseData.testimonials.testimonialsMetaData.forEach((testimonial, index) => {
-                if (testimonial.profilePic) {
-                  testimonialsImgPreviews[index] = testimonial.profilePic;
+              courseData.testimonials.testimonialsMetaData.forEach(
+                (testimonial, index) => {
+                  if (testimonial.profilePic) {
+                    testimonialsImgPreviews[index] = testimonial.profilePic;
+                  }
                 }
-              });
+              );
               setTestimonialImagePreviews(testimonialsImgPreviews);
             }
 
             // Populate video previews for lessons
             if (courseData.lessons?.[0]?.lessonData) {
               const videoPrevs = {};
-              courseData.lessons[0].lessonData.forEach((lesson, lessonIndex) => {
-                if (lesson.videos && Array.isArray(lesson.videos)) {
-                  lesson.videos.forEach((video, videoIndex) => {
-                    if (video) {
-                      videoPrevs[`${lessonIndex}-${videoIndex}`] = video;
-                    }
-                  });
+              courseData.lessons[0].lessonData.forEach(
+                (lesson, lessonIndex) => {
+                  if (lesson.videos && Array.isArray(lesson.videos)) {
+                    lesson.videos.forEach((video, videoIndex) => {
+                      if (video) {
+                        videoPrevs[`${lessonIndex}-${videoIndex}`] = video;
+                      }
+                    });
+                  }
                 }
-              });
+              );
               setVideoPreviews(videoPrevs);
             }
 
@@ -934,9 +1043,10 @@ const NewCoursePage = () => {
       Number(formData.price) > 0 &&
       !isQuillContentEmpty(formData.aboutThisCourse.description) &&
       // Validate that there's at least one lesson with name and video
-      formData.lessons.lessonData.some(lesson =>
-        lesson.lessonName.trim() !== "" &&
-        lesson.videos.some(video => video !== "")
+      formData.lessons.lessonData.some(
+        (lesson) =>
+          lesson.lessonName.trim() !== "" &&
+          lesson.videos.some((video) => video !== "")
       )
       // &&
       // formData.refundPolicies.refundPoliciesMetaData.length > 0 &&
@@ -970,30 +1080,32 @@ const NewCoursePage = () => {
       let transformedData = { ...formData };
 
       // Handle testimonials data - check if all fields are empty
-      const hasAnyTestimonialData = formData.testimonials.testimonialsMetaData.some(
-        item => (item.name && item.name.trim() !== "") ||
-          (item.description && item.description.trim() !== "") ||
-          item.profilePic
-      );
+      const hasAnyTestimonialData =
+        formData.testimonials.testimonialsMetaData.some(
+          (item) =>
+            (item.name && item.name.trim() !== "") ||
+            (item.description && item.description.trim() !== "") ||
+            item.profilePic
+        );
 
       if (!hasAnyTestimonialData) {
         // If all testimonials are empty, set to null
         transformedData.testimonials = {
           ...transformedData.testimonials,
-          testimonialsMetaData: []
+          testimonialsMetaData: [],
         };
       }
 
       // Handle gallery data - check if all fields are empty
       const hasAnyGalleryData = formData.gallery.imageMetaData.some(
-        item => (item.name && item.name.trim() !== "") || item.image
+        (item) => (item.name && item.name.trim() !== "") || item.image
       );
 
       if (!hasAnyGalleryData) {
         // If all gallery items are empty, set to null
         transformedData.gallery = {
           ...transformedData.gallery,
-          imageMetaData: []
+          imageMetaData: [],
         };
       }
 
@@ -1003,13 +1115,16 @@ const NewCoursePage = () => {
         isActive: transformedData.lessons.isActive,
         lessonData: transformedData.lessons.lessonData,
       };
-      transformedData.products = transformedData.products.isActive ? [{
-        title: transformedData.products.title,
-        isActive: transformedData.products.isActive,
-        productMetaData: transformedData.products.productMetaData,
-      }] : [];
+      transformedData.products = transformedData.products.isActive
+        ? [
+            {
+              title: transformedData.products.title,
+              isActive: transformedData.products.isActive,
+              productMetaData: transformedData.products.productMetaData,
+            },
+          ]
+        : [];
       transformedData.faqs = transformedData.faQ;
-
 
       let response;
       if (isEditMode) {
@@ -1153,7 +1268,9 @@ const NewCoursePage = () => {
             <div className="bg-white p-4 sm:p-5 rounded-lg w-full max-w-3xl relative">
               <button
                 className="absolute top-1 right-3 text-white bg-red-500 rounded-full cursor-pointer"
-                onClick={handleCloseModal}
+                onClick={() => {
+                  setModalVideo(null);
+                }}
               >
                 <XCircle size={30} />
               </button>
@@ -1161,6 +1278,8 @@ const NewCoursePage = () => {
                 src={modalVideo}
                 controls
                 className="w-full h-auto rounded-md"
+                controlsList="nodownload"
+                onContextMenu={(e) => e.preventDefault()}
               />
             </div>
           </div>
@@ -1192,8 +1311,7 @@ const NewCoursePage = () => {
                 {/* Event Title Section */}
                 <div>
                   <label className="block text-orange-500 text-[15px] mb-4">
-                    What is your event?{" "}
-                    <span className="text-red-500">*</span>
+                    What is your event? <span className="text-red-500">*</span>
                   </label>
                   <div className="space-y-4">
                     <input
@@ -1315,24 +1433,25 @@ const NewCoursePage = () => {
                           <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
                           <span>Uploading cover image...</span>
                         </div>
-                      ) : imagePreview && (
-                        <div className="mt-4 flex flex-col items-center">
-                          {/* Image Preview */}
-                          <img
-                            src={imagePreview}
-                            alt="Cover Preview"
-                            className="w-32 h-32 rounded-lg border border-orange-500/20 mb-2"
-                          />
-                          {/* Delete Button */}
-                          <button
-                            onClick={handleDeleteImage}
-                            className="text-sm text-orange-500 bg-[#1a1b1e] border border-orange-500/20 px-4 py-1 rounded-lg hover:bg-orange-500/20 transition-colors"
-                          >
-                            Delete Image
-                          </button>
-                        </div>
+                      ) : (
+                        imagePreview && (
+                          <div className="mt-4 flex flex-col items-center">
+                            {/* Image Preview */}
+                            <img
+                              src={imagePreview}
+                              alt="Cover Preview"
+                              className="w-32 h-32 rounded-lg border border-orange-500/20 mb-2"
+                            />
+                            {/* Delete Button */}
+                            <button
+                              onClick={handleDeleteImage}
+                              className="text-sm text-orange-500 bg-[#1a1b1e] border border-orange-500/20 px-4 py-1 rounded-lg hover:bg-orange-500/20 transition-colors"
+                            >
+                              Delete Image
+                            </button>
+                          </div>
+                        )
                       )}
-
                     </div>
                   )}
                 </div>
@@ -1373,7 +1492,8 @@ const NewCoursePage = () => {
                           { list: "bullet" },
                           { list: "check" },
                         ],
-                        ["link", "image"],
+                        // ["link", "image"],
+                        ["link"],
                         [{ size: ["small", false, "large", "huge"] }],
                         [{ color: [] }, { background: [] }],
                         [{ font: [] }],
@@ -1559,7 +1679,7 @@ const NewCoursePage = () => {
                   {/* Enable Syllabus Section */}
                   <div className="flex justify-between items-center">
                     <label className="block text-orange-500 text-[15px]">
-                      Enable Syllabus  <span className="text-red-500">*</span>
+                      Enable Syllabus <span className="text-red-500">*</span>
                     </label>
                     {/* <input
                       type="checkbox"
@@ -1604,35 +1724,39 @@ const NewCoursePage = () => {
                                 className="flex flex-col w-full"
                               >
                                 <div className="flex items-center w-full">
-                                  <input
-                                    type="file"
-                                    accept="video/*"
-                                    onChange={(e) =>
-                                      handleVideoUpload(
-                                        lessonIndex,
-                                        videoIndex,
-                                        e
-                                      )
-                                    }
-                                    className="w-full px-4 py-2 bg-[#1a1b1e] text-gray-300 rounded-lg border border-orange-500/20 focus:outline-none focus:border-orange-500/50 text-sm"
-                                  />
-                                  {videoPreviews[
+                                  <div className="relative w-full">
+                                    <input
+                                      type="file"
+                                      accept="video/*"
+                                    
+                                      onChange={(e) => handleVideoUpload(lessonIndex, videoIndex, e)}
+                                      className="w-full px-4 py-2 bg-[#1a1b1e] text-gray-300 rounded-lg border border-orange-500/20 focus:outline-none focus:border-orange-500/50 text-sm"
+                                    />
+                                    {/* {videoFileNames[`${lessonIndex}-${videoIndex}`] && (
+                                      <span className="absolute left-[110px] top-1/2 transform -translate-y-1/2 text-gray-400">
+                                        {videoFileNames[`${lessonIndex}-${videoIndex}`]}
+                                      </span>
+                                    )} */}
+                                  </div>
+                                  {(localVideoPreviews[
                                     `${lessonIndex}-${videoIndex}`
-                                  ] && (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleVideoPreview(
-                                            videoPreviews[
+                                  ] || 
+                                  videoPreviews[`${lessonIndex}-${videoIndex}`]) && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleVideoPreview(
+                                          localVideoPreviews[
                                             `${lessonIndex}-${videoIndex}`
-                                            ]
-                                          )
-                                        }
-                                        className="ml-2 text-orange-500 hover:text-orange-400"
-                                      >
-                                        View
-                                      </button>
-                                    )}
+                                          ] || 
+                                          videoPreviews[`${lessonIndex}-${videoIndex}`]
+                                        )
+                                      }
+                                      className="ml-2 text-orange-500 hover:text-orange-400"
+                                    >
+                                      View
+                                    </button>
+                                  )}
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -1644,7 +1768,9 @@ const NewCoursePage = () => {
                                   </button>
                                 </div>
 
-                                {videoUploading[`${lessonIndex}-${videoIndex}`] && (
+                                {videoUploading[
+                                  `${lessonIndex}-${videoIndex}`
+                                ] && (
                                   <div className="flex items-center gap-2 text-orange-500 mt-2">
                                     <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
                                     <span>Uploading video...</span>
@@ -1692,7 +1818,7 @@ const NewCoursePage = () => {
                       }
                       className="w-full h-11 bg-[#1a1b1e] text-gray-300 rounded-lg border border-orange-500/20 px-4 text-sm focus:outline-none focus:border-orange-500/50"
                     >
-                      <option value="" >Select validity</option>
+                      <option value="">Select validity</option>
                       {validity.map((validityOption) => (
                         <option key={validityOption} value={validityOption}>
                           {validityOption}
@@ -2216,14 +2342,26 @@ const NewCoursePage = () => {
                     Please fill in all required fields marked with * before
                     submitting:
                     <ul className="list-disc ml-5 mt-2">
-                      {formData.title === "" && <li>Course title is required</li>}
-                      {(formData.price === "" || isNaN(Number(formData.price)) || Number(formData.price) <= 0) &&
-                        <li>Price must be a valid number greater than 0</li>}
-                      {isQuillContentEmpty(formData.aboutThisCourse.description) && <li>Course description is required</li>}
-                      {!formData.lessons.lessonData.some(lesson =>
-                        lesson.lessonName.trim() !== "" &&
-                        lesson.videos.some(video => video !== "")
-                      ) && <li>At least one lesson with name and video is required</li>}
+                      {formData.title === "" && (
+                        <li>Course title is required</li>
+                      )}
+                      {(formData.price === "" ||
+                        isNaN(Number(formData.price)) ||
+                        Number(formData.price) <= 0) && (
+                        <li>Price must be a valid number greater than 0</li>
+                      )}
+                      {isQuillContentEmpty(
+                        formData.aboutThisCourse.description
+                      ) && <li>Course description is required</li>}
+                      {!formData.lessons.lessonData.some(
+                        (lesson) =>
+                          lesson.lessonName.trim() !== "" &&
+                          lesson.videos.some((video) => video !== "")
+                      ) && (
+                        <li>
+                          At least one lesson with name and video is required
+                        </li>
+                      )}
                     </ul>
                   </p>
                 </div>
@@ -2234,10 +2372,11 @@ const NewCoursePage = () => {
                 <button
                   type="button"
                   onClick={handelCreateCourseRequest}
-                  className={`px-8 py-3 ${validateForm() && !isSubmitting
-                    ? "bg-orange-500 hover:bg-orange-600 text-white font-medium"
-                    : "bg-gray-500 text-gray-300 cursor-not-allowed"
-                    } rounded-lg shadow-lg shadow-orange-500/30 transition-all transform hover:scale-105 flex items-center gap-2`}
+                  className={`px-8 py-3 ${
+                    validateForm() && !isSubmitting
+                      ? "bg-orange-500 hover:bg-orange-600 text-white font-medium"
+                      : "bg-gray-500 text-gray-300 cursor-not-allowed"
+                  } rounded-lg shadow-lg shadow-orange-500/30 transition-all transform hover:scale-105 flex items-center gap-2`}
                   disabled={!validateForm() || isSubmitting}
                 >
                   {isSubmitting ? (

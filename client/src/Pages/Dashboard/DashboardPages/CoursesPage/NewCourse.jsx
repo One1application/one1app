@@ -8,6 +8,7 @@ import  toast  from "react-hot-toast";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import SigninModal from "../../../../components/Modal/SigninModal";
 import { useAuth } from "../../../../context/AuthContext";
+import PageFooter from "../PayingUpPage/PageFooter";
 
 const NewCourse = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -539,6 +540,9 @@ const NewCourse = () => {
           </button>
         </div>
       </section> */}
+
+       {/* page footer */}
+       <PageFooter/>
     </div>
   );
 };
