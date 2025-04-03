@@ -23,6 +23,7 @@ import { Calendar } from "lucide-react";
 import { fetchBalanceDetails } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
+import { Link } from "react-router-dom";
 const WalletPage = () => {
 
   const { userDetails } = useAuth();
@@ -92,7 +93,7 @@ const WalletPage = () => {
     }
 
     setIsModalOpen(false);
-    toast.info("Processing your withdrawal...");
+    toast("Processing your withdrawal...");
 
     setTimeout(() => {
       toast.success(`Successfully withdrew Rs${withdrawAmount}!`);
@@ -341,9 +342,9 @@ const WalletPage = () => {
                 amount!
               </p>
             </div>
-            <button className="bg-orange-600 hover:bg-orange-700 py-2 px-3 text-sm rounded-md text-white font-poppins">
+            <Link to='/dashboard/kyc-setting' className="bg-orange-600 hover:bg-orange-700 py-2 px-3 text-sm rounded-md text-white font-poppins">
               Update
-            </button>
+            </Link>
           </div>
         </div>
       )}

@@ -119,7 +119,7 @@ const PayingUpTable = ({ data }) => {
   }, [sortedData, page]);
 
   const handleExport = () => {
-    toast.info('Starting export...', {
+    toast('Starting export...', {
       position: "top-right",
       autoClose: 1000,
     });

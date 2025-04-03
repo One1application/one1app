@@ -134,7 +134,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
               <p className="text-sm text-gray-400">
-                © 2025 OneApp. All rights reserved.
+                © 2025 contiks one hub technology private limited (OneApp). All rights reserved.
               </p>
               <p className="text-sm text-gray-400">Made with ❤️ in Bharat</p>
             </div>

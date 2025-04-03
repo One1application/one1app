@@ -900,7 +900,7 @@ const CreatePayUp = () => {
                     >
                       Fixed Price
                     </button>
-                    <button
+                    {/* <button
                       type="button"
                       className={`px-6 py-3 rounded-lg font-medium transition-all ${
                         priceType === "variable"
@@ -910,7 +910,7 @@ const CreatePayUp = () => {
                       onClick={() => setPriceType("variable")}
                     >
                       Variable Price
-                    </button>
+                    </button> */}
                   </div>
 
                   <div>
@@ -1142,7 +1142,8 @@ const CreatePayUp = () => {
                         { list: "bullet" },
                         { list: "check" },
                       ],
-                      ["link", "image"],
+                      // ["link", "image"],
+                      ["link",],
                       [{ size: ["small", false, "large", "huge"] }],
                       [{ color: [] }, { background: [] }],
                       [{ font: [] }],
