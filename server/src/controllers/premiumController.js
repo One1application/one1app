@@ -3,23 +3,21 @@ import { premiumSchema } from "../types/premiumValidation.js"; // Import Zod val
 
 export async function createContent(req, res) {
     try {
-        // Destructure required fields from request body
         const { title, category, unlockPrice, content } = req.body;
-        const user = req.user; // Get authenticated user (ensure middleware is set up)
+        const user = req.user;
 
-        // Validate input using Zod
         const validatedData = premiumSchema.parse(req.body);
 
-        // Create content in the database
+        
         await prisma.content.create({
             data: {
                 title,
                 category,
-                unlockPrice: parseFloat(unlockPrice), // Ensure price is a float
+                unlockPrice: parseFloat(unlockPrice),
                 text: content?.text || null,
                 images: content?.images || [],
                 files: content?.files || [],
-                createdById: user.id, // Associate with user
+                createdById: user.id, 
             }
         });
 
