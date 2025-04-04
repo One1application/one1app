@@ -149,7 +149,7 @@ export const userCustomers = async (req, res) => {
             val.purchasedBy.forEach((ticket) => {
                 customers.push({
                     ...ticket.purchaser,
-                    product: "Paying Up"
+                    product: "Course"
                 })
             })
         })
@@ -157,7 +157,7 @@ export const userCustomers = async (req, res) => {
             val.boughtBy.forEach((ticket) => {
                 customers.push({
                     ...ticket.boughtBy,
-                    product: "Paying Up"
+                    product: "Telegram"
                 })
             })
         })
