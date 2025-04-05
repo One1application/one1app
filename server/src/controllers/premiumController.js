@@ -1,4 +1,4 @@
-import { prisma } from "../prismaClient"; // Ensure Prisma client is configured
+import prisma from "../db/dbClient.js"; // Ensure Prisma client is configured
 import { premiumSchema } from "../types/premiumValidation.js"; // Import Zod validation schema
 
 export async function createContent(req, res) {
