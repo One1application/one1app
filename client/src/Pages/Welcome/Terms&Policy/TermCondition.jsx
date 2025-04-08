@@ -70,7 +70,7 @@ const TermCondition = () => {
               "Us" and "Our") having its registered office at F-G 103, Plot no.
               15, Orient Residency, Murlipura,Jaipur- 302039, Rajasthan through
               its "Website", "Contiks", or "Platform" (which individually and
-              collectively refers to the website https://Contiks.com and any
+              collectively refers to the website {<a className="text-orange-500" target="_blank" href="https://one1app.com/">https://one1app.com/</a>} and any
               other linked pages or its application services (including mobile
               application or mobile site services).
             </p>
