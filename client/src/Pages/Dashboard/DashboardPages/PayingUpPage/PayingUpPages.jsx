@@ -321,7 +321,7 @@ const PayingUpPages = () => {
               <img
                 src={payingUpDetails.coverImage.value}
                 alt="Course Cover"
-                className="w-full h-[400px] object-cover"
+                className="w-full h-[450px] max-md:h-auto object-cover"
               />
             </div>
           </div>
