@@ -17,7 +17,7 @@ const TermCondition = () => {
             <h1 className="text-5xl font-extrabold text-orange-500 tracking-tight">
             Term & COnditions
               <span className="block text-xl text-gray-300 mt-3 font-normal">
-                Contiks One Hub Technology Pvt. Ltd.
+                one1app One Hub Technology Pvt. Ltd.
               </span>
               <p className="text-sm text-gray-400">
                 Effective Date: 5 February 2025
@@ -65,11 +65,11 @@ const TermCondition = () => {
               "Yourself" or "User"; and (ii) "End-User"; ("Users" and "End
               Users" collectively referred to as "they", "them" or "their")
               hereby agree to these T&Cs for accessing or availing the Services
-              offered (directly or indirectly) by Contiks One Hub Technology
+              offered (directly or indirectly) by one1app One Hub Technology
               Private Limited (hereinafter referred to as "the Company", "We",
               "Us" and "Our") having its registered office at F-G 103, Plot no.
               15, Orient Residency, Murlipura,Jaipur- 302039, Rajasthan through
-              its "Website", "Contiks", or "Platform" (which individually and
+              its "Website", "one1app", or "Platform" (which individually and
               collectively refers to the website {<a className="text-orange-500" target="_blank" href="https://one1app.com/">https://one1app.com/</a>} and any
               other linked pages or its application services (including mobile
               application or mobile site services).
@@ -84,7 +84,7 @@ const TermCondition = () => {
             </p>
             <p>
               Please read the T&Cs carefully before using the services of
-              Contiks or accessing any material, information through the
+              one1app or accessing any material, information through the
               Platform. By accessing the Platform as a User or End-User or using
               any version of the Website, the User / End-User signify that they
               have read, understood and agreed to be legally bound by these T&Cs
@@ -92,9 +92,9 @@ const TermCondition = () => {
               referenced herein and/or available by hyperlink on the Website.
             </p>
             <p>
-              You understand and agree that Contiks will treat your use of the
+              You understand and agree that one1app will treat your use of the
               Services (as defined below) as acceptance of these T&C from such
-              point of usage. You agree that Contiks reserves the right to
+              point of usage. You agree that one1app reserves the right to
               update the Services from time to time.
             </p>
             <p>
@@ -125,11 +125,11 @@ const TermCondition = () => {
               consent to the Company to access their Personal Information for
               the purpose of rendering the Services or otherwise, they agree
               that they are interested in availing the Services or other
-              features of the Platform offered by Contiks in accordance with
+              features of the Platform offered by one1app in accordance with
               these T&Cs.
             </p>
             <p>
-              Please be aware that Contiks is not an educational institution,
+              Please be aware that one1app is not an educational institution,
               marketplace, or content provider and that the User of Our services
               is neither Our employee nor agent.
             </p>
@@ -199,12 +199,12 @@ const TermCondition = () => {
             </p>
             <p>
               "Landing Page" shall mean the unique webpage created through the
-              software solution offered by Contiks and dedicated to You where
+              software solution offered by one1app and dedicated to You where
               Your services, offerings, courses, programmes and other Content
               are curated and made available to the End Users by the You.
             </p>
             <p>
-              "Party" or "Parties" refers to Contiks, the Users and the End
+              "Party" or "Parties" refers to one1app, the Users and the End
               Users.
             </p>
             <p>
@@ -252,9 +252,9 @@ const TermCondition = () => {
             </p>
             <p>
               Users and End Users represent and warrant that at the time of
-              registering with Contiks for availing the Services offered by the
+              registering with one1app for availing the Services offered by the
               Company or at the time of making any payments in relation to the
-              Content through Contiks, they are competent and eligible to enter
+              Content through one1app, they are competent and eligible to enter
               into a legally binding agreement (including the T&Cs, conditions,
               obligations, affirmations, representations, warranties set forth
               in the T&Cs) under Applicable Law and to be bound by such
@@ -280,7 +280,7 @@ const TermCondition = () => {
               4. Services and User Guidelines
             </h3>
             <p>
-              The Services provided by Contiks to the Users shall be provided by
+              The Services provided by one1app to the Users shall be provided by
               the Company and the Company shall only provide the Services for
               the purpose of enabling You to inter alia build Your own Landing
               Page. These Services include:
@@ -312,7 +312,7 @@ const TermCondition = () => {
               </li>
             </ul>
             <p>
-              Contiks strives to provide You with access to digital
+              one1app strives to provide You with access to digital
               products/tools in the form of a software as a service ("Software")
               that gives You the opportunity to create or share content and
               generate or access links/ sub-domains to third party social media
@@ -354,7 +354,7 @@ const TermCondition = () => {
               be required by the Company as provided under the Privacy Policy.
             </p>
             <p>
-              To use the Platform, You are required to create a Contiks user
+              To use the Platform, You are required to create a one1app user
               account (hereinafter "Account"). The said registration is free of
               charge. Only persons satisfying the eligibility criteria as
               provided under clause 2 (Eligibility) of these T&Cs may register
@@ -380,8 +380,8 @@ const TermCondition = () => {
               all activities that occur under your password or Account. You
               shall take appropriate and reasonable measures to prevent third
               parties from obtaining knowledge of this password. You agree to
-              notify Contiks immediately of any unauthorized use of Your Account
-              or any other breach of security and request Contiks to block the
+              notify one1app immediately of any unauthorized use of Your Account
+              or any other breach of security and request one1app to block the
               Account. We shall not be liable for any loss to You owing any
               unauthorized access in your Account.
             </p>
@@ -399,7 +399,7 @@ const TermCondition = () => {
               The ownership of the Content, Your Landing Page, the pricing for
               registration or access to such Landing Page by any End User and
               the overall management of Your Account (excluding the
-              technological reliance on Contiks), including any interactions
+              technological reliance on one1app), including any interactions
               between You and End Users, the services offered therein is solely
               decided by You, and accordingly, You at all times, shall be solely
               responsible for all of the aforesaid.
@@ -531,7 +531,7 @@ const TermCondition = () => {
             </p>
             <p>
               The Service Fee and Platform fee paid by You shall be governed by
-              the Contiks Refund & Cancellation Policy as maybe available on the
+              the one1app Refund & Cancellation Policy as maybe available on the
               website from time to time.
             </p>
             <p>
@@ -544,7 +544,7 @@ const TermCondition = () => {
             <h3 className="text-2xl font-bold text-orange-500 mt-8">
               7. Warranties
             </h3>
-            <p>You represent and warrant to Contiks that:</p>
+            <p>You represent and warrant to one1app that:</p>
             <ul className="list-disc pl-6 space-y-3">
               <li>
                 You are the owner or the license holder of all copyright in the
@@ -579,7 +579,7 @@ const TermCondition = () => {
               <li>
                 For clarity, You retain your ownership rights in Your
                 User-generated Content. However, you grant a limited license to
-                Contiks to make available the User-generated Content on the
+                one1app to make available the User-generated Content on the
                 Platform.
               </li>
               <li>
@@ -647,7 +647,7 @@ const TermCondition = () => {
               Services Content.
             </p>
             <p>
-              Contiks is the sole owners of the underlying software and source
+              one1app is the sole owners of the underlying software and source
               code associated with the Software, Services and the Platform and
               all the trademarks, copyright and any other intellectual property
               rights of any nature therein.
@@ -700,10 +700,10 @@ const TermCondition = () => {
               10. Waiver
             </h3>
             <p>
-              Any failure on the part of Contiks to require performance of any
+              Any failure on the part of one1app to require performance of any
               provision of these T&Cs shall not affect its right to full
               performance thereof at any time thereafter, and any waiver by
-              Contiks of a breach of any provision hereof shall not constitute a
+              one1app of a breach of any provision hereof shall not constitute a
               waiver of a similar breach in the future or of any other breach.
             </p>
 
@@ -784,7 +784,7 @@ const TermCondition = () => {
               RESEARCH REGARDING THE SERVICES AND THE INFORMATION AVAILABLE ON
               THE WEBSITE. YOU HEREBY ACKNOWLEDGE AND AGREE THAT THE COMPANY
               SHALL NOT BE LIABLE FOR ANY CONTENT OR MATERIALS PUBLISHED BY YOU
-              THROUGH THE SERVICES. CONTIKS IS NOT RESPONSIBLE FOR ENSURING THAT
+              THROUGH THE SERVICES. one1app IS NOT RESPONSIBLE FOR ENSURING THAT
               YOUR CONTENT IS CONSISTENT WITH APPICABLE LAWS. WE DO NOT SELECT
               OR MODIFY YOUR CONTENT AND DO NOT MARKET, PROMOTE OR UNDERTAKE
               TARGETTED ADVERTISEMENT WITH RESPECT TO YOUR CONTENT IN ANY MANNER
@@ -806,7 +806,7 @@ const TermCondition = () => {
             <p>
               THE MATERIAL AS PART OF THE SERVICES AND AS APPEARING ON THE
               WEBSITE COULD INCLUDE TECHNICAL, TYPOGRAPHICAL, OR PHOTOGRAPHIC
-              ERRORS. CONTIKS DOES NOT WARRANT THAT ANY OF THE MATERIAL ON THE
+              ERRORS. one1app DOES NOT WARRANT THAT ANY OF THE MATERIAL ON THE
               WEBSITE IS ACCURATE, COMPLETE OR CURRENT.
             </p>
 
@@ -840,7 +840,7 @@ const TermCondition = () => {
             </p>
 
             <p>
-              Contiks shall not be responsible for any disclosure or leakage of
+              one1app shall not be responsible for any disclosure or leakage of
               Confidential Information of any Party due to negligence or failure
               on their part to practice safe computing. The obligations under
               this clause 12 (Confidentiality) shall continue to be applicable
@@ -881,7 +881,7 @@ const TermCondition = () => {
             </p>
             <p>
               You hereby agree to install the updates from time to time and
-              acknowledge that Contiks will only be able to provide Account
+              acknowledge that one1app will only be able to provide Account
               support for the Services if You ensure to install all updates upon
               receiving notifications thereof when using the Services.
             </p>
@@ -926,7 +926,7 @@ const TermCondition = () => {
             <p>
               The Users and End Users may not assign these T&Cs or any of their
               rights and obligations hereunder to any third party, without prior
-              written consent of Contiks. Subject to the foregoing, these T&Cs
+              written consent of one1app. Subject to the foregoing, these T&Cs
               will be binding on your legal heirs, successors and permitted
               assignees. Any assignment or transfer in violation of this clause
               will be deemed null and void. The Company may assign these T&Cs
@@ -951,7 +951,7 @@ const TermCondition = () => {
               logo) related to You and/or the Landing Page in its marketing of
               the Service pursuant to good business practices. You may present
               Yourself in the Landing Page and in public as a user of the
-              Software/Service as per these T&C and other policies of Contiks.
+              Software/Service as per these T&C and other policies of one1app.
               However, You may not present Yourself as acting on behalf of the
               Company.
             </p>
@@ -992,7 +992,7 @@ const TermCondition = () => {
             </h3>
 
             <p>
-              Contiks or associated third-parties shall not be liable for any
+              one1app or associated third-parties shall not be liable for any
               shortfall, failure or delay in performance of any Service or
               obligations under these T&Cs or any other terms of any policies
               framed by the Company and agreed by the User if, and to the extent
@@ -1029,7 +1029,7 @@ const TermCondition = () => {
             <p>
               In furtherance to the Consumer Protection Act 2019 and the
               Consumer Protection (E-Commerce) rules 2020 (“Act”), the Nodal
-              Officer of Contiks (as appointed under the Act) as the case may be
+              Officer of one1app (as appointed under the Act) as the case may be
               approached in writing or through email to the below:
             </p>
 
