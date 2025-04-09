@@ -12,8 +12,8 @@ services:
       - .env.production
     networks:
       - app-network
-    stdin_open: true
-    tty: true # Allows input for OTP verification
+    stdin_open: true # Allow interactive input
+    tty: true # Keeps the container running and interactive
 
 networks:
   app-network:
