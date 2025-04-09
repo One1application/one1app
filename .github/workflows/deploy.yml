@@ -46,6 +46,12 @@ jobs:
             git clone https://github.com/One1application/one1app.git . || { echo "Failed to clone repository"; exit 1; }
           fi
 
+          # Navigate to deployment directory
+          cd "$DEPLOY_PATH" || { echo "Failed to navigate to $DEPLOY_PATH"; exit 1; }
+
+          # Mark directory as safe for Git
+          git config --global --add safe.directory "$DEPLOY_PATH" || { echo "Failed to mark directory as safe"; exit 1; }
+
           # Pull latest changes
           echo "Pulling latest code..."
           git fetch origin main
