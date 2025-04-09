@@ -74,9 +74,9 @@ jobs:
           echo "Deployment completed successfully!"
           ENDSSH
 
-      # - name: Verify Deployment
-      #   run: |
-      #     echo "Waiting for services to start..."
-      #     sleep 30  # Give services time to start
-      #     curl -I http://ec2-43-204-90-158.ap-south-1.compute.amazonaws.com:5173 || { echo "Validation failed: Service is not reachable"; exit 1; }
-      #     echo "Validation successful: Service is up and running."
+      - name: Verify Deployment
+        run: |
+          echo "Waiting for services to start..."
+          sleep 30  # Give services time to start
+          curl -I http://ec2-43-204-90-158.ap-south-1.compute.amazonaws.com:5173 || { echo "Validation failed: Service is not reachable"; exit 1; }
+          echo "Validation successful: Service is up and running."
