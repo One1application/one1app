@@ -43,7 +43,7 @@ jobs:
           # Check for existing Git repo or initialize one
           if [ ! -d ".git" ]; then
             echo "Git repository not found. Cloning repository..."
-            git clone git@github.com:your-username/your-repo.git . || { echo "Failed to clone repository"; exit 1; }
+            git clone https://github.com/One1application/one1app.git . || { echo "Failed to clone repository"; exit 1; }
           fi
 
           # Pull latest changes
