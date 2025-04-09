@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  bot:
+    build:
+      context: ./server
+      dockerfile: docker/production/BotDockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.production
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true # Allows input for OTP verification
+
+networks:
+  app-network:
+    driver: bridge
