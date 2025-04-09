@@ -4,7 +4,7 @@ import Navbar from "../../../components/NavBar/NavBar";
 import Footer from "../../../components/Footer/Footer";
 import personImage from "../../../assets/Student.png";
 import AboutImg from "../../../assets/aboutImg.png";
-import TestimonialImg from "../../../assets/User_2.png";
+import TestimonialImg from "../../../assets/User.png";
 import FeatureImg from "../../../assets/effortless monetizw.webp";
 import FeatureImg2 from "../../../assets/Bost Engagement.webp";
 import FeatureImg3 from "../../../assets/Flexible scheduling.jpg";
