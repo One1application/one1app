@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,13 +18,13 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 43.204.90.158 >> ~/.ssh/known_hosts
+          ssh-keyscan -H ec2-43-204-90-158.ap-south-1.compute.amazonaws.com >> ~/.ssh/known_hosts
 
       - name: Deploy to Server
         env:
           DEPLOY_PATH: /home/one1app
-          DEPLOY_HOST: 43.204.90.158
-          DEPLOY_USER: root
+          DEPLOY_HOST: ec2-43-204-90-158.ap-south-1.compute.amazonaws.com
+          DEPLOY_USER: ubuntu
         run: |
           ssh $DEPLOY_USER@$DEPLOY_HOST "bash -s" << 'ENDSSH'
           # Set deployment path explicitly
@@ -71,5 +72,5 @@ jobs:
         run: |
           echo "Waiting for services to start..."
           sleep 30  # Give services time to start
-          curl -I http://43.204.90.158:5173 || { echo "Validation failed: Service is not reachable"; exit 1; }
+          curl -I http://ec2-43-204-90-158.ap-south-1.compute.amazonaws.com:5173 || { echo "Validation failed: Service is not reachable"; exit 1; }
           echo "Validation successful: Service is up and running."
