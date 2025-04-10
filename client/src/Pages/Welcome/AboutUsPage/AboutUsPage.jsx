@@ -31,7 +31,7 @@ const AboutUsPage = () => {
               Elevating creators to thrive and earn effortlessly.
             </p>
             <p className="leading-relaxed text-gray-300">
-              At OnTop, we are focused on elevating creators by offering a
+              At One1App, we are focused on elevating creators by offering a
               platform that makes the path from passion to profit effortless.
               Our tools promote growth, inspire creativity, and cultivate trust
               within communities, all while maintaining a user-friendly and
