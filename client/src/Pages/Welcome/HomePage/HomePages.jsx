@@ -31,7 +31,7 @@ const HeroSection = ({ email, setEmail }) => (
         <span className="italic text-orange-500">Content</span>
       </h1>
       <p className="text-gray-400 text-base md:text-lg">
-        Launch your paid subscriptions, events, courses, payment pages, <br />{" "}
+        Launch your paid subscriptions, events, courses, payingup pages, <br />{" "}
         and many more for your audience.
       </p>
       <div className="flex items-center gap-0 border border-orange-500 rounded-full p-1 bg-[#191919] w-full md:w-4/5 lg:w-3/4">

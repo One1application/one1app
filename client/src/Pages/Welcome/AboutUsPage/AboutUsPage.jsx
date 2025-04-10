@@ -72,8 +72,8 @@ const AboutUsPage = () => {
             </div>
 
             <div className="absolute inset-0 flex items-center justify-center gap-4">
-              <div className="relative w-full max-w-xl aspect-video">
-                <div className="absolute left-0 top-[-60px] w-52 p-4 bg-white rounded-lg shadow-lg">
+              <div className="relative w-full max-w-xl aspect-video  ">
+                {/* <div className="absolute left-0 top-[-60px] w-52 p-4 bg-white rounded-lg shadow-lg">
                   <span className="block text-xs text-blue-500 font-medium mb-2">
                     Popular
                   </span>
@@ -87,22 +87,22 @@ const AboutUsPage = () => {
                   <button className="px-4 py-2 text-white bg-blue-500 rounded-full text-sm">
                     Take Lesson
                   </button>
-                </div>
+                </div> */}
 
-                <div className="absolute right-0 top-4 w-48">
+                <div className="absolute left-20 max-md:left-[-150px] max-md:mt-6 top-0 w-56">
                   <img
                     src={Vision3}
                     alt="Learning session"
-                    className="absolute w-80 h-30 object-cover rounded-lg shadow-md ml-[-100px] top-[10px]"
+                    className="absolute w-80 h-30 object-cover rounded-lg shadow-md  top-[10px]"
                   />
-                  <img
+                  {/* <img
                     src={Vision4}
                     alt="Profile"
                     className="absolute top-[80px] right-[80px] w-12 h-12 rounded-full border-2 border-white"
-                  />
+                  /> */}
                 </div>
 
-                <div className="absolute left-2 bottom-0  w-52 ">
+                <div className="absolute max-lg:hidden max-md:block left-2 bottom-0  w-52 ">
                   <img
                     src={Vision1}
                     alt="Social interaction"
@@ -110,11 +110,11 @@ const AboutUsPage = () => {
                   />
                 </div>
 
-                <div className="absolute right-4 bottom-4 w-48">
+                <div className="absolute  right-4 bottom-4 w-48">
                   <img
                     src={Vision2}
                     alt="Study session"
-                    className="absolute w-80 h-30 object-cover rounded-lg shadow-md ml-[-80px] top-[-110px]"
+                    className="absolute w-80 h-30 object-cover rounded-lg shadow-md md:ml-[-80px] top-[-110px]"
                   />
                 </div>
               </div>
