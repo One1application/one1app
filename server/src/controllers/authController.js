@@ -2,11 +2,8 @@ import prisma from '../db/dbClient.js';
 import { signupValidation, signUpOtpValidation } from '../types/signupValidation.js';
 import { signInOtpValidation, signInValidation } from "../types/signinValidation.js";
 import jwt from 'jsonwebtoken';
-import sendOtp from '../utils/sendOtp.js';
-
-const otpStorage = {};
-
-
+import {sendOtp} from '../utils/sendOtp.js';
+import bcrypt from 'bcrypt'
 
 
 export const register = async (req, res) => {
@@ -26,7 +23,7 @@ export const register = async (req, res) => {
             socialMedia
         });
 
-        const existingUserByEmail = await prisma.user.findFirst({
+        const existingUserByEmail = await prisma.User.findFirst({
             where: {
                 email: email
             }
@@ -36,7 +33,7 @@ export const register = async (req, res) => {
             return res.status(400).json({ message: "A user with this email already exists." });
         }
 
-        const existingUserByPhone = await prisma.user.findFirst({
+        const existingUserByPhone = await prisma.User.findFirst({
             where: {
                 phone: phoneNumber
             }
@@ -46,13 +43,7 @@ export const register = async (req, res) => {
             return res.status(400).json({ message: "A user with this phone number already exists." });
         }
 
-        await prisma.$transaction(async (prisma) => {
-
-            // const otp = await sendOtp(phoneNumber);
-
-            // if(!otp) return res.status(500).json({ message: "Error sending OTP" });
-
-            const newUser = await prisma.user.create({
+            const newUser = await prisma.User.create({
                 data: {
                     email,
                     phone: phoneNumber,
@@ -73,13 +64,13 @@ export const register = async (req, res) => {
             }
 
 
-            // otpStorage[newUser.id] = { otp, phone:phoneNumber };
-
+            
+            await sendOtp(phoneNumber);
             res.status(201)
                 .json({
                     message: "OTP sent to phone number"
                 })
-        })
+        // })
 
     } catch (error) {
         console.error("Error registering user", error);
@@ -97,26 +88,25 @@ export const verifyOtpForRegister = async (req, res) => {
             otp
         });
         
-        const user = await prisma.user.findFirst({
-            where: {
-                phone: phoneNumber
+        const otpStored = await prisma.Otp.findFirst({
+            where:{
+                phoneNumber: phoneNumber
             }
         })
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        if(!otpStored){
+            return res.status(404).json({message: "No otp found"});
         }
+        const otpValid=await bcrypt.compare(otp,otpStored.phoneCodeHash)
+        if(!otpValid){
+            return res.status(400).json({message: "Invalid OTP"});
+        }
+        if(otpValid){
+            console.log("otp validate",otpValid);
+       }
 
-        console.log(otpStorage);
-        
 
-
-        // const userId = Object.keys(otpStorage).find(id => {
-        //     if(otpStorage[id].otp === otp.toString() && otpStorage[id].phone === phoneNumber) return id;
-        // });
-        if(otp!=='000000') return res.status(400).json({ message: "Invalid OTP" });
-
-        const updatedUser = await prisma.user.update({
+        const updatedUser = await prisma.User.update({
             where: {
                 phone: phoneNumber
             },
@@ -129,9 +119,7 @@ export const verifyOtpForRegister = async (req, res) => {
             return res.status(500).json({ message: "Internal server error" });
         }
 
-        // delete otpStorage[userId];
-
-
+       
         const token = jwt.sign({
             id: updatedUser.id,
             role: updatedUser.role
@@ -144,11 +132,18 @@ export const verifyOtpForRegister = async (req, res) => {
                 token
             })
 
+            const deletedOtp = await prisma.Otp.delete({
+                where: {
+                  phoneNumber: phoneNumber, 
+                },
+              });
+              
+              console.log("Deleted OTP:", deletedOtp);
+
     } catch (error) {
         console.error("Error verifying otp for register", error);
-        res
-            .status(500)
-            .json({ message: "Internal Server Error." })
+        
+        res.status(500).json({ message: "Internal Server Error." })
     }
 }
 
@@ -162,7 +157,7 @@ export async function signIn(req, res) {
             phoneNumber
         })
 
-        const userExist = await prisma.user.findFirst({
+        const userExist = await prisma.User.findFirst({
             where: {
                 OR: [
                     { email },
@@ -178,10 +173,7 @@ export async function signIn(req, res) {
             })
         }
 
-        const otp = await sendOtp(userExist.phone);
-        otpStorage[userExist.id] = { otp, phone: userExist.phone };
-
-
+        await sendOtp(phoneNumber);
         return res.status(200).json({
             success: true,
             message: "OTP sent to phone number"
@@ -213,22 +205,22 @@ export async function verifyOtpForLogin(req, res) {
         })
 
         
-        const userExist = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    { email },
-                    { phone: phoneNumber }
-                ]
+        const otpStored = await prisma.Otp.findFirst({
+            where:{
+                phoneNumber: phoneNumber
             }
         })
         
-        if (!userExist) {
-            
-            return res.status(404).json({
-                success: false,
-                message: "User doesn't exists."
-            })
+        if(!otpStored){
+            return res.status(404).json({message: "No otp found"});
         }
+        const otpValid=await bcrypt.compare(otp,otpStored.phoneCodeHash)
+        if(!otpValid){
+            return res.status(400).json({message: "Invalid OTP"});
+        }
+        if(otpValid){
+            console.log("otp validate");
+       }
         // const userId = Object.keys(otpStorage).find(id => {
         //     if(otpStorage[id].otp === otp.toString() && otpStorage[id].phone === phoneNumber) return id;
         // });
@@ -236,20 +228,40 @@ export async function verifyOtpForLogin(req, res) {
 
         // delete otpStorage[userId];
 
-        if(otp!=='000000') return res.status(400).json({ message: "Invalid OTP" });
+        
+        const updatedUser = await prisma.User.update({
+            where: {
+                phone: phoneNumber,
+                email:email
+            },
+            data: {
+                verified: true
+            }
+        })
+
+        if (!updatedUser) {
+            return res.status(500).json({ message: "Internal server error" });
+        }
 
         const token = jwt.sign({
-            id: userExist.id,
-            role: userExist.role
+            id: updatedUser.id,
+            role: updatedUser.role
         }, process.env.JWT_SECRET, { expiresIn: '13d' });
 
-
+        const deletedOtp = await prisma.Otp.delete({
+            where: {
+              phoneNumber: phoneNumber, 
+            },
+          });
+          
+          console.log("Deleted OTP:", deletedOtp);
+          
 
         return res.status(200).json({
             success: true,
             token,
         },)
-
+        
 
     } catch (error) {
 
