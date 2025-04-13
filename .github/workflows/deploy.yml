@@ -3,7 +3,7 @@ name: Deploy to VPS Server
 on:
   push:
     branches:
-      - main
+      - vishal
 
 jobs:
   deploy:
@@ -19,6 +19,15 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ec2-43-204-90-158.ap-south-1.compute.amazonaws.com >> ~/.ssh/known_hosts
+
+          -name: Apply Prisma Migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}  # Use the DATABASE_URL secret for database connection
+        run: |
+          # SSH into the VPS server and apply Prisma migrations
+          ssh $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && \
+            npx prisma migrate deploy && \
+            npx prisma generate" || { echo "Prisma migration failed"; exit 1; }
 
       - name: Deploy to Server
         env:
