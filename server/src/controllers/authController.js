@@ -265,13 +265,13 @@ export async function verifyOtpForLogin(req, res) {
             role: updatedUser.role
         }, process.env.JWT_SECRET, { expiresIn: '13d' });
 
-        // const deletedOtp = await prisma.Otp.delete({
-        //     where: {
-        //       phoneNumber: phoneNumber, 
-        //     },
-        //   });
+        const deletedOtp = await prisma.Otp.delete({
+            where: {
+              phoneNumber: phoneNumber, 
+            },
+          });
           
-        //   console.log("Deleted OTP:", deletedOtp);
+          console.log("Deleted OTP:", deletedOtp);
           
 
         return res.status(200).json({
