@@ -25,26 +25,43 @@ export const register = async (req, res) => {
 
         const existingUserByEmail = await prisma.User.findFirst({
             where: {
-                email: email
+                email: email,
+                verified:true
             }
         })
 
-        if (existingUserByEmail) {
+        if (existingUserByEmail ) {
             return res.status(400).json({ message: "A user with this email already exists." });
         }
 
         const existingUserByPhone = await prisma.User.findFirst({
             where: {
-                phone: phoneNumber
+                phone: phoneNumber,
+                verified:true
             }
         })
 
         if (existingUserByPhone) {
             return res.status(400).json({ message: "A user with this phone number already exists." });
         }
-
-            const newUser = await prisma.User.create({
-                data: {
+            
+            const newUser = await prisma.User.upsert({
+                where:{
+                    email:email,
+                    phone:phoneNumber
+                },
+                update: {
+                    email,
+                    phone: phoneNumber,
+                    name,
+                    role: role,
+                    verified: false,
+                    goals,
+                    heardAboutUs,
+                    socialMedia,
+                   
+                },
+                create:{
                     email,
                     phone: phoneNumber,
                     name,
@@ -55,9 +72,9 @@ export const register = async (req, res) => {
                     socialMedia,
                     wallet: {
                         create: {}
-                    }
-                }
-            })
+                  }
+            }
+           } )
 
             if (!newUser) {
                 return res.status(500).json({ message: "Internal server error" });
@@ -248,13 +265,13 @@ export async function verifyOtpForLogin(req, res) {
             role: updatedUser.role
         }, process.env.JWT_SECRET, { expiresIn: '13d' });
 
-        const deletedOtp = await prisma.Otp.delete({
-            where: {
-              phoneNumber: phoneNumber, 
-            },
-          });
+        // const deletedOtp = await prisma.Otp.delete({
+        //     where: {
+        //       phoneNumber: phoneNumber, 
+        //     },
+        //   });
           
-          console.log("Deleted OTP:", deletedOtp);
+        //   console.log("Deleted OTP:", deletedOtp);
           
 
         return res.status(200).json({
