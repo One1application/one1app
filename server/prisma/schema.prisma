@@ -323,7 +323,7 @@ model PremiumContent {
   files              String[]  
   code               String?   
   discountPercentage Float?    
-  expirationDate     DateTime? 
+  expirationDate     String? 
   createdById        String    
   createdBy          User      @relation(fields: [createdById], references: [id])
   createdAt          DateTime  @default(now())  // Timestamp for product creation
