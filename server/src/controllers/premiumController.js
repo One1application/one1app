@@ -1,22 +1,26 @@
-import prisma from "../db/dbClient.js"; // Ensure Prisma client is configured
+import prisma from "../db/dbClient.js"; 
 import { premiumSchema } from "../types/premiumValidation.js"; // Import Zod validation schema
 
 export async function createContent(req, res) {
     try {
-        const { title, category, unlockPrice, content } = req.body;
+        const { title, category, unlockPrice, 'content.text': contentText,'content.image': contentImage,'content.file': contentFile,'discountCodes.code': discountCode,'discountCodes.discountPercentage': discountPercentage,'discountCodes.expirationDate': expirationDate } = req.body;
         const user = req.user;
-
-        const validatedData = premiumSchema.parse(req.body);
-
+        console.log("req.body:",req.body);
+       
+        // const validatedData = premiumSchema.parse(req.body);
+        // console.log("validate data :",validatedData);
         
-        await prisma.content.create({
+        await prisma.PremiumContent.create({
             data: {
                 title,
                 category,
                 unlockPrice: parseFloat(unlockPrice),
-                text: content?.text || null,
-                images: content?.images || [],
-                files: content?.files || [],
+                text: contentText || null,
+                images: contentImage ?[contentImage] : [],
+                files: contentFile ? [contentFile] : [],
+                code:discountCode|| null,
+                discountPercentage:parseFloat(discountPercentage) || null ,
+                expirationDate:expirationDate || null ,
                 createdById: user.id, 
             }
         });
@@ -32,5 +36,102 @@ export async function createContent(req, res) {
             success: false,
             message: "Error in creating content."
         });
+    }
+}
+
+export const getPremiumContent = async (req,res)=>{
+    const { contentId } = req.params; 
+  
+  try {
+    const userId = req.user.id; 
+
+    // Check user has access to the premium content
+    const access = await prisma.PremiumContentAccess.findFirst({
+      where: {
+        userId: userId,
+        contentId: contentId,
+        expiryDate: {
+          gte: new Date(), // Check if the access is still valid (not expired)
+        },
+      },
+    });
+
+    if (!access) {
+      return res.status(403).json({
+        success: false,
+        message: "You don't have access to this premium content.",
+      });
+    }
+
+    //  content if the user can access it
+    const content = await prisma.PremiumContent.findUnique({
+      where: {
+        id: contentId,
+      },
+    });
+
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        message: "Content not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: content,
+    });
+  } catch (error) {
+    console.error("Error fetching content:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve premium content",
+      error: error.message,
+    });
+  }
+}
+
+export const createPremiumAccess = async (req,res)=>{
+    const { userId, contentId, expiryDate } = req.body;
+    console.log(req.body);
+    
+  
+    try {
+      // user already have access or not
+      const hasAccess = await prisma.PremiumContentAccess.findFirst({
+        where: {
+          userId: userId,
+          contentId: contentId,
+        },
+      });
+  
+      if (hasAccess) {
+        return res.status(400).json({
+          success: false,
+          message: "User already has access to this content.",
+        });
+      }
+  
+      // Create a new access record
+      const newAccess = await prisma.PremiumContentAccess.create({
+        data: {
+          userId: userId,
+          contentId: contentId,
+          expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),  //currently for 30 days
+        },
+      });
+  
+      res.status(201).json({
+        success: true,
+        message: "Premium access granted successfully.",
+        data: newAccess,
+      });
+    } catch (error) {
+      console.error("Error granting access:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to grant premium content access.",
+        error: error.message,
+      });
     }
 }
