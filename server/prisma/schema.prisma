@@ -49,6 +49,8 @@ model User {
   kycRecords            kycRecords?
   BankAccounts          BankDetails[]
   upiIds                UPI[]
+  premiumContent        PremiumContent[]
+  premiumAccess         PremiumContentAccess[]
 }
 
 model Otp {
@@ -309,3 +311,31 @@ model TelegramSubscription {
   orderId    String?
   createdAt   DateTime @default(now())
 }
+
+model PremiumContent {
+
+  id                 String    @id @default(uuid())  // Unique UUID for the product
+  title              String    
+  category           String    
+  unlockPrice        Float    
+  text               String?   
+  images             String[]  
+  files              String[]  
+  code               String?   
+  discountPercentage Float?    
+  expirationDate     DateTime? 
+  createdById        String    
+  createdBy          User      @relation(fields: [createdById], references: [id])
+  createdAt          DateTime  @default(now())  // Timestamp for product creation
+  access             PremiumContentAccess[]
+  }
+
+  model PremiumContentAccess {
+    userId           String
+    contentId        String
+    purchasedAt      DateTime          @default(now())
+    expiryDate       DateTime?
+    user             User              @relation( fields:[userId],references:[id] )
+    premiumContent   PremiumContent    @relation( fields:[contentId], references:[id])
+    @@id([userId,contentId])
+  }
