@@ -24,7 +24,7 @@ export async function createContent(req, res) {
         
   try { 
      // Upload images to ImageKit and get URLs
-    //  for (let file of files) {
+     for (let file of files) {
       const isImage = file.mimetype.startsWith('image/');
       const uploadResponse = await uploadOnImageKit(file.path, 'premium-content', false);
 
@@ -32,7 +32,7 @@ export async function createContent(req, res) {
         imageUrls.push(uploadResponse.url); // Store image URLs
       } else {
         fileUrls.push(uploadResponse.url); // Store non-image file URLs
-      }
+      }}
     
 
     await prisma.PremiumContent.create({
