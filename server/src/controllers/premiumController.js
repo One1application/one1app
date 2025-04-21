@@ -1,7 +1,7 @@
 import prisma from "../db/dbClient.js"; 
 import { premiumSchema } from "../types/premiumValidation.js"; // Import Zod validation schema
 import { upload } from '../config/multer.js'; 
-import { uploadOnImageKit } from '../config/imagekit.js'; // assuming you have the ImageKit upload function
+import { uploadOnImageKit } from '../config/imagekit.js'; 
 
 
 
@@ -31,7 +31,7 @@ export async function createContent(req, res) {
       if (isImage) {
         imageUrls.push(uploadResponse.url); // Store image URLs
       } else {
-        fileUrls.push(uploadResponse.url); // Store non-image file URLs
+        fileUrls.push(uploadResponse.url); // Storee file URLs
       }}
     
 
