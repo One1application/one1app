@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet  ,Navigate} from "react-router-dom";
+import { Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import SignInPage from "./Pages/Authentication/SigninPage/SignInPage";
 import SignUpPage from "./Pages/Authentication/SignupPage/SignUpPage";
@@ -45,19 +45,24 @@ import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedR
 import { useAuth } from "./context/AuthContext.jsx";
 import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
 const App = () => {
-
-  const { userRole , authenticated, logout , loading } = useAuth(); 
+  const { userRole, authenticated, logout, loading } = useAuth();
 
   return (
     <>
-      <Toaster
-        reverseOrder={false}
-
-      />
+      <Toaster reverseOrder={false} />
 
       <Routes>
         {/* Welcome Page */}
-        <Route path="/" element={ authenticated && userRole === "Creator" ? <Navigate to="/dashboard" /> : <HomePages />} />
+        <Route
+          path="/"
+          element={
+            authenticated && userRole === "Creator" ? (
+              <Navigate to="/dashboard" />
+            ) : (
+              <HomePages />
+            )
+          }
+        />
         <Route path="plugins" element={<PluginsPage />} />
         <Route path="TelegramsPages" element={<TelegramsPages />} />
         <Route path="/about-us" element={<AboutUsPage />} />
@@ -68,13 +73,11 @@ const App = () => {
         {/* <Route path="/refund-cancellation" element={<RefundCancellation />} /> */}
         <Route path="/TermCondition" element={<TermCondition />} />
 
-
         {/* Authentication Pages */}
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
 
         <Route path="/" element={<AuthenticatedRoutes />}>
-        
           {/* Dashboard Pages */}
           <Route path="dashboard" element={<DashboardPage />}>
             <Route path="" element={<HomePage />} />
@@ -86,7 +89,6 @@ const App = () => {
             <Route path="webinar" element={<WebinarPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="telegram" element={<TelegramPage />} />
-            <Route path="locked-content" element={<LockedContentPage />} />
             <Route path="discord" element={<DiscordPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="superlinks" element={<SuperLinkPage />} />
@@ -96,6 +98,7 @@ const App = () => {
             <Route path="withdrawal" element={<WithdrawalPage />} />
             <Route path="all-transactions" element={<AllTransactionsPage />} />
             <Route path="kyc-setting" element={<KYCpage />} />
+            <Route path="locked-content" element={<LockedContentPage />} />
           </Route>
 
           {/* Sub-Pages for App-Specific Routes */}
@@ -108,36 +111,25 @@ const App = () => {
               path="create-premium-content"
               element={<CreateLockedContentPage />}
             />
-            
 
             <Route path="edit-course" element={<CreateCoursePage />} />
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
-
-           
-          </Route >
-        
+          </Route>
         </Route>
 
-
         {/* </Route> */}
-        <Route path="app" element={<Outlet />}> 
+        <Route path="app" element={<Outlet />}>
           <Route path="paying-up" element={<PayingUpPages />} />
           <Route path="course" element={<NewCourse />} />
           <Route path="webinar" element={<WebinarPages />} />
           <Route path="telegram" element={<TelegramFormPrev />} />
 
           <Route path="course/lessons" element={<LessonsPage />} />
-        
         </Route>
-        
-        
-        
-
       </Routes>
     </>
   );
 };
 
 export default App;
-

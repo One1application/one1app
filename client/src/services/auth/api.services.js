@@ -119,6 +119,12 @@ export const createPayUpContent = async (data) => {
   );
   return response;
 };
+
+export const createLockedContent = async (data) => {
+  const response = await servicesAxiosInstance.post("/premium/create-content", data);
+  return response;
+};
+
 export const createNewWebinarRequest = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/webinar/create-webinar",
