@@ -1,23 +1,48 @@
 import prisma from "../db/dbClient.js"; 
 import { premiumSchema } from "../types/premiumValidation.js"; // Import Zod validation schema
+import { upload } from '../config/multer.js'; 
+import { uploadOnImageKit } from '../config/imagekit.js'; 
+
+
 
 export async function createContent(req, res) {
-    try {
+   
         const { title, category, unlockPrice, 'content.text': contentText,'content.image': contentImage,'content.file': contentFile,'discountCodes.code': discountCode,'discountCodes.discountPercentage': discountPercentage,'discountCodes.expirationDate': expirationDate } = req.body;
         const user = req.user;
         console.log("req.body:",req.body);
        
         // const validatedData = premiumSchema.parse(req.body);
         // console.log("validate data :",validatedData);
+        const { files } = req;
+
+        if (!files || files.length === 0) {
+          return res.status(400).json({ error: "No files uploaded" });
+        }
+    
+        const imageUrls = [];
+        const fileUrls = [];
         
-        await prisma.PremiumContent.create({
+  try { 
+     // Upload images to ImageKit and get URLs
+     for (let file of files) {
+      const isImage = file.mimetype.startsWith('image/');
+      const uploadResponse = await uploadOnImageKit(file.path, 'premium-content', false);
+
+      if (isImage) {
+        imageUrls.push(uploadResponse.url); // Store image URLs
+      } else {
+        fileUrls.push(uploadResponse.url); // Storee file URLs
+      }}
+    
+
+    await prisma.PremiumContent.create({
             data: {
                 title,
                 category,
                 unlockPrice: parseFloat(unlockPrice),
                 text: contentText || null,
-                images: contentImage ?[contentImage] : [],
-                files: contentFile ? [contentFile] : [],
+                images: imageUrls.length > 0 ? imageUrls : [],
+                files: fileUrls.length > 0 ? fileUrls : [],
                 code:discountCode|| null,
                 discountPercentage:parseFloat(discountPercentage) || null ,
                 expirationDate:expirationDate || null ,
