@@ -24,13 +24,13 @@ export const premiumSchema = z.object({
             })
         ).optional()
     }),
-    // discountCodes: z.array(
-    //     z.object({
-    //         code: z.string(),
-    //         discountPercentage: z.number().min(0).max(100),
-    //         expirationDate: z.string().optional()
-    //     })
-    // ).optional(),
+    discountCodes: z.array(
+        z.object({
+            code: z.string(),
+            discountPercentage: z.number().min(0).max(100),
+            expirationDate: z.string().optional()
+        })
+    ).optional(),
     // advancedSettings: z.object({
     //     isActive: z.boolean().optional(),
     //     metadata: z.array(z.string()).optional()

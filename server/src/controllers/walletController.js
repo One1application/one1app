@@ -1,7 +1,7 @@
 
 import crypto from 'crypto';
 import prisma from '../db/dbClient.js';
-import { createContact, createFundAccount, createPayout, razorpay } from '../config/razorpay.js';
+// import { createContact, createFundAccount, createPayout, razorpay } from '../config/razorpay.js';
 import { fetchPaymentDetails } from '../config/razorpay.js';
 import axios from 'axios';
 import { generateSignedUrl } from '../config/imagekit.js';

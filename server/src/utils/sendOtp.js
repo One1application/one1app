@@ -10,8 +10,8 @@ export  async function sendOtp(phoneNumber){
     const message=`Dear User,Your Verification Code is ${otp}.Please do not share this with anyone.Team Contiks One Hub Technology Pvt Ltd (One1app) Website:-one1app.com`;
     const encodeUrlMessage=encodeURIComponent(message);
    try{
-      const response=await axios.get(`https://site.ping4sms.com/api/smsapi?key=d260450575c2f60afe93097661a4b45f&route=2&sender=COHTPL&number=${phoneNumber}&sms=${encodeUrlMessage}&templateid=1707174408869151211`) 
-      console.log("otp sent successfully",response.data);
+      // const response=await axios.get(`https://site.ping4sms.com/api/smsapi?key=d260450575c2f60afe93097661a4b45f&route=2&sender=COHTPL&number=${phoneNumber}&sms=${encodeUrlMessage}&templateid=1707174408869151211`) 
+      // console.log("otp sent successfully",response.data);
 
       const hash=await bcrypt.hash(otp,10);
       const expiresAt=new Date(Date.now()+5*60*1000) 

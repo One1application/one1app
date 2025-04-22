@@ -102,6 +102,7 @@ const CreateLockedContentPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setIsSubmitting(true);
     toast.loading("Publishing content...");
 
@@ -154,6 +155,8 @@ const CreateLockedContentPage = () => {
         setIsSubmitting(false);
     }
   };
+
+
 
   return (
     <div className="min-h-screen bg-gray-900 p-8 flex items-center justify-center">

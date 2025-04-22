@@ -1,5 +1,5 @@
 import prisma from "../db/dbClient.js";
-import { razorpay } from "../config/razorpay.js";
+// import { razorpay } from "../config/razorpay.js";
 import dotenv from "dotenv";
 import { s3 } from "../config/aws.js";
 import { GetObjectCommand } from "@aws-sdk/client-s3";

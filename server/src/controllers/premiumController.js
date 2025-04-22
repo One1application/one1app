@@ -13,26 +13,26 @@ export async function createContent(req, res) {
        
         // const validatedData = premiumSchema.parse(req.body);
         // console.log("validate data :",validatedData);
-        const { files } = req;
+        // const { files } = req;
 
-        if (!files || files.length === 0) {
-          return res.status(400).json({ error: "No files uploaded" });
-        }
+        // if (!files || files.length === 0) {
+        //   return res.status(400).json({ error: "No files uploaded" });
+        // }
     
-        const imageUrls = [];
-        const fileUrls = [];
+        // const imageUrls = [];
+        // const fileUrls = [];
         
   try { 
      // Upload images to ImageKit and get URLs
-     for (let file of files) {
-      const isImage = file.mimetype.startsWith('image/');
-      const uploadResponse = await uploadOnImageKit(file.path, 'premium-content', false);
+    //  for (let file of files) {
+    //   const isImage = file.mimetype.startsWith('image/');
+    //   const uploadResponse = await uploadOnImageKit(file.path, 'premium-content', false);
 
-      if (isImage) {
-        imageUrls.push(uploadResponse.url); // Store image URLs
-      } else {
-        fileUrls.push(uploadResponse.url); // Storee file URLs
-      }}
+    //   if (isImage) {
+    //     imageUrls.push(uploadResponse.url); // Store image URLs
+    //   } else {
+    //     fileUrls.push(uploadResponse.url); // Storee file URLs
+    //   }}
     
 
     await prisma.PremiumContent.create({
@@ -41,8 +41,8 @@ export async function createContent(req, res) {
                 category,
                 unlockPrice: parseFloat(unlockPrice),
                 text: contentText || null,
-                images: imageUrls.length > 0 ? imageUrls : [],
-                files: fileUrls.length > 0 ? fileUrls : [],
+                images: contentImage ? [contentImage] : [],
+                files: contentFile ? [contentFile] : [],
                 code:discountCode|| null,
                 discountPercentage:parseFloat(discountPercentage) || null ,
                 expirationDate:expirationDate || null ,

@@ -20,4 +20,3 @@ authenticationRouter.get("/verify-token", authMiddleware, (req, res) => {
 		}
 	});
 });
-

@@ -1,4 +1,4 @@
-import { razorpay } from "../config/razorpay.js";
+// import { razorpay } from "../config/razorpay.js";
 import prisma from "../db/dbClient.js";
 import { telegramValidation } from "../types/telegramValidation.js";
 import { SchemaValidator } from "../utils/validator.js";

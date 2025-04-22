@@ -355,3 +355,8 @@ export const getSignedVideoUrl = async (videoUrl) => {
   const response = await servicesAxiosInstance.get(`/course/playVideo?url=${encodeURIComponent(videoUrl)}`);
   return response;
 };
+
+export const premiumContent =async (data)=>{
+  const response = await servicesAxiosInstance.post('/premium/create-content', data);
+  return response;
+}
