@@ -76,15 +76,23 @@ export const getPremiumContent = async (req,res)=>{
         userId: userId,
         contentId: contentId,
         expiryDate: {
-          gte: new Date(), // Check if the access is still valid (not expired)
+          gte: new Date(),   // Check if the access is  valid 
         },
       },
     });
 
     if (!access) {
+      const content = await prisma.PremiumContent.findFirst({
+        where:{contentId:contentId },
+        select:{
+          title:true,
+          unlockPrice:true
+          }
+     } )
       return res.status(403).json({
         success: false,
         message: "You don't have access to this premium content.",
+        content:content, 
       });
     }
 
