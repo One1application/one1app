@@ -160,3 +160,16 @@ export const createPremiumAccess = async (req,res)=>{
       });
     }
 }
+
+export const premiumDashboard = async (req, res) => {
+  try {
+    const response = await prisma.PremiumContent.findMany({
+      where: { createdById: req.user.id }
+    });
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching premium content:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
