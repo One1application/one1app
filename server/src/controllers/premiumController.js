@@ -89,9 +89,9 @@ export const getPremiumContent = async (req,res)=>{
           unlockPrice:true
           }
      } )
-      return res.status(403).json({
-        success: false,
-        message: "You don't have access to this premium content.",
+      return res.status(200).json({
+        success: true,
+        message: "You have limited access to this premium content.",
         content:content, 
       });
     }
