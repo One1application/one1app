@@ -7,7 +7,7 @@ export async function createWebinar(req, res) {
     
     try {
         
-        const {title, category, isOnline, venue, link, isPaid, quantity, amount, startDateTime, endDateTime, coverImage, occurrence} = req.body;
+        const {title, category, isOnline, venue, link, discount, isPaid, quantity, amount, startDateTime, endDateTime, coverImage, occurrence} = req.body;
         const user = req.user;
         
         
@@ -19,6 +19,7 @@ export async function createWebinar(req, res) {
                 isOnline,
                 venue,
                 link,
+                discount,
                 occurrence,
                 isPaid,
                 quantity: parseInt(quantity, 10),
