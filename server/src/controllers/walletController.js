@@ -482,19 +482,17 @@ export async function addBusinessInfo(req, res) {
       sebiCertificate,
     } = req.body;
 
-    if (
-      !firstName ||
-      !lastName ||
-      !businessStructure ||
-      !gstNumber ||
-      !sebiNumber ||
-      !sebiCertificate
-    ) {
+    if (!firstName || !lastName || !businessStructure) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields.",
+      });
+    }
+    if (businessStructure != "others" && !gstNumber && !sebiNumber) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields." });
     }
-
     const userExists = await prisma.user.findUnique({
       where: {
         id: user.id,
@@ -756,7 +754,17 @@ export async function addBankDetails(req, res) {
         primary: true,
       },
     });
-
+    const totalBankAccounts = await prisma.bankDetails.count({
+      where: {
+        userId: user.id,
+      },
+    });
+    if (totalBankAccounts >= 4) {
+      return res.status(400).json({
+        success: false,
+        message: "You can add only maximum 4 bank accounts or UPIs",
+      });
+    }
     if (existingBankDetails) {
       return res.status(400).json({
         success: false,
