@@ -6,7 +6,7 @@
   "scripts": {
     "dev:server": "nodemon src/index.js",
     "dev:bot": "node bot.js",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:bot\"",
+    "dev": "npm run dev:server",
     "start:server": "node src/index.js",
     "start:bot": "node bot.js"
   },

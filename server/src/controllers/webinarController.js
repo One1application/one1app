@@ -6,52 +6,49 @@ import prisma from "../db/dbClient.js";
 dotenv.config();
 
 export async function createWebinar(req, res) {
-  try {
-    const {
-      title,
-      category,
-      isOnline,
-      venue,
-      link,
-      isPaid,
-      quantity,
-      amount,
-      startDateTime,
-      endDateTime,
-      coverImage,
-      occurrence,
-    } = req.body;
-    const user = req.user;
 
-    await prisma.webinar.create({
-      data: {
-        title,
-        category,
-        coverImage,
-        isOnline,
-        venue,
-        link,
-        occurrence,
-        isPaid,
-        quantity: parseInt(quantity, 10),
-        amount: parseFloat(amount),
-        startDate: new Date(startDateTime),
-        endDate: new Date(endDateTime),
-        createdById: user.id,
-      },
-    });
+    
+    try {
+        
+        const {title, category, isOnline, venue, link, discount, isPaid, quantity, amount, startDateTime, endDateTime, coverImage, occurrence} = req.body;
+        const user = req.user;
+        
+        
+        await prisma.webinar.create({
+            data: {
+                title,
+                category,
+                coverImage,
+                isOnline,
+                venue,
+                link,
+                discount,
+                occurrence,
+                isPaid,
+                quantity: parseInt(quantity, 10),
+                amount: parseFloat(amount),
+                startDate: new Date(startDateTime),
+                endDate: new Date(endDateTime),
+                createdById: user.id
+            }
+        });
 
-    return res.status(200).json({
-      success: true,
-      message: "Webinar created successfully.",
-    });
-  } catch (error) {
-    console.log("Error in creating webinar.", error);
-    return res.status(500).json({
-      success: false,
-      message: "Error in creating webinar.",
-    });
-  }
+        
+        return res.status(200).json({
+            success: true,
+            message: "Webinar created successfully."
+        })
+
+    } catch (error) {
+        
+        console.log("Error in creating webinar.", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error in creating webinar."
+        })
+        
+    }
+
 }
 
 export async function editWebinar(req, res) {
