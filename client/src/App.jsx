@@ -44,6 +44,7 @@ import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes";
 import { useAuth } from "./context/AuthContext.jsx";
 import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
+import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
 
@@ -98,7 +99,7 @@ const App = () => {
             <Route path="withdrawal" element={<WithdrawalPage />} />
             <Route path="all-transactions" element={<AllTransactionsPage />} />
             <Route path="kyc-setting" element={<KYCpage />} />
-            <Route path="locked-content" element={<LockedContentPage />} />
+            <Route path="premium-content" element={<LockedContentPage />} />
           </Route>
 
           {/* Sub-Pages for App-Specific Routes */}
@@ -124,6 +125,7 @@ const App = () => {
           <Route path="course" element={<NewCourse />} />
           <Route path="webinar" element={<WebinarPages />} />
           <Route path="telegram" element={<TelegramFormPrev />} />
+          <Route path="premium-content" element={<LockedContentDisplayPage />} />
 
           <Route path="course/lessons" element={<LessonsPage />} />
         </Route>
