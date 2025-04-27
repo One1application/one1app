@@ -1,19 +1,17 @@
-import { useState } from "react";
 import * as Icons from "lucide-react";
-import { payingUpConfig } from "./payingUpConfig";
-import oneApp from "../../../../assets/oneapp.jpeg";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
+import oneApp from "../../../../assets/oneapp.jpeg";
+import PaymentSignUpModel from "../../../../components/Modal/PaymentSignUpModel";
+import SigninModal from "../../../../components/Modal/SigninModal";
+import { useAuth } from "../../../../context/AuthContext";
 import {
   fetchPayingUp,
   purchasePayingUp,
-  verifyPayment,
 } from "../../../../services/auth/api.services";
-import toast from "react-hot-toast";
-import SignupModal from "../../../../components/Modal/SignupModal";
-import SigninModal from "../../../../components/Modal/SigninModal";
-import { useAuth } from "../../../../context/AuthContext";
 import PageFooter from "./PageFooter";
+import { payingUpConfig } from "./payingUpConfig";
 
 const PayingUpPages = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -64,12 +62,12 @@ const PayingUpPages = () => {
     payup();
   }, [payingUpId]);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
+  // useEffect(() => {
+  //   const script = document.createElement("script");
+  //   script.src = "https://checkout.razorpay.com/v1/checkout.js";
+  //   script.async = true;
+  //   document.body.appendChild(script);
+  // }, []);
 
   const nextSlide = () => {
     setCurrentTestimonialIndex((prevIndex) =>
@@ -121,59 +119,58 @@ const PayingUpPages = () => {
   const handlePayment = async () => {
     try {
       const response = await purchasePayingUp(payingUpId);
-      const orderDetails = response.data.payload;
+      window.location.href = response.data.payload.redirectUrl;
+      // var options = {
+      //   key: import.meta.env.VITE_RAZORPAY_KEY,
+      //   amount: orderDetails.amount,
+      //   currency: orderDetails.currency,
+      //   name: "One App",
+      //   description: "Complete Your Purchase",
+      //   order_id: orderDetails.orderId,
+      //   handler: async function (response) {
+      //     console.log("payment");
+      //     const body = {
+      //       razorpay_order_id: response.razorpay_order_id,
+      //       razorpay_payment_id: response.razorpay_payment_id,
+      //       razorpay_signature: response.razorpay_signature,
+      //       webinarId: orderDetails.webinarId ? orderDetails.webinarId : null,
+      //       courseId: orderDetails.courseId ? orderDetails.courseId : null,
+      //       payingUpId: orderDetails.payingUpId
+      //         ? orderDetails.payingUpId
+      //         : null,
+      //     };
 
-      var options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY,
-        amount: orderDetails.amount,
-        currency: orderDetails.currency,
-        name: "One App",
-        description: "Complete Your Purchase",
-        order_id: orderDetails.orderId,
-        handler: async function (response) {
-          console.log("payment");
-          const body = {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            webinarId: orderDetails.webinarId ? orderDetails.webinarId : null,
-            courseId: orderDetails.courseId ? orderDetails.courseId : null,
-            payingUpId: orderDetails.payingUpId
-              ? orderDetails.payingUpId
-              : null,
-          };
+      //     try {
+      //       setIsPaymentVerifying(true);
+      //       const response = await verifyPayment(body);
+      //       if (
+      //         response.data &&
+      //         response.data.payload &&
+      //         response.data.payload.urls
+      //       ) {
+      //         setPaymentUrl(response.data.payload.urls);
+      //         setIsPurchased(true);
+      //         toast.success("Payment successful!");
+      //       }
+      //     } catch (error) {
+      //       console.error("Error while verifying payment.", error);
+      //       toast("Payment Failed");
+      //     } finally {
+      //       setIsPaymentVerifying(false);
+      //     }
+      //   },
+      //   prefill: {
+      //     name: "John Doe",
+      //     email: "john.doe@example.com",
+      //     contact: "9999999999",
+      //   },
+      //   theme: {
+      //     color: "#F37254",
+      //   },
+      // };
 
-          try {
-            setIsPaymentVerifying(true);
-            const response = await verifyPayment(body);
-            if (
-              response.data &&
-              response.data.payload &&
-              response.data.payload.urls
-            ) {
-              setPaymentUrl(response.data.payload.urls);
-              setIsPurchased(true);
-              toast.success("Payment successful!");
-            }
-          } catch (error) {
-            console.error("Error while verifying payment.", error);
-            toast("Payment Failed");
-          } finally {
-            setIsPaymentVerifying(false);
-          }
-        },
-        prefill: {
-          name: "John Doe",
-          email: "john.doe@example.com",
-          contact: "9999999999",
-        },
-        theme: {
-          color: "#F37254",
-        },
-      };
-
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
+      // const rzp1 = new window.Razorpay(options);
+      // rzp1.open();
     } catch (error) {
       if (!handleAuthError(error)) {
         toast.error("Error during payment of paying up.", error);
@@ -199,7 +196,7 @@ const PayingUpPages = () => {
 
   return (
     <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
-      <SignupModal
+      <PaymentSignUpModel
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
         onSuccessfulSignup={handleSuccessfulSignup}
@@ -522,13 +519,13 @@ const PayingUpPages = () => {
               </a>
             </div>
             <div className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20">
-            <a
-              href={`tel:${payingUpDetails.paymentDetails.ownerPhone}`}
-              className=" text-orange-500  font-bold shadow-xl inline-flex items-center space-x-3 text-lg"
-            >
-              <Icons.Phone className="w-6 h-6" />
-              <span>{payingUpDetails.paymentDetails.ownerPhone}</span>
-            </a>
+              <a
+                href={`tel:${payingUpDetails.paymentDetails.ownerPhone}`}
+                className=" text-orange-500  font-bold shadow-xl inline-flex items-center space-x-3 text-lg"
+              >
+                <Icons.Phone className="w-6 h-6" />
+                <span>{payingUpDetails.paymentDetails.ownerPhone}</span>
+              </a>
             </div>
           </div>
         </div>
@@ -536,7 +533,7 @@ const PayingUpPages = () => {
 
       {/* Contact Footer */}
 
-      <PageFooter/>
+      <PageFooter />
       {/* <section className="py-12 px-4 bg-gradient-to-r from-orange-600 to-orange-500">
 
       </section> */}

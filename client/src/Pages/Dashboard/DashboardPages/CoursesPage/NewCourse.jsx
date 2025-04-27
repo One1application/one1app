@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from "react";
 import * as Icons from "lucide-react";
-import { courseConfig } from "./courseConfig";
-import oneApp from "../../../../assets/oneapp.jpeg";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { fetchCourse, purchaseCourse, verifyPayment } from "../../../../services/auth/api.services";
-import  toast  from "react-hot-toast";
-import SignupModal from "../../../../components/Modal/SignupModal";
+import oneApp from "../../../../assets/oneapp.jpeg";
 import SigninModal from "../../../../components/Modal/SigninModal";
+import SignupModal from "../../../../components/Modal/SignupModal";
 import { useAuth } from "../../../../context/AuthContext";
+import {
+  fetchCourse,
+  purchaseCourse,
+} from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
+import { courseConfig } from "./courseConfig";
 
 const NewCourse = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -18,7 +21,7 @@ const NewCourse = () => {
   const itemsPerView = 3;
   const CurrencyIcon = Icons[courseConfig.currencySymbol];
   const [params] = useSearchParams();
-  const courseId = params.get('id');
+  const courseId = params.get("id");
   const [courseDetails, setCourseDetails] = useState(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showSigninModal, setShowSigninModal] = useState(false);
@@ -28,8 +31,10 @@ const NewCourse = () => {
   const { currentUserId } = useAuth();
 
   const handleAuthError = (error) => {
-    if (error?.response?.data?.message === "Token not found, Access Denied!" || 
-        error?.message === "Token not found, Access Denied!") {
+    if (
+      error?.response?.data?.message === "Token not found, Access Denied!" ||
+      error?.message === "Token not found, Access Denied!"
+    ) {
       setShowSignupModal(true);
       return true;
     }
@@ -60,15 +65,17 @@ const NewCourse = () => {
   };
 
   useEffect(() => {
-    const getCourse = async() => {
+    const getCourse = async () => {
       setIsLoading(true);
       try {
         const response = await fetchCourse(courseId);
         setCourseDetails(response.data.payload.course);
-        
+
         // Check if the course has been purchased
-        if (response.data.payload.course.lessons || 
-            response.data.payload.course.createdBy=== currentUserId) {
+        if (
+          response.data.payload.course.lessons ||
+          response.data.payload.course.createdBy === currentUserId
+        ) {
           setIsPurchased(true);
         }
       } catch (error) {
@@ -79,16 +86,16 @@ const NewCourse = () => {
       } finally {
         setIsLoading(false);
       }
-    }
+    };
     getCourse();
   }, [courseId, currentUserId]);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
+  // useEffect(() => {
+  //   const script = document.createElement("script");
+  //   script.src = "https://checkout.razorpay.com/v1/checkout.js";
+  //   script.async = true;
+  //   document.body.appendChild(script);
+  // }, []);
 
   const nextSlide = () => {
     setCurrentTestimonialIndex((prevIndex) =>
@@ -106,51 +113,52 @@ const NewCourse = () => {
   const handlePayment = async () => {
     try {
       const response = await purchaseCourse(courseId);
-      const orderDetails = response.data.payload;
+      window.location.href = response.data.payload.redirectUrl;
+      // const orderDetails = response.data.payload;
 
-      var options = {
-        "key": import.meta.env.VITE_RAZORPAY_KEY,
-        "amount": orderDetails.amount,
-        "currency": orderDetails.currency,
-        "name": "One App",
-        "description": "Complete Your Course Purchase",
-        "order_id": orderDetails.orderId,
-        "handler": async function (response) {
-          const body = {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            courseId: orderDetails.courseId
-          };
+      // var options = {
+      //   "key": import.meta.env.VITE_RAZORPAY_KEY,
+      //   "amount": orderDetails.amount,
+      //   "currency": orderDetails.currency,
+      //   "name": "One App",
+      //   "description": "Complete Your Course Purchase",
+      //   "order_id": orderDetails.orderId,
+      //   "handler": async function (response) {
+      //     const body = {
+      //       razorpay_order_id: response.razorpay_order_id,
+      //       razorpay_payment_id: response.razorpay_payment_id,
+      //       razorpay_signature: response.razorpay_signature,
+      //       courseId: orderDetails.courseId
+      //     };
 
-          try {
-            setIsPaymentVerifying(true);
-            const verifyResponse = await verifyPayment(body);
-            if (verifyResponse.data.success) {
-              setIsPurchased(true);
-              
-              toast.success("Payment successful!");
-              window.location.href = `/app/course/lessons?courseid=${courseId}`;
-            }
-          } catch (error) {
-            console.error("Error while verifying payment.", error);
-            toast.error("Payment Failed");
-          } finally {
-            setIsPaymentVerifying(false);
-          }
-        },
-        "prefill": {
-          "name": "John Doe",
-          "email": "john.doe@example.com",
-          "contact": "9999999999"
-        },
-        "theme": {
-          "color": "#F37254"
-        }
-      };
+      //     try {
+      //       setIsPaymentVerifying(true);
+      //       const verifyResponse = await verifyPayment(body);
+      //       if (verifyResponse.data.success) {
+      //         setIsPurchased(true);
 
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
+      //         toast.success("Payment successful!");
+      //         window.location.href = `/app/course/lessons?courseid=${courseId}`;
+      //       }
+      //     } catch (error) {
+      //       console.error("Error while verifying payment.", error);
+      //       toast.error("Payment Failed");
+      //     } finally {
+      //       setIsPaymentVerifying(false);
+      //     }
+      //   },
+      //   "prefill": {
+      //     "name": "John Doe",
+      //     "email": "john.doe@example.com",
+      //     "contact": "9999999999"
+      //   },
+      //   "theme": {
+      //     "color": "#F37254"
+      //   }
+      // };
+
+      // const rzp1 = new window.Razorpay(options);
+      // rzp1.open();
     } catch (error) {
       if (!handleAuthError(error)) {
         console.log("Error during course payment.", error);
@@ -168,21 +176,23 @@ const NewCourse = () => {
   }
 
   if (!courseDetails) {
-    return <div className="min-h-screen bg-black text-white flex items-center justify-center">
-      No course data available
-    </div>;
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        No course data available
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
-      <SignupModal 
+      <SignupModal
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
         onSuccessfulSignup={handleSuccessfulSignup}
         onSwitchToSignin={handleSwitchToSignin}
       />
 
-      <SigninModal 
+      <SigninModal
         open={showSigninModal}
         handleClose={() => setShowSigninModal(false)}
         label="Email"
@@ -231,36 +241,37 @@ const NewCourse = () => {
       </section>
 
       {/* Lessons Section - Moved to top and modified */}
-     
-        <section className="py-10 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-              Course Content
-            </h2>
-            <div className="flex justify-center">
-              {isPurchased ? (
-                <button
-                  onClick={() => navigate(`/app/course/lessons?courseid=${courseId}`)}
-                  className="bg-orange-500 hover:bg-orange-600 text-white py-4 px-10 rounded-lg font-bold transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
-                >
-                  <Icons.BookOpen className="w-6 h-6 mr-2" />
-                  <span>Go to Course Lessons</span>
-                </button>
-              ) : (
-                <div className="p-6 bg-gray-900 rounded-xl shadow-xl border border-orange-500/20 text-center">
-                  <Icons.Lock className="w-10 h-10 text-orange-500 mx-auto mb-3" />
-                  <h3 className="text-xl font-semibold mb-2 text-white">
-                    Course Content Locked
-                  </h3>
-                  <p className="text-gray-300">
-                    Purchase this course to access all lessons and materials
-                  </p>
-                </div>
-              )}
-            </div>
+
+      <section className="py-10 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
+            Course Content
+          </h2>
+          <div className="flex justify-center">
+            {isPurchased ? (
+              <button
+                onClick={() =>
+                  navigate(`/app/course/lessons?courseid=${courseId}`)
+                }
+                className="bg-orange-500 hover:bg-orange-600 text-white py-4 px-10 rounded-lg font-bold transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
+              >
+                <Icons.BookOpen className="w-6 h-6 mr-2" />
+                <span>Go to Course Lessons</span>
+              </button>
+            ) : (
+              <div className="p-6 bg-gray-900 rounded-xl shadow-xl border border-orange-500/20 text-center">
+                <Icons.Lock className="w-10 h-10 text-orange-500 mx-auto mb-3" />
+                <h3 className="text-xl font-semibold mb-2 text-white">
+                  Course Content Locked
+                </h3>
+                <p className="text-gray-300">
+                  Purchase this course to access all lessons and materials
+                </p>
+              </div>
+            )}
           </div>
-        </section>
-      
+        </div>
+      </section>
 
       {/* About Section */}
       <section className="py-10 px-4">
@@ -269,30 +280,41 @@ const NewCourse = () => {
             <h2 className="text-4xl font-bold mb-6 text-orange-500">
               About the Course
             </h2>
-            <div 
+            <div
               className="text-gray-300 mb-6 leading-relaxed text-lg"
-              dangerouslySetInnerHTML={{ __html: courseDetails.aboutThisCourse.description }}
+              dangerouslySetInnerHTML={{
+                __html: courseDetails.aboutThisCourse.description,
+              }}
             />
             {courseDetails.validity && (
               <div className="mb-6">
-                <h3 className="text-2xl font-semibold mb-3 text-orange-500">Course Validity : <span className="text-white text-xl">  {courseDetails.validity} </span> </h3>
-                
+                <h3 className="text-2xl font-semibold mb-3 text-orange-500">
+                  Course Validity :{" "}
+                  <span className="text-white text-xl">
+                    {" "}
+                    {courseDetails.validity}{" "}
+                  </span>{" "}
+                </h3>
               </div>
             )}
-            <h3 className="text-2xl font-semibold mb-3 text-orange-500"> Features : </h3>
+            <h3 className="text-2xl font-semibold mb-3 text-orange-500">
+              {" "}
+              Features :{" "}
+            </h3>
 
             <ul className="space-y-4">
-              {courseDetails.aboutThisCourse.features.map((feature, index) => (
-                feature && (
-                  <li
-                    key={index}
-                    className="flex items-center space-x-4 text-gray-200"
-                  >
-                    <Icons.CheckCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
-                    <span className="text-lg">{feature}</span>
-                  </li>
-                )
-              ))}
+              {courseDetails.aboutThisCourse.features.map(
+                (feature, index) =>
+                  feature && (
+                    <li
+                      key={index}
+                      className="flex items-center space-x-4 text-gray-200"
+                    >
+                      <Icons.CheckCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
+                      <span className="text-lg">{feature}</span>
+                    </li>
+                  )
+              )}
             </ul>
           </div>
         </div>
@@ -345,7 +367,7 @@ const NewCourse = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {courseDetails.courseBenefits.benefitsMetaData.map(
-                (benefit, index) => (
+                (benefit, index) =>
                   benefit.title && (
                     <div
                       key={index}
@@ -357,7 +379,6 @@ const NewCourse = () => {
                       </div>
                     </div>
                   )
-                )
               )}
             </div>
           </div>
@@ -442,20 +463,21 @@ const NewCourse = () => {
               {courseDetails.gallery.title}
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              {courseDetails.gallery.imageMetaData.map((image, index) => (
-                image.name && (
-                  <div
-                    key={index}
-                    className="rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
-                  >
-                    <img
-                      src={image.image || oneApp}
-                      alt={image.name}
-                      className="w-full h-48 object-cover"
-                    />
-                  </div>
-                )
-              ))}
+              {courseDetails.gallery.imageMetaData.map(
+                (image, index) =>
+                  image.name && (
+                    <div
+                      key={index}
+                      className="rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                    >
+                      <img
+                        src={image.image || oneApp}
+                        alt={image.name}
+                        className="w-full h-48 object-cover"
+                      />
+                    </div>
+                  )
+              )}
             </div>
           </div>
         </section>
@@ -469,24 +491,27 @@ const NewCourse = () => {
               {courseDetails.products[0].title}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {courseDetails.products[0].productMetaData.map((product, index) => (
-                product.name && (
-                  <a
-                    key={index}
-                    href={product.productLink}
-                    className="block p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 relative group border border-orange-500/20"
-                  >
-                    <h3 className="text-xl font-semibold mb-3 text-white">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center text-orange-500 font-semibold">
-                      {CurrencyIcon && <CurrencyIcon className="w-5 h-5 mr-1" />}
-                      <span>{product.price}</span>
-                    </div>
-                    <Icons.ArrowRight className="w-6 h-6 text-orange-500 absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </a>
-                )
-              ))}
+              {courseDetails.products[0].productMetaData.map(
+                (product, index) =>
+                  product.name && (
+                    <a
+                      key={index}
+                      href={product.productLink}
+                      className="block p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 relative group border border-orange-500/20"
+                    >
+                      <h3 className="text-xl font-semibold mb-3 text-white">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center text-orange-500 font-semibold">
+                        {CurrencyIcon && (
+                          <CurrencyIcon className="w-5 h-5 mr-1" />
+                        )}
+                        <span>{product.price}</span>
+                      </div>
+                      <Icons.ArrowRight className="w-6 h-6 text-orange-500 absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </a>
+                  )
+              )}
             </div>
           </div>
         </section>
@@ -500,25 +525,32 @@ const NewCourse = () => {
               {courseDetails.faqs.title}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {courseDetails.faqs.faQMetaData.map((faq, index) => (
-                faq.question && (
-                  <div
-                    key={index}
-                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
-                    onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
-                  >
-                    <h3 className="text-xl font-semibold mb-3 text-white flex justify-between items-center cursor-pointer">
-                      {faq.question}
-                      <Icons.ChevronDown
-                        className={`w-5 h-5 transition-transform ${openFaq === index ? "rotate-180" : ""}`}
-                      />
-                    </h3>
-                    <div className={`overflow-hidden transition-all ${openFaq === index ? "block" : "hidden"}`}>
-                      <p className="text-gray-300">{faq.answer}</p>
+              {courseDetails.faqs.faQMetaData.map(
+                (faq, index) =>
+                  faq.question && (
+                    <div
+                      key={index}
+                      className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                      onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
+                    >
+                      <h3 className="text-xl font-semibold mb-3 text-white flex justify-between items-center cursor-pointer">
+                        {faq.question}
+                        <Icons.ChevronDown
+                          className={`w-5 h-5 transition-transform ${
+                            openFaq === index ? "rotate-180" : ""
+                          }`}
+                        />
+                      </h3>
+                      <div
+                        className={`overflow-hidden transition-all ${
+                          openFaq === index ? "block" : "hidden"
+                        }`}
+                      >
+                        <p className="text-gray-300">{faq.answer}</p>
+                      </div>
                     </div>
-                  </div>
-                )
-              ))}
+                  )
+              )}
             </div>
           </div>
         </section>
@@ -541,8 +573,8 @@ const NewCourse = () => {
         </div>
       </section> */}
 
-       {/* page footer */}
-       <PageFooter/>
+      {/* page footer */}
+      <PageFooter />
     </div>
   );
 };

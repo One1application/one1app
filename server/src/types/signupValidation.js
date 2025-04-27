@@ -1,7 +1,7 @@
-import {z} from "zod" 
-
+import { z } from "zod";
 
 export const signupValidation = z.object({
+
     email: z.string().email("Invalid email format"),
     phone: z.string(),
     name: z.string(),
@@ -10,9 +10,10 @@ export const signupValidation = z.object({
     goals: z.array(z.string()),
     socialMedia: z.string().optional(),
     heardAboutUs: z.string().optional()
+
 });
 
 export const signUpOtpValidation = z.object({
-    otp: z.string().length(6, "OTP must be 6 characters long"),
-    phone: z.string()
-})
+  otp: z.string().length(6, "OTP must be 6 characters long"),
+  phone: z.string(),
+});
