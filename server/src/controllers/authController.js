@@ -13,8 +13,13 @@ import { sendOtp } from "../utils/sendOtp.js";
 
 export const register = async (req, res) => {
   try {
-    const { email, phoneNumber, name, goals, heardAboutUs, socialMedia, role } =
+    let { email, phoneNumber, name, goals, heardAboutUs, socialMedia, role } =
       req.body;
+    if (role === "User") {
+      if (!heardAboutUs) heardAboutUs = "";
+      if (!goals) goals = [];
+      if (!socialMedia) socialMedia = "";
+    }
 
     signupValidation.parse({
       email,

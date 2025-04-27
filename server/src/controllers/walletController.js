@@ -3,10 +3,9 @@ import dotenv from "dotenv";
 import { generateSignedUrl } from "../config/imagekit.js";
 import { PhonePayClient } from "../config/phonepay.js";
 import {
-    createContact,
-    createFundAccount,
-    createPayout,
-    fetchPaymentDetails,
+  createContact,
+  createFundAccount,
+  createPayout,
 } from "../config/razorpay.js";
 import prisma from "../db/dbClient.js";
 dotenv.config();
@@ -111,9 +110,9 @@ export async function verifyPayment(req, res) {
     }
 
     if (
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature ||
+      // !razorpay_order_id ||
+      // !razorpay_payment_id ||
+      // !razorpay_signature ||
       !existingUser.id
     ) {
       return res.status(400).json({
@@ -134,10 +133,11 @@ export async function verifyPayment(req, res) {
     //   });
     // }
 
-    const paymentDetails = await fetchPaymentDetails(razorpay_payment_id);
+    // const paymentDetails = await fetchPaymentDetails(razorpay_payment_id);
     const PhonePayPaymentDetails = await PhonePayClient.getOrderStatus(
       phonePayOrderId
     );
+    console.log("phonepay", PhonePayPaymentDetails);
     await prisma.$transaction(async (prisma) => {
       if (webinarId) {
         const creator = await prisma.webinar.findUnique({
@@ -257,6 +257,7 @@ export async function verifyPayment(req, res) {
       }
 
       if (payingUpId) {
+        console.log("payingUpId", payingUpId);
         const creator = await prisma.payingUp.findFirst({
           where: {
             id: payingUpId,
