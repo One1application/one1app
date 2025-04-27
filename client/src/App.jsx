@@ -44,9 +44,6 @@ import TelegramsPages from "./Pages/Welcome/Telegrams/TelegramsPages.jsx";
 import Disclaimer from "./Pages/Welcome/Terms&Policy/Disclaimer.jsx";
 import PrivacyPolicy from "./Pages/Welcome/Terms&Policy/PrivacyPolicy.jsx";
 import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
-import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes";
-import { useAuth } from "./context/AuthContext.jsx";
-import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
 import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
