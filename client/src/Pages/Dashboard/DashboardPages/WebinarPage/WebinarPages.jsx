@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import Card from "../../../../components/Cards/Card";
 import * as Icons from "lucide-react";
-import { fetchWebinar, purchaseWebinar, verifyPayment } from "../../../../services/auth/api.services";
-import { IndianRupee } from "lucide-react"; 
-import SignupModal from "../../../../components/Modal/SignupModal";
+import { IndianRupee } from "lucide-react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import PaymentSignUpModel from "../../../../components/Modal/PaymentSignUpModel";
 import SigninModal from "../../../../components/Modal/SigninModal";
-import  toast  from "react-hot-toast";
 import { useAuth } from "../../../../context/AuthContext";
+import {
+  fetchWebinar,
+  purchaseWebinar,
+} from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
-
 
 const WebinarPages = () => {
   const navigate = useNavigate();
@@ -28,11 +29,11 @@ const WebinarPages = () => {
 
   const { currentUserId } = useAuth();
 
-  
-
   const handleAuthError = (error) => {
-    if (error?.response?.data?.message === "Token not found, Access Denied!" || 
-        error?.message === "Token not found, Access Denied!") {
+    if (
+      error?.response?.data?.message === "Token not found, Access Denied!" ||
+      error?.message === "Token not found, Access Denied!"
+    ) {
       setShowSignupModal(true);
       return true;
     }
@@ -47,20 +48,19 @@ const WebinarPages = () => {
         const response = await fetchWebinar(webinarId);
         console.log(response);
         setWebinarData(response.data.payload.webinar);
-        
+
         // If link exists, set as purchased
         if (response.data.payload.webinar.link) {
           setIsPurchased(true);
           setMeetingDetails({
             ...response.data.payload.webinar.link,
-            venue: response.data.payload.webinar.venue
+            venue: response.data.payload.webinar.venue,
           });
-          
         }
       } catch (error) {
         console.error("Error in fetching webinar", error);
         if (!handleAuthError(error)) {
-          toast("Failed to fetch webinar." );
+          toast("Failed to fetch webinar.");
         }
       } finally {
         setIsLoading(false);
@@ -69,64 +69,67 @@ const WebinarPages = () => {
     fetch();
   }, [webinarId]);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
+  // useEffect(() => {
+  //   const script = document.createElement("script");
+  //   script.src = "https://checkout.razorpay.com/v1/checkout.js";
+  //   script.async = true;
+  //   document.body.appendChild(script);
+  // }, []);
 
   const handlePayment = async () => {
     try {
       const response = await purchaseWebinar(webinarId);
-      console.log(response);
-      const orderDetails = response.data.payload;
+     
+      window.location.href = response.data.payload.redirectUrl;
+      // const orderDetails = response.data.payload;
 
-      var options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY,
-        amount: orderDetails.amount,
-        currency: orderDetails.currency,
-        name: "One App",
-        description: "Complete Your Webinar Purchase",
-        order_id: orderDetails.orderId,
-        handler: async function (response) {
-          const body = {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            webinarId: orderDetails.webinarId,
-          };
+      // var options = {
+      //   key: import.meta.env.VITE_RAZORPAY_KEY,
+      //   amount: orderDetails.amount,
+      //   currency: orderDetails.currency,
+      //   name: "One App",
+      //   description: "Complete Your Webinar Purchase",
+      //   order_id: orderDetails.orderId,
+      //   handler: async function (response) {
+      //     const body = {
+      //       razorpay_order_id: response.razorpay_order_id,
+      //       razorpay_payment_id: response.razorpay_payment_id,
+      //       razorpay_signature: response.razorpay_signature,
+      //       webinarId: orderDetails.webinarId,
+      //     };
 
-          try {
-            setIsVerifying(true);
-            const verificationResponse = await verifyPayment(body);
-            if (verificationResponse.data?.payload?.webinarDetail) { 
-              setMeetingDetails(verificationResponse.data.payload.webinarDetail);
-              setIsPurchased(true);
-            }
-            
-            toast("Payment successful!");
-          } catch (error) {
-            console.error("Error while verifying payment.", error);
-            if (!handleAuthError(error)) {
-              toast("Payment Failed");
-            }
-          } finally {
-            setIsVerifying(false);
-          }
-        },
-        prefill: {
-          name: "John Doe",
-          email: "john.doe@example.com",
-          contact: "9999999999",
-        },
-        theme: {
-          color: "#F37254",
-        },
-      };
+      //     try {
+      //       setIsVerifying(true);
+      //       const verificationResponse = await verifyPayment(body);
+      //       if (verificationResponse.data?.payload?.webinarDetail) {
+      //         setMeetingDetails(
+      //           verificationResponse.data.payload.webinarDetail
+      //         );
+      //         setIsPurchased(true);
+      //       }
 
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
+      //       toast("Payment successful!");
+      //     } catch (error) {
+      //       console.error("Error while verifying payment.", error);
+      //       if (!handleAuthError(error)) {
+      //         toast("Payment Failed");
+      //       }
+      //     } finally {
+      //       setIsVerifying(false);
+      //     }
+      //   },
+      //   prefill: {
+      //     name: "John Doe",
+      //     email: "john.doe@example.com",
+      //     contact: "9999999999",
+      //   },
+      //   theme: {
+      //     color: "#F37254",
+      //   },
+      // };
+
+      // const rzp1 = new window.Razorpay(options);
+      // rzp1.open();
     } catch (error) {
       console.log("Error during webinar payment.", error);
       if (!handleAuthError(error)) {
@@ -176,14 +179,14 @@ const WebinarPages = () => {
 
   return (
     <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
-      <SignupModal 
+      <PaymentSignUpModel
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
         onSuccessfulSignup={handleSuccessfulSignup}
         onSwitchToSignin={handleSwitchToSignin}
       />
 
-      <SigninModal 
+      <SigninModal
         open={showSigninModal}
         handleClose={() => setShowSigninModal(false)}
         label="Email"
@@ -196,11 +199,9 @@ const WebinarPages = () => {
       <section className="bg-gradient-to-r from-orange-600 to-orange-500 text-white py-12 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-5xl sm:text-6xl font-bold mb-3 text-white">
-           {webinarData.title}
+            {webinarData.title}
           </h1>
-          <h2 className="text-2xl font-bold  mb-3">
-          Webinar Event 
-            </h2>
+          <h2 className="text-2xl font-bold  mb-3">Webinar Event</h2>
           {currentUserId === webinarData.createdById ? (
             <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
               <Icons.CheckCircle className="w-5 h-5 mr-2" />
@@ -216,7 +217,7 @@ const WebinarPages = () => {
               onClick={handlePayment}
               disabled={isVerifying || !webinarData.paymentEnabled}
               className={`py-4 px-10 rounded-lg font-bold transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg ${
-                !webinarData.paymentEnabled 
+                !webinarData.paymentEnabled
                   ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                   : "bg-black text-orange-500 hover:bg-gray-900"
               }`}
@@ -242,7 +243,6 @@ const WebinarPages = () => {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4">
-
         {/* Meeting Details Section - Show after successful purchase */}
         {isPurchased && meetingDetails && (
           <div className="mt-6">
@@ -251,10 +251,14 @@ const WebinarPages = () => {
                 Meeting Details
               </h2>
               <div className="space-y-4 bg-black/40 p-6 rounded-lg">
-                {(meetingDetails.meetingLink || meetingDetails.meetingId || meetingDetails.meetingPassword) && (
+                {(meetingDetails.meetingLink ||
+                  meetingDetails.meetingId ||
+                  meetingDetails.meetingPassword) && (
                   <>
-                    <h3 className="text-xl font-bold text-white">Zoom Meeting</h3>
-                    
+                    <h3 className="text-xl font-bold text-white">
+                      Zoom Meeting
+                    </h3>
+
                     {meetingDetails.meetingLink && (
                       <div className="space-y-2">
                         <label className="text-sm font-semibold text-white">
@@ -268,7 +272,11 @@ const WebinarPages = () => {
                             className="w-full bg-black/50 border-2 border-orange-500/30 rounded-lg p-3 text-sm text-white focus:outline-none"
                           />
                           <button
-                            onClick={() => navigator.clipboard.writeText(meetingDetails.meetingLink)}
+                            onClick={() =>
+                              navigator.clipboard.writeText(
+                                meetingDetails.meetingLink
+                              )
+                            }
                             className="bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700"
                           >
                             <Icons.Copy className="w-5 h-5" />
@@ -276,7 +284,7 @@ const WebinarPages = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {meetingDetails.meetingId && (
                       <div className="space-y-2">
                         <label className="text-sm font-semibold text-white">
@@ -290,7 +298,11 @@ const WebinarPages = () => {
                             className="w-full bg-black/50 border-2 border-orange-500/30 rounded-lg p-3 text-sm text-white focus:outline-none"
                           />
                           <button
-                            onClick={() => navigator.clipboard.writeText(meetingDetails.meetingId)}
+                            onClick={() =>
+                              navigator.clipboard.writeText(
+                                meetingDetails.meetingId
+                              )
+                            }
                             className="bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700"
                           >
                             <Icons.Copy className="w-5 h-5" />
@@ -298,7 +310,7 @@ const WebinarPages = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {meetingDetails.meetingPassword && (
                       <div className="space-y-2">
                         <label className="text-sm font-semibold text-white">
@@ -312,7 +324,11 @@ const WebinarPages = () => {
                             className="w-full bg-black/50 border-2 border-orange-500/30 rounded-lg p-3 text-sm text-white focus:outline-none"
                           />
                           <button
-                            onClick={() => navigator.clipboard.writeText(meetingDetails.meetingPassword)}
+                            onClick={() =>
+                              navigator.clipboard.writeText(
+                                meetingDetails.meetingPassword
+                              )
+                            }
                             className="bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700"
                           >
                             <Icons.Copy className="w-5 h-5" />
@@ -322,10 +338,12 @@ const WebinarPages = () => {
                     )}
                   </>
                 )}
-                
+
                 {meetingDetails.platformLink && (
                   <>
-                    <h3 className="text-xl font-bold text-white">Meeting Link</h3>
+                    <h3 className="text-xl font-bold text-white">
+                      Meeting Link
+                    </h3>
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-white">
                         Platform Link:
@@ -338,7 +356,11 @@ const WebinarPages = () => {
                           className="w-full bg-black/50 border-2 border-orange-500/30 rounded-lg p-3 text-sm text-white focus:outline-none"
                         />
                         <button
-                          onClick={() => navigator.clipboard.writeText(meetingDetails.platformLink)}
+                          onClick={() =>
+                            navigator.clipboard.writeText(
+                              meetingDetails.platformLink
+                            )
+                          }
                           className="bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700"
                         >
                           <Icons.Copy className="w-5 h-5" />
@@ -347,10 +369,12 @@ const WebinarPages = () => {
                     </div>
                   </>
                 )}
-                
+
                 {meetingDetails.venue && (
                   <>
-                    <h3 className="text-xl font-bold text-white">Offline Venue Address</h3>
+                    <h3 className="text-xl font-bold text-white">
+                      Offline Venue Address
+                    </h3>
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-white">
                         Venue:
@@ -363,7 +387,9 @@ const WebinarPages = () => {
                           className="w-full bg-black/50 border-2 border-orange-500/30 rounded-lg p-3 text-sm text-white focus:outline-none"
                         />
                         <button
-                          onClick={() => navigator.clipboard.writeText(meetingDetails.venue)}
+                          onClick={() =>
+                            navigator.clipboard.writeText(meetingDetails.venue)
+                          }
                           className="bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700"
                         >
                           <Icons.Copy className="w-5 h-5" />
@@ -372,12 +398,16 @@ const WebinarPages = () => {
                     </div>
                   </>
                 )}
-                
+
                 <div className="mt-4">
-                  {(meetingDetails.meetingLink || meetingDetails.platformLink) && (
-                    <a 
-                      href={meetingDetails.meetingLink || meetingDetails.platformLink} 
-                      target="_blank" 
+                  {(meetingDetails.meetingLink ||
+                    meetingDetails.platformLink) && (
+                    <a
+                      href={
+                        meetingDetails.meetingLink ||
+                        meetingDetails.platformLink
+                      }
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="bg-orange-600 text-white py-3 px-6 rounded-lg font-bold hover:bg-orange-700 transition-colors duration-300 shadow-xl inline-flex items-center gap-2"
                     >
@@ -413,8 +443,6 @@ const WebinarPages = () => {
           </div>
         </div>
 
-        
-
         {/* Date & Time Section */}
         <div className="mt-6">
           <div className="p-8 bg-slate-900 rounded-2xl shadow-2xl border border-orange-500/20">
@@ -425,29 +453,33 @@ const WebinarPages = () => {
               <div className="flex items-center gap-3 text-gray-300">
                 <Icons.Calendar className="w-6 h-6 text-orange-500" />
                 <span className="text-lg">Start Date : </span>
-                <span className="text-lg">{new Date(webinarData.startDate).toLocaleString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long', 
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: 'numeric',
-                  hour12: true
-                })}</span>
+                <span className="text-lg">
+                  {new Date(webinarData.startDate).toLocaleString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                    hour12: true,
+                  })}
+                </span>
               </div>
 
               <div className="flex items-center gap-3 text-gray-300">
                 <Icons.Calendar className="w-6 h-6 text-orange-500" />
                 <span className="text-lg">End Date : </span>
-                <span className="text-lg">{new Date(webinarData.endDate).toLocaleString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric', 
-                  hour: 'numeric',
-                  minute: 'numeric',
-                  hour12: true
-                })}</span>
+                <span className="text-lg">
+                  {new Date(webinarData.endDate).toLocaleString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                    hour12: true,
+                  })}
+                </span>
               </div>
               <div className="flex items-center gap-3 text-gray-300">
                 <Icons.RefreshCcw className="w-6 h-6 text-orange-500" />
@@ -494,11 +526,9 @@ const WebinarPages = () => {
             </button>
           </div>
         </div> */}
-
-
       </div>
-        {/* page footer */}
-        <PageFooter/>
+      {/* page footer */}
+      <PageFooter />
     </div>
   );
 };
