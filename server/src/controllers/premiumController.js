@@ -81,7 +81,7 @@ export const getPremiumContent = async (req,res)=>{
 
     if (!access) {
       const content = await prisma.PremiumContent.findFirst({
-        where:{contentId:contentId },
+        where:{id:contentId },
         select:{
           title:true,
           unlockPrice:true

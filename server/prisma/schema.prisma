@@ -6,14 +6,12 @@
 
 generator client {
   provider = "prisma-client-js"
-
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 
 enum Role {
   User
@@ -27,30 +25,30 @@ enum SubscriptionType {
 }
 
 model User {
-  id                    String             @id @default(uuid())
-  email                 String             @unique
-  phone                 String             @unique
-  name                  String
-  socialMedia           String
-  goals                 String[]
-  heardAboutUs          String
-  role                  Role
-  verified              Boolean            @default(false)
-  boughtWebinarTickets  WebinarTicket[]
-  boughtPayingUpTickets PayingUpTicket[]
+  id                          String                 @id @default(uuid())
+  email                       String                 @unique
+  phone                       String                 @unique
+  name                        String
+  socialMedia                 String
+  goals                       String[]
+  heardAboutUs                String
+  role                        Role
+  verified                    Boolean                @default(false)
+  boughtWebinarTickets        WebinarTicket[]
+  boughtPayingUpTickets       PayingUpTicket[]
   boughtTelegramSubscriptions TelegramSubscription[]
-  createdWebinars       Webinar[]
-  createdCourses        Course[]
-  createdPayingUps      PayingUp[]
-  createdTelegrams      Telegram[]
-  wallet                Wallet?
-  CoursePurchasers      CoursePurchasers[]
-  businessInfo          BusinessInfo?
-  kycRecords            kycRecords?
-  BankAccounts          BankDetails[]
-  upiIds                UPI[]
-  premiumContent        PremiumContent[]
-  premiumAccess         PremiumContentAccess[]
+  createdWebinars             Webinar[]
+  createdCourses              Course[]
+  createdPayingUps            PayingUp[]
+  createdTelegrams            Telegram[]
+  wallet                      Wallet?
+  CoursePurchasers            CoursePurchasers[]
+  businessInfo                BusinessInfo?
+  kycRecords                  kycRecords?
+  BankAccounts                BankDetails[]
+  upiIds                      UPI[]
+  premiumContent              PremiumContent[]
+  premiumAccess               PremiumContentAccess[]
 }
 
 model Otp {
@@ -129,8 +127,8 @@ model BusinessInfo {
   firstName         String
   lastName          String
   businessStructure String
-  gstNumber         String   @unique
-  sebiNumber        String   @unique
+  gstNumber         String?  @unique
+  sebiNumber        String?  @unique
   sebiCertificate   String?
   userId            String   @unique
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -168,6 +166,7 @@ model Withdrawal {
 }
 
 model Webinar {
+
   id                String          @id @default(uuid())
   title             String
   category          String
@@ -188,6 +187,7 @@ model Webinar {
   createdBy         User            @relation(fields: [createdById], references: [id])
   createdAt       DateTime @default(now())
   updatedAt       DateTime  @updatedAt
+
 }
 
 model WebinarTicket {
@@ -241,8 +241,6 @@ model Lessons {
   course     Course  @relation(fields: [courseId], references: [id])
 }
 
-
-
 model CoursePurchasers {
   id          String   @id @default(uuid())
   courseId    String
@@ -253,7 +251,6 @@ model CoursePurchasers {
   course      Course   @relation(fields: [courseId], references: [id])
   createdAt   DateTime @default(now())
 }
-
 
 model PayingUp {
   id              String           @id @default(uuid())
@@ -271,8 +268,8 @@ model PayingUp {
   createdById     String
   createdBy       User             @relation(fields: [createdById], references: [id])
   payingUpTickets PayingUpTicket[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt()
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt()
 }
 
 model PayingUpTicket {
@@ -285,24 +282,26 @@ model PayingUpTicket {
   orderId    String?
 }
 
-
 model Telegram {
-  id        String @id @unique @default(uuid())
-  coverImage String
-  channelLink String
-  title     String
-  description String
-  genre     String
-  discount  Json
+
+  id            String       @id @unique @default(uuid())
+  coverImage    String
+  channelLink   String
+  title         String
+  description   String
+  genre         String
+  discount      Json
   subscription  Json
-  createdById String
+  createdById   String
   createdBy User @relation(fields: [createdById], references: [id])
+
   telegramSubscriptions TelegramSubscription[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model TelegramSubscription {
+
   id        String @id @unique @default(uuid())
   validDays   Int
   telegramId  String
@@ -329,14 +328,17 @@ model PremiumContent {
   createdBy          User      @relation(fields: [createdById], references: [id])
   createdAt          DateTime  @default(now())  // Timestamp for product creation
   access             PremiumContentAccess[]
-  }
+}
 
 model PremiumContentAccess {
-    userId           String
-    contentId        String
-    purchasedAt      DateTime          @default(now())
-    expiryDate       DateTime?
-    user             User              @relation( fields:[userId],references:[id] )
-    premiumContent   PremiumContent    @relation( fields:[contentId], references:[id])
-    @@id([userId,contentId])
-  }
+  userId         String
+  contentId      String
+  purchasedAt    DateTime       @default(now())
+  expiryDate     DateTime?
+  user           User           @relation(fields: [userId], references: [id])
+  premiumContent PremiumContent @relation(fields: [contentId], references: [id])
+
+
+  @@id([userId, contentId])
+}
+
