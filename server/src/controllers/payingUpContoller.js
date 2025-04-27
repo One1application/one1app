@@ -6,7 +6,9 @@ export async function createPayingUp(req, res) {
 
     try {
 
-        const { title, description, paymentDetails, category, testimonials, faqs, refundPolicies, tacs, coverImage, files} = req.body;
+        const { title, description, discount , paymentDetails, category, testimonials, faqs, refundPolicies, tacs, coverImage, files} = req.body;
+        console.log("req body",req.body);
+        
     
         const user = req.user;
 
@@ -15,6 +17,7 @@ export async function createPayingUp(req, res) {
             data: {
                 title,
                 description,
+                discount,
                 paymentDetails,
                 category,
                 testimonials,

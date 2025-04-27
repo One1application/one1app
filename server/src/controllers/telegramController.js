@@ -1,6 +1,7 @@
 import { razorpay } from "../config/razorpay.js";
 import prisma from "../db/dbClient.js";
 import { telegramValidation } from "../types/telegramValidation.js";
+import { uploadOnImageKit } from "../config/imagekit.js";
 import { SchemaValidator } from "../utils/validator.js";
 import dotenv from "dotenv";
 dotenv.config();
@@ -12,26 +13,26 @@ export async function createTelegram(req, res) {
             return
         }
         const {
+            coverImage,
+            channelLink,
             title,
             description,
+            discounts,
             subscriptions,
-            imageUrl,
             genre,
-            channelId,
-            channelName
-
+            
         } = req.body;
         const user = req.user;
         
         await prisma.telegram.create({
             data: {
+                coverImage,
+                channelLink,
                 title,
                 description,
-                subscription: subscriptions,
-                imageUrl,
                 genre,
-                channelId,
-                channelName,
+                discount:discounts,
+                subscription: subscriptions,
                 createdById: user.id
             }
         })

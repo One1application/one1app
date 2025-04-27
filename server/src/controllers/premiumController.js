@@ -7,7 +7,7 @@ import { uploadOnImageKit } from '../config/imagekit.js';
 
 export async function createContent(req, res) {
    
-        const { title, category, unlockPrice, 'content.text': contentText,'content.image': contentImage,'content.file': contentFile,'discountCodes.code': discountCode,'discountCodes.discountPercentage': discountPercentage,'discountCodes.expirationDate': expirationDate } = req.body;
+        const { title, category, unlockPrice,  contentText,contentImage, contentFile,discount} = req.body;
         const user = req.user;
         console.log("req.body:",req.body);
        
@@ -43,9 +43,7 @@ export async function createContent(req, res) {
                 text: contentText || null,
                 images: contentImage ? [contentImage] : [],
                 files: contentFile ? [contentFile] : [],
-                code:discountCode|| null,
-                discountPercentage:parseFloat(discountPercentage) || null ,
-                expirationDate:expirationDate || null ,
+                discount:discount,
                 createdById: user.id, 
             }
         });

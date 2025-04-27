@@ -42,6 +42,7 @@ export const createCourse = async (req, res) => {
         const {
             title,
             price,
+            discount,
             validity,
             aboutThisCourse,
             testimonials,
@@ -53,6 +54,8 @@ export const createCourse = async (req, res) => {
             coverImage,
             lessons,
         } = req.body;
+        console.log("body",req.body);
+        
 
         const { startDate, endDate } = getCourseDuration(validity);
 
@@ -61,6 +64,7 @@ export const createCourse = async (req, res) => {
                 data: {
                     title,
                     price: parseFloat(price),
+                    discount:discount,
                     validity,
                     aboutThisCourse,
                     testimonials,
