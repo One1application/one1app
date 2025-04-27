@@ -5,49 +5,53 @@ import { PhonePayClient } from "../config/phonepay.js";
 import prisma from "../db/dbClient.js";
 dotenv.config();
 export async function createPayingUp(req, res) {
-  try {
-    const {
-      title,
-      description,
-      paymentDetails,
-      category,
-      testimonials,
-      faqs,
-      refundPolicies,
-      tacs,
-      coverImage,
-      files,
-    } = req.body;
 
-    const user = req.user;
 
-    await prisma.payingUp.create({
-      data: {
-        title,
-        description,
-        paymentDetails,
-        category,
-        testimonials,
-        faqs,
-        refundPolicies,
-        coverImage,
-        tacs,
-        files,
-        createdById: user.id,
-      },
-    });
+    try {
 
-    return res.status(200).json({
-      success: true,
-      message: "Paying up created successfully.",
-    });
-  } catch (error) {
-    console.error("Error while creating paying Up.", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error.",
-    });
-  }
+        const { title, description, discount , paymentDetails, category, testimonials, faqs, refundPolicies, tacs, coverImage, files} = req.body;
+        console.log("req body",req.body);
+        
+    
+        const user = req.user;
+
+        await prisma.payingUp.create({
+
+            data: {
+                title,
+                description,
+                discount,
+                paymentDetails,
+                category,
+                testimonials,
+                faqs,
+                refundPolicies,
+                coverImage,
+                tacs,
+                files,
+                createdById: user.id,
+                
+            }
+        })
+        
+        return res.status(200).json({
+            success: true,
+            message: "Paying up created successfully.",
+        })
+
+
+    } catch (error) {
+        
+        console.error("Error while creating paying Up.", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error."
+        })
+        
+    }
+
+  
+
 }
 
 export async function editPayingUpDetails(req, res) {

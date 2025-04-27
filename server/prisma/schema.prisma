@@ -166,25 +166,28 @@ model Withdrawal {
 }
 
 model Webinar {
-  id             String          @id @default(uuid())
-  title          String
-  category       String
-  coverImage     String
-  occurrence     String
-  startDate      DateTime
-  paymentEnabled Boolean         @default(true)
-  endDate        DateTime
-  isOnline       Boolean
-  venue          String?
-  link           Json
-  isPaid         Boolean
-  quantity       Int
-  amount         Float?
-  tickets        WebinarTicket[]
-  createdById    String
-  createdBy      User            @relation(fields: [createdById], references: [id])
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+
+  id                String          @id @default(uuid())
+  title             String
+  category          String
+  coverImage        String
+  occurrence        String
+  startDate         DateTime
+  paymentEnabled    Boolean @default(true)
+  endDate           DateTime
+  isOnline          Boolean
+  venue             String?
+  link              Json
+  discount          Json?
+  isPaid            Boolean
+  quantity          Int
+  amount            Float?
+  tickets           WebinarTicket[]
+  createdById       String
+  createdBy         User            @relation(fields: [createdById], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime  @updatedAt
+
 }
 
 model WebinarTicket {
@@ -201,6 +204,7 @@ model Course {
   id              String             @id @default(cuid())
   title           String
   price           Float
+  discount        Json?
   validity        String
   aboutThisCourse Json
   testimonials    Json
@@ -252,6 +256,7 @@ model PayingUp {
   id              String           @id @default(uuid())
   title           String
   description     String
+  discount        Json?
   paymentDetails  Json
   category        Json
   testimonials    Json
@@ -278,48 +283,50 @@ model PayingUpTicket {
 }
 
 model Telegram {
-  id                    String                 @id @unique @default(uuid())
-  channelId             String
-  channelName           String
-  title                 String
-  description           String
-  subscription          Json
-  genre                 String
-  imageUrl              String
-  createdById           String
-  createdBy             User                   @relation(fields: [createdById], references: [id])
+
+  id            String       @id @unique @default(uuid())
+  coverImage    String
+  channelLink   String
+  title         String
+  description   String
+  genre         String
+  discount      Json
+  subscription  Json
+  createdById   String
+  createdBy User @relation(fields: [createdById], references: [id])
+
   telegramSubscriptions TelegramSubscription[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
 
 model TelegramSubscription {
-  id         String   @id @unique @default(uuid())
-  validDays  Int
-  telegramId String
-  chatId     String?
-  telegram   Telegram @relation(fields: [telegramId], references: [id])
-  boughtById String   @unique
-  boughtBy   User     @relation(fields: [boughtById], references: [id])
-  paymentId  String?
-  orderId    String?
-  createdAt  DateTime @default(now())
+
+  id        String @id @unique @default(uuid())
+  validDays   Int
+  telegramId  String
+  chatId      String?
+  telegram    Telegram @relation(fields: [telegramId], references: [id])
+  boughtById  String @unique
+  boughtBy    User @relation(fields: [boughtById], references: [id])
+  paymentId   String?
+  orderId     String?
+  createdAt   DateTime @default(now())
 }
 
 model PremiumContent {
-  id                 String                 @id @default(uuid()) // Unique UUID for the product
-  title              String
-  category           String
-  unlockPrice        Float
-  text               String?
-  images             String[]
-  files              String[]
-  code               String?
-  discountPercentage Float?
-  expirationDate     String?
-  createdById        String
-  createdBy          User                   @relation(fields: [createdById], references: [id])
-  createdAt          DateTime               @default(now()) // Timestamp for product creation
+
+  id                 String    @id @default(uuid())  // Unique UUID for the product
+  title              String    
+  category           String    
+  unlockPrice        Float    
+  text               String?   
+  images             String[]  
+  files              String[]  
+  discount           Json? 
+  createdById        String    
+  createdBy          User      @relation(fields: [createdById], references: [id])
+  createdAt          DateTime  @default(now())  // Timestamp for product creation
   access             PremiumContentAccess[]
 }
 
@@ -331,5 +338,7 @@ model PremiumContentAccess {
   user           User           @relation(fields: [userId], references: [id])
   premiumContent PremiumContent @relation(fields: [contentId], references: [id])
 
+
   @@id([userId, contentId])
 }
+
