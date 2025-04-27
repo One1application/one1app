@@ -179,6 +179,7 @@ model Webinar {
   isOnline          Boolean
   venue             String?
   link              Json
+  discount          Json?
   isPaid            Boolean
   quantity          Int
   amount            Float?
@@ -203,6 +204,7 @@ model Course {
   id              String             @id @default(cuid())
   title           String
   price           Float
+  discount        Json?
   validity        String
   aboutThisCourse Json
   testimonials    Json
@@ -257,6 +259,7 @@ model PayingUp {
   id              String           @id @default(uuid())
   title           String
   description     String
+  discount        Json?
   paymentDetails  Json
   category        Json
   testimonials    Json
@@ -285,13 +288,13 @@ model PayingUpTicket {
 
 model Telegram {
   id        String @id @unique @default(uuid())
-  channelId String
-  channelName String
+  coverImage String
+  channelLink String
   title     String
   description String
-  subscription  Json
   genre     String
-  imageUrl  String
+  discount  Json
+  subscription  Json
   createdById String
   createdBy User @relation(fields: [createdById], references: [id])
   telegramSubscriptions TelegramSubscription[]
@@ -301,14 +304,14 @@ model Telegram {
 
 model TelegramSubscription {
   id        String @id @unique @default(uuid())
-  validDays Int
+  validDays   Int
   telegramId  String
   chatId      String?
   telegram    Telegram @relation(fields: [telegramId], references: [id])
   boughtById  String @unique
   boughtBy    User @relation(fields: [boughtById], references: [id])
-  paymentId  String?
-  orderId    String?
+  paymentId   String?
+  orderId     String?
   createdAt   DateTime @default(now())
 }
 
@@ -321,16 +324,14 @@ model PremiumContent {
   text               String?   
   images             String[]  
   files              String[]  
-  code               String?   
-  discountPercentage Float?    
-  expirationDate     String? 
+  discount           Json? 
   createdById        String    
   createdBy          User      @relation(fields: [createdById], references: [id])
   createdAt          DateTime  @default(now())  // Timestamp for product creation
   access             PremiumContentAccess[]
   }
 
-  model PremiumContentAccess {
+model PremiumContentAccess {
     userId           String
     contentId        String
     purchasedAt      DateTime          @default(now())
