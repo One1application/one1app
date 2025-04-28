@@ -172,7 +172,7 @@ export async function purchaseTelegram(req, res) {
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
-      .amount(payingUp.paymentDetails.totalAmount * 100)
+      .amount(subscriptionDetails.cost * 100)
       .redirectUrl(
         `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&telegramId=${telegramId}`
       )
@@ -183,7 +183,7 @@ export async function purchaseTelegram(req, res) {
       success: true,
       payload: {
         redirectUrl: response.redirectUrl,
-        payingUpId: payingUp.id,
+        telegramId: telegramId,
       },
     });
   } catch (error) {
