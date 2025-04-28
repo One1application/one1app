@@ -20,7 +20,8 @@ const BusinessInformationTab = () => {
     "Choose Business Structure",
     "sole proprietorship",
     "Limited Liability Company",
-    "Corporation",
+    "sebi register",
+    "Others",
   ];
 
   const handleFileChange = async (e) => {

@@ -1,16 +1,41 @@
 import Card from "../../../../components/Cards/Card";
 import NoContentComponent from "../../../../components/NoContent/NoContentComponent";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import { fetchPremiumDashboardData } from "../../../../services/auth/api.services";
 import pagesConfig from "../pagesConfig";
 import Table from "../../../../components/Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
+import LockedContentTable from "../../../../components/Table/LockedContentTable";
 
 const LockedContentPage = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [premiumContentData, setPremiumContentData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { title, button, bgGradient, noContent, tabs, cardData,path } = pagesConfig.lockedContentPage;
+  const { title, button, bgGradient, noContent, tabs, cardData, path } = pagesConfig.lockedContentPage;
   const navigate = useNavigate()
+
+  const getPremiumData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetchPremiumDashboardData();
+      setPremiumContentData(response.data || []);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to fetch locked content data."
+      );
+      console.error("Error fetching locked content:", error);
+      setPremiumContentData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getPremiumData();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -36,29 +61,20 @@ const LockedContentPage = () => {
         ))}
       </div> */}
 
-      <div className="flex justify-start items-center gap-4 p-6">
-        {tabs.map((tab, index) => (
-          <div
-            key={index}
-            onClick={() => setActiveTab(index)}
-            className={`cursor-pointer rounded-full text-xs md:text-sm px-4 py-2 transition duration-200 
-              ${activeTab === index ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-200'}`}
-          >
-            {tab.title}({tab.value})
-          </div>
-        ))}
-      </div>
-
-      {/* Tab Content */}
       <div className="p-6 h-full w-full flex items-center justify-center">
-        {tabs[activeTab].content && tabs[activeTab].content.length > 0 ? (
-          <Table data={tabs[activeTab].content} />
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+          </div>
+        ) : premiumContentData && premiumContentData.length > 0 ? (
+          <LockedContentTable data={premiumContentData} />
         ) : (
           <NoContentComponent
-            title={noContent[activeTab].title}
-            description={noContent[activeTab].description}
-            isbutton={noContent[activeTab].isButton}
-            button_title={noContent[activeTab].buttonTitle}
+            title={noContent[0].title}
+            description={noContent[0].description}
+            isbutton={noContent[0].isButton}
+            button_title={noContent[0].buttonTitle}
+            path={path}
           />
         )}
       </div>

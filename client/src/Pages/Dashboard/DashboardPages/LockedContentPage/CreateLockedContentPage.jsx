@@ -141,7 +141,7 @@ const CreateLockedContentPage = () => {
         toast.dismiss();
         if(response.data.success){
              toast.success("Content published successfully!");
-             navigate("/app/locked-content");
+             navigate("/dashboard/premium-content");
         } else {
              toast.error(response.data.message || "Failed to publish content.");
         }
