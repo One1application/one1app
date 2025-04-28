@@ -7,7 +7,7 @@ import { uploadOnImageKit } from '../config/imagekit.js';
 
 export async function createContent(req, res) {
    
-        const { title, category, unlockPrice,  contentText,contentImage, contentFile,discount} = req.body;
+        const { title, category, unlockPrice,content ,discount} = req.body;
         const user = req.user;
         console.log("req.body:",req.body);
        
@@ -40,9 +40,7 @@ export async function createContent(req, res) {
                 title,
                 category,
                 unlockPrice: parseFloat(unlockPrice),
-                text: contentText || null,
-                images: contentImage ? [contentImage] : [],
-                files: contentFile ? [contentFile] : [],
+                content:content,
                 discount:discount,
                 createdById: user.id, 
             }
