@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { PlusCircle, Upload, X, ChevronDown, Loader2 } from "lucide-react";
 import { createTelegram, handelUplaodFile, verifyInviteLink } from "../../../../services/auth/api.services";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 // Discount Form Component
 const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
   const [discountCode, setDiscountCode] = useState("");
@@ -273,21 +273,21 @@ const TelegramsPages = () => {
   const handleInviteLinkBlur = async () => {
     try {
 
-      if(inviteLink === "") return
+      if (inviteLink === "") return
       const match = inviteLink.match(/^(https?:\/\/t\.me\/(\+?[a-zA-Z0-9_-]+))$/)
 
-      if(!match) {
+      if (!match) {
         toast("Invalid Invite Link.")
         return
       }
-      
-      if(inviteLink === "") return
+
+      if (inviteLink === "") return
       const response = await verifyInviteLink(inviteLink);
       setInviteLinkData(response.data.channelDetails)
       console.log(response);
     } catch (error) {
       console.error("Error in verify invite link.", error);
-      
+
     }
   }
 
@@ -295,30 +295,32 @@ const TelegramsPages = () => {
     try {
       setIsSubmitting(true)
       let response;
-      if(imageFile) {
+      if (imageFile) {
         const imagePic = new FormData();
         imagePic.append("file", imageFile);
         response = await handelUplaodFile(imagePic);
         console.log(response);
-        
+
       }
-      
+
       const body = {
         title: telegramTitle,
         description: telegramDescription,
         subscriptions: subscriptions,
-        imageUrl: response?.data?.url || "",
+        coverImage: response?.data?.url || "",
         genre,
         channelId: inviteLinkData?.chatId || '',
-        channelName: inviteLinkData?.title || ""
+        channelName: inviteLinkData?.title || "",
+        channelLink: inviteLink,
+        discount: discounts
       }
-      
+
       await createTelegram(body);
       window.location.href = "/dashboard/telegram"
-      
+
     } catch (error) {
       console.log("Error in creating telegram.", error);
-      
+
     } finally {
       setIsSubmitting(false)
     }
@@ -394,8 +396,8 @@ const TelegramsPages = () => {
               />
               {inviteLinkData ? <div className="text-white mt-2">
                 <p className="text-xl">Your Channel Name</p>
-                <p className="text-2xl">{inviteLinkData.title}</p>  
-              </div> : isFetchingInviteLink && <Loader2 className="animate-spin text-white"/>}
+                <p className="text-2xl">{inviteLinkData.title}</p>
+              </div> : isFetchingInviteLink && <Loader2 className="animate-spin text-white" />}
             </div>
             {/* Page Title */}
             <div>
@@ -418,8 +420,8 @@ const TelegramsPages = () => {
                 Page Description
               </label>
               <textarea
-              value={telegramDescription}
-              onChange={(e) => setTelegramDescription(e.target.value)}
+                value={telegramDescription}
+                onChange={(e) => setTelegramDescription(e.target.value)}
                 className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent h-32 bg-gray-900 text-white"
                 placeholder="Enter description"
               />
@@ -431,8 +433,8 @@ const TelegramsPages = () => {
                 Genre <span className="text-red-500">*</span>
               </label>
               <select className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-              value={genre}
-              onChange={(e) => setGenre(e.target.value)}
+                value={genre}
+                onChange={(e) => setGenre(e.target.value)}
               >
                 <option value="education">Education</option>
                 <option value="entertainment">Entertainment</option>
@@ -510,9 +512,8 @@ const TelegramsPages = () => {
                         className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white pr-8"
                       />
                       <ChevronDown
-                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                          sub.showDropdown ? "transform rotate-180" : ""
-                        }`}
+                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${sub.showDropdown ? "transform rotate-180" : ""
+                          }`}
                       />
                     </div>
 
@@ -532,26 +533,26 @@ const TelegramsPages = () => {
                             .toLowerCase()
                             .includes(sub.inputValue.toLowerCase())
                         ).length > 0 && (
-                          <div className="max-h-48 overflow-auto">
-                            {predefinedTypes
-                              .filter((type) =>
-                                type
-                                  .toLowerCase()
-                                  .includes(sub.inputValue.toLowerCase())
-                              )
-                              .map((option) => (
-                                <div
-                                  key={option}
-                                  className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                                  onClick={() =>
-                                    handleOptionClick(option, index)
-                                  }
-                                >
-                                  {option}
-                                </div>
-                              ))}
-                          </div>
-                        )}
+                            <div className="max-h-48 overflow-auto">
+                              {predefinedTypes
+                                .filter((type) =>
+                                  type
+                                    .toLowerCase()
+                                    .includes(sub.inputValue.toLowerCase())
+                                )
+                                .map((option) => (
+                                  <div
+                                    key={option}
+                                    className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                                    onClick={() =>
+                                      handleOptionClick(option, index)
+                                    }
+                                  >
+                                    {option}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>

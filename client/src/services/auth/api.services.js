@@ -121,7 +121,10 @@ export const createPayUpContent = async (data) => {
 };
 
 export const createLockedContent = async (data) => {
-  const response = await servicesAxiosInstance.post("/premium/create-content", data);
+  const response = await servicesAxiosInstance.post(
+    "/premium/create-content",
+    data
+  );
   return response;
 };
 
@@ -286,9 +289,12 @@ export const verifyPayment = async (body) => {
 };
 
 export const verifyInviteLink = async (inviteLink) => {
-  const response = await axios.post("http://localhost:3000/verify-channel", {
-    inviteLink,
-  });
+  const response = await axios.post(
+    `${import.meta.env.VITE_BOT_SERVER_URL}/verify-channel`,
+    {
+      inviteLink,
+    }
+  );
   return response;
 };
 
@@ -352,7 +358,9 @@ export const fetchCustomers = async (page = 1) => {
 };
 
 export const getSignedVideoUrl = async (videoUrl) => {
-  const response = await servicesAxiosInstance.get(`/course/playVideo?url=${encodeURIComponent(videoUrl)}`);
+  const response = await servicesAxiosInstance.get(
+    `/course/playVideo?url=${encodeURIComponent(videoUrl)}`
+  );
   return response;
 };
 

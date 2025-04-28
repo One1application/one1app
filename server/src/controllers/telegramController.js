@@ -8,51 +8,47 @@ import { uploadOnImageKit } from "../config/imagekit.js";
 import { SchemaValidator } from "../utils/validator.js";
 dotenv.config();
 export async function createTelegram(req, res) {
+  try {
+    const isValid = await SchemaValidator(telegramValidation, req.body, res);
+    if (!isValid) {
+      return;
+    }
+    const {
+      coverImage,
+      channelLink,
+      title,
+      description,
+      discount,
+      subscriptions,
+      genre,
+    } = req.body;
+    const user = req.user;
 
-    try {
+    console.log(req.body);
 
-        const isValid = await SchemaValidator(telegramValidation, req.body, res);
-        if(!isValid) {
-            return
-        }
-        const {
-            coverImage,
-            channelLink,
-            title,
-            description,
-            discounts,
-            subscriptions,
-            genre,
-            
-        } = req.body;
-        const user = req.user;
-        
-        await prisma.telegram.create({
-            data: {
-                coverImage,
-                channelLink,
-                title,
-                description,
-                genre,
-                discount:discounts,
-                subscription: subscriptions,
-                createdById: user.id
-            }
-        })
+    await prisma.telegram.create({
+      data: {
+        coverImage: coverImage || "https://localhost.com",
+        channelLink,
+        title,
+        description,
+        genre,
+        discount: discount,
+        subscription: subscriptions,
+        createdById: user.id,
+      },
+    });
 
-        res.status(200).json({
-            success: true,
-            message: "Telegram created successfully."
-        })
-
-    } catch (error) {
-        console.error("Error in creating telegram.", error);
-        res.status(500).json({
-            success: false,
-            meesage: "Internal server error."
-        })
-        
-
+    res.status(200).json({
+      success: true,
+      message: "Telegram created successfully.",
+    });
+  } catch (error) {
+    console.error("Error in creating telegram.", error);
+    res.status(500).json({
+      success: false,
+      meesage: "Internal server error.",
+    });
   }
 }
 
@@ -172,6 +168,7 @@ export async function purchaseTelegram(req, res) {
     }
 
     const orderId = randomUUID();
+    // TODO : Fix Paying Up
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)

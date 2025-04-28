@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp } from 'lucide-react';
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 
 import Pagination from '@mui/material/Pagination';
 
@@ -37,6 +37,8 @@ const Table = ({ data }) => {
   }, []);
 
   const handleRowClick = (path) => {
+    console.log("PATH :", path);
+
     if (path) {
       navigate(path);
     }
@@ -72,8 +74,8 @@ const Table = ({ data }) => {
           event._count?.telegramSubscriptions || 0,
           event.revenue || 'N/A',
           (event.paymentDetails?.paymentEnabled || event.paymentEnabled) ? 'Enabled' : 'Disabled',
-          `"${new Date(event.createdAt).toLocaleString('en-US', {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true})}"`,
-          `"${new Date(event.updatedAt).toLocaleString('en-US', {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true})}"` 
+          `"${new Date(event.createdAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}"`,
+          `"${new Date(event.updatedAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}"`
         ].join(','))
       ].join('\n');
 
@@ -81,11 +83,11 @@ const Table = ({ data }) => {
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      
+
       link.setAttribute('href', url);
       link.setAttribute('download', `table_export_${new Date().toLocaleDateString()}.csv`);
       link.style.visibility = 'hidden';
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -108,7 +110,7 @@ const Table = ({ data }) => {
   };
 
   const filteredData = useMemo(() => {
-    return data.filter(event => 
+    return data.filter(event =>
       event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.price?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.sale?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -123,13 +125,13 @@ const Table = ({ data }) => {
     return [...filteredData].sort((a, b) => {
       switch (sortConfig.key) {
         case 'title':
-          return sortConfig.direction === 'asc' 
+          return sortConfig.direction === 'asc'
             ? a.title.localeCompare(b.title)
             : b.title.localeCompare(a.title);
         case 'price':
           const priceA = parseFloat(a.price) || 0;
           const priceB = parseFloat(b.price) || 0;
-          return sortConfig.direction === 'asc' 
+          return sortConfig.direction === 'asc'
             ? priceA - priceB
             : priceB - priceA;
         case 'sales':
@@ -147,13 +149,13 @@ const Table = ({ data }) => {
         case 'createdAt':
           const dateA = new Date(a.createdAt);
           const dateB = new Date(b.createdAt);
-          return sortConfig.direction === 'asc' 
+          return sortConfig.direction === 'asc'
             ? dateA - dateB
             : dateB - dateA;
         case 'updatedAt':
           const updateA = new Date(a.updatedAt);
           const updateB = new Date(b.updatedAt);
-          return sortConfig.direction === 'asc' 
+          return sortConfig.direction === 'asc'
             ? updateA - updateB
             : updateB - updateA;
         default:
@@ -190,7 +192,7 @@ const Table = ({ data }) => {
         <SortAsc className="h-4 w-4" />
         <span className="inline">Sort</span>
       </button>
-      
+
       <div className={`${isDropdownOpen ? 'block' : 'hidden'} absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10`}>
         <div className="py-1">
           <button
@@ -252,11 +254,11 @@ const Table = ({ data }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-         
-          
+
+
           {renderSortButton()}
-          
-          <button 
+
+          <button
             onClick={handleExport}
             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-sm"
           >
@@ -283,7 +285,7 @@ const Table = ({ data }) => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedData.map((event, index) => (
-              <tr 
+              <tr
                 key={index}
                 onClick={() => handleRowClick(`/app/telegram?id=${event.id}`)}
                 className="cursor-pointer hover:bg-gray-50 transition-colors duration-200"
@@ -313,17 +315,18 @@ const Table = ({ data }) => {
                 </td>
                 <td className="px-6 py-4 text-sm">
                   <div className="flex items-center space-x-4">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigator.clipboard.writeText(event.shareLink);
+                        navigator.clipboard.writeText(`${window.location.origin}/app/telegram?id=${event.id}`);
+
                         toast.success('Link copied to clipboard');
                       }}
                       className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
                     >
                       Share
                     </button>
-                    <button 
+                    <button
                       onClick={(e) => handleEdit(e, event)}
                       className="inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium transition-colors duration-200"
                     >
@@ -338,7 +341,7 @@ const Table = ({ data }) => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {formatDate(event.updatedAt)}
                 </td>
-                
+
               </tr>
             ))}
           </tbody>
@@ -350,7 +353,7 @@ const Table = ({ data }) => {
         {paginatedData.map((event, index) => (
           <div
             key={index}
-            onClick={() => handleRowClick(event.path)}
+            onClick={() => handleRowClick(`/app/telegram?id=${event.id}`)}
             className="bg-white rounded-xl border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-all duration-200"
           >
             <div className="flex justify-between items-start mb-4">
@@ -391,17 +394,19 @@ const Table = ({ data }) => {
                 <span className="font-medium text-gray-900">{formatDate(event.updatedAt)}</span>
               </div>
               <div className="col-span-2 flex items-center space-x-4 mt-2 pt-4 border-t border-gray-100">
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigator.clipboard.writeText(event.shareLink);
+
+                    navigator.clipboard.writeText(`${window.location.origin}/app/telegram?id=${event.id}`);
+
                     toast.success('Link copied to clipboard');
                   }}
                   className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
                 >
                   Share
                 </button>
-                <button 
+                <button
                   onClick={(e) => handleEdit(e, event)}
                   className="inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium transition-colors duration-200"
                 >
@@ -416,10 +421,10 @@ const Table = ({ data }) => {
 
       {/* Pagination */}
       <div className="flex justify-center mt-6">
-        <Pagination 
-          count={Math.ceil(filteredData.length / itemsPerPage)} 
-          page={page} 
-          onChange={handleChangePage} 
+        <Pagination
+          count={Math.ceil(filteredData.length / itemsPerPage)}
+          page={page}
+          onChange={handleChangePage}
           size="medium"
           sx={{
             '& .MuiPaginationItem-root': {

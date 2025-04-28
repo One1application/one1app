@@ -8,6 +8,7 @@ import {
   createPayout,
 } from "../config/razorpay.js";
 import prisma from "../db/dbClient.js";
+
 dotenv.config();
 
 export async function getWalletDetails(req, res) {
@@ -446,7 +447,7 @@ export async function verifyPayment(req, res) {
 
     if (telegramId && days) {
       const response = await axios.get(
-        `http://localhost:3000/generate-invitelink?channelId=${channelId}&boughtById=${user.id}`
+        `${process.env.BOT_SERVER_URL}/generate-invitelink?channelId=${channelId}&boughtById=${user.id}`
       );
       return res.status(200).json({
         success: true,
