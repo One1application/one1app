@@ -483,7 +483,7 @@ export const purchaseCourse = async (req, res) => {
     // const order = await razorpay.orders.create(options);
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
-      .amount(amount * 100)
+      .amount(course.price * 100)
       .redirectUrl(
         `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&courseId=${courseId}`
       )

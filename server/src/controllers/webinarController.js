@@ -312,7 +312,7 @@ export async function purchaseWebinar(req, res) {
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
-      .amount(payingUp.paymentDetails.totalAmount * 100)
+      .amount(webinar.amount * 100)
       .redirectUrl(
         `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&webinarId=${webinar.id}`
       )
@@ -323,7 +323,7 @@ export async function purchaseWebinar(req, res) {
       success: true,
       payload: {
         redirectUrl: response.redirectUrl,
-        payingUpId: payingUp.id,
+        webinarId: webinar.id,
       },
     });
   } catch (error) {
