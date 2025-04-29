@@ -13,6 +13,7 @@ import { uploadRouter } from "./routes/uploadRoute.js";
 import { userRouter } from "./routes/userRoutes.js";
 import { walletRoutes } from "./routes/walletRoutes.js";
 import { webinarRouter } from "./routes/webinarRoutes.js";
+import newsletterRoutes from "./routes/newsletterRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -52,6 +53,7 @@ app.use("/payingup", payingUpRoutes);
 app.use("/self", userRouter);
 app.use("/premium", premiumRouter);
 app.use("/payment", paymentRouter);
+app.use("/api/newsletter", newsletterRoutes);
 const Port = process.env.SERVER_PORT || 5000;
 
 app.listen(Port, async () => {
