@@ -339,3 +339,11 @@ model PremiumContentAccess {
 
   @@id([userId, contentId])
 }
+
+model Newsletter {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  isSubscribed Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
