@@ -25,11 +25,11 @@ const yourCustomerConfig = {
         },
       ],
     },
-    {
-      title: "Followers",
-      value: 0,
-      content: [],
-    },
+    // {
+    //   title: "Followers",
+    //   value: 0,
+    //   content: [],
+    // },
   ],
   noContentData: {
     customers: {

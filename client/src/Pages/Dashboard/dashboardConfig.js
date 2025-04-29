@@ -15,7 +15,7 @@ export const dashboardConfig = {
   },
   generalItems: [
     { label: "Home", icon: FaHome, path: "/" , sublabels:[] },
-    { label: "One Link", icon: FaLink, path: "/mystore" ,sublabels:[]},
+    // { label: "One Link", icon: FaLink, path: "/mystore" ,sublabels:[]},
     { label: "Your Customers", icon: FaUsers, path: "/your-customers",sublabels:[] },
     { label: "Wallets", icon: FaWallet, path: "/wallets", sublabels: [
       {label: "Withdrawal Amount", icon: PiHandWithdraw, path: "/withdrawal" },
@@ -42,7 +42,7 @@ export const dashboardConfig = {
     { label: "Account Setting", icon: FaCog, path: "/profile" },
     // commented out for now, as we don't have a superlinks dashboard yet
     // { label: "Feature Requests", icon: FaChartBar, path: "https://www.google.com" },
-    { label: "Help Center", icon: FaUsers, path: "https://www.google.com" },
+    // { label: "Help Center", icon: FaUsers, path: "https://www.google.com" },
     { label: "Sign Out", icon: FaCog, path: "/signin" , action: "signout"},
   ]
 };
