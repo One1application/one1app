@@ -111,7 +111,7 @@ const ProfilePage = () => {
                         : "text-gray-400 hover:text-gray-200"
                     }
                   `}
-                  onClick={() => handleChange("4")}
+                  onClick={() => handleChange("3")}
                 >
                   Payments
                 </button>
