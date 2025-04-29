@@ -1,47 +1,26 @@
 import prisma from "../db/dbClient.js"; 
 import { premiumSchema } from "../types/premiumValidation.js"; // Import Zod validation schema
-import { upload } from '../config/multer.js'; 
-import { uploadOnImageKit } from '../config/imagekit.js'; 
-
-
 
 export async function createContent(req, res) {
-   
-        const { title, category, unlockPrice,content ,discount} = req.body;
+    try {
+        const { title, category, unlockPrice, 'content.text': contentText,'content.image': contentImage,'content.file': contentFile,'discountCodes.code': discountCode,'discountCodes.discountPercentage': discountPercentage,'discountCodes.expirationDate': expirationDate } = req.body;
         const user = req.user;
         console.log("req.body:",req.body);
        
         // const validatedData = premiumSchema.parse(req.body);
         // console.log("validate data :",validatedData);
-        // const { files } = req;
-
-        // if (!files || files.length === 0) {
-        //   return res.status(400).json({ error: "No files uploaded" });
-        // }
-    
-        // const imageUrls = [];
-        // const fileUrls = [];
         
-  try { 
-     // Upload images to ImageKit and get URLs
-    //  for (let file of files) {
-    //   const isImage = file.mimetype.startsWith('image/');
-    //   const uploadResponse = await uploadOnImageKit(file.path, 'premium-content', false);
-
-    //   if (isImage) {
-    //     imageUrls.push(uploadResponse.url); 
-    //   } else {
-    //     fileUrls.push(uploadResponse.url); 
-    //   }}
-    
-
-    await prisma.PremiumContent.create({
+        await prisma.PremiumContent.create({
             data: {
                 title,
                 category,
                 unlockPrice: parseFloat(unlockPrice),
-                content:content,
-                discount:discount,
+                text: contentText || null,
+                images: contentImage ?[contentImage] : [],
+                files: contentFile ? [contentFile] : [],
+                code:discountCode|| null,
+                discountPercentage:parseFloat(discountPercentage) || null ,
+                expirationDate:expirationDate || null ,
                 createdById: user.id, 
             }
         });
@@ -72,23 +51,15 @@ export const getPremiumContent = async (req,res)=>{
         userId: userId,
         contentId: contentId,
         expiryDate: {
-          gte: new Date(),   // Check if the access is  valid 
+          gte: new Date(), // Check if the access is still valid (not expired)
         },
       },
     });
 
     if (!access) {
-      const content = await prisma.PremiumContent.findFirst({
-        where:{id:contentId },
-        select:{
-          title:true,
-          unlockPrice:true
-          }
-     } )
-      return res.status(200).json({
-        success: true,
-        message: "You have limited access to this premium content.",
-        content:content, 
+      return res.status(403).json({
+        success: false,
+        message: "You don't have access to this premium content.",
       });
     }
 
@@ -164,16 +135,3 @@ export const createPremiumAccess = async (req,res)=>{
       });
     }
 }
-
-export const premiumDashboard = async (req, res) => {
-  try {
-    const response = await prisma.PremiumContent.findMany({
-      where: { createdById: req.user.id }
-    });
-
-    res.status(200).json(response);
-  } catch (error) {
-    console.error("Error fetching premium content:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};

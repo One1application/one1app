@@ -83,13 +83,7 @@ export const courseSchema = z.object({
     isActive: z.boolean(),
     lessonData: z.array(lessonSchema)
   }),
-  discount: z.object({
-    discountCode: z.string().optional(),
-    discountPercent: z.preprocess((val) => Number(val), z.number().min(1, "Discount percentage must be at least 1").max(99, "Discount percentage must not exceed 99")).optional(),
-    discountExpiry: z.string().refine((val) => !isNaN(Date.parse(val)), {
-      message: "End date must be a valid ISO date-time string",
-    }).optional()
-  }).optional(),
+  discounts: z.array(z.any()).optional(),
   faqs: z.object({
     title: z.string(),
     isActive: z.boolean(),

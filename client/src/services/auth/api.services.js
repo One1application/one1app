@@ -121,10 +121,7 @@ export const createPayUpContent = async (data) => {
 };
 
 export const createLockedContent = async (data) => {
-  const response = await servicesAxiosInstance.post(
-    "/premium/create-content",
-    data
-  );
+  const response = await servicesAxiosInstance.post("/premium/create-content", data);
   return response;
 };
 
@@ -289,12 +286,9 @@ export const verifyPayment = async (body) => {
 };
 
 export const verifyInviteLink = async (inviteLink) => {
-  const response = await axios.post(
-    `${import.meta.env.VITE_BOT_SERVER_URL}/verify-channel`,
-    {
-      inviteLink,
-    }
-  );
+  const response = await axios.post("http://localhost:3000/verify-channel", {
+    inviteLink,
+  });
   return response;
 };
 
@@ -358,29 +352,6 @@ export const fetchCustomers = async (page = 1) => {
 };
 
 export const getSignedVideoUrl = async (videoUrl) => {
-  const response = await servicesAxiosInstance.get(
-    `/course/playVideo?url=${encodeURIComponent(videoUrl)}`
-  );
-  return response;
-};
-
-export const fetchPremiumDashboardData = async () => {
-  const response = await servicesAxiosInstance.get(
-    "/premium/premiumDashboard" // Matches the route in premiumRoutes.js
-  );
-  return response;
-};
-
-export const fetchPremiumContentById = async (contentId) => {
-  const response = await servicesAxiosInstance.get(
-    `/premium/premium-content/${contentId}` // Matches the route in premiumRoutes.js
-  );
-  return response;
-};
-export const purchasePremiumContent = async (id, userId) => {
-  const response = await servicesAxiosInstance.post(
-    "/premium/create-premium-access", // Matches the route in premiumRoutes.js
-    { contentId: id, userId: userId } // Send the ID and userId in the request body
-  );
+  const response = await servicesAxiosInstance.get(`/course/playVideo?url=${encodeURIComponent(videoUrl)}`);
   return response;
 };

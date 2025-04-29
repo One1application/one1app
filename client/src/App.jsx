@@ -1,50 +1,49 @@
+import { Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
-import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes";
-import { useAuth } from "./context/AuthContext.jsx";
 import SignInPage from "./Pages/Authentication/SigninPage/SignInPage";
 import SignUpPage from "./Pages/Authentication/SignupPage/SignUpPage";
 import DashboardPage from "./Pages/Dashboard/DashboardPage";
-import AppointementPage from "./Pages/Dashboard/DashboardPages/AppointementPage/AppointementPage.jsx";
-import ChatPage from "./Pages/Dashboard/DashboardPages/ChatPage/ChatPage.jsx";
-import CoursesPage from "./Pages/Dashboard/DashboardPages/CoursesPage/CoursesPage.jsx";
-import CreateCoursePage from "./Pages/Dashboard/DashboardPages/CoursesPage/CreateCoursePage.jsx";
-import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
-import NewCourse from "./Pages/Dashboard/DashboardPages/CoursesPage/NewCourse.jsx";
-import DiscordPage from "./Pages/Dashboard/DashboardPages/DiscordPage/DiscordPage.jsx";
 import HomePage from "./Pages/Dashboard/DashboardPages/HomePage/HomePage.jsx";
-import CreateLockedContentPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/CreateLockedContentPage.jsx";
-import LockedContentPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentPage.jsx";
 import MyStorePage from "./Pages/Dashboard/DashboardPages/MyStorePage/MyStorePage.jsx";
-import CreatePayUp from "./Pages/Dashboard/DashboardPages/PayingUpPage/CreatePayUp.jsx";
-import PayingUpPage from "./Pages/Dashboard/DashboardPages/PayingUpPage/PayingUpPage.jsx";
-import PayingUpPages from "./Pages/Dashboard/DashboardPages/PayingUpPage/PayingUpPages.jsx";
-import PluginPage from "./Pages/Dashboard/DashboardPages/PluginPage/PluginPage.jsx";
+import AudiencePage from "./Pages/Dashboard/DashboardPages/YourCustomerPage/YourCustomerPage.jsx";
+import AppointementPage from "./Pages/Dashboard/DashboardPages/AppointementPage/AppointementPage.jsx";
+import WebinarPage from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPage.jsx";
+import CoursesPage from "./Pages/Dashboard/DashboardPages/CoursesPage/CoursesPage.jsx";
+import TelegramPage from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramPage.jsx";
+import LockedContentPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentPage.jsx";
+import DiscordPage from "./Pages/Dashboard/DashboardPages/DiscordPage/DiscordPage.jsx";
 import ProfilePage from "./Pages/Dashboard/DashboardPages/ProfilePage/ProfilePage.jsx";
 import SuperLinkPage from "./Pages/Dashboard/DashboardPages/SuperLinkPage/SuperLinkPage.jsx";
-import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramForm";
-import TelegramFormPrev from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramFormPrev";
-import TelegramPage from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramPage.jsx";
+import CreateWebinarPage from "./Pages/Dashboard/DashboardPages/WebinarPage/CreateWebinarPage.jsx";
+import CreateLockedContentPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/CreateLockedContentPage.jsx";
+import ChatPage from "./Pages/Dashboard/DashboardPages/ChatPage/ChatPage.jsx";
+import PluginPage from "./Pages/Dashboard/DashboardPages/PluginPage/PluginPage.jsx";
+import CreateCoursePage from "./Pages/Dashboard/DashboardPages/CoursesPage/CreateCoursePage.jsx";
+import PayingUpPage from "./Pages/Dashboard/DashboardPages/PayingUpPage/PayingUpPage.jsx";
+import WalletPage from "./Pages/Dashboard/DashboardPages/WalletPage/WalletPage.jsx";
+import NewCourse from "./Pages/Dashboard/DashboardPages/CoursesPage/NewCourse.jsx";
+import WhatsAppPage from "./Pages/Dashboard/DashboardPages/WhatsAppPage/WhatsAppPage.jsx";
+import CreatePayUp from "./Pages/Dashboard/DashboardPages/PayingUpPage/CreatePayUp.jsx";
+import PayingUpPages from "./Pages/Dashboard/DashboardPages/PayingUpPage/PayingUpPages.jsx";
+import WithdrawalPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/WithdrawalPage";
 import AllTransactionsPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/AllTransactionsPage";
 import KYCpage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/KYCpage";
-import WithdrawalPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/WithdrawalPage";
-import WalletPage from "./Pages/Dashboard/DashboardPages/WalletPage/WalletPage.jsx";
-import CreateWebinarPage from "./Pages/Dashboard/DashboardPages/WebinarPage/CreateWebinarPage.jsx";
-import WebinarPage from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPage.jsx";
-import WebinarPages from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPages";
-import WhatsAppPage from "./Pages/Dashboard/DashboardPages/WhatsAppPage/WhatsAppPage.jsx";
-import AudiencePage from "./Pages/Dashboard/DashboardPages/YourCustomerPage/YourCustomerPage.jsx";
-import PaymentPage from "./Pages/payment/page.jsx";
-import AboutUsPage from "./Pages/Welcome/AboutUsPage/AboutUsPage.jsx";
-import ContactUsPage from "./Pages/Welcome/ContactUsPage/ContactUsPage.jsx";
-import HiringPage from "./Pages/Welcome/HiringPage/HiringPage.jsx";
 import HomePages from "./Pages/Welcome/HomePage/HomePages.jsx";
+import AboutUsPage from "./Pages/Welcome/AboutUsPage/AboutUsPage.jsx";
+import HiringPage from "./Pages/Welcome/HiringPage/HiringPage.jsx";
 import PluginsPage from "./Pages/Welcome/PlugIns/PluginsPage.jsx";
 import TelegramsPages from "./Pages/Welcome/Telegrams/TelegramsPages.jsx";
-import Disclaimer from "./Pages/Welcome/Terms&Policy/Disclaimer.jsx";
+import WebinarPages from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPages";
+import ContactUsPage from "./Pages/Welcome/ContactUsPage/ContactUsPage.jsx";
 import PrivacyPolicy from "./Pages/Welcome/Terms&Policy/PrivacyPolicy.jsx";
+import Disclaimer from "./Pages/Welcome/Terms&Policy/Disclaimer.jsx";
+import RefundCancellation from "./Pages/Welcome/Terms&Policy/RefundCancellation.jsx";
+import TelegramFormPrev from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramFormPrev";
+import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramForm";
 import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
-import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
+import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes";
+import { useAuth } from "./context/AuthContext.jsx";
+import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
 
@@ -73,7 +72,7 @@ const App = () => {
         <Route path="/disclaimer" element={<Disclaimer />} />
         {/* <Route path="/refund-cancellation" element={<RefundCancellation />} /> */}
         <Route path="/TermCondition" element={<TermCondition />} />
-        <Route path="/payment/verify" element={<PaymentPage />} />
+
         {/* Authentication Pages */}
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
@@ -99,7 +98,7 @@ const App = () => {
             <Route path="withdrawal" element={<WithdrawalPage />} />
             <Route path="all-transactions" element={<AllTransactionsPage />} />
             <Route path="kyc-setting" element={<KYCpage />} />
-            <Route path="premium-content" element={<LockedContentPage />} />
+            <Route path="locked-content" element={<LockedContentPage />} />
           </Route>
 
           {/* Sub-Pages for App-Specific Routes */}
@@ -125,7 +124,6 @@ const App = () => {
           <Route path="course" element={<NewCourse />} />
           <Route path="webinar" element={<WebinarPages />} />
           <Route path="telegram" element={<TelegramFormPrev />} />
-          <Route path="premium-content" element={<LockedContentDisplayPage />} />
 
           <Route path="course/lessons" element={<LessonsPage />} />
         </Route>

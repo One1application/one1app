@@ -80,7 +80,6 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUserId,
-    setCurrentUserId,
     authenticated,
     loading,
     logout,

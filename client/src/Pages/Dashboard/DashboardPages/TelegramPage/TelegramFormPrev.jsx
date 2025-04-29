@@ -1,15 +1,12 @@
 // import React from 'react';
-import { Antenna, CreditCard, Wallet } from "lucide-react";
+import { Antenna, Wallet, CreditCard } from "lucide-react";
+import ProfileImg from '../../../../assets/oneapp.jpeg';
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { fetchTelegram, purchaseTelegram, verifyPayment } from "../../../../services/auth/api.services";
 import { useSearchParams } from "react-router-dom";
-import ProfileImg from "../../../../assets/oneapp.jpeg";
-import SigninModal from "../../../../components/Modal/SigninModal";
 import SignupModal from "../../../../components/Modal/SignupModal";
-import {
-  fetchTelegram,
-  purchaseTelegram,
-} from "../../../../services/auth/api.services";
+import SigninModal from "../../../../components/Modal/SigninModal";
+import  toast  from "react-hot-toast";
 
 const TelegramFormPrev = () => {
   // Mock Data
@@ -78,7 +75,7 @@ const TelegramFormPrev = () => {
   };
 
   const [params] = useSearchParams();
-  const telegramId = params.get("id");
+  const telegramId = params.get('id');
   const [data, setdata] = useState(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showSigninModal, setShowSigninModal] = useState(false);
@@ -88,14 +85,12 @@ const TelegramFormPrev = () => {
     { title: "Privacy", path: "/publicpolicy" },
     { title: "Terms", path: "/terms" },
     { title: "Refund", path: "/refund-cancellation" },
-    { title: "Disclaimer", path: "/disclaimer" },
+    { title: "Disclaimer", path: "/disclaimer" }
   ];
 
   const handleAuthError = (error) => {
-    if (
-      error?.response?.data?.message === "Token not found, Access Denied!" ||
-      error?.message === "Token not found, Access Denied!"
-    ) {
+    if (error?.response?.data?.message === "Token not found, Access Denied!" || 
+        error?.message === "Token not found, Access Denied!") {
       setShowSignupModal(true);
       return true;
     }
@@ -104,80 +99,80 @@ const TelegramFormPrev = () => {
 
   useEffect(() => {
     console.log("aaya");
-
-    if (!telegramId) return;
-    const telegramDetails = async () => {
+    
+    if(!telegramId) return
+    const telegramDetails = async() => {
       try {
-        const response = await fetchTelegram(telegramId);
-        console.log(response);
-        setdata(response.data.payload.telegram);
+        const response = await fetchTelegram(telegramId)
+        console.log(response); 
+        setdata(response.data.payload.telegram) 
       } catch (error) {
         console.error("Error while fetching telegram.", error);
         if (!handleAuthError(error)) {
           toast("Please try later.");
         }
       }
-    };
-    telegramDetails();
-  }, []);
+    }
+    telegramDetails()
+  }, [])
 
-  // useEffect(() => {
-  //   const script = document.createElement("script");
-  //   script.src = "https://checkout.razorpay.com/v1/checkout.js";
-  //   script.async = true;
-  //   document.body.appendChild(script);
-  // }, []);
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
   const handlePayment = async (plan) => {
     try {
       const response = await purchaseTelegram({
         telegramId: data.id,
-        days: plan.days,
+        days: plan.days
       });
-      //   const orderDetails = response.data.payload;
+      const orderDetails = response.data.payload;
 
-      //   var options = {
-      //     "key": import.meta.env.VITE_RAZORPAY_KEY,
-      //     "amount": orderDetails.amount,
-      //     "currency": orderDetails.currency,
-      //     "name": "One App",
-      //     "description": "Complete Your Purchase",
-      //     "order_id": orderDetails.orderId,
-      //     "handler": async function (response) {
-      //       const body = {
-      //         razorpay_order_id: response.razorpay_order_id,
-      //         razorpay_payment_id: response.razorpay_payment_id,
-      //         razorpay_signature: response.razorpay_signature,
-      //         telegramId: orderDetails.telegramId,
-      //         channelId: data.channelId,
-      //         days: plan.days
-      //       };
+      var options = {
+        "key": import.meta.env.VITE_RAZORPAY_KEY,
+        "amount": orderDetails.amount,
+        "currency": orderDetails.currency,
+        "name": "One App",
+        "description": "Complete Your Purchase",
+        "order_id": orderDetails.orderId,
+        "handler": async function (response) {
+          const body = {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            telegramId: orderDetails.telegramId,
+            channelId: data.channelId,
+            days: plan.days
+          }; 
 
-      //       try {
-      //         const response = await verifyPayment(body);
-      //         if(response.data.payload.telegramInvitelink) {
-      //           window.location.href = `${response.data.payload.telegramInvitelink}`;
-      //         }
-      //       } catch (error) {
-      //         console.error("Error while verifying payment.", error);
-      //         if (!handleAuthError(error)) {
-      //           toast("Payment Failed");
-      //         }
-      //       }
-      //     },
-      //     "prefill": {
-      //         "name": "John Doe",
-      //         "email": "john.doe@example.com",
-      //         "contact": "9999999999"
-      //     },
-      //     "theme": {
-      //         "color": "#F37254"
-      //     }
-      // };
+          try {
+            const response = await verifyPayment(body);
+            if(response.data.payload.telegramInvitelink) {
+              window.location.href = `${response.data.payload.telegramInvitelink}`;
+            }
+          } catch (error) {
+            console.error("Error while verifying payment.", error);
+            if (!handleAuthError(error)) {
+              toast("Payment Failed");
+            }
+          }
+        },
+        "prefill": {
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "contact": "9999999999"
+        },
+        "theme": {
+            "color": "#F37254"
+        }
+    };
 
-      // const rzp1 = new window.Razorpay(options);
-      // rzp1.open()
-      window.location.href = response.data.payload.redirectUrl;
+    const rzp1 = new window.Razorpay(options);
+    rzp1.open()
+      
     } catch (error) {
       console.log("Error during payment of telegram.", error);
       if (!handleAuthError(error)) {
@@ -209,24 +204,22 @@ const TelegramFormPrev = () => {
     setShowSignupModal(true);
   };
 
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-      </div>
-    );
+  if(!data) {
+    return <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+    </div>
   }
 
   return (
     <div className="relative min-h-screen w-full bg-slate-950 p-8 flex items-center justify-center overflow-hidden">
-      <SignupModal
+      <SignupModal 
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
         onSuccessfulSignup={handleSuccessfulSignup}
         onSwitchToSignin={handleSwitchToSignin}
       />
 
-      <SigninModal
+      <SigninModal 
         open={showSigninModal}
         handleClose={() => setShowSigninModal(false)}
         label="Email"
@@ -246,8 +239,8 @@ const TelegramFormPrev = () => {
           <div className="flex-1 bg-gray-900/60 backdrop-blur-sm rounded-xl p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
-                <img
-                  src={data.imageUrl}
+                <img 
+                  src={data.imageUrl} 
                   alt={`${data.channelName}'s avatar`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -263,9 +256,7 @@ const TelegramFormPrev = () => {
 
             <div className="space-y-6 ">
               <div>
-                <h2 className="text-white text-lg font-semibold mb-4">
-                  About the channel
-                </h2>
+                <h2 className="text-white text-lg font-semibold mb-4">About the channel</h2>
                 <div className="flex gap-2 mb-4">
                   <span className="px-3 py-1 bg-gray-800/60 rounded-full text-sm text-gray-300">
                     {data.genre}
@@ -316,9 +307,7 @@ const TelegramFormPrev = () => {
                 >
                   <div className="flex flex-col items-start">
                     <span className="font-medium">₹{plan.cost}</span>
-                    <span className="text-xs text-orange-200">
-                      {plan.selectedValue}
-                    </span>
+                    <span className="text-xs text-orange-200">{plan.selectedValue}</span>
                   </div>
                   <span className="font-semibold">₹{plan.cost}</span>
                 </button>
@@ -332,9 +321,7 @@ const TelegramFormPrev = () => {
               <div className="flex justify-center items-center gap-6">
                 {channelData.paymentMethods.map((method, index) => (
                   <div key={index} className="flex flex-col items-center group">
-                    <div
-                      className={`w-12 h-12 bg-${method.color} rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300`}
-                    >
+                    <div className={`w-12 h-12 bg-${method.color} rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300`}>
                       {method.icon === "Wallet" ? (
                         <Wallet className="w-6 h-6 text-white" />
                       ) : (
@@ -355,13 +342,9 @@ const TelegramFormPrev = () => {
         <div className="mt-10 pt-6 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center space-x-2">
-              <span className="text-gray-400 text-sm font-medium">
-                Made with
-              </span>
+              <span className="text-gray-400 text-sm font-medium">Made with</span>
               <span className="text-red-500 animate-pulse">❤️</span>
-              <span className="text-gray-400 text-sm font-medium">
-                in Bharat
-              </span>
+              <span className="text-gray-400 text-sm font-medium">in Bharat</span>
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-end gap-x-6">

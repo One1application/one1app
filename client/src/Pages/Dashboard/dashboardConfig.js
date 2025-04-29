@@ -32,7 +32,7 @@ export const dashboardConfig = {
     { label: "Webinar", icon: RiPresentationFill, path: "/webinar" },
     { label: "Courses", icon: FaBookOpen, path: "/courses" },
     { label: "Telegram", icon: FaTelegramPlane, path: "/telegram" },
-    { label: "Premium Content", icon: FaLock, path: "/premium-content" },
+    { label: "Premium Content", icon: FaLock, path: "/locked-content" },
     // { label: "Discord", icon: FaDiscord, path: "/discord" },
     // { label: "Chat", icon: FaRocketchat, path: "/chat" },
     // { label: "WhatsApp", icon: FaWhatsapp, path: "/whatsapp" },

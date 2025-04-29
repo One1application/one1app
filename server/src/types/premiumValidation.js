@@ -24,13 +24,13 @@ export const premiumSchema = z.object({
             })
         ).optional()
     }),
-    discount: z.object({
-        discountCode: z.string().optional(),
-        discountPercent: z.preprocess((val) => Number(val), z.number().min(1, "Discount percentage must be at least 1").max(99, "Discount percentage must not exceed 99")).optional(),
-        discountExpiry: z.string().refine((val) => !isNaN(Date.parse(val)), {
-          message: "End date must be a valid ISO date-time string",
-        })
-      }).optional()
+    // discountCodes: z.array(
+    //     z.object({
+    //         code: z.string(),
+    //         discountPercentage: z.number().min(0).max(100),
+    //         expirationDate: z.string().optional()
+    //     })
+    // ).optional(),
     // advancedSettings: z.object({
     //     isActive: z.boolean().optional(),
     //     metadata: z.array(z.string()).optional()

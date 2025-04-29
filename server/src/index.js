@@ -1,25 +1,25 @@
-import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
-import rateLimit from "express-rate-limit";
-import { PhonePayClient } from "./config/phonepay.js";
+import dotenv from "dotenv";
+import cors from "cors";
 import { authenticationRouter } from "./routes/autheticationRoutes.js";
-import { courseRouter } from "./routes/courseRoutes.js";
-import { payingUpRoutes } from "./routes/payingUpRoutes.js";
-import { paymentRouter } from "./routes/paymentRoute.js";
-import { premiumRouter } from "./routes/premiumRoutes.js";
-import { telegramRouter } from "./routes/telegramRouter.js";
-import { uploadRouter } from "./routes/uploadRoute.js";
-import { userRouter } from "./routes/userRoutes.js";
-import { walletRoutes } from "./routes/walletRoutes.js";
 import { webinarRouter } from "./routes/webinarRoutes.js";
+import { courseRouter } from "./routes/courseRoutes.js";
+import { uploadRouter } from "./routes/uploadRoute.js";
+import { walletRoutes } from "./routes/walletRoutes.js";
+import { payingUpRoutes } from "./routes/payingUpRoutes.js";
+import { telegramRouter } from "./routes/telegramRouter.js";
+import { premiumRouter } from "./routes/premiumRoutes.js";
+import { adminRouter } from "./routes/adminRoutes.js";
+import rateLimit from "express-rate-limit";
+import { userRouter } from "./routes/userRoutes.js";
 dotenv.config();
 
 const app = express();
 
 app.set("trust proxy", 1);
-app.use(express.json({ limit: "1gb" }));
-app.use(express.urlencoded({ limit: "1gb", extended: true }));
+app.use(express.json({ limit: '1gb' }));
+app.use(express.urlencoded({ limit: '1gb', extended: true }));
+
 
 app.use(
   cors({
@@ -27,6 +27,7 @@ app.use(
     credentials: true,
   })
 );
+
 
 const postLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -51,10 +52,10 @@ app.use("/upload", uploadRouter);
 app.use("/payingup", payingUpRoutes);
 app.use("/self", userRouter);
 app.use("/premium", premiumRouter);
-app.use("/payment", paymentRouter);
+app.use("/admin", adminRouter);
+
 const Port = process.env.SERVER_PORT || 5000;
 
-app.listen(Port, async () => {
-  console.log(await PhonePayClient.env);
+app.listen(Port, () => {
   console.log("Server running on", Port);
 });
