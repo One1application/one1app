@@ -79,7 +79,7 @@ const ProfilePage = () => {
                 >
                   Billing
                 </button>
-                <button
+                {/* <button
                   className={`
                     w-full md:w-auto 
                     py-3 md:py-2 
@@ -96,7 +96,7 @@ const ProfilePage = () => {
                   onClick={() => handleChange("3")}
                 >
                   Branding
-                </button>
+                </button> */}
                 <button
                   className={`
                     w-full md:w-auto 
@@ -124,8 +124,8 @@ const ProfilePage = () => {
       <div>
         {value === "1" && <ProfileTab />}
         {value === "2" && <BillingTab />}
-        {value === "3" && <BrandingTab />}
-        {value === "4" && <PaymentTab />}
+        {/* {value === "3" && <BrandingTab />} */}
+        {value === "3" && <PaymentTab />}
       </div>
     </div>
   );
