@@ -106,7 +106,7 @@ const ProfilePage = () => {
                     duration-200 
                     text-base md:text-xl 
                     ${
-                      value === "4"
+                      value === "3"
                         ? "border-b-2 border-orange-500 text-orange-500"
                         : "text-gray-400 hover:text-gray-200"
                     }
