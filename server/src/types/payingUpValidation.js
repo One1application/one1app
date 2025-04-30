@@ -24,10 +24,10 @@ export const payingUpSchema = z.object({
             z.object({
                 name: z.string(),
                 statement: z.string(),
-                profilePic: z.string().url(),
+                profilePic: z.string().url().optional(),
                 rating: z.number(),
                 id: z.string()
-            })
+            }).optional(),
         )
     }).optional(),
     faqs: z.object({
@@ -65,7 +65,7 @@ export const payingUpSchema = z.object({
             })
         )
     }),
-    discount: z.object({
+    discount: z.array({
         discountCode: z.string().optional(),
         discountPercent: z.preprocess((val) => Number(val), z.number().min(1, "Discount percentage must be at least 1").max(99, "Discount percentage must not exceed 99")).optional(),
         discountExpiry: z.string().refine((val) => !isNaN(Date.parse(val)), {

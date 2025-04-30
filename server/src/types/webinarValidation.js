@@ -7,7 +7,9 @@ const linkSchema = z.object({
   platformLink: z.string().optional()
 });
 
-const discountSchema=z.object({
+const discountSchema=z.array({
+  couponCode:z.string().optional(),
+  id: z.string().regex(/^\d+$/, "ID must be a numeric string"),
   discountCode: z.string().optional(),
   discountPercent: z.preprocess((val) => Number(val), z.number().min(1, "Discount percentage must be at least 1").max(99, "Discount percentage must not exceed 99")).optional(),
   discountExpiry: z.string().refine((val) => !isNaN(Date.parse(val)), {
