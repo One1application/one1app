@@ -111,7 +111,7 @@ const DiscountForm = ({
                 code: discountCode,
                 percent: discountPercent,
                 expiry: expiryDate,
-                plan: selectedPlan,
+                
               };
               onSubmit(discountPayload);
               onClose();
@@ -804,7 +804,7 @@ const CreatePayUp = () => {
       coverImage: formData.coverImage,
       tacs: formData.termAndConditions,
       files: formData.file,
-      discounts: discounts,
+      discount: discounts,
     };
     
     try {

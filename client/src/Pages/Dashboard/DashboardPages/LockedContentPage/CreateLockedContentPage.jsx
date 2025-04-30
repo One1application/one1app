@@ -117,17 +117,25 @@ const CreateLockedContentPage = () => {
         setIsSubmitting(false);
         return;
     }
+    
+    const content={
+      text:formData.contentText,
+      image:formData.contentImage,
+      file:formData.contentFile,
+    }
+
+    const discount={
+      'code': formData.discountCode,
+      'percentage': formData.discountPercent,
+      'expiry': formData.expiryDate,
+    }
 
     const apiData = {
       title: formData.title,
       category: formData.category,
       unlockPrice: formData.unlockPrice,
-      'content.text': formData.contentText,
-      'content.image': formData.contentImage,
-      'content.file': formData.contentFile,
-      'discountCodes.code': formData.discountCode,
-      'discountCodes.discountPercentage': formData.discountPercent,
-      'discountCodes.expirationDate': formData.expiryDate,
+      content:content,
+      discount:discount
     };
 
     Object.keys(apiData).forEach(key => {
