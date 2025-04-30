@@ -139,6 +139,11 @@ export async function verifyPayment(req, res) {
       phonePayOrderId
     );
     console.log("phonepay", PhonePayPaymentDetails);
+    if (PhonePayPaymentDetails.state === "FAILED") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Payment failed" });
+    }
     await prisma.$transaction(async (prisma) => {
       if (webinarId) {
         const creator = await prisma.webinar.findUnique({

@@ -21,9 +21,9 @@ export default function PaymentPage() {
           courseId,
           payingUpId,
           webinarId,
-          telegramId
+          telegramId,
         });
-        console.log("response", response);
+
         if (response?.data.success) {
           setStatus("success");
           // Redirect to course page after successful payment
