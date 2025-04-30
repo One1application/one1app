@@ -192,7 +192,10 @@ const BusinessInformationTab = () => {
               ))}
             </select>
           </div>
-
+    
+        {/* Conditional Fields */}
+      {BussinessStructure !== 'Others' && (
+        <>
           {/* GST Number */}
           <div>
             <label className="block text-sm font-medium text-orange-500 mb-1">
@@ -245,6 +248,9 @@ const BusinessInformationTab = () => {
               )}
             </div>
           </div>
+          </>
+          )}
+
         </div>
       </div>
 
