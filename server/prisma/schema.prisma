@@ -49,7 +49,7 @@ model User {
   upiIds                      UPI[]
   premiumContent              PremiumContent[]
   premiumAccess               PremiumContentAccess[]
-  creatorComission            Int?
+  creatorComission            Int? @default(8)
 }
 
 model Otp {
