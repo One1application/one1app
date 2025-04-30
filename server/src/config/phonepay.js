@@ -5,5 +5,5 @@ export const PhonePayClient = StandardCheckoutClient.getInstance(
   process.env.PHONEPAY_CLIENT_ID,
   process.env.PHONEPAY_CLIENT_SECRATE,
   1,
-  Env.SANDBOX // or Env.PRODUCTION for live
+  Env.PRODUCTION // or Env.PRODUCTION for live
 );

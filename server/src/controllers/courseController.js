@@ -443,6 +443,7 @@ export const purchaseCourse = async (req, res) => {
               },
             }
           : false,
+        creator: true,
       },
     });
 
@@ -474,9 +475,14 @@ export const purchaseCourse = async (req, res) => {
     // };
     const orderId = randomUUID();
     // const order = await razorpay.orders.create(options);
+    let totalAmount = course.price;
+    if (course.creator.creatorComission) {
+      totalAmount =
+        totalAmount + (course.price * course.creator.creatorComission) / 100;
+    }
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
-      .amount(course.price * 100)
+      .amount(totalAmount * 100)
       .redirectUrl(
         `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&courseId=${courseId}`
       )

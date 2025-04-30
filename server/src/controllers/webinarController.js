@@ -261,10 +261,11 @@ export async function purchaseWebinar(req, res) {
             boughtById: user.id,
           },
         },
+        createdBy: true,
       },
     });
 
-    if (webinar.createdById === user.id) {
+    if (webinar.createdBy.id === user.id) {
       return res.status(400).json({
         success: false,
         message: "You cannot purchase your own webinar.",
@@ -313,11 +314,18 @@ export async function purchaseWebinar(req, res) {
     // }
 
     // const order = await razorpay.orders.create(option);
+    let totalAmount = webinar.amount;
+
+    if (webinar.createdBy.creatorComission) {
+      totalAmount =
+        totalAmount +
+        (webinar.amount * webinar.createdBy.creatorComission) / 100;
+    }
     const orderId = randomUUID();
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
-      .amount(webinar.amount * 100)
+      .amount(totalAmount * 100)
       .redirectUrl(
         `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&webinarId=${webinar.id}`
       )

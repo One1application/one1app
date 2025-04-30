@@ -4,7 +4,6 @@ import { StandardCheckoutPayRequest } from "pg-sdk-node";
 import { PhonePayClient } from "../config/phonepay.js";
 import prisma from "../db/dbClient.js";
 import { telegramValidation } from "../types/telegramValidation.js";
-import { uploadOnImageKit } from "../config/imagekit.js";
 import { SchemaValidator } from "../utils/validator.js";
 dotenv.config();
 export async function createTelegram(req, res) {
@@ -140,6 +139,9 @@ export async function purchaseTelegram(req, res) {
       where: {
         id: telegramId,
       },
+      include: {
+        createdBy: true,
+      },
     });
 
     if (!telegram) {
@@ -166,13 +168,18 @@ export async function purchaseTelegram(req, res) {
         message: "No subscription found.",
       });
     }
+    let totalAmount = subscriptionDetails.cost;
 
+    if (telegram.createdBy.creatorComission) {
+      totalAmount =
+        totalAmount +
+        (subscriptionDetails.cost * telegram.createdBy.creatorComission) / 100;
+    }
     const orderId = randomUUID();
-    // TODO : Fix Paying Up
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
-      .amount(subscriptionDetails.cost * 100)
+      .amount(totalAmount * 100)
       .redirectUrl(
         `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&telegramId=${telegramId}`
       )

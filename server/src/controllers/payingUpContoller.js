@@ -5,53 +5,52 @@ import { PhonePayClient } from "../config/phonepay.js";
 import prisma from "../db/dbClient.js";
 dotenv.config();
 export async function createPayingUp(req, res) {
+  try {
+    const {
+      title,
+      description,
+      discount,
+      paymentDetails,
+      category,
+      testimonials,
+      faqs,
+      refundPolicies,
+      tacs,
+      coverImage,
+      files,
+    } = req.body;
+    console.log("req body", req.body);
 
+    const user = req.user;
 
-    try {
+    await prisma.payingUp.create({
+      data: {
+        title,
+        description,
+        discount,
+        paymentDetails,
+        category,
+        testimonials,
+        faqs,
+        refundPolicies,
+        coverImage,
+        tacs,
+        files,
+        createdById: user.id,
+      },
+    });
 
-        const { title, description, discount , paymentDetails, category, testimonials, faqs, refundPolicies, tacs, coverImage, files} = req.body;
-        console.log("req body",req.body);
-        
-    
-        const user = req.user;
-
-        await prisma.payingUp.create({
-
-            data: {
-                title,
-                description,
-                discount,
-                paymentDetails,
-                category,
-                testimonials,
-                faqs,
-                refundPolicies,
-                coverImage,
-                tacs,
-                files,
-                createdById: user.id,
-                
-            }
-        })
-        
-        return res.status(200).json({
-            success: true,
-            message: "Paying up created successfully.",
-        })
-
-
-    } catch (error) {
-        
-        console.error("Error while creating paying Up.", error);
-        res.status(500).json({
-            success: false,
-            message: "Internal Server Error."
-        })
-        
-    }
-
-  
-
+    return res.status(200).json({
+      success: true,
+      message: "Paying up created successfully.",
+    });
+  } catch (error) {
+    console.error("Error while creating paying Up.", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error.",
+    });
+  }
 }
 
 export async function editPayingUpDetails(req, res) {
@@ -244,6 +243,7 @@ export async function purchasePayingUp(req, res) {
             boughtById: user.id,
           },
         },
+        createdBy: true,
       },
     });
 
@@ -288,10 +288,18 @@ export async function purchasePayingUp(req, res) {
     // };
 
     const orderId = randomUUID();
+    let totalAmount = payingUp.paymentDetails.totalAmount;
 
+    if (payingUp.createdBy.creatorComission) {
+      totalAmount =
+        totalAmount +
+        (payingUp.paymentDetails.totalAmount *
+          payingUp.createdBy.creatorComission) /
+          100;
+    }
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
-      .amount(payingUp.paymentDetails.totalAmount * 100)
+      .amount(totalAmount * 100)
       .redirectUrl(
         `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&payingUpId=${payingUp.id}`
       )
