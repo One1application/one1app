@@ -34,7 +34,7 @@ const DiscountForm = ({
     editingDiscount?.percent || ""
   );
   const [expiryDate, setExpiryDate] = useState(editingDiscount?.expiry || "");
-  const [selectedPlan, setSelectedPlan] = useState(editingDiscount?.plan || "");
+  
 
   const handleSubmit = () => {
     onSubmit({
@@ -42,7 +42,7 @@ const DiscountForm = ({
       code: discountCode,
       percent: discountPercent,
       expiry: expiryDate,
-      plan: selectedPlan,
+      
     });
     onClose();
   };
@@ -1110,7 +1110,7 @@ const NewCoursePage = () => {
       }
 
       // Add other transform properties
-      transformedData.discounts = discounts;
+      transformedData.discount = discounts;
       transformedData.lessons = {
         isActive: transformedData.lessons.isActive,
         lessonData: transformedData.lessons.lessonData,

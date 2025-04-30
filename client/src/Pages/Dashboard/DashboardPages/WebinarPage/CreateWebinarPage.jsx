@@ -47,7 +47,7 @@ const CreateWebinarPage = () => {
   
   const [coupons, setCoupons] = useState([]);
   const [formData, setFormData] = useState({
-    couponCode: '',
+    discountCode: '',
     discountPercent: '',
     discountExpiry: ''
   });
@@ -110,7 +110,7 @@ const CreateWebinarPage = () => {
         if (webinarData.coupons && webinarData.coupons.length > 0) {
           setCoupons(webinarData.coupons.map(coupon => ({
             id: coupon.id,
-            couponCode: coupon.couponCode,
+            discountCode: coupon.discountCode,
             discountPercent: coupon.discountPercent,
             discountExpiry: coupon.discountExpiry
           })));
@@ -140,7 +140,7 @@ const CreateWebinarPage = () => {
     }
     
     setFormData({
-      couponCode: '',
+      discountCode: '',
       discountPercent: '',
       discountExpiry: ''
     });
@@ -218,10 +218,15 @@ const CreateWebinarPage = () => {
     try { 
            
       let response;
+      // Prepare the payload
+    const payload = {
+      ...EventDetails,
+      discount: coupons // Include the coupons array in the payload
+    };
       
       if (isEditMode) {
         // Edit existing webinar
-        response = await editWebinar(webinarId, EventDetails);
+        response = await editWebinar(webinarId, payload);
         if (response.status === 200) {
           toast.success("Webinar updated successfully");
           navigate("/dashboard/webinar");
@@ -230,7 +235,7 @@ const CreateWebinarPage = () => {
         }
       } else {
         // Create new webinar
-        response = await createNewWebinarRequest(EventDetails);
+        response = await createNewWebinarRequest(payload);
         if (response.status === 200) {
           toast.success("Webinar created successfully");
           navigate("/dashboard/webinar");
@@ -792,11 +797,11 @@ const CreateWebinarPage = () => {
                             Coupon Code:
                           </label>
                           <input
-                            value={formData.couponCode}
+                            value={formData.discountCode}
                             onChange={(e) => {
                               setFormData((prev) => ({
                                 ...prev,
-                                couponCode: e.target.value,
+                                discountCode: e.target.value,
                               }));
                             }}
                             type="text"
@@ -863,7 +868,7 @@ const CreateWebinarPage = () => {
                           {coupons.map(coupon => (
                             <div key={coupon.id} className="flex items-center justify-between p-4 border border-orange-500/20 rounded-lg bg-black/40">
                               <div className="space-y-1">
-                                <div className="font-semibold text-orange-400">{coupon.couponCode}</div>
+                                <div className="font-semibold text-orange-400">{coupon.discountCode}</div>
                                 <div className="text-sm text-orange-400/80">
                                   {coupon.discountPercent}% off • Expires: {coupon.discountExpiry}
                                 </div>

@@ -10,7 +10,7 @@ courseRouter.get('/get-course-by-id/:courseId',loggedMiddleware,getCourseById);
 courseRouter.get('/playvideo', playVideo);
 courseRouter.use(authMiddleware);
 
-courseRouter.post('/create-course', SchemaValidator(courseSchema) ,createCourse);
+courseRouter.post('/create-course', createCourse);
 courseRouter.post('/edit-course/:courseId', editCourseDetails);
 courseRouter.get('/get-creator-courses', getCreatorCourses);
 courseRouter.post('/purchase-course', purchaseCourse)

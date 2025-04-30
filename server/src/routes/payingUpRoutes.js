@@ -12,9 +12,7 @@ payingUpRoutes.get('/get-payingup-by-id/:payingUpId', loggedMiddleware,
 
 payingUpRoutes.use(authMiddleware);
 
-payingUpRoutes.post('/create-payingup', SchemaValidator(payingUpSchema),
-    createPayingUp
-);
+payingUpRoutes.post('/create-payingup',createPayingUp );
 
 payingUpRoutes.post('/edit-payingup/:payingUpId', SchemaValidator(payingUpSchema), editPayingUpDetails
 );
