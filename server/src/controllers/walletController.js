@@ -144,11 +144,15 @@ export async function verifyPayment(req, res) {
         .status(400)
         .json({ success: false, message: "Payment failed" });
     }
+
     await prisma.$transaction(async (prisma) => {
       if (webinarId) {
         const creator = await prisma.webinar.findUnique({
           where: {
             id: webinarId,
+          },
+          include: {
+            createdBy: true,
           },
         });
 
@@ -157,14 +161,19 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-
+        let amountToBeAdded = creator.amount;
+        if (creator.createdBy.creatorComission) {
+          amountToBeAdded =
+            amountToBeAdded -
+            (creator.createdBy.creatorComission * creator.amount) / 100;
+        }
         const creatorWallet = await prisma.wallet.update({
           where: {
             userId: creator.createdById,
           },
           data: {
-            totalEarnings: { increment: parseFloat(creator.amount) },
-            balance: { increment: parseFloat(creator.amount) },
+            totalEarnings: { increment: parseFloat(amountToBeAdded) },
+            balance: { increment: parseFloat(amountToBeAdded) },
           },
         });
 
@@ -209,6 +218,9 @@ export async function verifyPayment(req, res) {
           where: {
             id: courseId,
           },
+          include: {
+            creator: true,
+          },
         });
 
         if (!creator) {
@@ -216,14 +228,19 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-
+        let amountToBeAdded = creator.price;
+        if (creator.creator.creatorComission) {
+          amountToBeAdded =
+            amountToBeAdded -
+            (creator.creator.creatorComission * creator.price) / 100;
+        }
         const creatorWallet = await prisma.wallet.update({
           where: {
             userId: creator.createdBy,
           },
           data: {
-            totalEarnings: { increment: parseFloat(creator.price) },
-            balance: { increment: parseFloat(creator.price) },
+            totalEarnings: { increment: parseFloat(amountToBeAdded) },
+            balance: { increment: parseFloat(amountToBeAdded) },
           },
         });
 
@@ -271,6 +288,7 @@ export async function verifyPayment(req, res) {
           select: {
             createdById: true,
             paymentDetails: true,
+            createdBy: true,
           },
         });
 
@@ -281,17 +299,24 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-
+        let amountToBeAdded = creator.paymentDetails.totalAmount;
+        if (creator.createdBy.creatorComission) {
+          amountToBeAdded =
+            amountToBeAdded -
+            (creator.createdBy.creatorComission *
+              creator.paymentDetails.totalAmount) /
+              100;
+        }
         const creatorWallet = await prisma.wallet.update({
           where: {
             userId: creator.createdById,
           },
           data: {
             totalEarnings: {
-              increment: parseFloat(creator.paymentDetails.totalAmount),
+              increment: parseFloat(amountToBeAdded),
             },
             balance: {
-              increment: parseFloat(creator.paymentDetails.totalAmount),
+              increment: parseFloat(amountToBeAdded),
             },
           },
         });
@@ -339,6 +364,7 @@ export async function verifyPayment(req, res) {
           select: {
             createdById: true,
             subscription: true,
+            createdBy: true,
           },
         });
 
@@ -351,16 +377,22 @@ export async function verifyPayment(req, res) {
         const subscriptionDetails = creator.subscription.find(
           (sub) => sub.days === days
         );
-
+        let amountToBeAdded = subscriptionDetails.cost;
+        if (creator.createdBy.creatorComission) {
+          amountToBeAdded =
+            amountToBeAdded -
+            (creator.createdBy.creatorComission * subscriptionDetails.cost) /
+              100;
+        }
         const creatorWallet = await prisma.wallet.update({
           where: {
             userId: creator.createdById,
           },
           data: {
             totalEarnings: {
-              increment: parseFloat(subscriptionDetails.cost),
+              increment: parseFloat(amountToBeAdded),
             },
-            balance: { increment: parseFloat(subscriptionDetails.cost) },
+            balance: { increment: parseFloat(amountToBeAdded) },
           },
         });
 

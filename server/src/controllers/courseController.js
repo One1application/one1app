@@ -476,10 +476,7 @@ export const purchaseCourse = async (req, res) => {
     const orderId = randomUUID();
     // const order = await razorpay.orders.create(options);
     let totalAmount = course.price;
-    if (course.creator.creatorComission) {
-      totalAmount =
-        totalAmount + (course.price * course.creator.creatorComission) / 100;
-    }
+  
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)

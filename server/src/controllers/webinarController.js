@@ -316,11 +316,6 @@ export async function purchaseWebinar(req, res) {
     // const order = await razorpay.orders.create(option);
     let totalAmount = webinar.amount;
 
-    if (webinar.createdBy.creatorComission) {
-      totalAmount =
-        totalAmount +
-        (webinar.amount * webinar.createdBy.creatorComission) / 100;
-    }
     const orderId = randomUUID();
 
     const request = StandardCheckoutPayRequest.builder()
