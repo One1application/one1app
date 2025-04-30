@@ -170,11 +170,6 @@ export async function purchaseTelegram(req, res) {
     }
     let totalAmount = subscriptionDetails.cost;
 
-    if (telegram.createdBy.creatorComission) {
-      totalAmount =
-        totalAmount +
-        (subscriptionDetails.cost * telegram.createdBy.creatorComission) / 100;
-    }
     const orderId = randomUUID();
 
     const request = StandardCheckoutPayRequest.builder()

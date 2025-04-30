@@ -290,13 +290,6 @@ export async function purchasePayingUp(req, res) {
     const orderId = randomUUID();
     let totalAmount = payingUp.paymentDetails.totalAmount;
 
-    if (payingUp.createdBy.creatorComission) {
-      totalAmount =
-        totalAmount +
-        (payingUp.paymentDetails.totalAmount *
-          payingUp.createdBy.creatorComission) /
-          100;
-    }
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
