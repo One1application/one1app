@@ -15,6 +15,7 @@ CREATE TABLE "User" (
     "heardAboutUs" TEXT NOT NULL,
     "role" "Role" NOT NULL,
     "verified" BOOLEAN NOT NULL DEFAULT false,
+    "creatorComission" INTEGER,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -101,8 +102,8 @@ CREATE TABLE "BusinessInfo" (
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
     "businessStructure" TEXT NOT NULL,
-    "gstNumber" TEXT NOT NULL,
-    "sebiNumber" TEXT NOT NULL,
+    "gstNumber" TEXT,
+    "sebiNumber" TEXT,
     "sebiCertificate" TEXT,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -155,6 +156,7 @@ CREATE TABLE "Webinar" (
     "isOnline" BOOLEAN NOT NULL,
     "venue" TEXT,
     "link" JSONB NOT NULL,
+    "discount" JSONB,
     "isPaid" BOOLEAN NOT NULL,
     "quantity" INTEGER NOT NULL,
     "amount" DOUBLE PRECISION,
@@ -181,6 +183,7 @@ CREATE TABLE "Course" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "price" DOUBLE PRECISION NOT NULL,
+    "discount" JSONB,
     "validity" TEXT NOT NULL,
     "aboutThisCourse" JSONB NOT NULL,
     "testimonials" JSONB NOT NULL,
@@ -236,6 +239,7 @@ CREATE TABLE "PayingUp" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "discount" JSONB,
     "paymentDetails" JSONB NOT NULL,
     "category" JSONB NOT NULL,
     "testimonials" JSONB NOT NULL,
@@ -265,13 +269,13 @@ CREATE TABLE "PayingUpTicket" (
 -- CreateTable
 CREATE TABLE "Telegram" (
     "id" TEXT NOT NULL,
-    "channelId" TEXT NOT NULL,
-    "channelName" TEXT NOT NULL,
+    "coverImage" TEXT NOT NULL,
+    "channelLink" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "subscription" JSONB NOT NULL,
     "genre" TEXT NOT NULL,
-    "imageUrl" TEXT NOT NULL,
+    "discount" JSONB NOT NULL,
+    "subscription" JSONB NOT NULL,
     "createdById" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -299,12 +303,8 @@ CREATE TABLE "PremiumContent" (
     "title" TEXT NOT NULL,
     "category" TEXT NOT NULL,
     "unlockPrice" DOUBLE PRECISION NOT NULL,
-    "text" TEXT,
-    "images" TEXT[],
-    "files" TEXT[],
-    "code" TEXT,
-    "discountPercentage" DOUBLE PRECISION,
-    "expirationDate" TEXT,
+    "content" JSONB NOT NULL,
+    "discount" JSONB,
     "createdById" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -319,6 +319,17 @@ CREATE TABLE "PremiumContentAccess" (
     "expiryDate" TIMESTAMP(3),
 
     CONSTRAINT "PremiumContentAccess_pkey" PRIMARY KEY ("userId","contentId")
+);
+
+-- CreateTable
+CREATE TABLE "Newsletter" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "isSubscribed" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Newsletter_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -359,6 +370,9 @@ CREATE UNIQUE INDEX "TelegramSubscription_id_key" ON "TelegramSubscription"("id"
 
 -- CreateIndex
 CREATE UNIQUE INDEX "TelegramSubscription_boughtById_key" ON "TelegramSubscription"("boughtById");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Newsletter_email_key" ON "Newsletter"("email");
 
 -- AddForeignKey
 ALTER TABLE "Wallet" ADD CONSTRAINT "Wallet_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
