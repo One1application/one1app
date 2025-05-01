@@ -58,6 +58,7 @@ const BusinessInformationTab = () => {
       toast.error("Last Name is required.");
       return false;
     }
+    if(BussinessStructure !== 'Others'){
     if (!/^\d+$/.test(gstNumber.trim())) {
       toast.error("GST Number must be a valid number.");
       return false;
@@ -65,7 +66,7 @@ const BusinessInformationTab = () => {
     if (!/^\d+$/.test(sebiNumber.trim())) {
       toast.error("SEBI Number must be a valid number.");
       return false;
-    }
+    } }
     return true;
   };
 
