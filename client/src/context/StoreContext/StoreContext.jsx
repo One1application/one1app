@@ -10,7 +10,7 @@ export const StoreContext = createContext({
   setHeader: () => {},
   setLinks: () => {},
   AllTransaction: [],
-  CurrentTransactionPage: 0,
+  CurrentTransactionPage: 1,
   TotalTransactionPages: 0,
   getNextTransactionPage: () => {},
   getPreviousTransactionPage: () => {},

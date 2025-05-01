@@ -1,15 +1,27 @@
 import { PiHandWithdraw } from "react-icons/pi";
 import { walletConfig } from "../WalletConfig";
+import { fetchTransactionsPage} from "../../../../../services/auth/api.services"
 // import { FaCog } from "react-icons/fa";
 import WalletTableComponent from "../../../../../components/Table/WalletTableComponent";
 import { useContext, useEffect } from "react";
 import { StoreContext } from "../../../../../context/StoreContext/StoreContext";
 
 const AllTransactionsPage = () => {
-  const { AllTransaction, CurrentTransactionPage, TotalTransactionPages } =
-    useContext(StoreContext);
+  const { AllTransaction, CurrentTransactionPage, TotalTransactionPages, setAllTransaction } = useContext(StoreContext);
 
   const { title, tableHeader, tableData } = walletConfig.allTransactionsPage;
+
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      const res = await fetchTransactionsPage({ page: CurrentTransactionPage });
+      setAllTransaction(res.data.payload.transactions);  
+    };
+
+    fetchTransactions();
+  }, [CurrentTransactionPage]);
+
+ 
 
   return (
     <div className="p-6 space-y-6 bg-[#0F1418] min-h-screen">
