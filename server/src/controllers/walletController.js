@@ -526,7 +526,7 @@ export async function addBusinessInfo(req, res) {
         message: "Missing required fields.",
       });
     }
-    if (businessStructure != "others" && !gstNumber && !sebiNumber) {
+    if (businessStructure != "Others" && !gstNumber && !sebiNumber) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields." });
