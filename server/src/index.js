@@ -56,7 +56,7 @@ app.use("/payingup", payingUpRoutes);
 app.use("/self", userRouter);
 app.use("/premium", premiumRouter);
 app.use("/payment", paymentRouter);
-app.use("/api/newsletter", newsletterRoutes);
+app.use("/newsletter", newsletterRoutes);
 
 app.use("/admin", adminRouter);
 
