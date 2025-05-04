@@ -22,7 +22,6 @@ const LoginPage = () => {
       }
 
       const response = await adminLogin('+91' + phoneNumber);
-      console.log(response);
 
       toast.success(response.message);
       setStage('otp');
@@ -37,10 +36,10 @@ const LoginPage = () => {
         toast.warning("Invalid OTP")
         return
       }
-      const response = await verifyAdminOtp('+91' + phoneNumber, otp);
       setLoading(true)
+      const response = await verifyAdminOtp('+91' + phoneNumber, otp);
+
       localStorage.setItem("AuthToken", response.token);
-      console.log(response);
 
       const data = await selfIdentification()
       if (data.success === true) {
