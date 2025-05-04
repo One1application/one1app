@@ -23,18 +23,17 @@ app.use(
 
 const prisma = new PrismaClient();
 
-const token = "7656770449:AAEKUv5Jlj4nRB1t9R-gsVI0sngBF9cGsYQ";
+const token = process.env.TELEGRAM_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${token}`;
-const SERVER_URL =
-  "https://6c80-2409-4080-e01-be92-14e2-14b5-b873-30f7.ngrok-free.app";
+const SERVER_URL = process.env.BOT_SERVER_URL;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const ChannelUser = new Map();
 
 const mtproto = new MTProto({
-  api_id: "22445730",
-  api_hash: "cd15770d044397228abebaef551073b0",
+  api_id: process.env.BOT_MTPROTO_API_APPID,
+  api_hash: process.env.BOT_MTPROTO_API_HASH,
   storageOptions: {
     path: path.resolve(__dirname, "mtproto-session.json"),
   },
@@ -51,7 +50,7 @@ const askQuestion = (query) => {
 
 const login = async () => {
   try {
-    const phone_number = "+919253436309";
+    const phone_number = process.env.BOT_PHONE_NUMBER;
 
     let result = await mtproto.call("auth.sendCode", {
       phone_number,
@@ -258,6 +257,12 @@ app.get("/users", (req, res) => {
   providedKey === expectedKey
     ? res.json(channelUserData)
     : res.status(401).send("Unauthorized");
+});
+
+app.get("/health-check", async (req, res) => {
+  res.json({
+    message: "Bot Server Up",
+  });
 });
 
 const checkExpiredSubscriptions = async () => {

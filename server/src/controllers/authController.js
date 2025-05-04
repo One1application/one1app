@@ -281,3 +281,132 @@ export async function verifyOtpForLogin(req, res) {
     });
   }
 }
+
+// Admin Login Functionality
+export const adminLogin = async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+
+    // Validate input using zod or your validation schema
+    signInValidation.parse({
+      phoneNumber,
+    });
+
+    const userExist = await prisma.user.findFirst({
+      where: {
+        phone: phoneNumber,
+        role: {
+          in: ["Admin", "SuperAdmin"],
+        },
+      },
+    });
+
+    if (!userExist) {
+      return res.status(404).json({
+        success: false,
+        message: "User doesn't exist or doesn't have the required role.",
+      });
+    }
+
+    // Simulate sending OTP based on the role
+    const otpType =
+      userExist.role === "Admin" ? "ADMIN_OTP" : "SUPER_ADMIN_OTP";
+
+    return res.status(200).json({
+      success: true,
+      message: `OTP sent to the registered phone number for ${userExist.role}.`,
+    });
+  } catch (error) {
+    console.error("Error in admin login process.", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error.",
+    });
+  }
+};
+
+export const verifyAdminOtp = async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+
+    signInOtpValidation.parse({
+      phoneNumber,
+      otp,
+    });
+
+    // Fetch the user by phone number
+    const user = await prisma.user.findFirst({
+      where: {
+        phone: phoneNumber,
+        role: {
+          in: ["Admin", "SuperAdmin"], // Ensure the role matches
+        },
+      },
+    });
+
+    // If user doesn't exist, return 404
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User doesn't exist or doesn't have the required role.",
+      });
+    }
+
+    // Check OTP based on the role
+    const expectedOtp =
+      user.role === "Admin"
+        ? process.env.ADMIN_OTP
+        : process.env.SUPER_ADMIN_OTP;
+
+    if (otp !== expectedOtp) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid OTP.",
+      });
+    }
+
+    // Update user to set verified as true
+    const updateAdmintoVerified = await prisma.user.update({
+      where: {
+        phone: phoneNumber,
+      },
+      data: {
+        verified: true,
+      },
+    });
+
+    if (!updateAdmintoVerified) {
+      return res.status(500).json({ message: "Internal server error" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: updateAdmintoVerified.id,
+        role: updateAdmintoVerified.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "2d" }
+    );
+
+    // Set the token as a cookie
+    res.cookie("authToken", token, {
+      httpOnly: process.env.NODE_ENV === "production" ? true : false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict", // Helps prevent CSRF attacks
+      maxAge: 2 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verification successful.",
+      token: token,
+    });
+  } catch (error) {
+    console.error("Error in verifying admin OTP.", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error.",
+    });
+  }
+};

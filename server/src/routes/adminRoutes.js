@@ -1,12 +1,28 @@
 import express from "express";
 import { adminMiddleware } from "../middlewares/adminMiddleware.js";
-import { createUser, getUsers, updateUser, deleteUser, createAdmin, getAdmins, updateAdmin, deleteAdmin, getPayments, getProducts, getDashboardData, getUserReport } from "../controllers/adminController.js";
+import {
+  createUser,
+  getUsers,
+  updateUser,
+  deleteUser,
+  createAdmin,
+  getAdmins,
+  updateAdmin,
+  deleteAdmin,
+  getPayments,
+  getProducts,
+  getDashboardData,
+  getUserReport,
+  adminSelfIdentification,
+} from "../controllers/adminController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 export const adminRouter = express.Router();
-adminRouter.use(authMiddleware)
-adminRouter.use(adminMiddleware); 
 
+adminRouter.use(authMiddleware);
+adminRouter.use(adminMiddleware);
+
+adminRouter.get("/details", adminSelfIdentification);
 adminRouter.post("/users", createUser);
 adminRouter.get("/users", getUsers);
 adminRouter.put("/users/:id", updateUser);

@@ -1,0 +1,346 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "app/generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  User
+  Creator
+  Admin
+  SuperAdmin
+}
+
+enum SubscriptionType {
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id                          String                 @id @default(uuid())
+  email                       String                 @unique
+  phone                       String                 @unique
+  name                        String
+  socialMedia                 String
+  goals                       String[]
+  heardAboutUs                String
+  role                        Role
+  verified                    Boolean                @default(false)
+  boughtWebinarTickets        WebinarTicket[]
+  boughtPayingUpTickets       PayingUpTicket[]
+  boughtTelegramSubscriptions TelegramSubscription[]
+  createdWebinars             Webinar[]
+  createdCourses              Course[]
+  createdPayingUps            PayingUp[]
+  createdTelegrams            Telegram[]
+  wallet                      Wallet?
+  CoursePurchasers            CoursePurchasers[]
+  businessInfo                BusinessInfo?
+  kycRecords                  kycRecords?
+  BankAccounts                BankDetails[]
+  upiIds                      UPI[]
+  premiumContent              PremiumContent[]
+  premiumAccess               PremiumContentAccess[]
+  creatorComission            Int?                   @default(8)
+}
+
+model Otp {
+  id            String   @id @default(uuid())
+  phoneNumber   String   @unique
+  phoneCodeHash String
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  updatedAt     DateTime @updatedAt
+}
+
+model Wallet {
+  id               String        @id @default(uuid())
+  userId           String        @unique
+  user             User          @relation(fields: [userId], references: [id])
+  balance          Float         @default(0.0)
+  totalEarnings    Float         @default(0.0)
+  totalWithdrawals Float         @default(0.0)
+  transactions     Transaction[]
+  withdrawals      Withdrawal[]
+  isKycVerified    Boolean       @default(false)
+  mpin             String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model BankDetails {
+  id                    String       @id @default(uuid())
+  accountHolderName     String
+  accountNumber         String
+  ifscCode              String
+  bankDocument          String?
+  upiId                 String[]
+  razorpayContactID     String?
+  razorpayFundAccountID String?
+  userId                String
+  primary               Boolean      @default(false)
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt             DateTime     @default(now())
+  upiIds                UPI[]
+  withdrawls            Withdrawal[]
+  updatedAt             DateTime     @updatedAt
+}
+
+model UPI {
+  id                    String       @id @default(uuid())
+  upiId                 String       @unique
+  razorpayFundAccountID String?
+  razorpayContactID     String?
+  bankDetailsId         String
+  bankDetails           BankDetails  @relation(fields: [bankDetailsId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  withdrawls            Withdrawal[]
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+model kycRecords {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  socialMedia   Json
+  aadhaarNumber String
+  aadhaarFront  String
+  aadhaarBack   String
+  panCard       String
+  selfie        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  status        String   @default("Pending")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BusinessInfo {
+  id                String   @id @default(uuid())
+  firstName         String
+  lastName          String
+  businessStructure String
+  gstNumber         String?  @unique
+  sebiNumber        String?  @unique
+  sebiCertificate   String?
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  walletId      String
+  wallet        Wallet   @relation(fields: [walletId], references: [id])
+  amount        Float
+  email         String
+  phoneNumber   String
+  product       String
+  modeOfPayment String
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Withdrawal {
+  id               String      @id @default(uuid())
+  walletId         String
+  wallet           Wallet      @relation(fields: [walletId], references: [id])
+  amount           Float
+  modeOfWithdrawal String
+  bankDetailsId    String
+  bankDetails      BankDetails @relation(fields: [bankDetailsId], references: [id])
+  upiId            String
+  upi              UPI         @relation(fields: [upiId], references: [id])
+  status           String
+  razorpayPayoutID String?
+  createdAt        DateTime    @default(now())
+}
+
+model Webinar {
+  id             String          @id @default(uuid())
+  title          String
+  category       String
+  coverImage     String
+  occurrence     String
+  startDate      DateTime
+  paymentEnabled Boolean         @default(true)
+  endDate        DateTime
+  isOnline       Boolean
+  venue          String?
+  link           Json
+  discount       Json?
+  isPaid         Boolean
+  quantity       Int
+  amount         Float?
+  tickets        WebinarTicket[]
+  createdById    String
+  createdBy      User            @relation(fields: [createdById], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model WebinarTicket {
+  id         String  @id @default(uuid())
+  webinarId  String
+  webinar    Webinar @relation(fields: [webinarId], references: [id], onDelete: Cascade)
+  boughtById String
+  boughtBy   User    @relation(fields: [boughtById], references: [id])
+  paymentId  String?
+  orderId    String?
+}
+
+model Course {
+  id              String             @id @default(cuid())
+  title           String
+  price           Float
+  discount        Json?
+  validity        String
+  aboutThisCourse Json
+  testimonials    Json
+  courseBenefits  Json
+  faqs            Json
+  gallery         Json
+  products        CourseProduct[]
+  coverImage      Json
+  lessons         Lessons[]
+  language        Json
+  startDate       DateTime
+  endDate         DateTime?
+  createdBy       String
+  creator         User               @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  purchasedBy     CoursePurchasers[]
+}
+
+model CourseProduct {
+  id              String  @id @default(cuid())
+  title           String
+  isActive        Boolean @default(false)
+  productMetaData Json
+  courseId        String  @unique
+  course          Course  @relation(fields: [courseId], references: [id])
+}
+
+model Lessons {
+  id         String  @id @default(cuid())
+  isActive   Boolean
+  lessonData Json
+  courseId   String
+  course     Course  @relation(fields: [courseId], references: [id])
+}
+
+model CoursePurchasers {
+  id          String   @id @default(uuid())
+  courseId    String
+  purchaserId String
+  paymentId   String
+  orderId     String
+  purchaser   User     @relation(fields: [purchaserId], references: [id])
+  course      Course   @relation(fields: [courseId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model PayingUp {
+  id              String           @id @default(uuid())
+  title           String
+  description     String
+  discount        Json?
+  paymentDetails  Json
+  category        Json
+  testimonials    Json
+  faqs            Json
+  refundPolicies  Json
+  tacs            Json
+  coverImage      Json
+  files           Json
+  createdById     String
+  createdBy       User             @relation(fields: [createdById], references: [id])
+  payingUpTickets PayingUpTicket[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt()
+}
+
+model PayingUpTicket {
+  id         String   @id @default(uuid())
+  payingUpId String
+  payingUp   PayingUp @relation(fields: [payingUpId], references: [id], onDelete: Cascade)
+  boughtById String
+  boughtBy   User     @relation(fields: [boughtById], references: [id])
+  paymentId  String?
+  orderId    String?
+}
+
+model Telegram {
+  id           String @id @unique @default(uuid())
+  coverImage   String
+  channelLink  String
+  title        String
+  description  String
+  genre        String
+  discount     Json
+  subscription Json
+  createdById  String
+  createdBy    User   @relation(fields: [createdById], references: [id])
+
+  telegramSubscriptions TelegramSubscription[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+}
+
+model TelegramSubscription {
+  id         String   @id @unique @default(uuid())
+  validDays  Int
+  telegramId String
+  chatId     String?
+  telegram   Telegram @relation(fields: [telegramId], references: [id])
+  boughtById String   @unique
+  boughtBy   User     @relation(fields: [boughtById], references: [id])
+  paymentId  String?
+  orderId    String?
+  createdAt  DateTime @default(now())
+}
+
+model PremiumContent {
+  id          String                 @id @default(uuid()) // Unique UUID for the product
+  title       String
+  category    String
+  unlockPrice Float
+  content     Json
+  discount    Json?
+  createdById String
+  createdBy   User                   @relation(fields: [createdById], references: [id])
+  createdAt   DateTime               @default(now()) // Timestamp for product creation
+  access      PremiumContentAccess[]
+}
+
+model PremiumContentAccess {
+  userId         String
+  contentId      String
+  purchasedAt    DateTime       @default(now())
+  expiryDate     DateTime?
+  user           User           @relation(fields: [userId], references: [id])
+  premiumContent PremiumContent @relation(fields: [contentId], references: [id])
+
+  @@id([userId, contentId])
+}
+
+model Newsletter {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  isSubscribed Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

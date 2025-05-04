@@ -3,6 +3,10 @@ import Logout from "../../assets/Logoutimg.png";
 
 const LogoutPage = () => {
   const navigate = useNavigate()
+  const handleLogOut = () => {
+    localStorage.removeItem("AuthToken")
+    navigate('/')
+  }
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-300">
       <div className="bg-white w-96 p-6 rounded-lg shadow-lg text-center">
@@ -24,7 +28,7 @@ const LogoutPage = () => {
           </button>
           <button
             className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
-            onClick={() => navigate('/')}
+            onClick={() => handleLogOut()}
           >
             Yes, Logout
           </button>

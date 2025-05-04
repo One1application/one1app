@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "app/generated/prisma/client"
 }
 
 datasource db {
@@ -17,6 +18,7 @@ enum Role {
   User
   Creator
   Admin
+  SuperAdmin
 }
 
 enum SubscriptionType {

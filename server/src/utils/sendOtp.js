@@ -3,6 +3,8 @@
 import axios from "axios";
 import bcrypt from "bcrypt";
 import prisma from "../db/dbClient.js";
+import dotenv from "dotenv";
+dotenv.config({});
 
 export async function sendOtp(phoneNumber) {
   console.log("send otp", phoneNumber);
@@ -12,7 +14,7 @@ export async function sendOtp(phoneNumber) {
   const encodeUrlMessage = encodeURIComponent(message);
   try {
     const response = await axios.get(
-      `https://site.ping4sms.com/api/smsapi?key=d260450575c2f60afe93097661a4b45f&route=2&sender=COHTPL&number=${phoneNumber}&sms=${encodeUrlMessage}&templateid=1707174408869151211`
+      `https://site.ping4sms.com/api/smsapi?key=${process.env.PING4SMS_KEY}&route=2&sender=COHTPL&number=${phoneNumber}&sms=${encodeUrlMessage}&templateid=${process.env.PING4SMS_TEMPLATE_ID}`
     );
     console.log("otp sent successfully", response.data);
 

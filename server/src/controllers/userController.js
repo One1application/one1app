@@ -13,6 +13,8 @@ export const selfIdentification = async (req, res) => {
         phone: true,
         name: true,
         verified: true,
+        role: true,
+        id: true,
       },
     });
 

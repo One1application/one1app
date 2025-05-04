@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 // import { Settings } from "lucide-react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { dashboardConfig } from "./dashboardConfig";
+import { useAuthStore } from "../store/authStore";
+import { ROLES } from "../utils/constant";
 
 const Dashboard = () => {
   // const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({});
   const navigate = useNavigate();
-
+  const { user, isAuthenticated } = useAuthStore()
+  const [accessibleItems, setaccessibleItems] = useState([])
   // const toggleSettings = () => {
   //   setIsSettingsOpen((prev) => !prev);
   // };
@@ -23,6 +26,20 @@ const Dashboard = () => {
       [index]: !prev[index],
     }));
   };
+
+  useEffect(() => {
+
+    if (isAuthenticated === true && (user?.role === ROLES.SuperAdmin || user?.role === ROLES.Admin)) {
+      const newItems = dashboardConfig.generalItems.filter((item) =>
+        item.roles.includes(user?.role)
+      );
+      setaccessibleItems(newItems)
+    } else {
+      navigate("/")
+    }
+  }, [user, isAuthenticated])
+
+
 
   // const handleSettingItemClick = (item) => {
   //   if (item.path.startsWith("http")) {
@@ -39,9 +56,8 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen">
       <aside
-        className={`${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 w-64 bg-[#0c1014] text-white flex flex-col h-screen fixed z-50 md:static md:translate-x-0`}
+        className={`${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          } transition-transform duration-300 w-64 bg-[#0c1014] text-white flex flex-col h-screen fixed z-50 md:static md:translate-x-0`}
       >
         <div className="p-2 flex items-center justify-center">
           <img
@@ -57,11 +73,11 @@ const Dashboard = () => {
         <div className="flex-1 overflow-y-auto scrollbar-hide">
           <div className="p-4">
             <div className="mb-6">
-              {dashboardConfig.generalItems.map((item, index) => (
+              {accessibleItems.map((item, index) => (
                 <div key={index}>
                   <div
                     className="flex items-center text-sm py-3 px-4 cursor-pointer hover:bg-orange-600 hover:rounded-xl transition-all"
-                    onClick={() => navigate(`${item.path}`)} 
+                    onClick={() => navigate(`${item.path}`)}
                   >
                     <item.icon className="w-5 h-5 mr-3" />
                     <span>{item.label}</span>
@@ -69,7 +85,7 @@ const Dashboard = () => {
                       <button
                         className="ml-auto"
                         onClick={(e) => {
-                          e.stopPropagation(); 
+                          e.stopPropagation();
                           toggleSubmenu(index);
                         }}
                       >
