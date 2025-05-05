@@ -30,7 +30,7 @@ const HomePage = () => {
     setIsLoading(true);
     try {
       const response = await dashboardData(selectedPeriod);
-      setDashboard(response);
+      console.log(response);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError("Failed to fetch dashboard data");
@@ -171,8 +171,8 @@ const HomePage = () => {
                 <button
                   key={tab.id}
                   className={`text-sm font-medium px-3 py-1 rounded-lg whitespace-nowrap ${activeTab === tab.id
-                      ? "bg-orange-600 text-white"
-                      : "text-gray-600 bg-gray-100"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-600 bg-gray-100"
                     }`}
                   onClick={() => handleTabClick(tab.id)}
                 >

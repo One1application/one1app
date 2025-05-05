@@ -873,7 +873,7 @@ export const getDashboardData = async (req, res) => {
           gte: startDate,
           lte: endDate,
         },
-        status: "SUCCESS", // Assuming only successful transactions count
+        status: "COMPLETED",
       },
       include: {
         wallet: {
