@@ -31,7 +31,7 @@ export const dashboardConfig = {
       roles: [ROLES.Admin, ROLES.SuperAdmin],
     },
     {
-      label: "Report",
+      label: "Creators Report",
       icon: FaChartBar,
       path: "/dashboard/report",
       sublabels: [],

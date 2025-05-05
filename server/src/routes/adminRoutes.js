@@ -14,6 +14,7 @@ import {
   getDashboardData,
   getUserReport,
   adminSelfIdentification,
+  toggleProductVerification,
 } from "../controllers/adminController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
@@ -30,6 +31,7 @@ adminRouter.delete("/users/:id", deleteUser);
 
 adminRouter.get("/payments", getPayments);
 adminRouter.get("/products", getProducts);
+adminRouter.put("/products/verify", toggleProductVerification);
 adminRouter.get("/dashboard", getDashboardData);
 adminRouter.get("/user-report", getUserReport);
 

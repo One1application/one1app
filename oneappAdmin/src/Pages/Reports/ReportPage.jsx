@@ -8,6 +8,8 @@ import { FaUsers } from "react-icons/fa";
 import UserDetailsModal from '../../components/Modal/UserDetailsModal';
 import EditUserModal from '../../components/Modal/EditUserModal';
 import { Pagination } from '@mui/material';
+import { getUserReport } from "../../services/api-service";
+import FullScreenLoader from "../../components/FullScreenLoader";
 
 const ReportPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +18,9 @@ const ReportPage = () => {
   const [filteredUsers, setFilteredUsers] = useState(reportConfig);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
+  const [loading, setLoading] = useState(false)
+
+
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,11 +56,7 @@ const ReportPage = () => {
   const indexOfFirstUser = indexOfLastUser - rowsPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
-  const totalUsers = reportConfig.length;
-  const totalActiveUsers = reportConfig.filter((user) => user.status === "Active").length;
-  const totalInactiveUsers = reportConfig.filter((user) => user.status === "Inactive").length;
-  const verifiedUsers = reportConfig.filter((user) => user.kycStatus === "Verified").length;
-  const pendingUsers = reportConfig.filter((user) => user.kycStatus === "Pending").length;
+
 
   // Reset all filters
   const resetFilters = () => {
@@ -91,13 +92,49 @@ const ReportPage = () => {
     setCurrentPage(value);
   };
 
+
+  const [statistics, setStatistics] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    verifiedUsers: 0,
+    pendingVerification: 0,
+  });
+  const [error, setError] = useState(null);
+
+  const fetchReport = async () => {
+    setLoading(true)
+    try {
+      const data = await getUserReport();
+      console.log(data);
+      // Update state with statistics from the API response
+      setStatistics(data.statistics);
+    } catch (error) {
+      console.error('Error fetching user report:', error);
+
+    } finally {
+      setLoading(false)
+    }
+  };
+
+  useEffect(() => {
+    fetchReport();
+  }, []);
+
+  // Destructure statistics for cleaner usage
+  const { totalUsers, activeUsers, inactiveUsers, verifiedUsers, pendingVerification } = statistics;
+
+
+  if (loading) {
+    return <FullScreenLoader />
+  }
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex justify-center items-center gap-3">
             <FaUsers className="md:size-8 size-6" />
-            <h1 className="text-2xl font-bold text-gray-800">User Reports</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Creator Reports</h1>
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
@@ -171,22 +208,27 @@ const ReportPage = () => {
           />
           <StatsCard
             title="Pending Verification"
-            value={pendingUsers}
+            value={pendingVerification}
             icon={<Clock className="text-yellow-600" size={24} />}
             color="bg-yellow-50"
           />
           <StatsCard
             title="Active Users"
-            value={totalActiveUsers}
+            value={activeUsers}
             icon={<Users className="text-green-600" size={24} />}
             color="bg-green-50"
           />
           <StatsCard
             title="Inactive Users"
-            value={totalInactiveUsers}
+            value={inactiveUsers}
             icon={<UserX className="text-red-600" size={24} />}
             color="bg-red-50"
           />
+          {error && (
+            <div className="col-span-1 md:col-span-3 bg-red-500 text-white px-4 py-2 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
         </div>
 
         {/* User Cards Grid */}

@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "app/generated/prisma/client"
 }
 
 datasource db {
@@ -184,6 +183,7 @@ model Webinar {
   isPaid         Boolean
   quantity       Int
   amount         Float?
+  isVerified     Boolean         @default(false)
   tickets        WebinarTicket[]
   createdById    String
   createdBy      User            @relation(fields: [createdById], references: [id])
@@ -218,6 +218,7 @@ model Course {
   language        Json
   startDate       DateTime
   endDate         DateTime?
+  isVerified      Boolean        @default(false)
   createdBy       String
   creator         User               @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt       DateTime           @default(now())
@@ -266,6 +267,7 @@ model PayingUp {
   tacs            Json
   coverImage      Json
   files           Json
+  isVerified      Boolean        @default(false)
   createdById     String
   createdBy       User             @relation(fields: [createdById], references: [id])
   payingUpTickets PayingUpTicket[]
@@ -292,6 +294,7 @@ model Telegram {
   genre        String
   discount     Json
   subscription Json
+  isVerified   Boolean           @default(false)
   createdById  String
   createdBy    User   @relation(fields: [createdById], references: [id])
 
@@ -320,6 +323,7 @@ model PremiumContent {
   unlockPrice Float
   content     Json
   discount    Json?
+  isVerified  Boolean            @default(false)
   createdById String
   createdBy   User                   @relation(fields: [createdById], references: [id])
   createdAt   DateTime               @default(now()) // Timestamp for product creation
