@@ -13,10 +13,14 @@ export async function sendOtp(phoneNumber) {
   const message = `Dear User,Your Verification Code is ${otp}.Please do not share this with anyone.Team Contiks One Hub Technology Pvt Ltd (One1app) Website:-one1app.com`;
   const encodeUrlMessage = encodeURIComponent(message);
   try {
-    const response = await axios.get(
-      `https://site.ping4sms.com/api/smsapi?key=${process.env.PING4SMS_KEY}&route=2&sender=COHTPL&number=${phoneNumber}&sms=${encodeUrlMessage}&templateid=${process.env.PING4SMS_TEMPLATE_ID}`
-    );
-    console.log("otp sent successfully", response.data);
+    if (process.env.NODE_ENV === "production") {
+      const response = await axios.get(
+        `https://site.ping4sms.com/api/smsapi?key=${process.env.PING4SMS_KEY}&route=2&sender=COHTPL&number=${phoneNumber}&sms=${encodeUrlMessage}&templateid=${process.env.PING4SMS_TEMPLATE_ID}`
+      );
+      console.log("otp sent successfully", response.data);
+    } else {
+      console.log("We Are in the Development OTP SHOW IN THE CONSOLE");
+    }
 
     const hash = await bcrypt.hash(otp, 10);
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
