@@ -638,6 +638,12 @@ export async function addKycDetails(req, res) {
         .json({ success: false, message: "Missing required fields." });
     }
 
+    if(aadhaarNumber.trim().length != 12){
+       return  res
+       .status(400)
+       .json({ success: false, message: "AadhaarNumber must be 12 digit." });
+    }
+
     const userExists = await prisma.user.findUnique({
       where: {
         id: user.id,

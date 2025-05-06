@@ -20,6 +20,12 @@ enum Role {
   SuperAdmin
 }
 
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 enum SubscriptionType {
   MONTHLY
   YEARLY
@@ -120,7 +126,8 @@ model kycRecords {
   selfie        String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  status        String   @default("Pending")
+  status        KycStatus @default(PENDING)
+  rejectionReason String?
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
