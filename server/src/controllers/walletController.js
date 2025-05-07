@@ -8,6 +8,8 @@ import {
   createPayout,
 } from "../config/razorpay.js";
 import prisma from "../db/dbClient.js";
+import { sendOtp } from "../utils/sendOtp.js";
+import bcrypt from "bcrypt";
 
 dotenv.config();
 
@@ -638,10 +640,10 @@ export async function addKycDetails(req, res) {
         .json({ success: false, message: "Missing required fields." });
     }
 
-    if(aadhaarNumber.trim().length != 12){
-       return  res
-       .status(400)
-       .json({ success: false, message: "AadhaarNumber must be 12 digit." });
+    if (aadhaarNumber.trim().length != 12) {
+      return res
+        .status(400)
+        .json({ success: false, message: "AadhaarNumber must be 12 digit." });
     }
 
     const userExists = await prisma.user.findUnique({
@@ -742,7 +744,6 @@ export async function getKycDetails(req, res) {
 }
 
 export async function addBankDetails(req, res) {
-  let contactId = null;
   try {
     const user = req.user;
     const { bankingInfo } = req.body;
@@ -785,13 +786,6 @@ export async function addBankDetails(req, res) {
         .json({ success: false, message: "User wallet not found." });
     }
 
-    if (!userWallet.isKycVerified) {
-      return res.status(400).json({
-        success: false,
-        message: "Kyc is not verified.",
-      });
-    }
-
     const existingBankDetails = await prisma.bankDetails.findFirst({
       where: {
         userId: userExists.id,
@@ -816,46 +810,6 @@ export async function addBankDetails(req, res) {
       });
     }
 
-    const razorpayContactData = {
-      name: accountNumber,
-      email: userExists.email,
-      contact: userExists.phone,
-      type: "customer",
-    };
-
-    const contactResponse = await createContact(razorpayContactData);
-
-    if (!contactResponse) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Failed to create contact." });
-    }
-
-    contactId = contactResponse.id;
-
-    const bankFundAccountData = {
-      contact_id: contactId,
-      account_type: "bank_account",
-      bank_account: {
-        name: userExists.name,
-        ifsc: ifscCode,
-        account_number: accountNumber,
-      },
-    };
-
-    const fundAccountResponseForBankAccount = await createFundAccount(
-      bankFundAccountData
-    );
-
-    if (!fundAccountResponseForBankAccount) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid Details. Check them properly",
-      });
-    }
-
-    const fundAccountIdForBankAccount = fundAccountResponseForBankAccount.id;
-
     const bankDetails = await prisma.bankDetails.create({
       data: {
         ifscCode: ifscCode,
@@ -864,8 +818,6 @@ export async function addBankDetails(req, res) {
         bankDocument,
         userId: user.id,
         primary: true,
-        razorpayContactID: contactId,
-        razorpayFundAccountID: fundAccountIdForBankAccount,
       },
     });
 
@@ -875,24 +827,9 @@ export async function addBankDetails(req, res) {
         .json({ success: false, message: "Failed to add bank details." });
     }
 
-    const upiFundAccountData = {
-      account_type: "vpa",
-      contact_id: contactId,
-      vpa: {
-        address: upiId,
-      },
-    };
-
-    const fundAccountResponseForUpi = await createFundAccount(
-      upiFundAccountData
-    );
-
-    const fundAccountIdForUpi = fundAccountResponseForUpi.id;
-
     const updateUpiId = await prisma.uPI.create({
       data: {
         upiId: upiId,
-        razorpayFundAccountID: fundAccountIdForUpi,
         bankDetailsId: bankDetails.id,
         userId: user.id,
       },
@@ -909,24 +846,6 @@ export async function addBankDetails(req, res) {
       message: "KYC updated and bank details added successfully.",
     });
   } catch (error) {
-    if (contactId !== null) {
-      try {
-        await axios.patch(
-          `https://api.razorpay.com/v1/contacts/${contactId}`,
-          {
-            active: false,
-          },
-          {
-            auth: {
-              username: process.env.RAZORPAY_KEY_ID,
-              password: process.env.RAZORPAY_SECRET,
-            },
-          }
-        );
-      } catch (error) {
-        console.error("Error in deactivating contact.", error);
-      }
-    }
     console.error("Error in adding bank details.", error);
     return res.status(500).json({
       success: false,
@@ -954,6 +873,13 @@ export async function getBankDetails(req, res) {
     const bankDetails = await prisma.bankDetails.findFirst({
       where: {
         userId: userExists.id,
+        primary: true,
+      },
+    });
+
+    const kycRecord = await prisma.kycRecords.findFirst({
+      where: {
+        userId: userExists.id,
       },
     });
 
@@ -963,9 +889,24 @@ export async function getBankDetails(req, res) {
         .json({ success: false, message: "Bank details not found." });
     }
 
+    if (!kycRecord) {
+      return res
+        .status(400)
+        .json({ success: false, message: "kyc Record not found." });
+    }
+
+    if (bankDetails.userId != kycRecord.userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "kyc Record not found." });
+    }
+
     return res.status(200).json({
       success: true,
-      payload: bankDetails,
+      payload: {
+        bankDetails: bankDetails,
+        kycRecord: kycRecord,
+      },
       message: "Fetched bank details successfully.",
     });
   } catch (error) {
@@ -982,7 +923,7 @@ export async function withdrawAmount(req, res) {
     const user = req.user;
     const { withdrawAmount, withdrawalMethod, withdrawFrom, mpin } = req.body;
     //TODO
-    if (!withdrawAmount || !withdrawalMethod || !withdrawFrom) {
+    if (!withdrawAmount || !withdrawalMethod || !withdrawFrom || !mpin) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields." });
@@ -1012,7 +953,20 @@ export async function withdrawAmount(req, res) {
         .json({ success: false, message: "Wallet not found." });
     }
 
-    if (wallet.mpin !== mpin) {
+    if (wallet.isKycVerified === false) {
+      return res
+        .status(400)
+        .json({ success: false, message: "KYC not completed." });
+    }
+    
+    if(wallet.mpin == null){
+      return res
+        .status(400)
+        .json({ success: false, message: "MPIN not set. Please set MPIN first." });
+    }
+     
+    const isMatchMpin = await bcrypt.compare(mpin, wallet.mpin);
+    if (!isMatchMpin) {
       return res.status(400).json({ success: false, message: "Invalid MPIN." });
     }
 
@@ -1022,11 +976,7 @@ export async function withdrawAmount(req, res) {
         .json({ success: false, message: "Insufficient balance." });
     }
 
-    if (wallet.isKycVerified === false) {
-      return res
-        .status(400)
-        .json({ success: false, message: "KYC not completed." });
-    }
+    
 
     if (withdrawalMethod == "bank") {
       const bankDetails = await prisma.bankDetails.findFirst({
@@ -1042,51 +992,18 @@ export async function withdrawAmount(req, res) {
           .json({ success: false, message: "Bank details not found." });
       }
 
-      const payoutData = {
-        account_number: process.env.RAZORPAY_ACCOUNT_NUMBER,
-        fund_account_id: bankDetails.razorpayFundAccountID,
-        amount: withdrawAmount * 100,
-        currency: "INR",
-        mode: "IMPS",
-        purpose: "payout",
-        notes: {
-          user_id: userExists.id,
-          description: "Withdrawal request",
+      await prisma.withdrawal.create({
+        data: {
+          walletId: wallet.id,
+          amount: withdrawAmount,
+          bankDetailsId: bankDetails.id,
+          modeOfWithdrawal: withdrawalMethod,
         },
-      };
-
-      const payout = await createPayout(payoutData);
-
-      if (!payout || payout.status !== "processed") {
-        return res
-          .status(400)
-          .json({ success: false, message: "Failed to withdraw amount." });
-      }
-      //TODO: might need to update the final status of the payout in the database using webhook or something
-      await prisma.$transaction([
-        prisma.wallet.update({
-          where: { id: wallet.id },
-          data: {
-            balance: { decrement: withdrawAmount },
-            totalWithdrawals: { increment: withdrawAmount },
-          },
-        }),
-
-        prisma.withdrawal.create({
-          data: {
-            amount: withdrawAmount,
-            bankDetailsId: bankDetails.id,
-            walletId: wallet.id,
-            modeOfWithdrawal: withdrawalMethod,
-            status: payout.status,
-            razorpayPayoutId: payout.id,
-          },
-        }),
-      ]);
+      });
 
       return res.status(200).json({
         success: true,
-        message: "Amount withdrawn successfully. ",
+        message: "Amount withdrawn processed successfully. ",
       });
     } else if (withdrawalMethod === "upi") {
       const upiDetails = await prisma.uPI.findFirst({
@@ -1102,51 +1019,18 @@ export async function withdrawAmount(req, res) {
           .json({ success: false, message: "UPI not found." });
       }
 
-      const payoutData = {
-        account_number: process.env.RAZORPAY_ACCOUNT_NUMBER,
-        fund_account_id: upiDetails.razorpayFundAccountID,
-        amount: withdrawAmount * 100,
-        currency: "INR",
-        mode: "UPI",
-        purpose: "payout",
-        notes: {
-          user_id: userExists.id,
-          description: "Withdrawal request",
+      await prisma.withdrawal.create({
+        data: {
+          amount: withdrawAmount,
+          upiId: upiDetails.id,
+          walletId: wallet.id,
+          modeOfWithdrawal: withdrawalMethod,
         },
-      };
-
-      const payout = await createPayout(payoutData);
-
-      if (!payout || payout.status !== "processed") {
-        return res
-          .status(400)
-          .json({ success: false, message: "Failed to withdraw amount." });
-      }
-
-      await prisma.$transaction([
-        prisma.wallet.update({
-          where: { id: wallet.id },
-          data: {
-            balance: { decrement: withdrawAmount },
-            totalWithdrawals: { increment: withdrawAmount },
-          },
-        }),
-
-        prisma.withdrawal.create({
-          data: {
-            amount: withdrawAmount,
-            upiId: upiDetails.id,
-            walletId: wallet.id,
-            modeOfWithdrawal: withdrawalMethod,
-            status: payout.status,
-            razorpayPayoutId: payout.id,
-          },
-        }),
-      ]);
+      });
 
       return res.status(200).json({
         success: true,
-        message: "Amount withdrawn successfully.",
+        message: "Amount withdrawn processed successfully.",
       });
     }
 
@@ -1607,21 +1491,22 @@ export async function getBankAndUpis(req, res) {
   }
 }
 
-const mpinOtpMap = {};
+//const mpinOtpMap = {};
 
 export async function setMPIN(req, res) {
   try {
     const user = req.user;
 
-    const { mpin } = req.body;
+    //phone with countrycode
+    const { mpin, phone } = req.body;
 
-    if (!mpin) {
+    if (!mpin || !phone) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields." });
     }
 
-    if (mpin.length !== 4) {
+    if (mpin.trim().length !== 4) {
       return res
         .status(400)
         .json({ success: false, message: "MPIN should be 4 digits." });
@@ -1651,9 +1536,10 @@ export async function setMPIN(req, res) {
         .json({ success: false, message: "Wallet not found." });
     }
 
-    const otp = Math.floor(1000 + Math.random() * 9000);
-
-    mpinOtpMap[user.id] = { mpin, otp };
+    // const otp = Math.floor(1000 + Math.random() * 9000);
+    // mpinOtpMap[user.id] = { mpin, otp };
+    const otp = await sendOtp(phone);
+    console.log("mpin setup otp --", otp);
 
     //send otp to user using twilio, yet to implement
 
@@ -1674,9 +1560,9 @@ export async function verifyMpinOtp(req, res) {
   try {
     const user = req.user;
 
-    const { otp } = req.body;
+    const { otp, phone, mpin } = req.body;
 
-    if (!otp) {
+    if (!otp || !phone || !mpin) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields." });
@@ -1706,28 +1592,36 @@ export async function verifyMpinOtp(req, res) {
         .json({ success: false, message: "Wallet not found." });
     }
 
-    const mpinOtp = mpinOtpMap[user.id];
+    // const mpinOtp = mpinOtpMap[user.id];
 
-    if (!mpinOtp) {
-      return res
-        .status(400)
-        .json({ success: false, message: "OTP not found." });
+    const hashMpin = await bcrypt.hash(mpin, 10);
+    const otpStored = await prisma.otp.findFirst({
+      where: {
+        phoneNumber: phone,
+      },
+    });
+
+    if (!otpStored) {
+      return res.status(404).json({ message: "No otp found" });
+    }
+    const otpValid = await bcrypt.compare(otp, otpStored.phoneCodeHash);
+    if (!otpValid) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+    if (otpValid) {
+      console.log("otp validate", otpValid);
     }
 
-    // if (mpinOtp.otp !== otp) {
-    //     return res.status(400).json({ success: false, message: "Invalid OTP." });
+    // if (otp !== "000000") {
+    //   return res.status(400).json({ success: false, message: "Invalid OTP" });
     // }
-
-    if (otp !== "000000") {
-      return res.status(400).json({ success: false, message: "Invalid OTP" });
-    }
 
     await prisma.wallet.update({
       where: {
         id: wallet.id,
       },
       data: {
-        mpin: mpinOtp.mpin,
+        mpin: hashMpin,
       },
     });
 

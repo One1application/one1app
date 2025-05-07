@@ -31,6 +31,12 @@ enum SubscriptionType {
   YEARLY
 }
 
+enum WithdrawalStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 model User {
   id                          String                 @id @default(uuid())
   email                       String                 @unique
@@ -56,7 +62,7 @@ model User {
   upiIds                      UPI[]
   premiumContent              PremiumContent[]
   premiumAccess               PremiumContentAccess[]
-  creatorComission            Int? @default(8)
+  creatorComission            Int?                   @default(8)
 }
 
 model Otp {
@@ -102,33 +108,31 @@ model BankDetails {
 }
 
 model UPI {
-  id                    String       @id @default(uuid())
-  upiId                 String       @unique
-  razorpayFundAccountID String?
-  razorpayContactID     String?
-  bankDetailsId         String
-  bankDetails           BankDetails  @relation(fields: [bankDetailsId], references: [id], onDelete: Cascade)
-  userId                String
-  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  withdrawls            Withdrawal[]
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
+  id            String       @id @default(uuid())
+  upiId         String       @unique
+  bankDetailsId String
+  bankDetails   BankDetails  @relation(fields: [bankDetailsId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  withdrawls    Withdrawal[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model kycRecords {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  socialMedia   Json
-  aadhaarNumber String
-  aadhaarFront  String
-  aadhaarBack   String
-  panCard       String
-  selfie        String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  status        KycStatus @default(PENDING)
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  socialMedia     Json
+  aadhaarNumber   String
+  aadhaarFront    String
+  aadhaarBack     String
+  panCard         String
+  selfie          String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  status          KycStatus @default(PENDING)
   rejectionReason String?
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BusinessInfo {
@@ -160,18 +164,18 @@ model Transaction {
 }
 
 model Withdrawal {
-  id               String      @id @default(uuid())
+  id               String           @id @default(uuid())
   walletId         String
-  wallet           Wallet      @relation(fields: [walletId], references: [id])
+  wallet           Wallet           @relation(fields: [walletId], references: [id])
   amount           Float
   modeOfWithdrawal String
-  bankDetailsId    String
-  bankDetails      BankDetails @relation(fields: [bankDetailsId], references: [id])
-  upiId            String
-  upi              UPI         @relation(fields: [upiId], references: [id])
-  status           String
-  razorpayPayoutID String?
-  createdAt        DateTime    @default(now())
+  bankDetailsId    String?
+  bankDetails      BankDetails?     @relation(fields: [bankDetailsId], references: [id])
+  upiId            String?
+  upi              UPI?             @relation(fields: [upiId], references: [id])
+  status           WithdrawalStatus @default(PENDING)
+  failedReason     String?
+  createdAt        DateTime         @default(now())
 }
 
 model Webinar {
@@ -225,7 +229,7 @@ model Course {
   language        Json
   startDate       DateTime
   endDate         DateTime?
-  isVerified      Boolean        @default(false)
+  isVerified      Boolean            @default(false)
   createdBy       String
   creator         User               @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt       DateTime           @default(now())
@@ -274,7 +278,7 @@ model PayingUp {
   tacs            Json
   coverImage      Json
   files           Json
-  isVerified      Boolean        @default(false)
+  isVerified      Boolean          @default(false)
   createdById     String
   createdBy       User             @relation(fields: [createdById], references: [id])
   payingUpTickets PayingUpTicket[]
@@ -293,7 +297,7 @@ model PayingUpTicket {
 }
 
 model Telegram {
-  id           String @id @unique @default(uuid())
+  id           String  @id @unique @default(uuid())
   coverImage   String
   channelLink  String
   title        String
@@ -301,9 +305,9 @@ model Telegram {
   genre        String
   discount     Json
   subscription Json
-  isVerified   Boolean           @default(false)
+  isVerified   Boolean @default(false)
   createdById  String
-  createdBy    User   @relation(fields: [createdById], references: [id])
+  createdBy    User    @relation(fields: [createdById], references: [id])
 
   telegramSubscriptions TelegramSubscription[]
   createdAt             DateTime               @default(now())
@@ -330,7 +334,7 @@ model PremiumContent {
   unlockPrice Float
   content     Json
   discount    Json?
-  isVerified  Boolean            @default(false)
+  isVerified  Boolean                @default(false)
   createdById String
   createdBy   User                   @relation(fields: [createdById], references: [id])
   createdAt   DateTime               @default(now()) // Timestamp for product creation
