@@ -107,33 +107,90 @@ const createInviteLink = async (chatId) => {
 
 const getChannelId = async (inviteLink) => {
   try {
-    console.log("Started fetching Channel ID...");
+    console.log("Started fetching Channel ID for invite link:", inviteLink);
 
     if (inviteLink.includes("+")) {
+      // Private channel invite link (e.g., https://t.me/+abcdefg)
       const hash = inviteLink.split("+")[1];
-      const result = await mtproto.call("messages.checkChatInvite", {
+      if (!hash) {
+        throw new Error("Invalid private invite link format.");
+      }
+
+      const inviteResult = await mtproto.call("messages.checkChatInvite", {
         hash,
       });
-      return {
-        title: result.chat.title,
-        chatId: `-100${result.chat.id}`,
-      };
+      console.log(
+        "CheckChatInvite result:",
+        JSON.stringify(inviteResult, null, 2)
+      );
+
+      if (inviteResult._ === "chatInvite") {
+        // Handle case where bot is not a member and only invite metadata is returned
+        if (!inviteResult.title) {
+          throw new Error("No title found in invite link response.");
+        }
+
+        // Join the channel to get the chat ID
+        const importResult = await mtproto.call("messages.importChatInvite", {
+          hash,
+        });
+        console.log(
+          "ImportChatInvite result:",
+          JSON.stringify(importResult, null, 2)
+        );
+
+        if (!importResult.chats || importResult.chats.length === 0) {
+          throw new Error("Failed to retrieve chat information after joining.");
+        }
+
+        const chat = importResult.chats[0];
+        const chatId = `-100${chat.id}`;
+        const title = chat.title || inviteResult.title;
+
+        // Optionally leave the channel if the bot doesn't need to stay
+        // await mtproto.call("channels.leaveChannel", { channel: { _: "inputChannel", channel_id: chat.id, access_hash: chat.access_hash } });
+
+        return {
+          title,
+          chatId,
+        };
+      } else if (inviteResult.chat) {
+        // Case where chat information is directly available
+        return {
+          title: inviteResult.chat.title || "Unknown Channel",
+          chatId: `-100${inviteResult.chat.id}`,
+        };
+      } else {
+        throw new Error("Unexpected response format from checkChatInvite.");
+      }
     } else {
-      const username = inviteLink.replace("https://t.me/", "").replace("/", "");
+      // Public channel or group (e.g., https://t.me/username)
+      const username = inviteLink
+        .replace("https://t.me/", "")
+        .replace("/", "")
+        .replace("@", "");
 
       if (!username) {
-        throw new Error("Invalid invite link format.");
+        throw new Error("Invalid public invite link format.");
       }
 
       const result = await mtproto.call("contacts.resolveUsername", {
         username,
       });
-      console.log("Public Channel ID:", result.chats[0].id);
-      return result.chats[0].id;
+      console.log("ResolveUsername result:", JSON.stringify(result, null, 2));
+
+      if (!result.chats || result.chats.length === 0) {
+        throw new Error("No chats found for the provided username.");
+      }
+
+      return {
+        title: result.chats[0].title || "Unknown Channel",
+        chatId: `-100${result.chats[0].id}`,
+      };
     }
   } catch (error) {
     console.error("Error fetching channel ID:", error?.error_message || error);
-    throw new Error("Failed to fetch channel Id.");
+    throw new Error(`Failed to fetch channel ID: ${error.message}`);
   }
 };
 
