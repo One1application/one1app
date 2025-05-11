@@ -32,10 +32,10 @@ const VerificationTab = ({ setVal }) => {
   };
 
   const handleDeleteFile = (fieldName) => {
+    setIdVerification((prev) => ({ ...prev, [fieldName]: null }));
     if (fileInputs[fieldName]) {
       fileInputs[fieldName].value = "";
     }
-    setIdVerification((prev) => ({ ...prev, [fieldName]: null }));
   };
 
   const validateInputs = () => {
@@ -249,13 +249,16 @@ const VerificationTab = ({ setVal }) => {
                 Aadhaar Card Front Image *
               </label>
               <div className="flex gap-2">
+                {idVerification.aadhaarFront ? <a target="_blank" href={idVerification.aadhaarFront}
+                className="w-full text-white truncate focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{idVerification.aadhaarFront}</a> :
                 <input
                   onChange={(e) => handleFileChange(e, "aadhaarFront")}
                   type="file"
                   name="aadhaarFront"
                   accept="image/*"
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
+                />}
                 {idVerification.aadhaarFront && (
                   <button
                     onClick={() => handleDeleteFile("aadhaarFront")}
@@ -273,17 +276,21 @@ const VerificationTab = ({ setVal }) => {
                 Aadhaar Card Back Image *
               </label>
               <div className="flex gap-2">
+
+                {idVerification.aadhaarBack ? <a target="_blank" href={idVerification.aadhaarBack}
+                className="w-full text-white truncate focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{idVerification.aadhaarBack}</a> :
                 <input
                   onChange={(e) => handleFileChange(e, "aadhaarBack")}
                   type="file"
                   name="aadhaarBack"
                   accept="image/*"
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
+                />}
                 {idVerification.aadhaarBack && (
                   <button
                     onClick={() => handleDeleteFile("aadhaarBack")}
-                    className="px-3 py-2 bg-[#FF5B22] text-white rounded-lg hover:bg-orange-600 focus:ring focus:ring-orange-500 focus:ring-opacity-50"
+                    className="px-3 py-2 bg-[#FF5B22] text-white  rounded-lg hover:bg-orange-600 focus:ring focus:ring-orange-500 focus:ring-opacity-50"
                   >
                     Delete
                   </button>
@@ -297,13 +304,16 @@ const VerificationTab = ({ setVal }) => {
                 PAN Card *
               </label>
               <div className="flex gap-2">
+                {idVerification.panCard ? <a target="_blank" href={idVerification.panCard}
+                className="w-full text-white truncate focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{idVerification.panCard}</a> :
                 <input
                   onChange={(e) => handleFileChange(e, "panCard")}
                   type="file"
                   name="panCard"
                   accept="image/*"
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
+                /> }
                 {idVerification.panCard && (
                   <button
                     onClick={() => handleDeleteFile("panCard")}
@@ -320,14 +330,17 @@ const VerificationTab = ({ setVal }) => {
               <label className="block text-sm font-medium text-orange-500 mb-1">
                 Your Selfie *
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 ">
+                {idVerification.selfie ? <a target="_blank" href={idVerification.selfie}
+                className="w-full truncate text-white focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{idVerification.selfie}</a> :
                 <input
                   onChange={(e) => handleFileChange(e, "selfie")}
                   type="file"
                   name="selfie"
                   accept="image/*"
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
+                /> }
                 {idVerification.selfie && (
                   <button
                     onClick={() => handleDeleteFile("selfie")}

@@ -249,14 +249,16 @@ const BusinessInformationTab = ({ setVal }) => {
               SEBI Certificate
             </label>
             <div className="flex gap-2">
-              <div className="relative flex-1">
+              
+                {sebiCertificate ? <a target="_blank" href={sebiCertificate}
+                className="w-full truncate text-white focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{sebiCertificate}</a> : 
                 <input
                   type="file"
                   ref={fileInputRef}
                   onChange={(e)=>handleFileChange(e)}
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
-              </div>
+                /> }
               {sebiCertificate && (
                 <button
                   onClick={handleDeleteFile}

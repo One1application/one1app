@@ -144,6 +144,8 @@ const WalletPage = () => {
         ],
         // financeIds: ['65654',"kahusdkahs@kjabs","65464"],
       });
+      console.log(response.data.payload.BalanceDetails.accountNumbers)
+      console.log(response.data.payload.BalanceDetails.upiIds)
     }
   };
 
@@ -231,7 +233,7 @@ const WalletPage = () => {
             <Dropdown
               financeIds={
                 BalanceDetails.financeIds.length
-                  ? BalanceDetails.financeIds
+                  ? [...BalanceDetails.financeIds, "Add More"]
                   : ["Not Added"]
               }
             />

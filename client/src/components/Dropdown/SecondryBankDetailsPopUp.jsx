@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import  toast  from "react-hot-toast";
 import {
-  fetchPrimaryPaymentInformation,
-  fetchVerificationInformation,
   handelUplaodFile,
-  savePrimaryPaymentInformation,
-} from "../../../../../services/auth/api.services";
+  saveSecondaryBankorUpiAccount,
+} from "../../services/auth/api.services";
 
-const BankDetailsTab = ({ setVal }) => {
+const SecondryBankDetailsPopUp = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [BankingInfo, setBankingInfo] = useState({
     accountHolderName: "",
@@ -86,7 +84,7 @@ const BankDetailsTab = ({ setVal }) => {
     };
     try {
       setLoading(true);
-      const response = await savePrimaryPaymentInformation(bankingInfo);
+      const response = await saveSecondaryBankorUpiAccount(BankingInfo);
       console.log(response);
       if (response.status === 200) {
         toast.success("Banking Information saved successfully!");
@@ -104,60 +102,12 @@ const BankDetailsTab = ({ setVal }) => {
     }
   };
 
-  const getPrimaryPaymentInformation = async () => {
-    try {
-      const response = await fetchPrimaryPaymentInformation();
-
-      if (response.status === 200) {
-        const {
-          accountHolderName,
-          accountNumber,
-          ifscCode,
-          bankDocument,
-          upiId,
-        } = response.data.payload.bankDetails;
-
-        setBankingInfo({
-          accountHolderName: accountHolderName || "",
-          accountNumber: accountNumber || "",
-          ifscCode: ifscCode || "",
-          bankDocument: bankDocument || null,
-          upiId: upiId || [],
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching payment information:", error);
-    }
-  };
-
-  const getVerificationInformation = async () => {
-    try {
-      const response = await fetchVerificationInformation();
-      if (response.status === 400) { 
-        toast.error(response.data.message);
-        setVal("2");
-      }
-    } catch (error) {
-      setVal("2");
-      toast.error("Add verification information", {
-        iconTheme: {
-          primary: "#FF0000",
-          secondary: "#FF0000",
-        },  
-      });
-      console.error("Error fetching verification information:", error);
-    } 
-  }
-
-  useEffect(() => {
-    getVerificationInformation();
-    getPrimaryPaymentInformation();
-  }, []);
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-[#0F1418] mt-12">
-      <div className="bg-[#1A1D21] p-6 rounded-lg shadow-md w-full max-w-4xl">
+      <div className="fixed inset-0 bg-[#0F1418] bg-opacity-50 z-50 flex items-center justify-center">
+        <div className="bg-[#1A1D21] p-6 rounded-lg w-full max-w-md">
         {/* Banking Information */}
+        <div>
         <h1 className="text-lg font-semibold mb-4 text-orange-500">
           Banking Information
         </h1>
@@ -180,7 +130,7 @@ const BankDetailsTab = ({ setVal }) => {
           {/* Primary Account Number */}
           <div>
             <label className="block text-sm font-medium text-orange-500 mb-1">
-              Primary Account Number
+              Account Number
             </label>
             <input
               type="text"
@@ -248,23 +198,34 @@ const BankDetailsTab = ({ setVal }) => {
             />
           </div>
         </div>
-      </div>
 
-      {/* Save Button */}
-      <div className="flex justify-center mt-6">
-        <button
-          type="button"
-          onClick={handleBankDetails}
-          disabled={loading}
-          className={`${
-            loading ? "bg-gray-400" : "bg-orange-500 hover:bg-orange-600"
-          } text-white py-2 px-6 rounded-lg focus:ring focus:ring-orange-500 focus:ring-opacity-50`}
-        >
-        {loading ? "Saving..." : "Save"}
-        </button>
+        </div>
+      
+
+        {/* Save Button */}
+        <div className="flex justify-center mt-6 gap-2">
+          <button
+            type="button"
+            onClick={handleBankDetails}
+            disabled={loading}
+            className={`${
+              loading ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"
+            } mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600`}
+          >
+          {loading ? "Saving..." : "Save"}
+
+          
+          </button>
+          <button
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-export default BankDetailsTab;
+export default SecondryBankDetailsPopUp;

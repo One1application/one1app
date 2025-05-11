@@ -6,7 +6,7 @@ import BankDetailsTab from './BankDetailsTab';
 import SuccessPage from "../../../../../components/SuccessPage/SuccessPage";
 
 const KYCpage = () => {
-  const [value, setValue] = useState("4");
+  const [value, setValue] = useState("1");
 
   const handleChange = (newValue) => {
     setValue(newValue);

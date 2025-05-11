@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { FaCheckCircle } from "react-icons/fa"; // For checkmark icon
 import { IoIosArrowDown } from "react-icons/io"; // For dropdown arrow
-import { MdOutlineAccountBalance } from "react-icons/md"; // Bank icon
+import { MdAdd, MdOutlineAccountBalance } from "react-icons/md"; // Bank icon
 import { HiOutlineOfficeBuilding } from "react-icons/hi"; // Placeholder icons
+import SecondryBankDetailsPopUp from "./SecondryBankDetailsPopUp";
 
 const Dropdown = ({ financeIds }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [popup , setPopup] = useState(false);
   const [selected, setSelected] = useState("Not Added");
   useEffect(() => {
     setSelected(financeIds[0]);
@@ -14,6 +16,7 @@ const Dropdown = ({ financeIds }) => {
   const options = [
     <HiOutlineOfficeBuilding className="text-green-600" />,
     <MdOutlineAccountBalance className="text-orange-600" />,
+    <MdAdd className="text-blue-600" />,
   ];
 
   const handleSelect = (option) => {
@@ -21,15 +24,19 @@ const Dropdown = ({ financeIds }) => {
     setIsOpen(false);
   };
 
+  const handleAddMore = () => {
+    setPopup(true);
+    console.log(popup);
+  }
   return (
-    <div className="relative md:w-64 w-full">
+    <div className="relative md:w-64 w-full z-50">
       {/* Selected Item */}
       <button
         className="flex items-center justify-between w-full px-4 py-3 border rounded-md bg-white shadow-md text-sm font-medium cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="flex items-center gap-2 font-poppins tracking-tight">
-          {selected.includes("@") ? options[0] : options[1]}
+          {selected === 'Add More' ? options[2] : selected.includes("@") ? options[0] : options[1]}
           {selected}
         </span>
         <IoIosArrowDown className="text-gray-500" />
@@ -44,10 +51,10 @@ const Dropdown = ({ financeIds }) => {
               className={`flex items-center justify-between px-4 py-2 font-poppins  hover:bg-gray-100 cursor-pointer ${
                 selected === financeId ? "bg-gray-50" : ""
               }`}
-              onClick={() => handleSelect(financeId)}
+              onClick={ financeId === 'Add More' ? handleAddMore : () => handleSelect(financeId)}
             >
               <span className="flex items-center gap-2 text-sm font-poppins tracking-tight ">
-                {financeId.includes("@") ? options[0] : options[1]}
+                {financeId === 'Add More' ? options[2] : financeId.includes("@") ? options[0] : options[1]}
                 {financeId}
               </span>
               {selected === financeId && (
@@ -55,6 +62,8 @@ const Dropdown = ({ financeIds }) => {
               )}
             </div>
           ))}
+
+          {popup && <SecondryBankDetailsPopUp onClose={() => setPopup(false)}/>}
         </div>
       )}
     </div>
