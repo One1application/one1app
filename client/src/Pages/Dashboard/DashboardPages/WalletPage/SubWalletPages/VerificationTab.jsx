@@ -6,7 +6,8 @@ import {
   saveVerificationInformation,
 } from "../../../../../services/auth/api.services";
 
-const VerificationTab = () => {
+const VerificationTab = ({ setVal }) => {
+  const [loading, setLoading] = useState(false);
   const [socialMediaLinks, setSocialMediaLinks] = useState({
     instagram: "",
     facebook: "",
@@ -31,13 +32,24 @@ const VerificationTab = () => {
   };
 
   const handleDeleteFile = (fieldName) => {
+    setIdVerification((prev) => ({ ...prev, [fieldName]: null }));
     if (fileInputs[fieldName]) {
       fileInputs[fieldName].value = "";
     }
-    setIdVerification((prev) => ({ ...prev, [fieldName]: null }));
   };
 
   const validateInputs = () => {
+
+    // Social media links — at least one should be filled
+    const hasAtLeastOneSocialLink = Object.values(socialMediaLinks).some(
+      (link) => link.trim() !== ""
+    );
+    if (!hasAtLeastOneSocialLink) {
+      toast.error("Please provide at least one social media link.");
+      return false;
+    }
+
+    // Aadhaar validation
     if (
       !idVerification.aadhaarNumber.trim() ||
       !/^\d{12}$/.test(idVerification.aadhaarNumber)
@@ -46,16 +58,19 @@ const VerificationTab = () => {
       return false;
     }
 
+    // Aadhaar card images
     if (!idVerification.aadhaarFront || !idVerification.aadhaarBack) {
       toast.error("Please upload Aadhaar Card Front & Back Image.");
       return false;
     }
 
+    // PAN card
     if (!idVerification.panCard) {
       toast.error("Please upload your PAN Card.");
       return false;
     }
 
+    // Selfie
     if (!idVerification.selfie) {
       toast.error("Please upload your selfie.");
       return false;
@@ -90,10 +105,12 @@ const VerificationTab = () => {
     };
 
     try {
+      setLoading(true);
       const response = await saveVerificationInformation(data);
       console.log(response);
       if (response.status === 200) {
         toast.success("Verification details saved successfully!");
+        setVal("3");
       } else {
         toast.error(
           "Failed to save verification details. Please try again later."
@@ -102,6 +119,8 @@ const VerificationTab = () => {
     } catch (error) {
       console.log(error);
       toast.error(error.response?.data?.message);
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -230,13 +249,16 @@ const VerificationTab = () => {
                 Aadhaar Card Front Image *
               </label>
               <div className="flex gap-2">
+                {idVerification.aadhaarFront ? <a target="_blank" href={idVerification.aadhaarFront}
+                className="w-full text-white truncate focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{idVerification.aadhaarFront}</a> :
                 <input
                   onChange={(e) => handleFileChange(e, "aadhaarFront")}
                   type="file"
                   name="aadhaarFront"
                   accept="image/*"
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
+                />}
                 {idVerification.aadhaarFront && (
                   <button
                     onClick={() => handleDeleteFile("aadhaarFront")}
@@ -254,17 +276,21 @@ const VerificationTab = () => {
                 Aadhaar Card Back Image *
               </label>
               <div className="flex gap-2">
+
+                {idVerification.aadhaarBack ? <a target="_blank" href={idVerification.aadhaarBack}
+                className="w-full text-white truncate focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{idVerification.aadhaarBack}</a> :
                 <input
                   onChange={(e) => handleFileChange(e, "aadhaarBack")}
                   type="file"
                   name="aadhaarBack"
                   accept="image/*"
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
+                />}
                 {idVerification.aadhaarBack && (
                   <button
                     onClick={() => handleDeleteFile("aadhaarBack")}
-                    className="px-3 py-2 bg-[#FF5B22] text-white rounded-lg hover:bg-orange-600 focus:ring focus:ring-orange-500 focus:ring-opacity-50"
+                    className="px-3 py-2 bg-[#FF5B22] text-white  rounded-lg hover:bg-orange-600 focus:ring focus:ring-orange-500 focus:ring-opacity-50"
                   >
                     Delete
                   </button>
@@ -278,13 +304,16 @@ const VerificationTab = () => {
                 PAN Card *
               </label>
               <div className="flex gap-2">
+                {idVerification.panCard ? <a target="_blank" href={idVerification.panCard}
+                className="w-full text-white truncate focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{idVerification.panCard}</a> :
                 <input
                   onChange={(e) => handleFileChange(e, "panCard")}
                   type="file"
                   name="panCard"
                   accept="image/*"
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
+                /> }
                 {idVerification.panCard && (
                   <button
                     onClick={() => handleDeleteFile("panCard")}
@@ -301,14 +330,17 @@ const VerificationTab = () => {
               <label className="block text-sm font-medium text-orange-500 mb-1">
                 Your Selfie *
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 ">
+                {idVerification.selfie ? <a target="_blank" href={idVerification.selfie}
+                className="w-full truncate text-white focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{idVerification.selfie}</a> :
                 <input
                   onChange={(e) => handleFileChange(e, "selfie")}
                   type="file"
                   name="selfie"
                   accept="image/*"
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
+                /> }
                 {idVerification.selfie && (
                   <button
                     onClick={() => handleDeleteFile("selfie")}
@@ -328,9 +360,12 @@ const VerificationTab = () => {
         <button
           type="button"
           onClick={handelVerificationDetails}
-          className="bg-[#FF5B22] text-white py-2 px-6 rounded-lg hover:bg-orange-600 focus:ring focus:ring-orange-500 focus:ring-opacity-50"
+          disabled={loading}
+          className={`${
+            loading ? "bg-gray-400" : "bg-orange-500 hover:bg-orange-600"
+          } text-white py-2 px-6 rounded-lg focus:ring focus:ring-orange-500 focus:ring-opacity-50`}
         >
-          Save
+          {loading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>

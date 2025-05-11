@@ -6,7 +6,7 @@ import {
   saveBusinessInformation,
 } from "../../../../../services/auth/api.services";
 
-const BusinessInformationTab = () => {
+const BusinessInformationTab = ({ setVal }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [BussinessStructure, setBussinessStructure] = useState("");
@@ -87,12 +87,30 @@ const BusinessInformationTab = () => {
       console.log(response);
       if (response.status === 200) {
         toast.success("Business information saved successfully!");
+        setVal("2");
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.response.data.message);
+      if (error.response && error.response.status === 400) {
+        console.log('1');
+        toast.dismiss()
+        toast.success(error.response.data.message, {
+          style: {
+            border: '1px solid #713200',
+            padding: '16px',
+            color: '#713200',
+          },
+          icon:  '',
+        });
+        setVal("2");
+      } else {
+        console.log('2');
+        
+        toast.error(error.response.data.message);
+      }
+
     } finally {
       setLoading(false);
     }
@@ -231,14 +249,16 @@ const BusinessInformationTab = () => {
               SEBI Certificate
             </label>
             <div className="flex gap-2">
-              <div className="relative flex-1">
+              
+                {sebiCertificate ? <a target="_blank" href={sebiCertificate}
+                className="w-full truncate text-white focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none"
+                >{sebiCertificate}</a> : 
                 <input
                   type="file"
                   ref={fileInputRef}
                   onChange={(e)=>handleFileChange(e)}
                   className="w-full bg-[#1E2328] border border-orange-500 text-white rounded-lg p-2 focus:ring focus:ring-orange-500 focus:ring-opacity-50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-white hover:file:bg-orange-600"
-                />
-              </div>
+                /> }
               {sebiCertificate && (
                 <button
                   onClick={handleDeleteFile}
