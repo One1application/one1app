@@ -8,7 +8,7 @@ import CountUp from "react-countup";
 import Dropdown from "../../../../components/Dropdown/Dropdown";
 import Coin from "../../../../assets/coin.png";
 import Cash from "../../../../assets/cash.png";
-import { IoIosCloseCircle, IoIosWarning } from "react-icons/io";
+import { IoIosCheckmarkCircle, IoIosCloseCircle, IoIosWarning } from "react-icons/io";
 import { MdKeyboardArrowRight, MdOutlinePin } from "react-icons/md";
 import { FaLongArrowAltDown, FaLongArrowAltUp } from "react-icons/fa";
 import EarningsChart from "../../../../components/Charts/EarningsChart";
@@ -20,7 +20,7 @@ import UPIModal from "../../../../components/Modal/UPIModal";
 import MPINModal from "../../../../components/Modal/MPINModal";
 import  toast  from "react-hot-toast";
 import { Calendar } from "lucide-react";
-import { fetchBalanceDetails } from "../../../../services/auth/api.services";
+import { fetchBalanceDetails, fetchPrimaryPaymentInformation } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
 import { Link } from "react-router-dom";
@@ -54,6 +54,7 @@ const WalletPage = () => {
   const [openMPIN, setOpenMPIN] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [status, setStatus] = useState('NULL');
 
   const toggleModal = () => {
     if (openWithdrawal || openUPI || openMPIN) {
@@ -130,7 +131,7 @@ const WalletPage = () => {
 
   const getWalletBalanceDetails = async () => {
     const response = await fetchBalanceDetails();
-    console.log(response);
+    // console.log(response);
     if (response.data.success) {
       setBalanceDetails({
         balance: response.data.payload.balance,
@@ -146,7 +147,17 @@ const WalletPage = () => {
     }
   };
 
+  const getPrimaryPaymentInformation = async () => {
+    try {
+      const response = await fetchPrimaryPaymentInformation();
+      console.log(response.data.payload.kycRecord.status);
+      setStatus(response.data.payload.kycRecord.status)
+    } catch (error) {
+      console.error("Error fetching payment information:", error);
+    }
+  }
   useEffect(() => {
+    getPrimaryPaymentInformation();
     getWalletBalanceDetails();
     getNextTransactionPage();
     getNextWithdrawalPage();
@@ -336,18 +347,40 @@ const WalletPage = () => {
         <div className="bg-[#1A1D21] w-full py-3 px-3 mt-5 rounded-xl">
           <div className="flex bg-[#1E2328] py-3 justify-between items-center rounded-xl px-3">
             <div className="flex gap-3 items-center">
-              <IoIosWarning className="text-orange-600 size-8" />
+              {status === "NULL" ? (
+                <IoIosWarning className="text-orange-600 size-8" />
+                ) : status === "PENDING" ? (
+                  <IoIosWarning className="text-yellow-500 size-8" />
+                ) : status === "REJECTED" ? (
+                  <IoIosWarning className="text-red-600 size-8" />
+                ) : status === "VERIFIED" ? (
+                  <IoIosCheckmarkCircle className="text-green-600 size-8" />
+              ) : null}
               <p className="font-poppins text-sm md:text-md tracking-tight text-gray-300">
-                Your KYC is Pending complete is asap to withdraw your wallet
-                amount!
+                {status === "NULL" ? (
+                  "Please update your KYC to withdraw your wallet amount!"
+                ) : status === "PENDING" ? (
+                  "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
+                ) : status === "REJECTED" ? (
+                  "Your KYC was rejected. Please update your details!"
+                ) : status === "VERIFIED" ? (
+                  "Your KYC is verified. You can now withdraw your wallet amount."
+                ) : null}
               </p>
+              <Link
+                to="/dashboard/kyc-setting"
+                className={`${status === 'NULL' ? 'bg-orange-600 hover:bg-orange-700' : 
+                  status === "PENDING" ?  'bg-yellow-500 hover:bg-yellow-700' :  
+                  status === "REJECTED" ?  'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }
+                   py-2 px-3 text-sm rounded-md text-white font-poppins`}
+              >
+                {status === "NULL" ? "Update KYC" : status}
+              </Link>
             </div>
-            <Link to='/dashboard/kyc-setting' className="bg-orange-600 hover:bg-orange-700 py-2 px-3 text-sm rounded-md text-white font-poppins">
-              Update
-            </Link>
           </div>
         </div>
-      )}
+)}
+
 
       {/* Chart and graphs */}
       <div className="flex md:flex-row flex-col gap-4 w-full">

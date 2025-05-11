@@ -6,7 +6,8 @@ import {
   saveVerificationInformation,
 } from "../../../../../services/auth/api.services";
 
-const VerificationTab = () => {
+const VerificationTab = ({ setVal }) => {
+  const [loading, setLoading] = useState(false);
   const [socialMediaLinks, setSocialMediaLinks] = useState({
     instagram: "",
     facebook: "",
@@ -38,6 +39,17 @@ const VerificationTab = () => {
   };
 
   const validateInputs = () => {
+
+    // Social media links — at least one should be filled
+    const hasAtLeastOneSocialLink = Object.values(socialMediaLinks).some(
+      (link) => link.trim() !== ""
+    );
+    if (!hasAtLeastOneSocialLink) {
+      toast.error("Please provide at least one social media link.");
+      return false;
+    }
+
+    // Aadhaar validation
     if (
       !idVerification.aadhaarNumber.trim() ||
       !/^\d{12}$/.test(idVerification.aadhaarNumber)
@@ -46,16 +58,19 @@ const VerificationTab = () => {
       return false;
     }
 
+    // Aadhaar card images
     if (!idVerification.aadhaarFront || !idVerification.aadhaarBack) {
       toast.error("Please upload Aadhaar Card Front & Back Image.");
       return false;
     }
 
+    // PAN card
     if (!idVerification.panCard) {
       toast.error("Please upload your PAN Card.");
       return false;
     }
 
+    // Selfie
     if (!idVerification.selfie) {
       toast.error("Please upload your selfie.");
       return false;
@@ -90,10 +105,12 @@ const VerificationTab = () => {
     };
 
     try {
+      setLoading(true);
       const response = await saveVerificationInformation(data);
       console.log(response);
       if (response.status === 200) {
         toast.success("Verification details saved successfully!");
+        setVal("3");
       } else {
         toast.error(
           "Failed to save verification details. Please try again later."
@@ -102,6 +119,8 @@ const VerificationTab = () => {
     } catch (error) {
       console.log(error);
       toast.error(error.response?.data?.message);
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -328,9 +347,12 @@ const VerificationTab = () => {
         <button
           type="button"
           onClick={handelVerificationDetails}
-          className="bg-[#FF5B22] text-white py-2 px-6 rounded-lg hover:bg-orange-600 focus:ring focus:ring-orange-500 focus:ring-opacity-50"
+          disabled={loading}
+          className={`${
+            loading ? "bg-gray-400" : "bg-orange-500 hover:bg-orange-600"
+          } text-white py-2 px-6 rounded-lg focus:ring focus:ring-orange-500 focus:ring-opacity-50`}
         >
-          Save
+          {loading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>

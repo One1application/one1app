@@ -6,7 +6,7 @@ import {
   saveBusinessInformation,
 } from "../../../../../services/auth/api.services";
 
-const BusinessInformationTab = () => {
+const BusinessInformationTab = ({ setVal }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [BussinessStructure, setBussinessStructure] = useState("");
@@ -87,12 +87,30 @@ const BusinessInformationTab = () => {
       console.log(response);
       if (response.status === 200) {
         toast.success("Business information saved successfully!");
+        setVal("2");
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.response.data.message);
+      if (error.response && error.response.status === 400) {
+        console.log('1');
+        toast.dismiss()
+        toast.success(error.response.data.message, {
+          style: {
+            border: '1px solid #713200',
+            padding: '16px',
+            color: '#713200',
+          },
+          icon:  '',
+        });
+        setVal("2");
+      } else {
+        console.log('2');
+        
+        toast.error(error.response.data.message);
+      }
+
     } finally {
       setLoading(false);
     }

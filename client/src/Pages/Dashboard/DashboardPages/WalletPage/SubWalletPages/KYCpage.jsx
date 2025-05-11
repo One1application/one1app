@@ -3,9 +3,10 @@ import { PiIdentificationCardThin } from "react-icons/pi";
 import BusinessInformationTab from './BusinessInformationTab';
 import VerificationTab from './VerificationTab';
 import BankDetailsTab from './BankDetailsTab';
+import SuccessPage from "../../../../../components/SuccessPage/SuccessPage";
 
 const KYCpage = () => {
-  const [value, setValue] = useState("1");
+  const [value, setValue] = useState("4");
 
   const handleChange = (newValue) => {
     setValue(newValue);
@@ -72,7 +73,7 @@ const KYCpage = () => {
                     py-3 md:py-2 
                     text-center 
                     transition-all 
-                    duration-200 
+                    duration-200
                     text-base md:text-xl 
                     ${
                       value === "3"
@@ -90,9 +91,10 @@ const KYCpage = () => {
         </div>
       </div>
       <div>
-        {value === "1" && <BusinessInformationTab/>}
-        {value === "2" && <VerificationTab />}
-        {value === "3" && <BankDetailsTab />}
+        {value === "1" && <BusinessInformationTab setVal={setValue}/>}
+        {value === "2" && <VerificationTab setVal={setValue}/>}
+        {value === "3" && <BankDetailsTab setVal={setValue}/>}
+        {value === "4" && <SuccessPage />}
       </div>
     </div>
   );

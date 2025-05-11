@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import  toast  from "react-hot-toast";
 import {
   fetchPrimaryPaymentInformation,
+  fetchVerificationInformation,
   handelUplaodFile,
   savePrimaryPaymentInformation,
 } from "../../../../../services/auth/api.services";
 
-const BankDetailsTab = () => {
+const BankDetailsTab = ({ setVal }) => {
+  const [loading, setLoading] = useState(false);
   const [BankingInfo, setBankingInfo] = useState({
     accountHolderName: "",
     accountNumber: "",
@@ -40,6 +42,18 @@ const BankDetailsTab = () => {
       toast.error("IFSC Code is required.");
       return false;
     }
+
+    // banck document
+    if (!BankingInfo.bankDocument) {
+      toast.error("Please Upload Bank Passbook / Statement (Any One).");
+      return false;
+    }
+
+    // UPI ID
+    if (!BankingInfo.upiId) {
+      toast.error("UPI ID is required.");
+      return false;
+    }
     return true;
   };
 
@@ -71,10 +85,12 @@ const BankDetailsTab = () => {
       },
     };
     try {
+      setLoading(true);
       const response = await savePrimaryPaymentInformation(bankingInfo);
       console.log(response);
       if (response.status === 200) {
         toast.success("Banking Information saved successfully!");
+        setVal("4");
       } else {
         toast.error(
           "Failed to save Banking Information. Please try again later."
@@ -83,13 +99,14 @@ const BankDetailsTab = () => {
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message);
+    } finally{
+      setLoading(false);
     }
   };
 
   const getPrimaryPaymentInformation = async () => {
     try {
       const response = await fetchPrimaryPaymentInformation();
-      console.log(response);
 
       if (response.status === 200) {
         const {
@@ -98,7 +115,7 @@ const BankDetailsTab = () => {
           ifscCode,
           bankDocument,
           upiId,
-        } = response.data.payload;
+        } = response.data.payload.bankDetails;
 
         setBankingInfo({
           accountHolderName: accountHolderName || "",
@@ -113,7 +130,27 @@ const BankDetailsTab = () => {
     }
   };
 
+  const getVerificationInformation = async () => {
+    try {
+      const response = await fetchVerificationInformation();
+      if (response.status === 400) { 
+        toast.error(response.data.message);
+        setVal("2");
+      }
+    } catch (error) {
+      setVal("2");
+      toast.error("Add verification information", {
+        iconTheme: {
+          primary: "#FF0000",
+          secondary: "#FF0000",
+        },  
+      });
+      console.error("Error fetching verification information:", error);
+    } 
+  }
+
   useEffect(() => {
+    getVerificationInformation();
     getPrimaryPaymentInformation();
   }, []);
 
@@ -215,9 +252,12 @@ const BankDetailsTab = () => {
         <button
           type="button"
           onClick={handleBankDetails}
-          className="bg-orange-500 text-white py-2 px-6 rounded-lg hover:bg-orange-600 focus:ring focus:ring-orange-500 focus:ring-opacity-50"
+          disabled={loading}
+          className={`${
+            loading ? "bg-gray-400" : "bg-orange-500 hover:bg-orange-600"
+          } text-white py-2 px-6 rounded-lg focus:ring focus:ring-orange-500 focus:ring-opacity-50`}
         >
-          Save
+        {loading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>
