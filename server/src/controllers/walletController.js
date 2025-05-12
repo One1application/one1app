@@ -53,14 +53,28 @@ export async function getWalletDetails(req, res) {
     );
     const upiIdResponse = upiIds.map((upi) => upi.upiId);
 
+    const withdrawals = await prisma.withdrawal.findMany({
+      where: {
+        walletId: wallet.id,
+        status: "SUCCESS",
+      },
+      select: {
+        amount: true,
+      },
+    });
+
+    const totalWithdrawals = withdrawals.reduce(
+      (total, withdrawal) => total + withdrawal.amount,
+      0
+    );
+
     return res.status(200).json({
       success: true,
       message: "Fetched wallet details successfully.",
       payload: {
         balance: wallet.balance === null ? 0 : wallet.balance,
         totalEarnings: wallet.totalEarnings === null ? 0 : wallet.totalEarnings,
-        totalWithdrawals:
-          wallet.totalWithdrawals === null ? 0 : wallet.totalWithdrawals,
+        totalWithdrawals: totalWithdrawals,
         lastModified: wallet.updatedAt,
         accountNumbers: accountNumberResponse,
         upiIds: upiIdResponse,
@@ -78,9 +92,6 @@ export async function getWalletDetails(req, res) {
 export async function verifyPayment(req, res) {
   try {
     const {
-      razorpay_payment_id,
-      razorpay_order_id,
-      razorpay_signature,
       webinarId,
       courseId,
       payingUpId,
@@ -91,6 +102,7 @@ export async function verifyPayment(req, res) {
     } = req.body;
 
     const user = req.user;
+    const GST_RATE = 0.18;
 
     const existingUser = await prisma.user.findUnique({
       where: {
@@ -112,18 +124,6 @@ export async function verifyPayment(req, res) {
       });
     }
 
-    if (
-      // !razorpay_order_id ||
-      // !razorpay_payment_id ||
-      // !razorpay_signature ||
-      !existingUser.id
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields.",
-      });
-    }
-
     // const generatedSignature = crypto
     //   .createHmac("sha256", process.env.RAZORPAY_SECRET)
     //   .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -137,10 +137,12 @@ export async function verifyPayment(req, res) {
     // }
 
     // const paymentDetails = await fetchPaymentDetails(razorpay_payment_id);
+
     const PhonePayPaymentDetails = await PhonePayClient.getOrderStatus(
       phonePayOrderId
     );
-    console.log("phonepay", PhonePayPaymentDetails);
+
+    
     if (PhonePayPaymentDetails.state === "FAILED") {
       return res
         .status(400)
@@ -163,12 +165,22 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
+
         let amountToBeAdded = creator.amount;
         if (creator.createdBy.creatorComission) {
+          const commissionAmount =
+            Math.round(
+              ((creator.createdBy.creatorComission * creator.amount) / 100) *
+                100
+            ) / 100;
+          const gstOnCommission =
+            Math.round(commissionAmount * GST_RATE * 100) / 100;
           amountToBeAdded =
-            amountToBeAdded -
-            (creator.createdBy.creatorComission * creator.amount) / 100;
+            Math.round(
+              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
+            ) / 100;
         }
+
         const creatorWallet = await prisma.wallet.update({
           where: {
             userId: creator.createdById,
@@ -198,10 +210,11 @@ export async function verifyPayment(req, res) {
         const transaction = await prisma.transaction.create({
           data: {
             amount: parseFloat(creator.amount),
-            email: existingUser.email,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
-            phoneNumber: existingUser.phone,
-            product: "Webinar",
+            productId: webinarId,
+            buyerId: existingUser.id,
+            creatorId: creator.createdById,
+            productType: "WEBINAR",
             status: PhonePayPaymentDetails.paymentDetails[0].state,
             walletId: creatorWallet.id,
           },
@@ -232,9 +245,17 @@ export async function verifyPayment(req, res) {
         }
         let amountToBeAdded = creator.price;
         if (creator.creator.creatorComission) {
+           const commissionAmount =
+            Math.round(
+              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
+                100
+            ) / 100;
+          const gstOnCommission =
+            Math.round(commissionAmount * GST_RATE * 100) / 100;
           amountToBeAdded =
-            amountToBeAdded -
-            (creator.creator.creatorComission * creator.price) / 100;
+            Math.round(
+              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
+            ) / 100;
         }
         const creatorWallet = await prisma.wallet.update({
           where: {
@@ -264,10 +285,11 @@ export async function verifyPayment(req, res) {
         const transaction = await prisma.transaction.create({
           data: {
             amount: parseFloat(creator.price),
-            email: existingUser.email,
+            buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
-            phoneNumber: existingUser.phone,
-            product: "Course",
+            productId: courseId,
+            productType: "COURSE",
+            creatorId: creator.createdBy,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
             walletId: creatorWallet.id,
           },
@@ -301,14 +323,23 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amountToBeAdded = creator.paymentDetails.totalAmount;
+        let amount = creator.paymentDetails.totalAmount;
+
+        let amountToBeAdded = parseFloat(amount);
+
         if (creator.createdBy.creatorComission) {
+          const commissionAmount =
+            Math.round(
+              ((creator.createdBy.creatorComission * amount) / 100) * 100
+            ) / 100;
+          const gstOnCommission =
+            Math.round(commissionAmount * GST_RATE * 100) / 100;
           amountToBeAdded =
-            amountToBeAdded -
-            (creator.createdBy.creatorComission *
-              creator.paymentDetails.totalAmount) /
-              100;
+            Math.round(
+              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
+            ) / 100;
         }
+
         const creatorWallet = await prisma.wallet.update({
           where: {
             userId: creator.createdById,
@@ -341,10 +372,11 @@ export async function verifyPayment(req, res) {
         const transaction = await prisma.transaction.create({
           data: {
             amount: parseFloat(creator.paymentDetails.totalAmount),
-            email: existingUser.email,
+            buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
-            phoneNumber: existingUser.phone,
-            product: "PayingUp",
+            productId: payingUpId,
+            productType: "PAYING_UP",
+            creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
             walletId: creatorWallet.id,
           },
@@ -381,10 +413,17 @@ export async function verifyPayment(req, res) {
         );
         let amountToBeAdded = subscriptionDetails.cost;
         if (creator.createdBy.creatorComission) {
+          const commissionAmount =
+            Math.round(
+              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
+                100
+            ) / 100;
+          const gstOnCommission =
+            Math.round(commissionAmount * GST_RATE * 100) / 100;
           amountToBeAdded =
-            amountToBeAdded -
-            (creator.createdBy.creatorComission * subscriptionDetails.cost) /
-              100;
+            Math.round(
+              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
+            ) / 100;
         }
         const creatorWallet = await prisma.wallet.update({
           where: {
@@ -417,10 +456,11 @@ export async function verifyPayment(req, res) {
         const transaction = await prisma.transaction.create({
           data: {
             amount: parseFloat(subscriptionDetails.cost),
-            email: existingUser.email,
+            buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
-            phoneNumber: existingUser.phone,
-            product: "Telegram",
+            productId: telegramId,
+            productType: "TELEGRAM",
+            creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
             walletId: creatorWallet.id,
           },
@@ -509,6 +549,9 @@ export async function verifyPayment(req, res) {
     });
   }
 }
+
+
+
 
 export async function addBusinessInfo(req, res) {
   try {
@@ -1161,8 +1204,19 @@ export async function getWithdrawals(req, res) {
     const totalWithdrawals = await prisma.withdrawal.count({
       where: {
         walletId: wallet.id,
+        status: "SUCCESS",
       },
     });
+
+    // const totalWithdrawalAmount = await prisma.withdrawal.aggregate({
+    //   where: {
+    //     walletId: wallet.id,
+    //     status: "SUCCESS"
+    //   },
+    //   _sum: {
+    //     amount: true
+    //   }
+    // });
 
     const totalPages = Math.ceil(totalWithdrawals / pageSize);
 
@@ -1175,6 +1229,7 @@ export async function getWithdrawals(req, res) {
     const withdrawals = await prisma.withdrawal.findMany({
       where: {
         walletId: wallet.id,
+        status: "SUCCESS",
       },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -1191,6 +1246,7 @@ export async function getWithdrawals(req, res) {
       payload: {
         withdrawals: withdrawals.length === 0 ? [] : withdrawals,
         totalPages,
+        // totalWithdrawalAmount: totalWithdrawalAmount._sum.amount
       },
       message: "Fetched withdrawals successfully.",
     });
@@ -1204,7 +1260,6 @@ export async function getWithdrawals(req, res) {
 }
 
 export async function addBankOrUpi(req, res) {
-  let contactId = null;
   try {
     const {
       accountNumber,
@@ -1269,13 +1324,24 @@ export async function addBankOrUpi(req, res) {
           .json({ success: false, message: "Missing required fields." });
       }
 
+      const bankExists = await prisma.bankDetails.findFirst({
+        where: {
+          accountNumber: accountNumber,
+        },
+      });
+
+      if (bankExists) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Account number already exists." });
+      }
+
       const bankDetails = await prisma.bankDetails.create({
         data: {
           accountNumber,
           accountHolderName,
           ifscCode,
           userId: user.id,
-          primary: false,
         },
       });
 

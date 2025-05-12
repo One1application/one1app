@@ -288,6 +288,7 @@ export async function purchasePayingUp(req, res) {
     // };
 
     const orderId = randomUUID();
+
     let totalAmount = payingUp.paymentDetails.totalAmount;
 
     const request = StandardCheckoutPayRequest.builder()
