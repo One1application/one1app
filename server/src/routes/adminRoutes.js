@@ -12,9 +12,12 @@ import {
   getPayments,
   getProducts,
   getDashboardData,
-  getUserReport,
   adminSelfIdentification,
   toggleProductVerification,
+  getCreatorReport,
+  getCreatorDetails,
+  toggleCreatorKycStatus,
+  updateCreatorPersonalDetails,
 } from "../controllers/adminController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
@@ -33,7 +36,11 @@ adminRouter.get("/payments", getPayments);
 adminRouter.get("/products", getProducts);
 adminRouter.put("/products/verify", toggleProductVerification);
 adminRouter.get("/dashboard", getDashboardData);
-adminRouter.get("/user-report", getUserReport);
+
+adminRouter.get("/creator/report", getCreatorReport);
+adminRouter.get("/creator/:id", getCreatorDetails);
+adminRouter.patch("/creator/:id/kyc", toggleCreatorKycStatus);
+adminRouter.patch("/creator/:id/personal", updateCreatorPersonalDetails);
 
 adminRouter.post("/admins", createAdmin);
 adminRouter.get("/admins", getAdmins);

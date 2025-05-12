@@ -1,6 +1,3 @@
-/* eslint-disable react/prop-types */
-
-
 const StatsCard = ({ title, value, icon, color }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 flex items-center space-x-4">

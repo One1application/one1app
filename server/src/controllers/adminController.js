@@ -1035,64 +1035,43 @@ export const getDashboardData = async (req, res) => {
   }
 };
 
-export const getUserReport = async (req, res) => {
+// Creator Report
+
+export const getCreatorReport = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const searchTerm = req.query.search || "";
+    const kycStatus = req.query.kycStatus || "";
+    const verifiedStatus = req.query.verifiedStatus || "";
+
+    // Build where clause for filtering
+    const where = {
+      role: "Creator",
+      OR: searchTerm
+        ? [
+            { name: { contains: searchTerm, mode: "insensitive" } },
+            { email: { contains: searchTerm, mode: "insensitive" } },
+            { phone: { contains: searchTerm, mode: "insensitive" } },
+          ]
+        : undefined,
+      kycRecords: kycStatus ? { status: kycStatus.toUpperCase() } : undefined,
+      verified: verifiedStatus ? verifiedStatus === "true" : undefined,
+    };
 
     // Get statistics
-    const [
-      totalUsers,
-      verifiedUsers,
-      activeVerifiedUsers,
-      inactiveVerifiedUsers,
-      pendingUsers,
-    ] = await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({
-        where: {
-          verified: true,
-        },
-      }),
-      prisma.user.count({
-        where: {
-          verified: true,
-          wallet: {
-            transactions: {
-              some: {
-                createdAt: {
-                  gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.user.count({
-        where: {
-          verified: true,
-          wallet: {
-            transactions: {
-              none: {
-                createdAt: {
-                  gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.user.count({
-        where: {
-          verified: false,
-        },
-      }),
-    ]);
+    const [totalCreators, verifiedCreators, unverifiedCreators] =
+      await Promise.all([
+        prisma.user.count({ where: { role: "Creator" } }),
+        prisma.user.count({ where: { role: "Creator", verified: true } }),
+        prisma.user.count({ where: { role: "Creator", verified: false } }),
+      ]);
 
-    // Get paginated user details
-    const [users, total] = await Promise.all([
+    // Get paginated creators
+    const [creators, total] = await Promise.all([
       prisma.user.findMany({
+        where,
         skip,
         take: limit,
         select: {
@@ -1101,51 +1080,31 @@ export const getUserReport = async (req, res) => {
           email: true,
           phone: true,
           verified: true,
-          wallet: {
-            select: {
-              transactions: {
-                select: {
-                  createdAt: true,
-                },
-                orderBy: {
-                  createdAt: "desc",
-                },
-                take: 1,
-              },
-            },
-          },
+          kycRecords: { select: { status: true } },
         },
-        orderBy: {
-          name: "asc",
-        },
+        orderBy: { name: "asc" },
       }),
-      prisma.user.count(),
+      prisma.user.count({ where }),
     ]);
 
-    // Format user data with activity status
-    const formattedUsers = users.map((user) => ({
-      initial: user.name.charAt(0).toUpperCase(),
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      verificationStatus: user.verified ? "Verified" : "Pending",
-      activityStatus:
-        user.wallet?.transactions[0]?.createdAt >=
-        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-          ? "Active"
-          : "Inactive",
+    // Format creator data
+    const formattedCreators = creators.map((creator) => ({
+      id: creator.id,
+      name: creator.name,
+      email: creator.email,
+      phone: creator.phone,
+      verified: creator.verified,
+      kycStatus: creator.kycRecords?.status || "PENDING",
     }));
 
-    return res.status(200).json({
+    res.status(200).json({
       statistics: {
-        totalUsers,
-        verifiedUsers,
-        pendingVerification: pendingUsers,
-        activeUsers: activeVerifiedUsers,
-        inactiveUsers: inactiveVerifiedUsers,
+        totalCreators,
+        verifiedCreators,
+        unverifiedCreators,
       },
-      users: {
-        data: formattedUsers,
+      creators: {
+        data: formattedCreators,
         meta: {
           total,
           page,
@@ -1155,11 +1114,160 @@ export const getUserReport = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching user report:", error);
-    return res.status(500).json({ message: "Failed to fetch user report" });
+    console.error("Error fetching creator report:", error);
+    res.status(500).json({ message: "Failed to fetch creator report" });
   }
 };
 
+export const getCreatorDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const creator = await prisma.user.findUnique({
+      where: { id, role: "Creator" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        socialMedia: true,
+        goals: true,
+        heardAboutUs: true,
+        verified: true,
+        kycRecords: {
+          select: {
+            status: true,
+            aadhaarNumber: true,
+            panCard: true,
+            selfie: true,
+            aadhaarBack: true,
+            aadhaarFront: true,
+
+            socialMedia: true,
+            rejectionReason: true,
+          },
+        },
+        businessInfo: {
+          select: {
+            firstName: true,
+            lastName: true,
+            businessStructure: true,
+            gstNumber: true,
+            sebiNumber: true,
+          },
+        },
+        BankAccounts: {
+          select: {
+            id: true,
+            accountHolderName: true,
+            accountNumber: true,
+            ifscCode: true,
+            primary: true,
+          },
+        },
+        upiIds: {
+          select: {
+            id: true,
+            upiId: true,
+          },
+        },
+      },
+    });
+
+    if (!creator) {
+      return res.status(404).json({ message: "Creator not found" });
+    }
+
+    // Add availability flags
+    const response = {
+      ...creator,
+      hasKyc: !!creator.kycRecords,
+      hasBusinessInfo: !!creator.businessInfo,
+      hasBankDetails:
+        creator.BankAccounts.length > 0 || creator.upiIds.length > 0,
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching creator details:", error);
+    res.status(500).json({ message: "Failed to fetch creator details" });
+  }
+};
+
+export const toggleCreatorKycStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, rejectionReason } = req.body;
+
+    if (!["PENDING", "VERIFIED", "REJECTED"].includes(status)) {
+      return res.status(400).json({ message: "Invalid KYC status" });
+    }
+
+    const updatedKyc = await prisma.kycRecords.update({
+      where: { userId: id },
+      data: {
+        status,
+        rejectionReason: status === "REJECTED" ? rejectionReason : null,
+      },
+    });
+
+    await prisma.user.update({
+      where: { id },
+      data: { verified: status === "VERIFIED" },
+    });
+
+    res
+      .status(200)
+      .json({ message: "KYC status updated", kycStatus: updatedKyc.status });
+  } catch (error) {
+    console.error("Error updating KYC status:", error);
+    res.status(500).json({ message: "Failed to update KYC status" });
+  }
+};
+
+export const updateCreatorPersonalDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, socialMedia, goals, heardAboutUs } = req.body;
+
+    // Validate inputs
+    if (!name || !email || !phone) {
+      return res
+        .status(400)
+        .json({ message: "Name, email, and phone are required" });
+    }
+
+    const updatedCreator = await prisma.user.update({
+      where: { id, role: "Creator" },
+      data: {
+        name,
+        email,
+        phone,
+        socialMedia,
+        goals,
+        heardAboutUs,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        socialMedia: true,
+        goals: true,
+        heardAboutUs: true,
+      },
+    });
+
+    res
+      .status(200)
+      .json({ message: "Personal details updated", creator: updatedCreator });
+  } catch (error) {
+    console.error("Error updating personal details:", error);
+    res.status(500).json({ message: "Failed to update personal details" });
+  }
+};
+
+//User Payment Transaction Report
 export const getPayments = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;

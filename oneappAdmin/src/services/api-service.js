@@ -103,9 +103,46 @@ export const getPaymentsApiService = async ({ page = 1, limit = 10 } = {}) => {
   return response.data;
 };
 
-export const getUserReport = async ({ page = 1, limit = 10 } = {}) => {
-  const response = await axiosInstance.get("/admin/user-report", {
-    params: { page, limit },
+export const getCreatorReport = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  kycStatus = "",
+  verifiedStatus = "",
+} = {}) => {
+  const response = await axiosInstance.get("/admin/creator/report", {
+    params: { page, limit, search, kycStatus, verifiedStatus },
+  });
+  return response.data;
+};
+
+export const getCreatorDetails = async (id) => {
+  const response = await axiosInstance.get(`/admin/creator/${id}`);
+  return response.data;
+};
+
+export const toggleCreatorKycStatus = async (
+  id,
+  { status, rejectionReason }
+) => {
+  const response = await axiosInstance.patch(`/admin/creator/${id}/kyc`, {
+    status,
+    rejectionReason,
+  });
+  return response.data;
+};
+
+export const updateCreatorPersonalDetails = async (
+  id,
+  { name, email, phone, socialMedia, goals, heardAboutUs }
+) => {
+  const response = await axiosInstance.patch(`/admin/creator/${id}/personal`, {
+    name,
+    email,
+    phone,
+    socialMedia,
+    goals,
+    heardAboutUs,
   });
   return response.data;
 };

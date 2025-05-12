@@ -958,13 +958,14 @@ export async function withdrawAmount(req, res) {
         .status(400)
         .json({ success: false, message: "KYC not completed." });
     }
-    
-    if(wallet.mpin == null){
-      return res
-        .status(400)
-        .json({ success: false, message: "MPIN not set. Please set MPIN first." });
+
+    if (wallet.mpin == null) {
+      return res.status(400).json({
+        success: false,
+        message: "MPIN not set. Please set MPIN first.",
+      });
     }
-     
+
     const isMatchMpin = await bcrypt.compare(mpin, wallet.mpin);
     if (!isMatchMpin) {
       return res.status(400).json({ success: false, message: "Invalid MPIN." });
@@ -975,8 +976,6 @@ export async function withdrawAmount(req, res) {
         .status(400)
         .json({ success: false, message: "Insufficient balance." });
     }
-
-    
 
     if (withdrawalMethod == "bank") {
       const bankDetails = await prisma.bankDetails.findFirst({
@@ -1207,8 +1206,13 @@ export async function getWithdrawals(req, res) {
 export async function addBankOrUpi(req, res) {
   let contactId = null;
   try {
-    const { accountNumber, ifscCode, accountHolderName, upiId, type } =
-      req.body;
+    const {
+      accountNumber,
+      ifscCode,
+      accountHolderName,
+      upiId,
+      type = "bank",
+    } = req.body;
 
     const user = req.user;
 
@@ -1258,65 +1262,12 @@ export async function addBankOrUpi(req, res) {
       });
     }
 
-    const razorpayContactData = {
-      name: userExists.name,
-      email: userExists.email,
-      contact: userExists.phone,
-      type: "customer",
-    };
-
-    const contactResponse = await createContact(razorpayContactData);
-
-    if (!contactResponse) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Failed to create contact." });
-    }
-
-    contactId = contactResponse.id;
-    console.log("Contact ID", contactId);
-
     if (type === "bank") {
       if (!accountHolderName || !accountNumber || !ifscCode) {
         return res
           .status(400)
           .json({ success: false, message: "Missing required fields." });
       }
-
-      const bankExists = await prisma.bankDetails.findFirst({
-        where: {
-          accountNumber: accountNumber,
-        },
-      });
-
-      if (bankExists) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Account number already exists." });
-      }
-
-      const bankFundAccountData = {
-        contact_id: contactId,
-        account_type: "bank_account",
-        bank_account: {
-          name: userExists.name,
-          ifsc: ifscCode,
-          account_number: accountNumber,
-        },
-      };
-
-      const fundAccountResponseForBankAccount = await createFundAccount(
-        bankFundAccountData
-      );
-
-      if (!fundAccountResponseForBankAccount) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid Details. Check them properly",
-        });
-      }
-
-      const fundAccountIdForBankAccount = fundAccountResponseForBankAccount.id;
 
       const bankDetails = await prisma.bankDetails.create({
         data: {
@@ -1325,8 +1276,6 @@ export async function addBankOrUpi(req, res) {
           ifscCode,
           userId: user.id,
           primary: false,
-          razorpayContactID: contactId,
-          razorpayFundAccountID: fundAccountIdForBankAccount,
         },
       });
 
@@ -1359,33 +1308,10 @@ export async function addBankOrUpi(req, res) {
           .json({ success: false, message: "UPI ID already exists." });
       }
 
-      const upiFundAccountData = {
-        account_type: "vpa",
-        contact_id: contactId,
-        vpa: {
-          address: upiId,
-        },
-      };
-
-      const fundAccountResponseForUpi = await createFundAccount(
-        upiFundAccountData
-      );
-
-      if (!fundAccountResponseForUpi) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid Details. Check them properly",
-        });
-      }
-
-      const fundAccountIdForUpi = fundAccountResponseForUpi.id;
-
       const upiDetails = await prisma.uPI.create({
         data: {
           upiId,
           userId: user.id,
-          razorpayFundAccountID: fundAccountIdForUpi,
-          razorpayContactID: contactId,
           bankDetailsId: primaryAccount.id,
         },
       });
@@ -1402,25 +1328,6 @@ export async function addBankOrUpi(req, res) {
       });
     }
   } catch (error) {
-    if (contactId !== null) {
-      try {
-        await axios.patch(
-          `https://api.razorpay.com/v1/contacts/${contactId}`,
-          {
-            active: false,
-          },
-          {
-            auth: {
-              username: process.env.RAZORPAY_KEY_ID,
-              password: process.env.RAZORPAY_SECRET,
-            },
-          }
-        );
-      } catch (error) {
-        console.error("Error in deactivating contact.", error);
-      }
-    }
-
     console.error("Error in adding bank or upi details.", error);
     return res.status(500).json({
       success: false,

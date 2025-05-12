@@ -1,45 +1,94 @@
-/* eslint-disable react/prop-types */
-import {
-  X,
-  User,
-  Mail,
-  Phone,
-  IdCard,
-  CreditCard,
-  FileText,
-} from "lucide-react";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from 'react';
+import { X, User, Mail, Phone, IdCard, Briefcase, CreditCard, Globe, Target, Ear } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { getCreatorDetails, toggleCreatorKycStatus, updateCreatorPersonalDetails } from '../../services/api-service';
+import { toast } from 'react-toastify';
 
-const UserDetailsModal = ({ user, isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState("personalInfo");
-
-  if (!isOpen) return null;
+const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
+  const [activeTab, setActiveTab] = useState('personalInfo');
+  const [creator, setCreator] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    socialMedia: '',
+    goals: [],
+    heardAboutUs: '',
+  });
+  const [kycForm, setKycForm] = useState({ status: '', rejectionReason: '' });
 
   const tabs = [
-    { id: "personalInfo", label: "Personal Info" },
-    { id: "accountDetails", label: "Account Details" },
-    { id: "incomeDetails", label: "Income Details" },
-    { id: "links", label: "Links" },
+    { id: 'personalInfo', label: 'Personal Info' },
+    { id: 'kycDetails', label: 'KYC Details' },
+    { id: 'businessInfo', label: 'Business Info' },
+    { id: 'bankDetails', label: 'Bank Details' },
   ];
 
-  const renderAvatar = () => {
-    if (user.image) {
-      return (
-        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden mx-auto">
-          <img
-            src={user.image}
-            alt={user.creatorName}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      );
+  const fetchCreatorDetails = async () => {
+    setLoading(true);
+    try {
+      const data = await getCreatorDetails(creatorId);
+      setCreator(data);
+      setFormData({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        socialMedia: data.socialMedia || '',
+        goals: data.goals || [],
+        heardAboutUs: data.heardAboutUs || '',
+      });
+      setKycForm({
+        status: data.kycRecords?.status || 'PENDING',
+        rejectionReason: data.kycRecords?.rejectionReason || '',
+      });
+    } catch (err) {
+      setError('Failed to fetch creator details');
+      console.error('Error fetching creator details:', err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const initials = user.creatorName
-      .split(" ")
+  useEffect(() => {
+    if (isOpen) {
+      fetchCreatorDetails();
+    }
+  }, [isOpen, creatorId]);
+
+  const handleKycUpdate = async () => {
+    try {
+      await toggleCreatorKycStatus(creatorId, kycForm);
+      await fetchCreatorDetails();
+      onUpdate();
+      toast.success('KYC status updated successfully');
+    } catch (err) {
+      toast.error('Failed to update KYC status');
+      console.error('Error updating KYC status:', err);
+    }
+  };
+
+  const handlePersonalUpdate = async () => {
+    try {
+      await updateCreatorPersonalDetails(creatorId, formData);
+      await fetchCreatorDetails();
+      setIsEditing(false);
+      onUpdate();
+      toast.success('Personal details updated successfully');
+    } catch (err) {
+      toast.error('Failed to update personal details');
+      console.error('Error updating personal details:', err);
+    }
+  };
+
+  const renderAvatar = () => {
+    if (!creator) return null;
+    const initials = creator.name
+      .split(' ')
       .map((word) => word[0])
-      .join("")
+      .join('')
       .toUpperCase()
       .slice(0, 2);
 
@@ -51,178 +100,361 @@ const UserDetailsModal = ({ user, isOpen, onClose }) => {
   };
 
   const renderKycBadge = () => {
+    if (!creator) return null;
     const statusColors = {
-      verified: "bg-green-100 text-green-800",
-      pending: "bg-yellow-100 text-yellow-800",
-      rejected: "bg-red-100 text-red-800",
+      verified: 'bg-green-100 text-green-800',
+      pending: 'bg-yellow-100 text-yellow-800',
+      rejected: 'bg-red-100 text-red-800',
     };
 
-    const color =
-      statusColors[user.kycStatus?.toLowerCase()] ||
-      "bg-gray-100 text-gray-800";
+    const color = statusColors[creator.kycRecords?.status?.toLowerCase()] || 'bg-gray-100 text-gray-800';
 
     return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-medium uppercase ${color}`}
-      >
-        {user.kycStatus || "Unknown"}
-      </span>
-    );
-  };
-  const renderActiveBadge = () => {
-    const statusColors = {
-      active: "bg-green-100 text-green-800",
-      inactive: "bg-yellow-100 text-yellow-800",
-    };
-
-    const color =
-      statusColors[user.status?.toLowerCase()] || "bg-gray-100 text-gray-800";
-
-    return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-medium uppercase ${color}`}
-      >
-        {user.status || "Unknown"}
+      <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase ${color}`}>
+        {creator.kycRecords?.status || 'Unknown'}
       </span>
     );
   };
 
   const DetailRow = ({ icon, label, value }) => (
-    <div className="flex items-center border-b border-gray-100 py-3 px-4">
-      {icon}
-      <div className="ml-4">
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="font-semibold text-gray-800">{value || "N/A"}</p>
+    <div className="flex items-center py-3 border-b border-gray-200">
+      <div className="flex items-center space-x-2">
+        {icon}
+        <span className="text-sm font-medium text-gray-600">{label}</span>
+      </div>
+      <div className="ml-auto text-sm text-gray-800 break-all">
+        {typeof value === 'string' && value.startsWith('http') && label.includes('Card') ? (
+          <a href={value} target="_blank" rel="noopener noreferrer">
+            <img src={value} alt={label} className="w-24 h-auto rounded-md hover:scale-105 transition-transform" />
+          </a>
+        ) : typeof value === 'string' && value.startsWith('http') ? (
+          <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+            {value}
+          </a>
+        ) : (
+          value || 'N/A'
+        )}
       </div>
     </div>
   );
 
   const renderTabContent = () => {
+    if (!creator) return <div className="w-full h-full flex items-center justify-center text-gray-500">Loading...</div>;
+
     switch (activeTab) {
-      case "personalInfo":
-        return (
+      case 'personalInfo':
+        return isEditing ? (
+          <div className="p-6 bg-gray-50 rounded-lg">
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium">Name</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium">Phone</label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium">Social Media</label>
+              <input
+                type="text"
+                value={formData.socialMedia}
+                onChange={(e) => setFormData({ ...formData, socialMedia: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium">Goals (comma-separated)</label>
+              <input
+                type="text"
+                value={formData.goals.join(',')}
+                onChange={(e) => setFormData({ ...formData, goals: e.target.value.split(',').map((g) => g.trim()) })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium">Heard About Us</label>
+              <input
+                type="text"
+                value={formData.heardAboutUs}
+                onChange={(e) => setFormData({ ...formData, heardAboutUs: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePersonalUpdate}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        ) : (
           <div>
             <DetailRow
               icon={<User className="text-blue-500" size={20} />}
-              label="Creator Id"
-              value={user.creatorId}
+              label="Creator ID"
+              value={creator.id}
             />
             <DetailRow
               icon={<User className="text-blue-500" size={20} />}
               label="Full Name"
-              value={user.creatorName}
+              value={creator.name}
             />
             <DetailRow
-              icon={<Mail className="text-green-500" size={20} />}
+              icon={<Mail className New Tab
+                ="text-green-500" size={20} />}
               label="Email Address"
-              value={user.email}
+              value={creator.email}
             />
             <DetailRow
               icon={<Phone className="text-purple-500" size={20} />}
               label="Mobile Number"
-              value={user.mobileNumber}
+              value={creator.phone}
             />
             <DetailRow
-              icon={<IdCard className="text-indigo-500" size={20} />}
-              label="KYC Status"
-              value={user.kycStatus}
+              icon={<Globe className="text-teal-500" size={20} />}
+              label="Social Media"
+              value={creator.socialMedia}
             />
             <DetailRow
-              icon={<CreditCard className="text-teal-500" size={20} />}
-              label="Account Status"
-              value={user.status}
+              icon={<Target className="text-orange-500" size={20} />}
+              label="Goals"
+              value={creator.goals?.join(', ')}
             />
+            <DetailRow
+              icon={<Ear className="text-pink-500" size={20} />}
+              label="Heard About Us"
+              value={creator.heardAboutUs}
+            />
+            <div className="flex justify-end p-4">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Edit Details
+              </button>
+            </div>
           </div>
         );
-      case "accountDetails":
-        return (
-          <div>
+
+      case 'kycDetails':
+        return creator.hasKyc ? (
+          <div className="p-6 bg-gray-50 rounded-lg max-w-4xl mx-auto">
+            {/* KYC Status and Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DetailRow
+                icon={<IdCard className="text-teal-500" size={20} />}
+                label="KYC Status"
+                value={creator?.kycRecords?.status}
+              />
+              <DetailRow
+                icon={<IdCard className="text-teal-500" size={20} />}
+                label="Aadhaar Number"
+                value={creator?.kycRecords?.aadhaarNumber}
+              />
+            </div>
+
+            {/* Document Images */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">Documents</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <DetailRow
+                  icon={<IdCard className="text-teal-500" size={20} />}
+                  label="Aadhaar Front Card"
+                  value={creator?.kycRecords?.aadhaarFront}
+                />
+                <DetailRow
+                  icon={<IdCard className="text-teal-500" size={20} />}
+                  label="Aadhaar Back Card"
+                  value={creator?.kycRecords?.aadhaarBack}
+                />
+                <DetailRow
+                  icon={<IdCard className="text-teal-500" size={20} />}
+                  label="PAN Card"
+                  value={creator?.kycRecords?.panCard}
+                />
+                <DetailRow
+                  icon={<IdCard className="text-teal-500" size={20} />}
+                  label="Selfie Card"
+                  value={creator?.kycRecords?.selfie}
+                />
+              </div>
+            </div>
+
+            {/* Social Media Links */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">Social Media</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(creator?.kycRecords?.socialMedia || {}).map(([platform, link]) => (
+                  link && (
+                    <DetailRow
+                      key={platform}
+                      icon={<IdCard className="text-teal-500" size={20} />}
+                      label={platform.charAt(0).toUpperCase() + platform.slice(1)}
+                      value={link}
+                    />
+                  )
+                ))}
+              </div>
+            </div>
+
+            {/* Rejection Reason (if any) */}
+            {creator?.kycRecords?.rejectionReason && (
+              <DetailRow
+                icon={<IdCard className="text-teal-500" size={20} />}
+                label="Rejection Reason"
+                value={creator?.kycRecords.rejectionReason}
+              />
+            )}
+
+            {/* Update KYC Form */}
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">Update KYC Status</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-600 font-medium mb-1">KYC Status</label>
+                  <select
+                    value={kycForm.status}
+                    onChange={(e) => setKycForm({ ...kycForm, status: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="VERIFIED">Verified</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                </div>
+
+                {kycForm.status === 'REJECTED' && (
+                  <div>
+                    <label className="block text-sm text-gray-600 font-medium mb-1">Rejection Reason</label>
+                    <textarea
+                      value={kycForm.rejectionReason}
+                      onChange={(e) => setKycForm({ ...kycForm, rejectionReason: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                      rows="4"
+                      placeholder="Enter reason for rejection"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleKycUpdate}
+                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Update KYC
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            No KYC details available for this creator.
+          </div>
+        );
+
+      case 'businessInfo':
+        return creator.hasBusinessInfo ? (
+          <div className="p-6 bg-gray-50 rounded-lg">
             <DetailRow
-              icon={<IdCard className="text-indigo-500" size={20} />}
-              label="Account Number"
-              value={user.accountNumber}
+              icon={<Briefcase className="text-orange-500" size={20} />}
+              label="First Name"
+              value={creator.businessInfo?.firstName}
             />
             <DetailRow
-              icon={<CreditCard className="text-teal-500" size={20} />}
-              label="IFSC Code"
-              value={user.ifscCode}
+              icon={<Briefcase className="text-orange-500" size={20} />}
+              label="Last Name"
+              value={creator.businessInfo?.lastName}
             />
             <DetailRow
-              icon={<FileText className="text-orange-500" size={20} />}
+              icon={<Briefcase className="text-orange-500" size={20} />}
+              label="Business Structure"
+              value={creator.businessInfo?.businessStructure}
+            />
+            <DetailRow
+              icon={<Briefcase className="text-orange-500" size={20} />}
               label="GST Number"
-              value={user.gstNumber}
+              value={creator.businessInfo?.gstNumber}
             />
             <DetailRow
-              icon={<FileText className="text-orange-500" size={20} />}
-              label="Payment Hold"
-              value={user.paymentsHold}
+              icon={<Briefcase className="text-orange-500" size={20} />}
+              label="SEBI Number"
+              value={creator.businessInfo?.sebiNumber}
             />
           </div>
-        );
-      case "incomeDetails":
-        return (
-          <div>
-            <DetailRow
-              icon={<FileText className="text-orange-500" size={20} />}
-              label="Total Amount"
-              value={user.totalAmount}
-            />
-            <DetailRow
-              icon={<FileText className="text-orange-500" size={20} />}
-              label="Total Revenue"
-              value={user.todaysRevenue}
-            />
-            <DetailRow
-              icon={<FileText className="text-orange-500" size={20} />}
-              label="Total Amount In Wallet"
-              value={user.amountInWallet}
-            />
-            <DetailRow
-              icon={<FileText className="text-orange-500" size={20} />}
-              label="Amount Withdrawn"
-              value={user.amountWithdrawal}
-            />
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            No business information available for this creator.
           </div>
         );
-      case "links":
-        return (
-          <div>
-            <DetailRow
-              icon={<FileText className="text-orange-500" size={20} />}
-              label="Bank Proof"
-              value={
-                user.bankProof ? (
-                  <a
-                    href={user.bankProof}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 underline"
-                  >
-                    View Bank Proof
-                  </a>
-                ) : (
-                  "N/A"
-                )
-              }
-            />
-            <DetailRow
-              icon={<FileText className="text-orange-500" size={20} />}
-              label="Product Link"
-              value={
-                user.productsLink ? (
-                  <a
-                    href={user.productsLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 underline"
-                  >
-                    View Product
-                  </a>
-                ) : (
-                  "N/A"
-                )
-              }
-            />
+
+      case 'bankDetails':
+        return creator.hasBankDetails ? (
+          <div className="p-6 bg-gray-50 rounded-lg">
+            {creator.BankAccounts?.map((bank) => (
+              <div key={bank.id} className="mb-4 border-b pb-4">
+                <DetailRow
+                  icon={<CreditCard className="text-purple-500" size={20} />}
+                  label="Account Holder Name"
+                  value={bank.accountHolderName}
+                />
+                <DetailRow
+                  icon={<CreditCard className="text-purple-500" size={20} />}
+                  label="Account Number"
+                  value={bank.accountNumber}
+                />
+                <DetailRow
+                  icon={<CreditCard className="text-purple-500" size={20} />}
+                  label="IFSC Code"
+                  value={bank.ifscCode}
+                />
+                <DetailRow
+                  icon={<CreditCard className="text-purple-500" size={20} />}
+                  label="Primary"
+                  value={bank.primary ? 'Yes' : 'No'}
+                />
+              </div>
+            ))}
+            {creator.upiIds?.map((upi) => (
+              <div key={upi.id} className="mb-4 border-b pb-4">
+                <DetailRow
+                  icon={<CreditCard className="text-purple-500" size={20} />}
+                  label="UPI ID"
+                  value={upi.upiId}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            No bank details or UPI IDs available for this creator.
           </div>
         );
 
@@ -231,6 +463,8 @@ const UserDetailsModal = ({ user, isOpen, onClose }) => {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <motion.div
@@ -238,7 +472,7 @@ const UserDetailsModal = ({ user, isOpen, onClose }) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative scrollbar-hide"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative"
       >
         {/* Close Button */}
         <button
@@ -249,30 +483,22 @@ const UserDetailsModal = ({ user, isOpen, onClose }) => {
         </button>
 
         {/* Header with Avatar */}
-        <div className="bg-gradient-to-r from-orange-500 to-white-600 text-white p-6 rounded-t-2xl">
+        <div className="bg-gradient-to-r from-orange-500 to-yellow-600 text-white p-6 rounded-t-2xl">
           <div className="mb-4">{renderAvatar()}</div>
-          <h2 className="text-2xl font-bold text-center mt-4">
-            {user.creatorName}
-          </h2>
-          <div className="flex items-center justify-center gap-3">
-            <div className="flex justify-center mt-2">{renderKycBadge()}</div>
-            <div className="flex justify-center mt-2">
-              {renderActiveBadge()}
-            </div>
-          </div>
+          <h2 className="text-2xl font-bold text-center mt-4">{creator?.name}</h2>
+          <div className="flex justify-center mt-2">{renderKycBadge()}</div>
         </div>
 
         {/* Tabs */}
-        <div className="border-b flex justify-between">
+        <div className="border-b flex justify-between bg-gray-50">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 text-center font-semibold ${
-                activeTab === tab.id
-                  ? "text-orange-600 border-b-2 border-orange-600"
-                  : "text-gray-500"
-              }`}
+              className={`flex-1 py-3 text-center font-semibold ${activeTab === tab.id
+                ? 'text-orange-600 border-b-2 border-orange-600'
+                : 'text-gray-600 hover:text-orange-500'
+                } transition-colors`}
             >
               {tab.label}
             </button>
@@ -281,6 +507,10 @@ const UserDetailsModal = ({ user, isOpen, onClose }) => {
 
         {/* Tab Content */}
         <div className="p-6">{renderTabContent()}</div>
+
+        {error && (
+          <div className="p-4 bg-red-500 text-white text-sm rounded-b-lg">{error}</div>
+        )}
       </motion.div>
     </div>
   );
