@@ -288,6 +288,7 @@ export async function purchasePayingUp(req, res) {
     // };
 
     const orderId = randomUUID();
+    
 
     let totalAmount = payingUp.paymentDetails.totalAmount;
 
@@ -310,7 +311,7 @@ export async function purchasePayingUp(req, res) {
     });
   } catch (error) {
     console.error("Error while purchasing paying up.", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Please try again later.",
     });

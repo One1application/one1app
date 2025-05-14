@@ -42,6 +42,7 @@ enum ProductType {
   COURSE
   PAYING_UP
   TELEGRAM
+  PREMIUM_CONTENT
 }
 
 model User {
