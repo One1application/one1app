@@ -67,7 +67,8 @@ model User {
   kycRecords                  kycRecords?
   BankAccounts                BankDetails[]
   upiIds                      UPI[]
-  transactions                Transaction[]
+  transactionsAsBuyer         Transaction[]          @relation("Buyer")
+  transactionsAsCreator       Transaction[]          @relation("Creator")
   premiumContent              PremiumContent[]
   premiumAccess               PremiumContentAccess[]
   creatorComission            Int?                   @default(8)
@@ -156,7 +157,6 @@ model BusinessInfo {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
-
 model Transaction {
   id            String      @id @default(uuid())
   walletId      String
@@ -165,13 +165,15 @@ model Transaction {
   productId     String
   productType   ProductType
   buyerId       String
-  buyer         User        @relation(fields: [buyerId], references: [id])
+  buyer         User        @relation(name: "Buyer", fields: [buyerId], references: [id])
   creatorId     String
+  creator       User        @relation(name: "Creator", fields: [creatorId], references: [id])
   modeOfPayment String
   status        String
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
+
 
 model Withdrawal {
   id               String           @id @default(uuid())

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, IdCard, Briefcase, CreditCard, Globe, Target, Ear, Coins } from 'lucide-react';
+import { X, User, Mail, Phone, IdCard, Briefcase, CreditCard, Globe, Target, Ear, Coins, Filter, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getCreatorDetails, toggleCreatorKycStatus, updateCreatorPersonalDetails } from '../../services/api-service';
+import { getCreatorDetails, getCreatorWithdrawals, toggleCreatorKycStatus, updateCreatorPersonalDetails, updateWithdrawalStatus } from '../../services/api-service';
 import { toast } from 'react-toastify';
 
 const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
@@ -18,24 +18,27 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
     goals: [],
     heardAboutUs: '',
     creatorComission: null
-
   });
   const [kycForm, setKycForm] = useState({ status: '', rejectionReason: '' });
+  const [creatorWithdrawalsDetails, setCreatorWithdrawalsDetails] = useState([]);
+  const [withdrawalFilter, setWithdrawalFilter] = useState('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const tabs = [
     { id: 'personalInfo', label: 'Personal Info' },
     { id: 'kycDetails', label: 'KYC Details' },
     { id: 'businessInfo', label: 'Business Info' },
     { id: 'bankDetails', label: 'Bank Details' },
+    { id: 'withdrawals', label: 'Withdrawals Details' },
   ];
 
   const fetchCreatorDetails = async () => {
     setLoading(true);
     try {
       const data = await getCreatorDetails(creatorId);
+      const withdrawalsDetails = await getCreatorWithdrawals(creatorId);
+      setCreatorWithdrawalsDetails(withdrawalsDetails.withdrawalsDetails);
       setCreator(data);
-
-
       setFormData({
         name: data.name,
         email: data.email,
@@ -45,7 +48,6 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
         heardAboutUs: data.heardAboutUs || '',
         creatorComission: data.creatorComission
       });
-
       setKycForm({
         status: data.kycRecords?.status || 'PENDING',
         rejectionReason: data.kycRecords?.rejectionReason || '',
@@ -86,6 +88,17 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
     } catch (err) {
       toast.error('Failed to update personal details');
       console.error('Error updating personal details:', err);
+    }
+  };
+
+  const handleWithdrawalStatusUpdate = async (withdrawalId, status, failedReason = '') => {
+    try {
+      await updateWithdrawalStatus(withdrawalId, status, failedReason);
+      await fetchCreatorDetails();
+      toast.success('Withdrawal status updated successfully');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update withdrawal status');
+      console.error('Error updating withdrawal status:', err);
     }
   };
 
@@ -143,6 +156,121 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
       </div>
     </div>
   );
+
+  const WithdrawalCard = ({ withdrawal }) => {
+    const [status, setStatus] = useState(withdrawal.status);
+    const [failedReason, setFailedReason] = useState(withdrawal.failedReason || '');
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const handleStatusChange = async () => {
+      setIsUpdating(true);
+      await handleWithdrawalStatusUpdate(withdrawal.id, status, status === 'FAILED' ? failedReason : '');
+      setIsUpdating(false);
+    };
+
+    const statusColors = {
+      PENDING: 'bg-yellow-100 text-yellow-800',
+      SUCCESS: 'bg-green-100 text-green-800',
+      FAILED: 'bg-red-100 text-red-800',
+    };
+
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-600">Withdrawal ID</p>
+            <p className="text-sm font-medium">{withdrawal.id}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Amount</p>
+            <p className="text-sm font-medium">₹{withdrawal.amount}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Mode</p>
+            <p className="text-sm font-medium">{withdrawal.modeOfWithdrawal}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Date</p>
+            <p className="text-sm font-medium">{new Date(withdrawal.createdAt).toLocaleDateString()}</p>
+          </div>
+          {withdrawal.modeOfWithdrawal === 'bank' && withdrawal.bankDetails && (
+            <>
+              <div>
+                <p className="text-sm text-gray-600">Account Holder</p>
+                <p className="text-sm font-medium">{withdrawal.bankDetails.accountHolderName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Account Number</p>
+                <p className="text-sm font-medium">{withdrawal.bankDetails.accountNumber}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">IFSC Code</p>
+                <p className="text-sm font-medium">{withdrawal.bankDetails.ifscCode}</p>
+              </div>
+            </>
+          )}
+          {withdrawal.modeOfWithdrawal === 'upi' && withdrawal.upi && (
+            <div>
+              <p className="text-sm text-gray-600">UPI ID</p>
+              <p className="text-sm font-medium">{withdrawal.upi.upiId}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-sm text-gray-600">Status</p>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[withdrawal.status]}`}>
+              {withdrawal.status}
+            </span>
+          </div>
+        </div>
+        {withdrawal.status === 'PENDING' && (
+          <div className="mt-4 border-t pt-4">
+            <p className="text-sm font-medium mb-2">Update Status</p>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg mb-2"
+              disabled={isUpdating}
+            >
+              <option value="PENDING">Pending</option>
+              <option value="SUCCESS">Success</option>
+              <option value="FAILED">Failed</option>
+            </select>
+            {status === 'FAILED' && (
+              <textarea
+                value={failedReason}
+                onChange={(e) => setFailedReason(e.target.value)}
+                placeholder="Enter reason for failure"
+                className="w-full px-3 py-2 border rounded-lg mb-2"
+                rows="3"
+                disabled={isUpdating}
+              />
+            )}
+            <button
+              onClick={handleStatusChange}
+              disabled={isUpdating}
+              className={`px-4 py-2 rounded-lg text-white ${isUpdating ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'}`}
+            >
+              {isUpdating ? 'Updating...' : 'Update Status'}
+            </button>
+          </div>
+        )}
+        {withdrawal.status === 'FAILED' && withdrawal.failedReason && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-600">Failed Reason</p>
+            <p className="text-sm text-red-600">{withdrawal.failedReason}</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const filteredWithdrawals = creatorWithdrawalsDetails.filter((withdrawal) => {
+    const matchesStatus = withdrawalFilter === 'ALL' || withdrawal.status === withdrawalFilter;
+    const matchesSearch = withdrawal.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (withdrawal.bankDetails?.accountNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (withdrawal.upi?.upiId?.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesStatus && matchesSearch;
+  });
 
   const renderTabContent = () => {
     if (!creator) return <div className="w-full h-full flex items-center justify-center text-gray-500">Loading...</div>;
@@ -242,8 +370,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
               value={creator.name}
             />
             <DetailRow
-              icon={<Mail className New Tab
-                ="text-green-500" size={20} />}
+              icon={<Mail className="text-green-500" size={20} />}
               label="Email Address"
               value={creator.email}
             />
@@ -286,7 +413,6 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
       case 'kycDetails':
         return creator.hasKyc ? (
           <div className="p-6 bg-gray-50 rounded-lg max-w-4xl mx-auto">
-            {/* KYC Status and Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DetailRow
                 icon={<IdCard className="text-teal-500" size={20} />}
@@ -299,11 +425,9 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                 value={creator?.kycRecords?.aadhaarNumber}
               />
             </div>
-
-            {/* Document Images */}
             <div className="mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Documents</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DetailRow
                   icon={<IdCard className="text-teal-500" size={20} />}
                   label="Aadhaar Front Card"
@@ -326,8 +450,6 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                 />
               </div>
             </div>
-
-            {/* Social Media Links */}
             <div className="mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Social Media</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -343,8 +465,6 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                 ))}
               </div>
             </div>
-
-            {/* Rejection Reason (if any) */}
             {creator?.kycRecords?.rejectionReason && (
               <DetailRow
                 icon={<IdCard className="text-teal-500" size={20} />}
@@ -352,8 +472,6 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                 value={creator?.kycRecords.rejectionReason}
               />
             )}
-
-            {/* Update KYC Form */}
             <div className="mt-8">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Update KYC Status</h3>
               <div className="space-y-4">
@@ -369,7 +487,6 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                     <option value="REJECTED">Rejected</option>
                   </select>
                 </div>
-
                 {kycForm.status === 'REJECTED' && (
                   <div>
                     <label className="block text-sm text-gray-600 font-medium mb-1">Rejection Reason</label>
@@ -382,7 +499,6 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                     />
                   </div>
                 )}
-
                 <div className="flex justify-end">
                   <button
                     onClick={handleKycUpdate}
@@ -437,9 +553,10 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
 
       case 'bankDetails':
         return creator.hasBankDetails ? (
-          <div className="p-6 bg-gray-50 rounded-lg">
+          <div className="p-6 rounded-lg flex flex-col gap-4">
+            <h2 className='uppercase font-bold text-3xl text-black my-3'>CREATOR BANK ACCOUNTS</h2>
             {creator.BankAccounts?.map((bank) => (
-              <div key={bank.id} className="mb-4 border-b pb-4">
+              <div key={bank.id} className="mb-4 pb-4 bg-gray-50 px-2">
                 <DetailRow
                   icon={<CreditCard className="text-purple-500" size={20} />}
                   label="Account Holder Name"
@@ -462,8 +579,9 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                 />
               </div>
             ))}
+            <h2 className='uppercase font-bold text-3xl text-black my-3'>Creator UPI IDS</h2>
             {creator.upiIds?.map((upi) => (
-              <div key={upi.id} className="mb-4 border-b pb-4">
+              <div key={upi.id} className="mb-4 px-3 bg-gray-50">
                 <DetailRow
                   icon={<CreditCard className="text-purple-500" size={20} />}
                   label="UPI ID"
@@ -475,6 +593,47 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
         ) : (
           <div className="p-6 text-center text-gray-500">
             No bank details or UPI IDs available for this creator.
+          </div>
+        );
+
+      case 'withdrawals':
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Withdrawal Details</h2>
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="flex items-center gap-2 flex-1">
+                <Search className="text-gray-500" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search by ID, Account Number, or UPI ID"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Filter className="text-gray-500" size={20} />
+                <select
+                  value={withdrawalFilter}
+                  onChange={(e) => setWithdrawalFilter(e.target.value)}
+                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="SUCCESS">Success</option>
+                  <option value="FAILED">Failed</option>
+                </select>
+              </div>
+            </div>
+            {filteredWithdrawals.length > 0 ? (
+              filteredWithdrawals.map((withdrawal) => (
+                <WithdrawalCard key={withdrawal.id} withdrawal={withdrawal} />
+              ))
+            ) : (
+              <div className="text-center text-gray-500 py-8">
+                No withdrawals found matching the current filters.
+              </div>
+            )}
           </div>
         );
 
@@ -494,22 +653,17 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
         transition={{ duration: 0.3 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative"
       >
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 z-10"
         >
           <X size={24} />
         </button>
-
-        {/* Header with Avatar */}
         <div className="bg-gradient-to-r from-orange-500 to-yellow-600 text-white p-6 rounded-t-2xl">
           <div className="mb-4">{renderAvatar()}</div>
           <h2 className="text-2xl font-bold text-center mt-4">{creator?.name}</h2>
           <div className="flex justify-center mt-2">{renderKycBadge()}</div>
         </div>
-
-        {/* Tabs */}
         <div className="border-b flex justify-between bg-gray-50">
           {tabs.map((tab) => (
             <button
@@ -524,10 +678,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
             </button>
           ))}
         </div>
-
-        {/* Tab Content */}
         <div className="p-6">{renderTabContent()}</div>
-
         {error && (
           <div className="p-4 bg-red-500 text-white text-sm rounded-b-lg">{error}</div>
         )}

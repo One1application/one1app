@@ -1069,7 +1069,7 @@ export async function withdrawAmount(req, res) {
 
       await prisma.withdrawal.create({
         data: {
-          amount: withdrawAmount,
+          amount: +withdrawAmount,
           upiId: upiDetails.id,
           walletId: wallet.id,
           modeOfWithdrawal: withdrawalMethod,

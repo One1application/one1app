@@ -824,14 +824,21 @@ export const getDashboardData = async (req, res) => {
   try {
     const { period = "today" } = req.query; // Filter by period: today, thisWeek, thisMonth, thisYear
 
-    // Define the time range based on the period
+    // Define the time range for the current period
     const now = new Date();
-    let startDate;
-    let endDate = now;
+    let startDate,
+      endDate = now;
+    let prevStartDate, prevEndDate;
 
     switch (period.toLowerCase()) {
       case "today":
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        prevEndDate = new Date(startDate);
+        prevStartDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - 1
+        );
         break;
       case "thisweek":
         startDate = new Date(
@@ -839,15 +846,31 @@ export const getDashboardData = async (req, res) => {
           now.getMonth(),
           now.getDate() - now.getDay()
         );
+        prevEndDate = new Date(startDate);
+        prevStartDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - now.getDay() - 7
+        );
         break;
       case "thismonth":
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        prevEndDate = new Date(startDate);
+        prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         break;
       case "thisyear":
         startDate = new Date(now.getFullYear(), 0, 1);
+        prevEndDate = new Date(startDate);
+        prevStartDate = new Date(now.getFullYear() - 1, 0, 1);
         break;
       default:
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        prevEndDate = new Date(startDate);
+        prevStartDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - 1
+        );
     }
 
     // Fetch creators (Role: Creator)
@@ -862,7 +885,7 @@ export const getDashboardData = async (req, res) => {
       },
     });
 
-    // Fetch transactions for creators within the period
+    // Fetch transactions for creators within the current period
     const creatorIds = creators.map((creator) => creator.id);
     const transactions = await prisma.transaction.findMany({
       where: {
@@ -872,6 +895,27 @@ export const getDashboardData = async (req, res) => {
         createdAt: {
           gte: startDate,
           lte: endDate,
+        },
+        status: "COMPLETED",
+      },
+      include: {
+        wallet: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    // Fetch transactions for creators within the previous period
+    const prevTransactions = await prisma.transaction.findMany({
+      where: {
+        wallet: {
+          userId: { in: creatorIds },
+        },
+        createdAt: {
+          gte: prevStartDate,
+          lte: prevEndDate,
         },
         status: "COMPLETED",
       },
@@ -898,7 +942,7 @@ export const getDashboardData = async (req, res) => {
       0
     );
 
-    // Calculate Total Revenue, Spend, and Saving
+    // Calculate Total Revenue, Spend, and Saving (Current Period)
     const totalRevenue = transactions.reduce((sum, tx) => sum + tx.amount, 0);
     const transactionChargeRate = 0.0195; // 1.95%
     const totalSpend = transactions.reduce(
@@ -916,27 +960,86 @@ export const getDashboardData = async (req, res) => {
         (sum, tx) => sum + tx.amount,
         0
       );
-      const commissionRate = (creator.creatorComission || 8) / 100; // Default to 8% if not set
+      const commissionRate = (creator.creatorComission || 8) / 100; // Default to 8%
       totalCommission += creatorRevenue * commissionRate;
     }
     const totalSaving = totalCommission - totalSpend;
 
-    // Calculate Creator Metrics
-    const totalCreators = creators.length;
+    // Calculate Total Revenue, Spend, and Saving (Previous Period)
+    const prevTotalRevenue = prevTransactions.reduce(
+      (sum, tx) => sum + tx.amount,
+      0
+    );
+    const prevTotalSpend = prevTransactions.reduce(
+      (sum, tx) => sum + tx.amount * transactionChargeRate,
+      0
+    );
+    let prevTotalCommission = 0;
+    for (const creator of creators) {
+      const creatorTransactions = prevTransactions.filter(
+        (tx) => tx.wallet.userId === creator.id
+      );
+      const creatorRevenue = creatorTransactions.reduce(
+        (sum, tx) => sum + tx.amount,
+        0
+      );
+      const commissionRate = (creator.creatorComission || 8) / 100;
+      prevTotalCommission += creatorRevenue * commissionRate;
+    }
+    const prevTotalSaving = prevTotalCommission - prevTotalSpend;
 
-    // New Creators: Joined within the period
+    // Calculate Creator Metrics (Current Period)
+    const totalCreators = creators.length;
     const newCreators = creators.filter((creator) => {
       const createdAt = new Date(creator.createdAt || creator.updatedAt);
       return createdAt >= startDate && createdAt <= endDate;
     }).length;
-
-    // Deactive Creators: No transactions in the period
     const activeCreatorIds = new Set(
       transactions.map((tx) => tx.wallet.userId)
     );
     const deactiveCreators = creators.filter(
       (creator) => !activeCreatorIds.has(creator.id)
     ).length;
+
+    // Calculate Creator Metrics (Previous Period)
+    const prevNewCreators = creators.filter((creator) => {
+      const createdAt = new Date(creator.createdAt || creator.updatedAt);
+      return createdAt >= prevStartDate && createdAt <= prevEndDate;
+    }).length;
+    const prevActiveCreatorIds = new Set(
+      prevTransactions.map((tx) => tx.wallet.userId)
+    );
+    const prevDeactiveCreators = creators.filter(
+      (creator) => !prevActiveCreatorIds.has(creator.id)
+    ).length;
+
+    // Calculate Percentage Changes
+    const calculatePercentageChange = (current, previous) => {
+      if (previous === 0 && current === 0) return 0;
+      if (previous === 0) return current > 0 ? 100 : -100;
+      return ((current - previous) / previous) * 100;
+    };
+
+    const revenuePercentage = calculatePercentageChange(
+      totalRevenue,
+      prevTotalRevenue
+    );
+    const spendPercentage = calculatePercentageChange(
+      totalSpend,
+      prevTotalSpend
+    );
+    const savingPercentage = calculatePercentageChange(
+      totalSaving,
+      prevTotalSaving
+    );
+    const newCreatorsPercentage = calculatePercentageChange(
+      newCreators,
+      prevNewCreators
+    );
+    const deactiveCreatorsPercentage = calculatePercentageChange(
+      deactiveCreators,
+      prevDeactiveCreators
+    );
 
     // Creators Leaderboard
     const leaderboardData = creators
@@ -986,43 +1089,53 @@ export const getDashboardData = async (req, res) => {
         {
           title: "Total Revenue",
           value: `₹${totalRevenue.toFixed(2)}`,
-          trend: totalRevenue >= 0 ? "positive" : "negative",
-          percentage: totalRevenue >= 0 ? "+0%" : "-0%", // Simplified for now
+          trend: revenuePercentage >= 0 ? "positive" : "negative",
+          percentage: `${
+            revenuePercentage >= 0 ? "+" : ""
+          }${revenuePercentage.toFixed(2)}%`,
         },
         {
           title: "Total Spend",
           value: `₹${totalSpend.toFixed(2)}`,
-          trend: "negative",
-          percentage: "-0%", // Simplified for now
+          trend: spendPercentage >= 0 ? "positive" : "negative",
+          percentage: `${
+            spendPercentage >= 0 ? "+" : ""
+          }${spendPercentage.toFixed(2)}%`,
         },
         {
           title: "Total Saving",
           value: `₹${totalSaving.toFixed(2)}`,
-          trend: totalSaving >= 0 ? "positive" : "negative",
-          percentage: totalSaving >= 0 ? "+0%" : "-0%", // Simplified for now
+          trend: savingPercentage >= 0 ? "positive" : "negative",
+          percentage: `${
+            savingPercentage >= 0 ? "+" : ""
+          }${savingPercentage.toFixed(2)}%`,
         },
         {
           title: "Total Creators",
           value: totalCreators.toString(),
-          trend: "positive",
-          percentage: "+0%", // Simplified for now
+          trend: "positive", // Total creators is always positive as it's a count
+          percentage: "+0%", // Total creators doesn't change period-to-period
         },
         {
           title: "New Creators",
           value: newCreators.toString(),
-          trend: newCreators >= 0 ? "positive" : "negative",
-          percentage: newCreators >= 0 ? "+0%" : "-0%", // Simplified for now
+          trend: newCreatorsPercentage >= 0 ? "positive" : "negative",
+          percentage: `${
+            newCreatorsPercentage >= 0 ? "+" : ""
+          }${newCreatorsPercentage.toFixed(2)}%`,
         },
         {
           title: "Deactive Creators",
           value: deactiveCreators.toString(),
-          trend: "negative",
-          percentage: "-0%", // Simplified for now
+          trend: deactiveCreatorsPercentage >= 0 ? "negative" : "positive",
+          percentage: `${
+            deactiveCreatorsPercentage >= 0 ? "+" : ""
+          }${deactiveCreatorsPercentage.toFixed(2)}%`,
         },
       ],
       leaderboard: {
         today: leaderboardData,
-        thisWeek: leaderboardData, // Simplified: Use the same data for all periods
+        thisWeek: leaderboardData, // Unchanged as per original logic
         thisMonth: leaderboardData,
         thisYear: leaderboardData,
       },
@@ -1288,110 +1401,257 @@ export const updateCreatorPersonalDetails = async (req, res) => {
   }
 };
 
-//User Payment Transaction Report
-export const getPayments = async (req, res) => {
+export const getCreatoreWithDrawls = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const { creatorId } = req.params;
 
-    const [payments, total] = await Promise.all([
-      prisma.transaction.findMany({
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          amount: true,
-          modeOfPayment: true,
-          product: true,
-          wallet: {
-            select: {
-              user: {
-                select: {
-                  id: true,
-                  phone: true,
-                  email: true,
+    if (!creatorId) {
+      return res.status(400).send({
+        success: false,
+        message: "Creator Id Required",
+      });
+    }
+
+    const withdrawalsDetails = await prisma.withdrawal.findMany({
+      where: {
+        wallet: {
+          userId: creatorId,
+          user: {
+            role: "Creator",
+          },
+        },
+      },
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        failedReason: true,
+        modeOfWithdrawal: true,
+        bankDetails: {
+          select: {
+            accountHolderName: true,
+            accountNumber: true,
+            ifscCode: true,
+          },
+        },
+        upi: {
+          select: {
+            upiId: true,
+          },
+        },
+        createdAt: true,
+        wallet: {
+          select: {
+            balance: true,
+            userId: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).send({
+      success: true,
+      message: "Creator WithDrawls True",
+      withdrawalsDetails,
+    });
+  } catch (error) {
+    console.log("ERROR: GetWithDrawls Fails", error);
+    return res.status(500).send({
+      success: false,
+      message: "Error in Getting WithDrawls",
+      error: "Internal Server Error",
+    });
+  }
+};
+
+export const updateWithDrawlsStatus = async (req, res) => {
+  try {
+    const { withdrawalId } = req.params;
+    const { status, failedReason } = req.body;
+
+    if (!withdrawalId || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "Withdrawal ID and status are required",
+      });
+    }
+
+    if (!["PENDING", "SUCCESS", "FAILED"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status value",
+      });
+    }
+
+    const withdrawal = await prisma.withdrawal.findUnique({
+      where: { id: withdrawalId },
+      include: { wallet: true },
+    });
+
+    if (!withdrawal) {
+      return res.status(404).json({
+        success: false,
+        message: "Withdrawal not found",
+      });
+    }
+
+    if (withdrawal.status !== "PENDING") {
+      return res.status(400).json({
+        success: false,
+        message: "Only pending withdrawals can be updated",
+      });
+    }
+
+    let updateData = { status };
+
+    if (status === "FAILED") {
+      updateData.failedReason = failedReason || "No reason provided";
+    }
+
+    if (status === "SUCCESS") {
+      if (withdrawal.wallet.balance < withdrawal.amount) {
+        return res.status(400).json({
+          success: false,
+          message: "Insufficient wallet balance",
+        });
+      }
+
+      await prisma.$transaction([
+        prisma.withdrawal.update({
+          where: { id: withdrawalId },
+          data: {
+            status,
+            wallet: {
+              update: {
+                balance: {
+                  decrement: withdrawal.amount,
+                },
+                totalWithdrawals: {
+                  increment: withdrawal.amount,
                 },
               },
             },
           },
-          status: true,
-        },
-      }),
-      prisma.transaction.count(),
-    ]);
-
-    const formattedPayments = await Promise.all(
-      payments.map(async (payment) => {
-        let creatorId = null;
-        let productId = null;
-
-        if (payment.wallet?.user?.id) {
-          const userId = payment.wallet.user.id;
-
-          const webinarTickets = await prisma.webinarTicket.findMany({
-            where: {
-              boughtById: userId,
-              paymentId: payment.id,
-            },
-            select: {
-              webinar: {
-                select: {
-                  id: true,
-                  createdById: true,
-                },
-              },
-            },
-          });
-
-          const coursePurchases = await prisma.coursePurchasers.findMany({
-            where: {
-              purchaserId: userId,
-              paymentId: payment.id,
-            },
-            select: {
-              course: {
-                select: {
-                  id: true,
-                  createdBy: true,
-                },
-              },
-            },
-          });
-
-          if (webinarTickets.length > 0) {
-            creatorId = webinarTickets[0].webinar.createdById;
-            productId = webinarTickets[0].webinar.id;
-          } else if (coursePurchases.length > 0) {
-            creatorId = coursePurchases[0].course.createdBy;
-            productId = coursePurchases[0].course.id;
-          }
-        }
-
-        return {
-          AmountPaid: payment.amount,
-          PaymentMethod: payment.modeOfPayment,
-          CreatorsID: creatorId,
-          ProductID: productId,
-          ProductType: payment.product,
-          UserNumber: payment.wallet?.user?.phone,
-          UserEmailID: payment.wallet?.user?.email,
-          Status: payment.status,
-        };
-      })
-    );
+        }),
+      ]);
+    } else {
+      await prisma.withdrawal.update({
+        where: { id: withdrawalId },
+        data: updateData,
+      });
+    }
 
     return res.status(200).json({
+      success: true,
+      message: "Withdrawal status updated successfully",
+    });
+  } catch (error) {
+    console.error("ERROR: Update Withdrawal Status Failed", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error updating withdrawal status",
+      error: "Internal Server Error",
+    });
+  }
+};
+//User Payment Transaction Report
+export const getPayments = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      productType,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+    if (search) {
+      where.OR = [
+        { id: { contains: search, mode: "insensitive" } },
+        { productId: { contains: search, mode: "insensitive" } },
+        { buyer: { name: { contains: search, mode: "insensitive" } } },
+        { buyer: { email: { contains: search, mode: "insensitive" } } },
+        { creator: { name: { contains: search, mode: "insensitive" } } },
+        { creator: { email: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+    if (status) {
+      where.status = status;
+    }
+    if (productType) {
+      where.productType = productType;
+    }
+
+    const orderBy = {};
+    orderBy[sortBy] = sortOrder;
+
+    const [payments, total] = await Promise.all([
+      prisma.transaction.findMany({
+        skip,
+        take: limitNum,
+        where,
+        orderBy,
+        select: {
+          id: true,
+          amount: true,
+          productId: true,
+          productType: true,
+          status: true,
+          modeOfPayment: true,
+          createdAt: true,
+          buyer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      }),
+      prisma.transaction.count({ where }),
+    ]);
+
+    const formattedPayments = payments.map((payment) => ({
+      ...payment,
+      buyerName: payment.buyer.name,
+      buyerEmail: payment.buyer.email,
+      creatorName: payment.creator.name,
+      creatorEmail: payment.creator.email,
+    }));
+
+    return res.status(200).json({
+      success: true,
       data: formattedPayments,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
       },
     });
   } catch (error) {
     console.error("Error fetching payments:", error);
-    return res.status(500).json({ message: "Failed to fetch payments" });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch payments",
+      error: "Internal Server Error",
+    });
   }
 };

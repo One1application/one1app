@@ -232,7 +232,7 @@ const WalletPage = () => {
             </p>
             <h2 className="font-bold tracking-tight font-poppins text-3xl flex gap-1 text-white">
               ₹
-              <div className="text-3xl font-bold">{BalanceDetails?.balance}</div>
+              <div className="text-3xl font-bold">{BalanceDetails?.balance.toFixed(2)}</div>
             </h2>
             <p className="font-poppins tracking-tight text-sm text-gray-400">
               Last Updated on{" "}
@@ -270,7 +270,7 @@ const WalletPage = () => {
             </p>
             <h2 className="font-bold text-3xl text-white tracking-tight flex gap-1">
               ₹
-              <div className="text-3xl font-bold">{BalanceDetails?.totalEarnings}</div>
+              <div className="text-3xl font-bold">{BalanceDetails?.totalEarnings.toFixed(2)}</div>
 
             </h2>
           </div>
@@ -324,13 +324,9 @@ const WalletPage = () => {
             <p className="font-poppins text-white tracking-tight text-lg">
               Total Withdrawal
             </p>
-            <h2 className="font-bold text-3xl text-white tracking-tight">
+            <h2 className="font-bold text-3xl text-white tracking-tight flex gap-2">
               ₹
-              <CountUp
-                start={0}
-                end={BalanceDetails.totalWithdrawals}
-                duration={2}
-              />
+              <div>{BalanceDetails.totalWithdrawals?.toFixed(2)}</div>
             </h2>
           </div>
           <img src={Cash} alt="" className="absolute bottom-0 right-0" />

@@ -18,6 +18,8 @@ import {
   getCreatorDetails,
   toggleCreatorKycStatus,
   updateCreatorPersonalDetails,
+  getCreatoreWithDrawls,
+  updateWithDrawlsStatus,
 } from "../controllers/adminController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
@@ -41,6 +43,8 @@ adminRouter.get("/creator/report", getCreatorReport);
 adminRouter.get("/creator/:id", getCreatorDetails);
 adminRouter.patch("/creator/:id/kyc", toggleCreatorKycStatus);
 adminRouter.patch("/creator/:id/personal", updateCreatorPersonalDetails);
+adminRouter.get("/creator/:creatorId/withdrawls", getCreatoreWithDrawls);
+adminRouter.patch("/withdrawal/:withdrawalId/status", updateWithDrawlsStatus);
 
 adminRouter.post("/admins", createAdmin);
 adminRouter.get("/admins", getAdmins);

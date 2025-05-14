@@ -96,12 +96,6 @@ export const dashboardData = async (period = "today") => {
   });
   return response.data;
 };
-export const getPaymentsApiService = async ({ page = 1, limit = 10 } = {}) => {
-  const response = await axiosInstance.get("/admin/payments", {
-    params: { page, limit },
-  });
-  return response.data;
-};
 
 export const getCreatorReport = async ({
   page = 1,
@@ -144,6 +138,40 @@ export const updateCreatorPersonalDetails = async (
     goals,
     heardAboutUs,
     creatorComission,
+  });
+  return response.data;
+};
+export const getCreatorWithdrawals = async (id) => {
+  const response = await axiosInstance.get(`/admin/creator/${id}/withdrawls`);
+  return response.data;
+};
+
+export const updateWithdrawalStatus = async (
+  withdrawalId,
+  status,
+  failedReason
+) => {
+  const response = await axiosInstance.patch(
+    `/admin/withdrawal/${withdrawalId}/status`,
+    {
+      status,
+      failedReason,
+    }
+  );
+  return response.data;
+};
+
+export const getPaymentsApiService = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  status = "",
+  productType = "",
+  sortBy = "createdAt",
+  sortOrder = "desc",
+} = {}) => {
+  const response = await axiosInstance.get("/admin/payments", {
+    params: { page, limit, search, status, productType, sortBy, sortOrder },
   });
   return response.data;
 };

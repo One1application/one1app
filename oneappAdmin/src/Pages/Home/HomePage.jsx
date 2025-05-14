@@ -1,7 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect, useMemo } from "react";
 import { FaHome, FaSearch } from "react-icons/fa";
-import CountUp from "react-countup";
 import NotificationModal from "../../components/Modal/NotificationModal";
 import { dashboardData } from "../../services/api-service";
 import PieChartComponent from "../../components/Charts/PieChartComponent";
@@ -28,9 +27,10 @@ const HomePage = () => {
 
   const fetchDashboardData = async (selectedPeriod) => {
     setIsLoading(true);
+    setError(null);
     try {
       const response = await dashboardData(selectedPeriod);
-      console.log(response);
+      setDashboard(response); // Update state with fetched data
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError("Failed to fetch dashboard data");
@@ -102,8 +102,8 @@ const HomePage = () => {
             <p className="font-poppins tracking-tight text-sm text-gray-500">
               Today's Revenue
             </p>
-            <h2 className="font-bold tracking-tight font-poppins text-3xl flex gap-1">
-              ₹<CountUp start={0} end={parseFloat(dashboard.todaysRevenue)} duration={2} decimals={2} />
+            <h2 className="font-bold tracking-tight font-poppins text-3xl">
+              ₹{parseFloat(dashboard.todaysRevenue).toFixed(2)}
             </h2>
             <p className="font-poppins tracking-tight text-sm text-gray-500">
               Last Updated on {dashboard.lastUpdated}
@@ -129,29 +129,33 @@ const HomePage = () => {
         {/* Stats Section */}
         <div className="w-full lg:w-2/3">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {dashboard.stats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-white shadow-md p-4 rounded-lg border border-gray-200 text-sm"
-              >
-                <h3 className="text-base font-semibold text-gray-700 mb-2">
-                  {stat.title}
-                </h3>
-                <hr className="mb-3 border-gray-300" />
-                <p className="text-xl font-bold text-gray-900 mb-1">
-                  {stat.value}
-                </p>
-                <div className="flex justify-between items-center">
-                  <p
-                    className={`font-medium ${stat.trend === "positive" ? "text-green-500" : "text-red-500"
-                      }`}
-                  >
-                    {stat.percentage}
+            {dashboard.stats.length > 0 ? (
+              dashboard.stats.map((stat, index) => (
+                <div
+                  key={index}
+                  className="bg-white shadow-md p-4 rounded-lg border border-gray-200 text-sm"
+                >
+                  <h3 className="text-base font-semibold text-gray-700 mb-2">
+                    {stat.title}
+                  </h3>
+                  <hr className="mb-3 border-gray-300" />
+                  <p className="text-xl font-bold text-gray-900 mb-1">
+                    {stat.value}
                   </p>
-                  <p className="ml-2 text-sm text-gray-500">From Last Period</p>
+                  <div className="flex justify-between items-center">
+                    <p
+                      className={`font-medium ${stat.trend === "positive" ? "text-green-500" : "text-red-500"
+                        }`}
+                    >
+                      {stat.percentage}
+                    </p>
+                    <p className="ml-2 text-sm text-gray-500">From Last Period</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-gray-500">No stats available.</p>
+            )}
           </div>
         </div>
 
@@ -171,8 +175,8 @@ const HomePage = () => {
                 <button
                   key={tab.id}
                   className={`text-sm font-medium px-3 py-1 rounded-lg whitespace-nowrap ${activeTab === tab.id
-                    ? "bg-orange-600 text-white"
-                    : "text-gray-600 bg-gray-100"
+                      ? "bg-orange-600 text-white"
+                      : "text-gray-600 bg-gray-100"
                     }`}
                   onClick={() => handleTabClick(tab.id)}
                 >
@@ -229,7 +233,7 @@ const HomePage = () => {
       </div>
 
       {error && (
-        <div className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg">
+        <div className="mt-4 bg-red-100 text-red-700 px-4 py-2 rounded-lg">
           {error}
         </div>
       )}
