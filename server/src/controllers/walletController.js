@@ -68,6 +68,7 @@ export async function getWalletDetails(req, res) {
       0
     );
 
+    console.log(wallet);
     return res.status(200).json({
       success: true,
       message: "Fetched wallet details successfully.",
@@ -76,6 +77,7 @@ export async function getWalletDetails(req, res) {
         totalEarnings: wallet.totalEarnings === null ? 0 : wallet.totalEarnings,
         totalWithdrawals: totalWithdrawals,
         lastModified: wallet.updatedAt,
+        mpin: wallet.mpin !== null,
         accountNumbers: accountNumberResponse,
         upiIds: upiIdResponse,
       },

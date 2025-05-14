@@ -5,6 +5,8 @@ export const authMiddleware = (req, res, next) => {
     const token = req.header('Authorization');
     
     if(!token){
+        console.log('1');
+        
         return res.status(401).json({
             message: "Token not found, Access Denied!"
         })

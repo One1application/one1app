@@ -384,3 +384,19 @@ export const purchasePremiumContent = async (id, userId) => {
   );
   return response;
 };
+
+export const saveMpin = async (data) => {
+  const response = await servicesAxiosInstance.post(
+    "wallet/set-mpin",
+    data
+  );
+  return response;
+}
+
+export const verifyMpin = async (data) => {
+  const response = await servicesAxiosInstance.post(
+    "wallet/verify-mpin",
+    data
+  );
+  return response;
+}

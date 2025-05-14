@@ -23,7 +23,7 @@ import { Calendar } from "lucide-react";
 import { fetchBalanceDetails, fetchPrimaryPaymentInformation } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 const WalletPage = () => {
 
   const { userDetails } = useAuth();
@@ -55,6 +55,8 @@ const WalletPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [status, setStatus] = useState('NULL');
+  const [mpinStatus, setMpinStatus] = useState(false); 
+  const navigate = useNavigate();
 
   const toggleModal = () => {
     if (openWithdrawal || openUPI || openMPIN) {
@@ -129,9 +131,18 @@ const WalletPage = () => {
       : toast.error("Please complete your KYC verification first!");
   };
 
+  const hadleWithdrawal = () => {
+    if(status !== 'VERIFIED'){
+      toast.error("Please complete your KYC verification first!");
+      navigate('/dashboard/kyc-setting')
+    } else if (!mpinStatus) {
+      toast.error("Please set your MPIN first!");
+      openMPINModal();
+    }
+
+  }
   const getWalletBalanceDetails = async () => {
     const response = await fetchBalanceDetails();
-    // console.log(response);
     if (response.data.success) {
       setBalanceDetails({
         balance: response.data.payload.balance,
@@ -152,14 +163,25 @@ const WalletPage = () => {
   const getPrimaryPaymentInformation = async () => {
     try {
       const response = await fetchPrimaryPaymentInformation();
-      console.log(response.data.payload.kycRecord.status);
       setStatus(response.data.payload.kycRecord.status)
     } catch (error) {
       console.error("Error fetching payment information:", error);
     }
   }
+
+  const getWalletInformation = async () => {
+    try {
+      const response = await fetchBalanceDetails();
+      console.log(response.data.payload);
+      setMpinStatus(response.data.payload.mpin);
+    } catch (error) {
+      console.error("Error fetching wallet information:", error);
+    }
+  };
+
   useEffect(() => {
     getPrimaryPaymentInformation();
+    getWalletInformation();
     getWalletBalanceDetails();
     getNextTransactionPage();
     getNextWithdrawalPage();
@@ -183,7 +205,7 @@ const WalletPage = () => {
             />
           </div>
           {modal && (
-            <div className="bg-[#1A1D21] absolute z-20 top-36 right-[42px] md:top-20 md:right-14 w-60 py-1 pr-3 rounded-md shadow-md border border-gray-700">
+            <div className="bg-[#1A1D21] absolute top-36 right-[42px] md:top-20 md:right-14 w-60 py-1 pr-3 rounded-md shadow-md border border-gray-700 z-50">
               <a
                 onClick={openUPIModal}
                 className="cursor-pointer hover:bg-[#1E2328] transition-transform ease-out duration-300 transform hover:translate-x-2 font-poppins text-sm text-gray-300 py-2 px-3 tracking-tight flex gap-3 items-center"
@@ -238,7 +260,8 @@ const WalletPage = () => {
               }
             />
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={hadleWithdrawal}
+              // () => setIsModalOpen(true)
               className="py-2 px-3 bg-orange-600 hover:bg-orange-700 font-poppins text-white rounded-md"
             >
               Withdraw amount
@@ -470,7 +493,10 @@ const WalletPage = () => {
       {openMPIN && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 w-full">
           <div className="transform opacity-0 scale-95 transition-all duration-500 ease-out animate-fadeInUp relative">
-            <MPINModal />
+            <MPINModal 
+              setOpen={setOpenMPIN}
+              setMpinSt={setMpinStatus}
+            />
             <IoIosCloseCircle
               onClick={() => setOpenMPIN(false)}
               className="cursor-pointer text-red-600 absolute size-6 md:size-8 top-3 right-2"

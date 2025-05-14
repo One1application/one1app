@@ -29,7 +29,7 @@ const Dropdown = ({ financeIds }) => {
     console.log(popup);
   }
   return (
-    <div className="relative md:w-64 w-full z-50">
+    <div className="relative md:w-64 w-full z-30">
       {/* Selected Item */}
       <button
         className="flex items-center justify-between w-full px-4 py-3 border rounded-md bg-white shadow-md text-sm font-medium cursor-pointer"
