@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, IdCard, Briefcase, CreditCard, Globe, Target, Ear } from 'lucide-react';
+import { X, User, Mail, Phone, IdCard, Briefcase, CreditCard, Globe, Target, Ear, Coins } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getCreatorDetails, toggleCreatorKycStatus, updateCreatorPersonalDetails } from '../../services/api-service';
 import { toast } from 'react-toastify';
@@ -17,6 +17,8 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
     socialMedia: '',
     goals: [],
     heardAboutUs: '',
+    creatorComission: null
+
   });
   const [kycForm, setKycForm] = useState({ status: '', rejectionReason: '' });
 
@@ -32,6 +34,8 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
     try {
       const data = await getCreatorDetails(creatorId);
       setCreator(data);
+
+
       setFormData({
         name: data.name,
         email: data.email,
@@ -39,7 +43,9 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
         socialMedia: data.socialMedia || '',
         goals: data.goals || [],
         heardAboutUs: data.heardAboutUs || '',
+        creatorComission: data.creatorComission
       });
+
       setKycForm({
         status: data.kycRecords?.status || 'PENDING',
         rejectionReason: data.kycRecords?.rejectionReason || '',
@@ -199,6 +205,15 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium">CreatorComission</label>
+              <input
+                type="number"
+                value={formData.creatorComission}
+                onChange={(e) => setFormData({ ...formData, creatorComission: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setIsEditing(false)}
@@ -251,6 +266,11 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
               icon={<Ear className="text-pink-500" size={20} />}
               label="Heard About Us"
               value={creator.heardAboutUs}
+            />
+            <DetailRow
+              icon={<Coins className="text-black" size={20} />}
+              label="Creator Comission"
+              value={creator.creatorComission}
             />
             <div className="flex justify-end p-4">
               <button

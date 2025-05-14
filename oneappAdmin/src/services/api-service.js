@@ -134,7 +134,7 @@ export const toggleCreatorKycStatus = async (
 
 export const updateCreatorPersonalDetails = async (
   id,
-  { name, email, phone, socialMedia, goals, heardAboutUs }
+  { name, email, phone, socialMedia, goals, heardAboutUs, creatorComission }
 ) => {
   const response = await axiosInstance.patch(`/admin/creator/${id}/personal`, {
     name,
@@ -143,6 +143,7 @@ export const updateCreatorPersonalDetails = async (
     socialMedia,
     goals,
     heardAboutUs,
+    creatorComission,
   });
   return response.data;
 };

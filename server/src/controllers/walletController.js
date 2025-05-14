@@ -29,7 +29,12 @@ export async function getWalletDetails(req, res) {
         userId: user.id,
       },
     });
-
+    if (!wallet) {
+      return res.status(400).send({
+        success: false,
+        message: "Wallet Not Found",
+      });
+    }
     const accountNumbers = await prisma.bankDetails.findMany({
       where: {
         userId: user.id,
@@ -67,6 +72,8 @@ export async function getWalletDetails(req, res) {
       (total, withdrawal) => total + withdrawal.amount,
       0
     );
+
+    console.log(wallet);
 
     console.log(wallet);
     return res.status(200).json({
@@ -145,7 +152,6 @@ export async function verifyPayment(req, res) {
       phonePayOrderId
     );
 
-    
     if (PhonePayPaymentDetails.state === "FAILED") {
       return res
         .status(400)
@@ -248,7 +254,7 @@ export async function verifyPayment(req, res) {
         }
         let amountToBeAdded = creator.price;
         if (creator.creator.creatorComission) {
-           const commissionAmount =
+          const commissionAmount =
             Math.round(
               ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
                 100
@@ -552,9 +558,6 @@ export async function verifyPayment(req, res) {
     });
   }
 }
-
-
-
 
 export async function addBusinessInfo(req, res) {
   try {
@@ -1017,7 +1020,7 @@ export async function withdrawAmount(req, res) {
       return res.status(400).json({ success: false, message: "Invalid MPIN." });
     }
 
-    if (wallet.balance < withdrawAmount) {
+    if (wallet.balance < +withdrawAmount) {
       return res
         .status(400)
         .json({ success: false, message: "Insufficient balance." });
@@ -1040,7 +1043,7 @@ export async function withdrawAmount(req, res) {
       await prisma.withdrawal.create({
         data: {
           walletId: wallet.id,
-          amount: withdrawAmount,
+          amount: parseInt(withdrawAmount),
           bankDetailsId: bankDetails.id,
           modeOfWithdrawal: withdrawalMethod,
         },

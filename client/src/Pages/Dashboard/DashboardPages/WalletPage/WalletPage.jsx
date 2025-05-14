@@ -18,7 +18,7 @@ import { PiIdentificationBadgeFill } from "react-icons/pi";
 import { CiBank } from "react-icons/ci";
 import UPIModal from "../../../../components/Modal/UPIModal";
 import MPINModal from "../../../../components/Modal/MPINModal";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import { Calendar } from "lucide-react";
 import { fetchBalanceDetails, fetchPrimaryPaymentInformation, sendWithdrawAmount } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
@@ -55,7 +55,7 @@ const WalletPage = () => {
   const [openMPIN, setOpenMPIN] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [status, setStatus] = useState('NULL');
-  const [mpinStatus, setMpinStatus] = useState(false); 
+  const [mpinStatus, setMpinStatus] = useState(false);
   const [upi, setUpi] = useState([]);
   const [account, setAccount] = useState([]);
   const navigate = useNavigate();
@@ -92,34 +92,34 @@ const WalletPage = () => {
   };
 
   const openWithdrawalModal = () => {
-    return userDetails?.verified  
+    return userDetails?.verified
       ? (() => {
-          setOpenWithdrawal(true);
-          setOpenModal(false);
-        })()
+        setOpenWithdrawal(true);
+        setOpenModal(false);
+      })()
       : toast.error("Please complete your KYC verification first!");
   };
 
   const openUPIModal = () => {
     return userDetails?.verified
       ? (() => {
-          setOpenUPI(true);
-          setOpenModal(false);
-        })()
+        setOpenUPI(true);
+        setOpenModal(false);
+      })()
       : toast.error("Please complete your KYC verification first!");
   };
 
   const openMPINModal = () => {
     return userDetails?.verified
       ? (() => {
-          setOpenMPIN(true);
-          setOpenModal(false);
-        })()
+        setOpenMPIN(true);
+        setOpenModal(false);
+      })()
       : toast.error("Please complete your KYC verification first!");
   };
 
   const hadleWithdrawal = () => {
-    if(status !== 'VERIFIED'){
+    if (status !== 'VERIFIED') {
       toast.error("Please complete your KYC verification first!");
       navigate('/dashboard/kyc-setting')
     } else if (!mpinStatus) {
@@ -163,6 +163,7 @@ const WalletPage = () => {
     try {
       const response = await fetchBalanceDetails();
       setMpinStatus(response.data.payload.mpin);
+
     } catch (error) {
       console.error("Error fetching wallet information:", error);
     }
@@ -231,7 +232,7 @@ const WalletPage = () => {
             </p>
             <h2 className="font-bold tracking-tight font-poppins text-3xl flex gap-1 text-white">
               ₹
-              <CountUp start={0} end={BalanceDetails.balance} duration={2} />
+              <div className="text-3xl font-bold">{BalanceDetails?.balance}</div>
             </h2>
             <p className="font-poppins tracking-tight text-sm text-gray-400">
               Last Updated on{" "}
@@ -267,13 +268,10 @@ const WalletPage = () => {
             <p className="font-poppins text-white tracking-tight text-lg">
               Total Earnings
             </p>
-            <h2 className="font-bold text-3xl text-white tracking-tight">
+            <h2 className="font-bold text-3xl text-white tracking-tight flex gap-1">
               ₹
-              <CountUp
-                start={0}
-                end={BalanceDetails.totalEarnings}
-                duration={2}
-              />
+              <div className="text-3xl font-bold">{BalanceDetails?.totalEarnings}</div>
+
             </h2>
           </div>
           <img src={Coin} alt="" className="absolute bottom-0 right-0" />
@@ -363,12 +361,12 @@ const WalletPage = () => {
             <div className="flex gap-3 items-center">
               {status === "NULL" ? (
                 <IoIosWarning className="text-orange-600 size-8" />
-                ) : status === "PENDING" ? (
-                  <IoIosWarning className="text-yellow-500 size-8" />
-                ) : status === "REJECTED" ? (
-                  <IoIosWarning className="text-red-600 size-8" />
-                ) : status === "VERIFIED" ? (
-                  <IoIosCheckmarkCircle className="text-green-600 size-8" />
+              ) : status === "PENDING" ? (
+                <IoIosWarning className="text-yellow-500 size-8" />
+              ) : status === "REJECTED" ? (
+                <IoIosWarning className="text-red-600 size-8" />
+              ) : status === "VERIFIED" ? (
+                <IoIosCheckmarkCircle className="text-green-600 size-8" />
               ) : null}
               <p className="font-poppins text-sm md:text-md tracking-tight text-gray-300">
                 {status === "NULL" ? (
@@ -383,9 +381,9 @@ const WalletPage = () => {
               </p>
               <Link
                 to="/dashboard/kyc-setting"
-                className={`${status === 'NULL' ? 'bg-orange-600 hover:bg-orange-700' : 
-                  status === "PENDING" ?  'bg-yellow-500 hover:bg-yellow-700' :  
-                  status === "REJECTED" ?  'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }
+                className={`${status === 'NULL' ? 'bg-orange-600 hover:bg-orange-700' :
+                  status === "PENDING" ? 'bg-yellow-500 hover:bg-yellow-700' :
+                    status === "REJECTED" ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
                    py-2 px-3 text-sm rounded-md text-white font-poppins`}
               >
                 {status === "NULL" ? "Update KYC" : status}
@@ -393,7 +391,7 @@ const WalletPage = () => {
             </div>
           </div>
         </div>
-)}
+      )}
 
 
       {/* Chart and graphs */}
@@ -482,7 +480,7 @@ const WalletPage = () => {
       {openMPIN && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 w-full">
           <div className="transform opacity-0 scale-95 transition-all duration-500 ease-out animate-fadeInUp relative">
-            <MPINModal 
+            <MPINModal
               setOpen={setOpenMPIN}
               setMpinSt={setMpinStatus}
             />
@@ -495,7 +493,7 @@ const WalletPage = () => {
       )}
 
       {isModalOpen && (
-        <AmountWithdraw setIsModalOpen={setIsModalOpen} accountNumbers={account} upiIds={upi}/>
+        <AmountWithdraw setIsModalOpen={setIsModalOpen} accountNumbers={account} upiIds={upi} />
       )}
     </div>
   );

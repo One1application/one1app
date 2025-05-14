@@ -1134,6 +1134,7 @@ export const getCreatorDetails = async (req, res) => {
         goals: true,
         heardAboutUs: true,
         verified: true,
+        creatorComission: true,
         kycRecords: {
           select: {
             status: true,
@@ -1211,6 +1212,16 @@ export const toggleCreatorKycStatus = async (req, res) => {
       },
     });
 
+    //
+    await prisma.wallet.update({
+      where: {
+        userId: updatedKyc.userId,
+      },
+      data: {
+        isKycVerified: status === "VERIFIED",
+      },
+    });
+
     await prisma.user.update({
       where: { id },
       data: { verified: status === "VERIFIED" },
@@ -1228,7 +1239,15 @@ export const toggleCreatorKycStatus = async (req, res) => {
 export const updateCreatorPersonalDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, socialMedia, goals, heardAboutUs } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      socialMedia,
+      goals,
+      heardAboutUs,
+      creatorComission = 8,
+    } = req.body;
 
     // Validate inputs
     if (!name || !email || !phone) {
@@ -1246,6 +1265,7 @@ export const updateCreatorPersonalDetails = async (req, res) => {
         socialMedia,
         goals,
         heardAboutUs,
+        creatorComission: parseInt(creatorComission),
       },
       select: {
         id: true,
@@ -1255,6 +1275,7 @@ export const updateCreatorPersonalDetails = async (req, res) => {
         socialMedia: true,
         goals: true,
         heardAboutUs: true,
+        creatorComission: true,
       },
     });
 

@@ -79,7 +79,7 @@ export async function getCreatorTelegram(req, res) {
       success: true,
       message: "Fetched telegrams successfully.",
       payload: {
-        telegrams: telegram.createdTelegrams,
+        telegrams: telegram?.createdTelegrams || [],
       },
     });
   } catch (error) {
