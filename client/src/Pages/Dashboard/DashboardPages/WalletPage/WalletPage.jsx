@@ -20,10 +20,11 @@ import UPIModal from "../../../../components/Modal/UPIModal";
 import MPINModal from "../../../../components/Modal/MPINModal";
 import  toast  from "react-hot-toast";
 import { Calendar } from "lucide-react";
-import { fetchBalanceDetails, fetchPrimaryPaymentInformation } from "../../../../services/auth/api.services";
+import { fetchBalanceDetails, fetchPrimaryPaymentInformation, sendWithdrawAmount } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import AmountWithdraw from "./SubWalletPages/AmountWithdraw";
 const WalletPage = () => {
 
   const { userDetails } = useAuth();
@@ -53,9 +54,10 @@ const WalletPage = () => {
   const [openUPI, setOpenUPI] = useState(false);
   const [openMPIN, setOpenMPIN] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState("");
   const [status, setStatus] = useState('NULL');
   const [mpinStatus, setMpinStatus] = useState(false); 
+  const [upi, setUpi] = useState([]);
+  const [account, setAccount] = useState([]);
   const navigate = useNavigate();
 
   const toggleModal = () => {
@@ -87,21 +89,6 @@ const WalletPage = () => {
     } else {
       toast.error("Please select a valid date range");
     }
-  };
-
-  const handleWithdraw = async () => {
-    if (!withdrawAmount || isNaN(withdrawAmount) || withdrawAmount <= 0) {
-      toast.error("Please enter a valid amount!");
-      return;
-    }
-
-    setIsModalOpen(false);
-    toast("Processing your withdrawal...");
-
-    setTimeout(() => {
-      toast.success(`Successfully withdrew Rs${withdrawAmount}!`);
-      setWithdrawAmount("");
-    }, 2000);
   };
 
   const openWithdrawalModal = () => {
@@ -138,6 +125,8 @@ const WalletPage = () => {
     } else if (!mpinStatus) {
       toast.error("Please set your MPIN first!");
       openMPINModal();
+    } else {
+      setIsModalOpen(true)
     }
 
   }
@@ -155,8 +144,9 @@ const WalletPage = () => {
         ],
         // financeIds: ['65654',"kahusdkahs@kjabs","65464"],
       });
-      console.log(response.data.payload.BalanceDetails.accountNumbers)
-      console.log(response.data.payload.BalanceDetails.upiIds)
+      console.log(response);
+      setUpi(response.data.payload.upiIds)
+      setAccount(response.data.payload.accountNumbers)
     }
   };
 
@@ -172,7 +162,6 @@ const WalletPage = () => {
   const getWalletInformation = async () => {
     try {
       const response = await fetchBalanceDetails();
-      console.log(response.data.payload);
       setMpinStatus(response.data.payload.mpin);
     } catch (error) {
       console.error("Error fetching wallet information:", error);
@@ -506,40 +495,7 @@ const WalletPage = () => {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#1A1D21] rounded-lg p-6 w-96 shadow-lg border border-gray-700">
-            <h2 className="text-xl font-bold mb-4 text-white">
-              Withdraw Money
-            </h2>
-            <label htmlFor="amount" className="block mb-2 text-gray-300">
-              Enter amount to withdraw:
-            </label>
-            <input
-              type="number"
-              id="amount"
-              value={withdrawAmount}
-              onChange={(e) => setWithdrawAmount(e.target.value)}
-              placeholder="Enter amount"
-              className="w-full px-3 py-2 bg-[#1E2328] border border-gray-700 text-white rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-orange-600"
-            />
-            <div className="flex justify-end gap-4">
-              {/* Cancel Button */}
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              {/* Withdraw Button */}
-              <button
-                onClick={handleWithdraw}
-                className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
-              >
-                Withdraw
-              </button>
-            </div>
-          </div>
-        </div>
+        <AmountWithdraw setIsModalOpen={setIsModalOpen} accountNumbers={account} upiIds={upi}/>
       )}
     </div>
   );
