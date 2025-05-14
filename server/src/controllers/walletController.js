@@ -77,6 +77,7 @@ export async function getWalletDetails(req, res) {
         totalEarnings: wallet.totalEarnings === null ? 0 : wallet.totalEarnings,
         totalWithdrawals: totalWithdrawals,
         lastModified: wallet.updatedAt,
+        walletId: wallet.id,
         mpin: wallet.mpin !== null,
         accountNumbers: accountNumberResponse,
         upiIds: upiIdResponse,

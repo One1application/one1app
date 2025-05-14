@@ -400,3 +400,11 @@ export const verifyMpin = async (data) => {
   );
   return response;
 }
+
+export const sendWithdrawAmount = async (data) => {
+  const response = await servicesAxiosInstance.post(
+    "wallet/withdraw",
+    data
+  );
+  return response;
+}
