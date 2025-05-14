@@ -106,6 +106,7 @@ export async function verifyPayment(req, res) {
       courseId,
       payingUpId,
       telegramId,
+      premiumContentId,
       days,
       channelId,
       phonePayOrderId,
@@ -127,7 +128,13 @@ export async function verifyPayment(req, res) {
       });
     }
 
-    if (!courseId && !webinarId && !payingUpId && !telegramId) {
+    if (
+      !courseId &&
+      !webinarId &&
+      !payingUpId &&
+      !telegramId &&
+      !premiumContentId
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid request.",
@@ -253,11 +260,11 @@ export async function verifyPayment(req, res) {
             .json({ success: false, message: "Creator not found." });
         }
         let amountToBeAdded = creator.price;
+        console.log("amount", amountToBeAdded);
         if (creator.creator.creatorComission) {
           const commissionAmount =
             Math.round(
-              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
+              ((creator.creator.creatorComission * amountToBeAdded) / 100) * 100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -399,6 +406,88 @@ export async function verifyPayment(req, res) {
         }
       }
 
+      if (premiumContentId) {
+        
+        const creator = await prisma.premiumContent.findFirst({
+          where: {
+            id: premiumContentId,
+          },
+          include: {
+            createdBy: true,
+          },
+        });
+        
+
+        if (!creator) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Creator not found." });
+        }
+        let amountToBeAdded = creator.unlockPrice;
+        if (creator.createdBy.creatorComission) {
+          const commissionAmount =
+            Math.round(
+              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
+                100
+            ) / 100;
+          const gstOnCommission =
+            Math.round(commissionAmount * GST_RATE * 100) / 100;
+          amountToBeAdded =
+            Math.round(
+              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
+            ) / 100;
+        }
+
+        const creatorWallet = await prisma.wallet.update({
+          where: {
+            userId: creator.createdById,
+          },
+          data: {
+            totalEarnings: {
+              increment: parseFloat(amountToBeAdded),
+            },
+            balance: {
+              increment: parseFloat(amountToBeAdded),
+            },
+          },
+        });
+
+        const premiumContent = await prisma.premiumContentAccess.create({
+          data: {
+            userId: user.id,
+            contentId: premiumContentId,
+            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), //currently for 30 days
+          },
+        });
+
+        if(!premiumContent){
+           return res.status(400).json({
+             success: false,
+             message: "Failed to create premium content access.",
+           })
+        };
+
+        const transaction = await prisma.transaction.create({
+          data: {
+            amount: parseFloat(creator.unlockPrice),
+            buyerId: existingUser.id,
+            modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
+            productId: premiumContentId,
+            productType: "PREMIUM_CONTENT",
+            creatorId: creator.createdById,
+            status: PhonePayPaymentDetails.paymentDetails[0].state,
+            walletId: creatorWallet.id,
+          },
+        });
+
+        if (!transaction) {
+          return res.status(400).json({
+            success: false,
+            message: "Failed to create transaction.",
+          });
+        };
+      };
+
       if (telegramId && days) {
         const creator = await prisma.telegram.findFirst({
           where: {
@@ -509,12 +598,21 @@ export async function verifyPayment(req, res) {
       });
     }
 
+    if (premiumContentId) {
+      return res.status(200).json({
+        success: true,
+        message: "Premium content purchased successfully.",
+        payload: null,
+      });
+    }
+
     if (payingUpId) {
       const response = await prisma.payingUp.findUnique({
         where: {
           id: payingUpId,
         },
       });
+
 
       const signedUrls = response.files.value.map((file) => {
         const filePath = new URL(file.url).pathname.replace(

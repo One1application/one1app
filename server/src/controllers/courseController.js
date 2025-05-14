@@ -475,8 +475,9 @@ export const purchaseCourse = async (req, res) => {
     // };
     const orderId = randomUUID();
     // const order = await razorpay.orders.create(options);
+   
     let totalAmount = course.price;
-  
+
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)

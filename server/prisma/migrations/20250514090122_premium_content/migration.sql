@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ProductType" ADD VALUE 'PREMIUM_CONTENT';
