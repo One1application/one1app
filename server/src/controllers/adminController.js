@@ -1061,13 +1061,18 @@ export const getDashboardData = async (req, res) => {
         );
         const commissionRate =
           creatorMap.get(creator.id)?.commissionRate || 0.08;
-        const earnings = creatorTransactions.reduce(
-          (sum, tx) => sum + Number(tx.amount) * commissionRate,
-          0
-        );
+        const transactionChargeRate = 0.0195; // 1.95%
+        const gstRate = 0.18; // 18%
+        const earnings = creatorTransactions.reduce((sum, tx) => {
+          const amount = Number(tx.amount);
+          const commission = amount * commissionRate;
+          const gst = commission * gstRate;
+          const transactionCharge = commission * transactionChargeRate;
+          return sum + (amount - (commission + gst));
+        }, 0);
         return {
           name: creator.name,
-          earnings: earnings.toFixed(5),
+          earnings: earnings.toFixed(2),
         };
       })
       .filter((creator) => creator.earnings > 0)

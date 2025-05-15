@@ -45,6 +45,8 @@ const HomePage = () => {
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
+    fetchDashboardData(tab)
+    setPeriod(tab)
   };
 
   const handlePeriodChange = (e) => {
