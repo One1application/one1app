@@ -83,7 +83,7 @@ const HomePage = () => {
   ];
 
   return (
-    <div className="max-w-full min-h-screen px-4 md:px-6 py-8 bg-gray-100">
+    <div className="max-w-full min-h-screen px-2 md:px-3 py-1 bg-gray-100">
       {/* Dashboard Header */}
       <div className="flex flex-col bg-white py-4 px-3 md:py-6 md:px-5 rounded-md">
         <div className="flex bg-[#EFF4F5] py-4 md:py-6 px-3 rounded-md items-center justify-between">
@@ -175,8 +175,8 @@ const HomePage = () => {
                 <button
                   key={tab.id}
                   className={`text-sm font-medium px-3 py-1 rounded-lg whitespace-nowrap ${activeTab === tab.id
-                      ? "bg-orange-600 text-white"
-                      : "text-gray-600 bg-gray-100"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-600 bg-gray-100"
                     }`}
                   onClick={() => handleTabClick(tab.id)}
                 >

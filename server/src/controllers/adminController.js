@@ -938,54 +938,65 @@ export const getDashboardData = async (req, res) => {
       (tx) => new Date(tx.createdAt) >= todayStart
     );
     const todaysRevenue = todayTransactions.reduce(
-      (sum, tx) => sum + tx.amount,
+      (sum, tx) => sum + Number(tx.amount),
       0
     );
 
-    // Calculate Total Revenue, Spend, and Saving (Current Period)
-    const totalRevenue = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+    // Calculate Metrics for Current Period
     const transactionChargeRate = 0.0195; // 1.95%
-    const totalSpend = transactions.reduce(
-      (sum, tx) => sum + tx.amount * transactionChargeRate,
-      0
+    const gstRate = 0.18; // 18%
+    let totalRevenue = 0;
+    let totalCommission = 0;
+    let totalSpend = 0;
+    let totalGST = 0;
+
+    const creatorMap = new Map(
+      creators.map((creator) => [
+        creator.id,
+        { commissionRate: (creator.creatorComission || 8) / 100 },
+      ])
     );
 
-    // Calculate creator commissions and total saving
-    let totalCommission = 0;
-    for (const creator of creators) {
-      const creatorTransactions = transactions.filter(
-        (tx) => tx.wallet.userId === creator.id
-      );
-      const creatorRevenue = creatorTransactions.reduce(
-        (sum, tx) => sum + tx.amount,
-        0
-      );
-      const commissionRate = (creator.creatorComission || 8) / 100; // Default to 8%
-      totalCommission += creatorRevenue * commissionRate;
+    for (const tx of transactions) {
+      const amount = Number(tx.amount);
+      totalRevenue += amount;
+
+      const commissionRate =
+        creatorMap.get(tx.wallet.userId)?.commissionRate || 0.08;
+      const commission = amount * commissionRate;
+      totalCommission += commission;
+
+      const transactionCharge = commission * transactionChargeRate;
+      totalSpend += transactionCharge;
+
+      const gst = commission * gstRate;
+      totalGST += gst;
     }
+
     const totalSaving = totalCommission - totalSpend;
 
-    // Calculate Total Revenue, Spend, and Saving (Previous Period)
-    const prevTotalRevenue = prevTransactions.reduce(
-      (sum, tx) => sum + tx.amount,
-      0
-    );
-    const prevTotalSpend = prevTransactions.reduce(
-      (sum, tx) => sum + tx.amount * transactionChargeRate,
-      0
-    );
+    // Calculate Metrics for Previous Period
+    let prevTotalRevenue = 0;
     let prevTotalCommission = 0;
-    for (const creator of creators) {
-      const creatorTransactions = prevTransactions.filter(
-        (tx) => tx.wallet.userId === creator.id
-      );
-      const creatorRevenue = creatorTransactions.reduce(
-        (sum, tx) => sum + tx.amount,
-        0
-      );
-      const commissionRate = (creator.creatorComission || 8) / 100;
-      prevTotalCommission += creatorRevenue * commissionRate;
+    let prevTotalSpend = 0;
+    let prevTotalGST = 0;
+
+    for (const tx of prevTransactions) {
+      const amount = Number(tx.amount);
+      prevTotalRevenue += amount;
+
+      const commissionRate =
+        creatorMap.get(tx.wallet.userId)?.commissionRate || 0.08;
+      const commission = amount * commissionRate;
+      prevTotalCommission += commission;
+
+      const transactionCharge = commission * transactionChargeRate;
+      prevTotalSpend += transactionCharge;
+
+      const gst = commission * gstRate;
+      prevTotalGST += gst;
     }
+
     const prevTotalSaving = prevTotalCommission - prevTotalSpend;
 
     // Calculate Creator Metrics (Current Period)
@@ -1032,6 +1043,7 @@ export const getDashboardData = async (req, res) => {
       totalSaving,
       prevTotalSaving
     );
+    const gstPercentage = calculatePercentageChange(totalGST, prevTotalGST);
     const newCreatorsPercentage = calculatePercentageChange(
       newCreators,
       prevNewCreators
@@ -1047,13 +1059,15 @@ export const getDashboardData = async (req, res) => {
         const creatorTransactions = transactions.filter(
           (tx) => tx.wallet.userId === creator.id
         );
+        const commissionRate =
+          creatorMap.get(creator.id)?.commissionRate || 0.08;
         const earnings = creatorTransactions.reduce(
-          (sum, tx) => sum + tx.amount,
+          (sum, tx) => sum + Number(tx.amount) * commissionRate,
           0
         );
         return {
           name: creator.name,
-          earnings: earnings.toFixed(2),
+          earnings: earnings.toFixed(5),
         };
       })
       .filter((creator) => creator.earnings > 0)
@@ -1062,8 +1076,12 @@ export const getDashboardData = async (req, res) => {
 
     // Pie Chart Data: Spending Distribution
     const spendingData = [
-      { name: "Transaction Charges", value: totalSpend },
-      { name: "Creator Commissions", value: totalCommission },
+      { name: "Transaction Charges", value: Number(totalSpend.toFixed(5)) },
+      {
+        name: "Creator Commissions",
+        value: Number(totalCommission.toFixed(5)),
+      },
+      { name: "GST", value: Number(totalGST.toFixed(5)) },
     ];
 
     // Pie Chart Data: Creator Distribution
@@ -1083,38 +1101,54 @@ export const getDashboardData = async (req, res) => {
     });
 
     return res.status(200).json({
-      todaysRevenue: todaysRevenue.toFixed(2),
+      todaysRevenue: todaysRevenue.toFixed(5),
       lastUpdated,
       stats: [
         {
           title: "Total Revenue",
-          value: `₹${totalRevenue.toFixed(2)}`,
+          value: `₹${totalRevenue.toFixed(5)}`,
           trend: revenuePercentage >= 0 ? "positive" : "negative",
           percentage: `${
             revenuePercentage >= 0 ? "+" : ""
-          }${revenuePercentage.toFixed(2)}%`,
+          }${revenuePercentage.toFixed(5)}%`,
+        },
+        {
+          title: "Total Commission",
+          value: `₹${totalCommission.toFixed(5)}`,
+          trend: revenuePercentage >= 0 ? "positive" : "negative",
+          percentage: `${
+            revenuePercentage >= 0 ? "+" : ""
+          }${revenuePercentage.toFixed(5)}%`,
         },
         {
           title: "Total Spend",
-          value: `₹${totalSpend.toFixed(2)}`,
+          value: `₹${totalSpend.toFixed(5)}`,
           trend: spendPercentage >= 0 ? "positive" : "negative",
           percentage: `${
             spendPercentage >= 0 ? "+" : ""
-          }${spendPercentage.toFixed(2)}%`,
+          }${spendPercentage.toFixed(5)}%`,
         },
         {
           title: "Total Saving",
-          value: `₹${totalSaving.toFixed(2)}`,
+          value: `₹${totalSaving.toFixed(5)}`,
           trend: savingPercentage >= 0 ? "positive" : "negative",
           percentage: `${
             savingPercentage >= 0 ? "+" : ""
-          }${savingPercentage.toFixed(2)}%`,
+          }${savingPercentage.toFixed(5)}%`,
+        },
+        {
+          title: "Total GST",
+          value: `₹${totalGST.toFixed(5)}`,
+          trend: gstPercentage >= 0 ? "positive" : "negative",
+          percentage: `${gstPercentage >= 0 ? "+" : ""}${gstPercentage.toFixed(
+            2
+          )}%`,
         },
         {
           title: "Total Creators",
           value: totalCreators.toString(),
-          trend: "positive", // Total creators is always positive as it's a count
-          percentage: "+0%", // Total creators doesn't change period-to-period
+          trend: "positive",
+          percentage: "+0%",
         },
         {
           title: "New Creators",
@@ -1122,7 +1156,7 @@ export const getDashboardData = async (req, res) => {
           trend: newCreatorsPercentage >= 0 ? "positive" : "negative",
           percentage: `${
             newCreatorsPercentage >= 0 ? "+" : ""
-          }${newCreatorsPercentage.toFixed(2)}%`,
+          }${newCreatorsPercentage.toFixed(5)}%`,
         },
         {
           title: "Deactive Creators",
@@ -1130,12 +1164,12 @@ export const getDashboardData = async (req, res) => {
           trend: deactiveCreatorsPercentage >= 0 ? "negative" : "positive",
           percentage: `${
             deactiveCreatorsPercentage >= 0 ? "+" : ""
-          }${deactiveCreatorsPercentage.toFixed(2)}%`,
+          }${deactiveCreatorsPercentage.toFixed(5)}%`,
         },
       ],
       leaderboard: {
         today: leaderboardData,
-        thisWeek: leaderboardData, // Unchanged as per original logic
+        thisWeek: leaderboardData,
         thisMonth: leaderboardData,
         thisYear: leaderboardData,
       },
@@ -1285,6 +1319,17 @@ export const getCreatorDetails = async (req, res) => {
             upiId: true,
           },
         },
+        wallet: {
+          select: {
+            id: true,
+            balance: true,
+            totalEarnings: true,
+            totalWithdrawals: true,
+            isKycVerified: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
@@ -1299,6 +1344,7 @@ export const getCreatorDetails = async (req, res) => {
       hasBusinessInfo: !!creator.businessInfo,
       hasBankDetails:
         creator.BankAccounts.length > 0 || creator.upiIds.length > 0,
+      hasWallet: !!creator.wallet,
     };
 
     res.status(200).json(response);

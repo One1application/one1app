@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, IdCard, Briefcase, CreditCard, Globe, Target, Ear, Coins, Filter, Search } from 'lucide-react';
+import { X, User, Mail, Phone, IdCard, Briefcase, CreditCard, Globe, Target, Ear, Coins, Filter, Search, Wallet, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getCreatorDetails, getCreatorWithdrawals, toggleCreatorKycStatus, updateCreatorPersonalDetails, updateWithdrawalStatus } from '../../services/api-service';
 import { toast } from 'react-toastify';
-
+import { format } from 'date-fns';
 const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
   const [activeTab, setActiveTab] = useState('personalInfo');
   const [creator, setCreator] = useState(null);
@@ -30,6 +30,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
     { id: 'businessInfo', label: 'Business Info' },
     { id: 'bankDetails', label: 'Bank Details' },
     { id: 'withdrawals', label: 'Withdrawals Details' },
+    { id: 'wallet', label: 'Wallet' },
   ];
 
   const fetchCreatorDetails = async () => {
@@ -136,12 +137,12 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
   };
 
   const DetailRow = ({ icon, label, value }) => (
-    <div className="flex items-center py-3 border-b border-gray-200">
+    <div className="flex items-start justify-between gap-3 flex-col md:flex-row py-3 border-b border-gray-200">
       <div className="flex items-center space-x-2">
         {icon}
         <span className="text-sm font-medium text-gray-600">{label}</span>
       </div>
-      <div className="ml-auto text-sm text-gray-800 break-all">
+      <div className=" text-sm text-gray-800 break-all">
         {typeof value === 'string' && value.startsWith('http') && label.includes('Card') ? (
           <a href={value} target="_blank" rel="noopener noreferrer">
             <img src={value} alt={label} className="w-24 h-auto rounded-md hover:scale-105 transition-transform" />
@@ -598,7 +599,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
 
       case 'withdrawals':
         return (
-          <div className="p-6">
+          <div className="p-3">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Withdrawal Details</h2>
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex items-center gap-2 flex-1">
@@ -637,6 +638,61 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
           </div>
         );
 
+      case 'wallet':
+        return creator.hasWallet ? (
+          <div className="p-6 bg-gray-50 rounded-lg">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Wallet Details</h2>
+            <div className="grid grid-cols-1  gap-6">
+              <DetailRow
+                icon={<Wallet className="text-green-500" size={20} />}
+                label="Wallet ID"
+                value={creator.wallet.id}
+              />
+              <DetailRow
+                icon={<Coins className="text-yellow-500" size={20} />}
+                label="Balance"
+                value={`₹${creator.wallet.balance.toFixed(2)}`}
+              />
+              <DetailRow
+                icon={<Coins className="text-yellow-500" size={20} />}
+                label="Total Earnings"
+                value={`₹${creator.wallet.totalEarnings.toFixed(2)}`}
+              />
+              <DetailRow
+                icon={<Coins className="text-yellow-500" size={20} />}
+                label="Total Withdrawals"
+                value={`₹${creator.wallet.totalWithdrawals.toFixed(2)}`}
+              />
+              <DetailRow
+                icon={<IdCard className="text-blue-500" size={20} />}
+                label="KYC Verified"
+                value={
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${creator.wallet.isKycVerified
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}>
+                    {creator.wallet.isKycVerified ? 'Verified' : 'Unverified'}
+                  </span>
+                }
+              />
+              <DetailRow
+                icon={<Clock className="text-gray-500" size={20} />}
+                label="Created At"
+                value={format(new Date(creator.wallet.createdAt), 'MMM dd, yyyy HH:mm')}
+              />
+              <DetailRow
+                icon={<Clock className="text-gray-500" size={20} />}
+                label="Updated At"
+                value={format(new Date(creator.wallet.updatedAt), 'MMM dd, yyyy HH:mm')}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            No wallet details available for this creator.
+          </div>
+        );
+
       default:
         return null;
     }
@@ -651,7 +707,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto  relative"
       >
         <button
           onClick={onClose}
@@ -664,12 +720,12 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
           <h2 className="text-2xl font-bold text-center mt-4">{creator?.name}</h2>
           <div className="flex justify-center mt-2">{renderKycBadge()}</div>
         </div>
-        <div className="border-b flex justify-between bg-gray-50">
+        <div className="border-b flex justify-between bg-gray-50 max-w-5xl overflow-x-scroll md:overflow-x-hidden">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 text-center font-semibold ${activeTab === tab.id
+              className={`flex-1 py-3 text-center mx-5 md:mx-3 font-semibold ${activeTab === tab.id
                 ? 'text-orange-600 border-b-2 border-orange-600'
                 : 'text-gray-600 hover:text-orange-500'
                 } transition-colors`}
@@ -679,9 +735,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
           ))}
         </div>
         <div className="p-6">{renderTabContent()}</div>
-        {error && (
-          <div className="p-4 bg-red-500 text-white text-sm rounded-b-lg">{error}</div>
-        )}
+
       </motion.div>
     </div>
   );

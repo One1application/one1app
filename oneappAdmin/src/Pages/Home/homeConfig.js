@@ -1,3 +1,20 @@
+/**
+ * 
+ * Per Transaction (₹1)
+Revenue: ₹1
+Commission: ₹1 * 0.08 = ₹0.08
+Spend: ₹0.08 * 0.0195 = ₹0.00156
+Saving: ₹0.08 - ₹0.00156 = ₹0.07844
+GST: ₹0.08 * 0.18 = ₹0.0144
+
+Aggregated for 4 Transactions
+Total Revenue: ₹1 * 4 = ₹4
+Total Commission: ₹0.08 * 4 = ₹0.32
+Total Spend: ₹0.00156 * 4 = ₹0.00624
+Total Saving: ₹0.07844 * 4 = ₹0.31376
+Total GST: ₹0.0144 * 4 = ₹0.0576
+ */
+
 export const dashboardConfig = {
   todaysRevenue: "1010",
   lastUpdated: "25/07/2023 12:30 PM",
@@ -140,7 +157,7 @@ export const dashboardConfig = {
       { month: "Dec", earnings: 30000 },
     ],
   },
-  notifications : [
+  notifications: [
     {
       title: "New User Joined",
       description: "A new user has joined the platform.",
@@ -155,6 +172,6 @@ export const dashboardConfig = {
       title: "Content Milestone",
       description: "Your content reached 10,000 views!",
       timestamp: "2024-06-13 15:45:00",
-    }
-  ]
+    },
+  ],
 };
