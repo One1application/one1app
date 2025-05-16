@@ -41,9 +41,9 @@ export const selfIdentification = async (req, res) => {
 export const userCustomers = async (req, res) => {
   try {
     const user = req.user;
-    const { param } = req.params;
-    const page = param || 1;
+   const page = parseInt(req.query.page) || 1;
     const pageSize = 20;
+    const skip = page > 1 ? (page - 1) * pageSize : undefined;
 
     const userDetails = await prisma.user.findFirst({
       where: { id: user.id },
@@ -59,6 +59,11 @@ export const userCustomers = async (req, res) => {
                     name: true,
                   },
                 },
+                webinar: {
+                  select: {
+                    amount: true,
+                  },
+                },
               },
             },
           },
@@ -66,7 +71,34 @@ export const userCustomers = async (req, res) => {
             createdAt: "desc",
           },
           take: pageSize,
-          skip: (page - 1) * pageSize,
+          skip: skip,
+        },
+
+        premiumContent: {
+          include: {
+            access: {
+              select: {
+                expiryDate: true,
+                user: {
+                  select: {
+                    email: true,
+                    phone: true,
+                    name: true,
+                  },
+                },
+                premiumContent: {
+                  select: {
+                    unlockPrice: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: pageSize,
+          skip: skip,
         },
         createdTelegrams: {
           select: {
@@ -86,7 +118,7 @@ export const userCustomers = async (req, res) => {
             createdAt: "desc",
           },
           take: pageSize,
-          skip: (page - 1) * pageSize,
+          skip: skip,
         },
         createdCourses: {
           select: {
@@ -99,6 +131,12 @@ export const userCustomers = async (req, res) => {
                     name: true,
                   },
                 },
+                course: {
+                  select: {
+                    price: true,
+                    endDate: true,
+                  },
+                },
               },
             },
           },
@@ -106,7 +144,7 @@ export const userCustomers = async (req, res) => {
             createdAt: "desc",
           },
           take: pageSize,
-          skip: (page - 1) * pageSize,
+          skip: skip,
         },
         createdPayingUps: {
           select: {
@@ -119,6 +157,17 @@ export const userCustomers = async (req, res) => {
                     name: true,
                   },
                 },
+                payingUp: {
+                  select: {
+                    paymentDetails: {
+                      select: {
+                        totalAmount: {
+                          json: "totalAmount",
+                        },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -126,7 +175,7 @@ export const userCustomers = async (req, res) => {
             createdAt: "desc",
           },
           take: pageSize,
-          skip: (page - 1) * pageSize,
+          skip: skip,
         },
       },
     });
@@ -138,6 +187,18 @@ export const userCustomers = async (req, res) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Paying Up",
+          amountSpent: ticket.payingUp?.paymentDetails?.totalAmount || 0,
+          activeSubscriptions: true,
+        });
+      });
+    });
+    userDetails.premiumContent.forEach((val) => {
+      val.access.forEach((ticket) => {
+        customers.push({
+          ...ticket.user,
+          product: "Premium Content",
+          amountSpent: ticket.premiumContent?.unlockPrice || 0,
+          activeSubscriptions: ticket.expiryDate >= new Date(),
         });
       });
     });
@@ -146,6 +207,8 @@ export const userCustomers = async (req, res) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Webinar",
+          amountSpent: ticket.webinar?.amount || 0,
+          activeSubscriptions: true,
         });
       });
     });
@@ -154,6 +217,8 @@ export const userCustomers = async (req, res) => {
         customers.push({
           ...ticket.purchaser,
           product: "Course",
+          amountSpent: ticket.course?.price || 0,
+          activeSubscriptions: ticket.course.endDate >= new Date(),
         });
       });
     });
@@ -162,6 +227,7 @@ export const userCustomers = async (req, res) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Telegram",
+          //need to add amountspent and activeSubs
         });
       });
     });
