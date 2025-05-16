@@ -10,8 +10,10 @@ const WithdrawalPage = () => {
     useContext(StoreContext);
   const { title, tableHeader, tableData } = walletConfig.allWithdrawalPage;
 
+  
   return (
     <div className="p-6 space-y-6 bg-[#0F1418] min-h-screen">
+      
       <section className="flex justify-between items-center bg-[#1A1D21] p-4 rounded-lg shadow-md border border-gray-700">
         <div className="flex items-center space-x-2">
           <PiHandWithdraw className="text-orange-600 h-6 w-6" />
