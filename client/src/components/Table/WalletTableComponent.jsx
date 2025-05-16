@@ -13,6 +13,7 @@ const TableComponent = ({
   CurrentPage,
   TotalPages,
 }) => {
+  
   const [filterText, setFilterText] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -22,10 +23,9 @@ const TableComponent = ({
 
   // Ensure data is an array
   const safeData = Array.isArray(data) ? data : [];
-
+  
   // Transform data into an array of arrays
-  const transformedData = safeData.map((row) => Object.values(row));
-
+  const transformedData = safeData.map((row, idx) => [idx + 1 ,row.id, row.createdAt, row.amount, 'email', 'phone', row.productType, row.modeOfPayment, row.status]);
   // Processed Data: Filtered and Sorted
   const processedData = transformedData
     .filter((row) =>
@@ -147,7 +147,7 @@ const TableComponent = ({
                   <th
                     key={index}
                     onClick={() => handleSort(header)}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-orange-200 transition duration-300 group"
+                    className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-orange-200 transition duration-300 group"
                   >
                     <div className="flex items-center justify-between font-poppins ">
                       {header}
@@ -163,17 +163,18 @@ const TableComponent = ({
                   key={rowIndex}
                   className="hover:bg-gray-50 transition-colors duration-200 font-poppins text-sm tracking-tight"
                 >
+                
                   {row.map((cell, cellIndex) => (
                     <td
                       key={cellIndex}
-                      className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      className={`px-1 py-4 whitespace-nowrap text-sm ${
                         headers[cellIndex].toLowerCase() === "status"
                           ? getStatusClass(cell)
                           : "text-gray-700"
                       }`}
                     >
                       {cell}
-                    </td>
+                    </td> 
                   ))}
                 </tr>
               ))}
@@ -212,7 +213,7 @@ const TableComponent = ({
       <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
         <p className="font-poppins tracking-tight text-sm text-orange-500">
           Showing {paginatedData.length} of {processedData.length} filtered
-          entries
+          entries 
         </p>
         <p className="hidden md:block font-poppins tracking-tight text-orange-500">
           Tip: Click column headers to sort
