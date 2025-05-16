@@ -15,7 +15,7 @@ export const userRouter = Router();
 userRouter.use(authMiddleware);
 
 userRouter.get("/details", selfIdentification);
-userRouter.get("/customers/:param", userCustomers);
+userRouter.get("/customers", userCustomers);
 userRouter.get("/purchases/webinars", getWebinarPurchases);
 userRouter.get("/purchases/courses", getCoursePurchases);
 userRouter.get("/purchases/premium-content", getPremiumContentAccess);

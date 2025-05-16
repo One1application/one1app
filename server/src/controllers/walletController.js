@@ -407,7 +407,6 @@ export async function verifyPayment(req, res) {
       }
 
       if (premiumContentId) {
-        
         const creator = await prisma.premiumContent.findFirst({
           where: {
             id: premiumContentId,
@@ -416,7 +415,6 @@ export async function verifyPayment(req, res) {
             createdBy: true,
           },
         });
-        
 
         if (!creator) {
           return res
@@ -460,12 +458,12 @@ export async function verifyPayment(req, res) {
           },
         });
 
-        if(!premiumContent){
-           return res.status(400).json({
-             success: false,
-             message: "Failed to create premium content access.",
-           })
-        };
+        if (!premiumContent) {
+          return res.status(400).json({
+            success: false,
+            message: "Failed to create premium content access.",
+          });
+        }
 
         const transaction = await prisma.transaction.create({
           data: {
@@ -485,8 +483,8 @@ export async function verifyPayment(req, res) {
             success: false,
             message: "Failed to create transaction.",
           });
-        };
-      };
+        }
+      }
 
       if (telegramId && days) {
         const creator = await prisma.telegram.findFirst({
@@ -613,7 +611,6 @@ export async function verifyPayment(req, res) {
         },
       });
 
-
       const signedUrls = response.files.value.map((file) => {
         const filePath = new URL(file.url).pathname.replace(
           /^.*\/images/,
@@ -736,6 +733,139 @@ export async function addBusinessInfo(req, res) {
   }
 }
 
+export async function updateBusinessInfo(req, res) {
+  try {
+    const user = req.user;
+    const {
+      firstName,
+      lastName,
+      businessStructure,
+      gstNumber,
+      sebiNumber,
+      sebiCertificate,
+    } = req.body;
+
+    if (
+      !firstName &&
+      !lastName &&
+      !businessStructure &&
+      !gstNumber &&
+      !sebiNumber &&
+      !sebiCertificate
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field to update is required.",
+      });
+    }
+
+    if (
+      businessStructure &&
+      businessStructure !== "Others" &&
+      !gstNumber &&
+      !sebiNumber
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "GST number or SEBI number is required for this business structure.",
+      });
+    }
+
+    const userExists = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (!userExists) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    const businessExists = await prisma.businessInfo.findFirst({
+      where: { userId: user.id },
+    });
+
+    if (!businessExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Business information not found. Please create it first.",
+      });
+    }
+
+    const updatedBusinessInfo = await prisma.businessInfo.update({
+      where: {
+        id: businessExists.id,
+      },
+      data: {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(businessStructure && { businessStructure }),
+        ...(gstNumber !== undefined && { gstNumber }),
+        ...(sebiNumber !== undefined && { sebiNumber }),
+        ...(sebiCertificate && { sebiCertificate }),
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Business information updated successfully.",
+      data: updatedBusinessInfo,
+    });
+  } catch (error) {
+    console.error("Error in updating business info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+}
+
+export async function deleteBusinessInfo(req, res) {
+  try {
+    const user = req.user;
+
+    const userExists = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (!userExists) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    const businessExists = await prisma.businessInfo.findFirst({
+      where: { userId: user.id },
+    });
+
+    if (!businessExists) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Business information not found." });
+    }
+
+    await prisma.businessInfo.delete({
+      where: {
+        id: businessExists.id,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Business information deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error in deleting business info:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+}
+
 export async function getBusinessInfo(req, res) {
   try {
     const user = req.user;
@@ -844,6 +974,169 @@ export async function addKycDetails(req, res) {
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
+    });
+  }
+}
+
+export async function updateKycDetails(req, res) {
+  try {
+    const user = req.user;
+    const { socialMedia, idVerification } = req.body;
+
+    if (idVerification) {
+      const { aadhaarNumber, aadhaarFront, aadhaarBack, panCard, selfie } =
+        idVerification;
+      if (aadhaarNumber && aadhaarNumber.trim().length !== 12) {
+        return res.status(400).json({
+          success: false,
+          message: "Aadhaar Number must be 12 digits.",
+        });
+      }
+    }
+
+    const userExists = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (!userExists) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    const kycExists = await prisma.kycRecords.findFirst({
+      where: { userId: user.id },
+    });
+
+    if (!kycExists) {
+      return res.status(404).json({
+        success: false,
+        message: "KYC details not found. Please create KYC details first.",
+      });
+    }
+
+    // Extract only the fields that are provided
+    const updateData = {};
+
+    if (socialMedia !== undefined) {
+      updateData.socialMedia = socialMedia;
+    }
+
+    if (idVerification) {
+      if (idVerification.aadhaarNumber !== undefined) {
+        updateData.aadhaarNumber = idVerification.aadhaarNumber;
+      }
+      if (idVerification.aadhaarFront !== undefined) {
+        updateData.aadhaarFront = idVerification.aadhaarFront;
+      }
+      if (idVerification.aadhaarBack !== undefined) {
+        updateData.aadhaarBack = idVerification.aadhaarBack;
+      }
+      if (idVerification.panCard !== undefined) {
+        updateData.panCard = idVerification.panCard;
+      }
+      if (idVerification.selfie !== undefined) {
+        updateData.selfie = idVerification.selfie;
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No fields provided for update." });
+    }
+
+    const updatedKyc = await prisma.kycRecords.update({
+      where: {
+        id: kycExists.id,
+      },
+      data: updateData,
+    });
+
+    const containsDocumentUpdates =
+      idVerification?.aadhaarFront !== undefined ||
+      idVerification?.aadhaarBack !== undefined ||
+      idVerification?.panCard !== undefined ||
+      idVerification?.selfie !== undefined;
+
+    if (containsDocumentUpdates) {
+      await prisma.kycRecords.update({
+        where: { id: kycExists.id },
+        data: {
+          status: "PENDING",
+        },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "KYC details updated successfully.",
+      data: updatedKyc,
+    });
+  } catch (error) {
+    console.error("Error in updating KYC details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+}
+
+export async function deleteKycDetails(req, res) {
+  try {
+    const user = req.user;
+
+    const userExists = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (!userExists) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    const kycExists = await prisma.kycRecords.findFirst({
+      where: { userId: user.id },
+    });
+
+    if (!kycExists) {
+      return res
+        .status(404)
+        .json({ success: false, message: "KYC details not found." });
+    }
+
+    const hasActiveServices = await prisma.wallet.findFirst({
+      where: {
+        userId: user.id,
+        isKycVerified: true,
+      },
+    });
+
+    if (hasActiveServices) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete KYC details while you have active services.",
+      });
+    }
+
+    await prisma.kycRecords.delete({
+      where: {
+        id: kycExists.id,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "KYC details deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error in deleting KYC details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
     });
   }
 }
@@ -1001,6 +1294,116 @@ export async function addBankDetails(req, res) {
   }
 }
 
+//primary default bank and upi updation
+export async function updateBankDetails(req, res) {
+  try {
+    const user = req.user;
+    const { bankDetailsId } = req.params;
+    const { bankingInfo } = req.body;
+    const { ifscCode, accountHolderName, accountNumber, bankDocument, upiId } =
+      bankingInfo;
+
+    if (!bankDetailsId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Bank details id required." });
+    }
+    console.log("bankDetailsId", bankDetailsId);
+
+    if (
+      !ifscCode &&
+      !accountHolderName &&
+      !accountNumber &&
+      !bankDocument &&
+      !upiId
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field to update is required.",
+      });
+    }
+
+    const userExists = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+    });
+
+    if (!userExists) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found." });
+    }
+
+    const existingBankDetails = await prisma.bankDetails.findFirst({
+      where: {
+        id: bankDetailsId,
+        userId: user.id,
+      },
+    });
+    console.log("existingBankDetails", existingBankDetails);
+
+    if (!existingBankDetails) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Bank details not found." });
+    }
+
+    //update bank details
+    const updatedBankDetails = await prisma.bankDetails.update({
+      where: {
+        id: bankDetailsId,
+      },
+      data: {
+        ...(ifscCode && { ifscCode }),
+        ...(accountHolderName && { accountHolderName }),
+        ...(accountNumber && { accountNumber }),
+        ...(bankDocument && { bankDocument }),
+        primary: true,
+      },
+    });
+
+    //update UPI if provided
+    let updatedUpi = null;
+    if (upiId) {
+      if (existingBankDetails.upiId && existingBankDetails.upiId.length > 0) {
+        updatedUpi = await prisma.uPI.update({
+          where: {
+            id: existingBankDetails.upiId[0].id,
+          },
+          data: {
+            upiId,
+          },
+        });
+      } else {
+        updatedUpi = await prisma.uPI.create({
+          data: {
+            upiId: upiId,
+            bankDetailsId: bankDetailsId,
+            userId: user.id,
+          },
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Bank details updated successfully.",
+      data: {
+        bankDetails: updatedBankDetails,
+        upi: updatedUpi,
+      },
+    });
+  } catch (error) {
+    console.error("Error in updating bank details:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+}
+
 export async function getBankDetails(req, res) {
   try {
     const user = req.user;
@@ -1118,10 +1521,11 @@ export async function withdrawAmount(req, res) {
       return res.status(400).json({ success: false, message: "Invalid MPIN." });
     }
 
-    if (wallet.balance < +withdrawAmount) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Insufficient balance." });
+    if (wallet.balance < +withdrawAmount || wallet.balance <= 50) {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient balance or wallet balance is less than 50rs.",
+      });
     }
 
     if (withdrawalMethod == "bank") {
@@ -1177,6 +1581,7 @@ export async function withdrawAmount(req, res) {
       return res.status(200).json({
         success: true,
         message: "Amount withdrawn processed successfully.",
+        amount: withdrawAmount,
       });
     }
 
@@ -1499,6 +1904,312 @@ export async function addBankOrUpi(req, res) {
     }
   } catch (error) {
     console.error("Error in adding bank or upi details.", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+}
+
+export async function updateBankOrUpi(req, res) {
+  try {
+    const {
+      id,
+      accountNumber,
+      ifscCode,
+      accountHolderName,
+      upiId,
+      type = "bank",
+      primary = false,
+    } = req.body;
+
+    const user = req.user;
+
+    if(!id){
+       return res.status(400).json({
+         success: false,
+         message: "id is required",
+       })
+    };
+
+    const userExists = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+    });
+
+    if (!userExists) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found." });
+    }
+
+    if (type === "bank") {
+      const bankAccount = await prisma.bankDetails.findFirst({
+        where: {
+          id: id,
+          userId: user.id,
+        },
+      });
+
+      if (!bankAccount) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Bank account not found." });
+      }
+
+      // If setting as primary
+      if (primary === true) {
+        await prisma.bankDetails.updateMany({
+          where: {
+            userId: user.id,
+            primary: true,
+          },
+          data: {
+            primary: false,
+          },
+        });
+      } else if (bankAccount.primary === true) {
+        const primaryAccountCount = await prisma.bankDetails.count({
+          where: {
+            userId: user.id,
+            primary: true,
+          },
+        });
+
+        if (primaryAccountCount <= 1) {
+          return res.status(400).json({
+            success: false,
+            message: "You must have at least one primary bank account.",
+          });
+        }
+      }
+
+      // Check if account number already exists but with different ID
+      if (accountNumber && accountNumber !== bankAccount.accountNumber) {
+        const accountExists = await prisma.bankDetails.findFirst({
+          where: {
+            accountNumber: accountNumber,
+            NOT: {
+              id: id,
+            },
+          },
+        });
+
+        if (accountExists) {
+          return res.status(400).json({
+            success: false,
+            message: "Account number already exists.",
+          });
+        }
+      }
+
+      // Update bank account
+      const updatedBank = await prisma.bankDetails.update({
+        where: {
+          id: id,
+        },
+        data: {
+          accountNumber: accountNumber || bankAccount.accountNumber,
+          ifscCode: ifscCode || bankAccount.ifscCode,
+          accountHolderName: accountHolderName || bankAccount.accountHolderName,
+          primary,
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Bank details updated successfully.",
+        data: updatedBank,
+      });
+    } else if (type === "upi") {
+      const upiAccount = await prisma.uPI.findFirst({
+        where: {
+          id: id,
+          userId: user.id,
+        },
+      });
+
+      if (!upiAccount) {
+        return res
+          .status(404)
+          .json({ success: false, message: "UPI ID not found." });
+      }
+
+      // Check if UPI ID already exists but with different ID
+      if (upiId && upiId !== upiAccount.upiId) {
+        const upiExists = await prisma.uPI.findFirst({
+          where: {
+            upiId: upiId,
+            NOT: {
+              id: id,
+            },
+          },
+        });
+
+        if (upiExists) {
+          return res
+            .status(400)
+            .json({ success: false, message: "UPI ID already exists." });
+        }
+      }
+
+      // Update UPI
+      const updatedUpi = await prisma.uPI.update({
+        where: {
+          id: id,
+        },
+        data: {
+          upiId: upiId || upiAccount.upiId,
+          
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "UPI details updated successfully.",
+        data: updatedUpi,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid type. Use 'bank' or 'upi'.",
+      });
+    }
+  } catch (error) {
+    console.error("Error in updating bank or upi details.", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+}
+
+export async function deleteBankOrUpi(req, res) {
+  try {
+    const { id, type = "bank" } = req.body;
+    const user = req.user;
+
+    if (!id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "ID is required." });
+    }
+
+    const userExists = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+    });
+
+    if (!userExists) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found." });
+    }
+
+    if (type === "bank") {
+      // Find the bank account
+      const bankAccount = await prisma.bankDetails.findFirst({
+        where: {
+          id: id,
+          userId: user.id,
+        },
+      });
+
+      if (!bankAccount) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Bank account not found." });
+      }
+
+      // Check if it's a primary account
+      if (bankAccount.primary) {
+        // Count total bank accounts for this user
+        const bankAccountsCount = await prisma.bankDetails.count({
+          where: {
+            userId: user.id,
+          },
+        });
+
+        if (bankAccountsCount <= 1) {
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message: "Cannot delete the primary bank account.",
+            });
+        }
+
+        
+        // Find another bank account to set as primary
+        const anotherBank = await prisma.bankDetails.findFirst({
+          where: {
+            userId: user.id,
+            NOT: {
+              id: id,
+            },
+          },
+        });
+
+        if (anotherBank) {
+          await prisma.bankDetails.update({
+            where: {
+              id: anotherBank.id,
+            },
+            data: {
+              primary: true,
+            },
+          });
+        }
+      }
+
+      // Delete the bank account
+      await prisma.bankDetails.delete({
+        where: {
+          id: id,
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Bank account deleted successfully.",
+      });
+    } else if (type === "upi") {
+      const upiAccount = await prisma.uPI.findFirst({
+        where: {
+          id: id,
+          userId: user.id,
+        },
+      });
+
+      if (!upiAccount) {
+        return res
+          .status(404)
+          .json({ success: false, message: "UPI ID not found." });
+      }
+
+      // Delete the UPI
+      await prisma.uPI.delete({
+        where: {
+          id: id,
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "UPI ID deleted successfully.",
+      });
+    } else {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Invalid type. Use 'bank' or 'upi'.",
+        });
+    }
+  } catch (error) {
+    console.error("Error in deleting bank or upi details.", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
