@@ -45,6 +45,7 @@ import Disclaimer from "./Pages/Welcome/Terms&Policy/Disclaimer.jsx";
 import PrivacyPolicy from "./Pages/Welcome/Terms&Policy/PrivacyPolicy.jsx";
 import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
+
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
 
@@ -125,7 +126,10 @@ const App = () => {
           <Route path="course" element={<NewCourse />} />
           <Route path="webinar" element={<WebinarPages />} />
           <Route path="telegram" element={<TelegramFormPrev />} />
-          <Route path="premium-content" element={<LockedContentDisplayPage />} />
+          <Route
+            path="premium-content"
+            element={<LockedContentDisplayPage />}
+          />
 
           <Route path="course/lessons" element={<LessonsPage />} />
         </Route>

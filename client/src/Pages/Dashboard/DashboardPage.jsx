@@ -4,6 +4,7 @@ import { useNavigate, Outlet } from "react-router-dom";
 import { dashboardConfig } from "./dashboardConfig";
 import { useAuth } from "../../context/AuthContext"
 
+
 const DashboardPage = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

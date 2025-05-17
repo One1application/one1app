@@ -7,10 +7,15 @@ import {
   MessageCircle,
   Share2,
 } from "lucide-react";
+ 
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { HomePageConfig } from "./homeConfig";
 import "leaflet/dist/leaflet.css";
+import CustomThemes from "../../../../Zustand/CustomThemes";
+import { useThemeSelectorStore } from "../../../../Zustand/ThemeStore.js";
+import ComingSoonSection from "../../../../ComingSoonSection/ComingSoonSection.jsx";
+import ReviewForm from "../../../../Review/ReviewForm.jsx";
 
 // Enhanced visitor data with Indian states
 const generateVisitorData = (count = 10) => {
@@ -33,7 +38,8 @@ const generateVisitorData = (count = 10) => {
   ];
 
   return Array.from({ length: count }, (_, i) => {
-    const location = indianStates[Math.floor(Math.random() * indianStates.length)];
+    const location =
+      indianStates[Math.floor(Math.random() * indianStates.length)];
     return {
       id: `visitor-${i}`,
       cityName: location.name,
@@ -71,7 +77,9 @@ const StatsCard = ({ title, value, color, icon: Icon, trend }) => (
         </div>
       </div>
       {trend && (
-        <div className={`text-sm ${trend > 0 ? "text-green-500" : "text-red-500"}`}>
+        <div
+          className={`text-sm ${trend > 0 ? "text-green-500" : "text-red-500"}`}
+        >
           {trend > 0 ? "↑" : "↓"} {Math.abs(trend)}%
         </div>
       )}
@@ -92,12 +100,15 @@ const MapComponent = ({ data }) => {
           const L = await import("leaflet");
 
           if (!mapInstance.current && mapRef.current) {
-            mapInstance.current = L.map(mapRef.current).setView(centerRef.current, 5);
+            mapInstance.current = L.map(mapRef.current).setView(
+              centerRef.current,
+              5
+            );
 
             L.tileLayer(
-              'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
               {
-                attribution: '©OpenStreetMap, ©CartoDB',
+                attribution: "©OpenStreetMap, ©CartoDB",
                 maxZoom: 19,
                 minZoom: 4,
               }
@@ -107,18 +118,18 @@ const MapComponent = ({ data }) => {
               L.latLng(5, 65),
               L.latLng(40, 100)
             );
-            
+
             mapInstance.current.setMaxBounds(asiaBounds);
             mapInstance.current.fitBounds(asiaBounds);
 
             // Store center position when user moves the map
-            mapInstance.current.on('moveend', () => {
+            mapInstance.current.on("moveend", () => {
               centerRef.current = mapInstance.current.getCenter();
             });
           }
 
           // Clear existing markers
-          Object.values(markersRef.current).forEach(marker => {
+          Object.values(markersRef.current).forEach((marker) => {
             marker.remove();
           });
           markersRef.current = {};
@@ -135,7 +146,7 @@ const MapComponent = ({ data }) => {
 
           // Restore the previous center and zoom
           mapInstance.current.setView(currentCenter, currentZoom, {
-            animate: false
+            animate: false,
           });
         } catch (error) {
           console.error("Error initializing map:", error);
@@ -155,21 +166,21 @@ const MapComponent = ({ data }) => {
 
   const getStateColor = (state) => {
     const colors = {
-      'Delhi': '#FF6B6B',
-      'Maharashtra': '#4ECDC4',
-      'Karnataka': '#45B7D1',
-      'Tamil Nadu': '#96CEB4',
-      'West Bengal': '#FFEEAD',
-      'Telangana': '#D4A5A5',
-      'Gujarat': '#9B5DE5',
-      'Rajasthan': '#F15BB5',
-      'Uttar Pradesh': '#00BBF9',
-      'Madhya Pradesh': '#00F5D4',
-      'Bihar': '#FEE440',
-      'Punjab': '#8338EC',
-      'Assam': '#FF006E',
-      'Chhattisgarh': '#FB5607',
-      default: '#4361EE'
+      Delhi: "#FF6B6B",
+      Maharashtra: "#4ECDC4",
+      Karnataka: "#45B7D1",
+      "Tamil Nadu": "#96CEB4",
+      "West Bengal": "#FFEEAD",
+      Telangana: "#D4A5A5",
+      Gujarat: "#9B5DE5",
+      Rajasthan: "#F15BB5",
+      "Uttar Pradesh": "#00BBF9",
+      "Madhya Pradesh": "#00F5D4",
+      Bihar: "#FEE440",
+      Punjab: "#8338EC",
+      Assam: "#FF006E",
+      Chhattisgarh: "#FB5607",
+      default: "#4361EE",
     };
     return colors[state] || colors.default;
   };
@@ -178,7 +189,7 @@ const MapComponent = ({ data }) => {
     const markerColor = getStateColor(location.regionName);
 
     const customIcon = L.divIcon({
-      className: 'custom-div-icon',
+      className: "custom-div-icon",
       html: `
         <div class="marker-pin-container">
           <div class="marker-pin" style="background-color: ${markerColor}"></div>
@@ -200,12 +211,14 @@ const MapComponent = ({ data }) => {
           <div class="mt-2 space-y-1 text-gray-600">
             <p class="text-sm">Device: ${location.device}</p>
             <p class="text-sm">Browser: ${location.browser}</p>
-            <p class="text-sm">Last Active: ${new Date(location.lastActive).toLocaleTimeString()}</p>
+            <p class="text-sm">Last Active: ${new Date(
+              location.lastActive
+            ).toLocaleTimeString()}</p>
           </div>
         </div>
       `,
       {
-        className: 'custom-popup',
+        className: "custom-popup",
       }
     );
   };
@@ -229,10 +242,7 @@ const MapComponent = ({ data }) => {
           <span className="text-sm text-gray-400">Live Updates</span>
         </div>
       </div>
-      <div
-        ref={mapRef}
-        className="h-96 rounded-xl overflow-hidden"
-      />
+      <div ref={mapRef} className="h-96 rounded-xl overflow-hidden" />
       <style jsx global>{`
         .marker-pin-container {
           position: relative;
@@ -345,11 +355,15 @@ const CommunitySection = ({ isLoading }) => {
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex items-center space-x-2">
                   <Users className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-500">{community.members}</span>
+                  <span className="text-sm text-gray-500">
+                    {community.members}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Activity className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-500">{community.activity}</span>
+                  <span className="text-sm text-gray-500">
+                    {community.activity}
+                  </span>
                 </div>
               </div>
               <a
@@ -386,9 +400,10 @@ const CommunitySection = ({ isLoading }) => {
 };
 
 const HomePage = () => {
+   
   const [visitorData, setVisitorData] = useState(generateVisitorData(8));
   const [isLoading] = useState(false);
-
+  const { theme } = useThemeSelectorStore();
   useEffect(() => {
     const interval = setInterval(() => {
       setVisitorData((prevData) => {
@@ -410,6 +425,7 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, []);
 
+ 
   const statsConfig = [
     {
       title: "Total Visitors",
@@ -441,8 +457,11 @@ const HomePage = () => {
     },
   ];
 
+    
+
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+    <div className="min-h-screen flex flex-col relative" data-theme={theme}>
       <div className="flex-grow px-4 sm:px-6 lg:px-8 py-8">
         <div className="w-full max-w-7xl mx-auto">
           {/* Hero Section */}
@@ -458,7 +477,7 @@ const HomePage = () => {
               {HomePageConfig.noticeText}
             </p>
           </motion.div>
-
+          <CustomThemes />
           {/* Live Updates Banner */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -490,7 +509,10 @@ const HomePage = () => {
           <MapComponent data={visitorData} />
 
           {/* Community Section */}
-          <CommunitySection isLoading={isLoading} />
+          {/* <CommunitySection isLoading={isLoading} /> */}
+
+          <ComingSoonSection />
+          <ReviewForm/>
 
           {/* Footer Section */}
           <motion.div

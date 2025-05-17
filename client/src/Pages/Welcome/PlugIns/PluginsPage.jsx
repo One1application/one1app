@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { pluginConfig } from "../../Dashboard/DashboardPages/PluginPage/pluginConfig";
 import Navbar from "../../../components/NavBar/NavBar";
 import Footer from "../../../components/Footer/Footer";
+import toast from "react-hot-toast";
 
 const PluginsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -12,15 +13,25 @@ const PluginsPage = () => {
     name: "",
     email: "",
     contact: "",
+    purpose: "",
+    websitelink: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleButtonClick = (plan) => {
     setSelectedPlan(plan);
     setIsModalOpen(true);
     setIsSubmitted(false);
-    setFormData({ name: "", email: "", contact: "", purpose: "", websitelink: "" });
+    setFormData({
+      name: "",
+      email: "",
+      contact: "",
+      purpose: "",
+      websitelink: "",
+    });
+    setError("");
   };
 
   const closeModal = () => setIsModalOpen(false);
@@ -30,14 +41,37 @@ const PluginsPage = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
-    setTimeout(() => {
-      setLoading(false);
+    const submissionData = {
+      ...formData,
+      planType: selectedPlan?.planType || "",
+      price: selectedPlan?.price || "",
+    };
+
+    try {
+      const response = await fetch(
+        "https://script.google.com/macros/s/AKfycbxD2ZqR1PUe5CGOLpjW-I7TzGt2rgSDsEs4otrqLUmugLo5qI1PgJ_jII99UdwrICbe0g/exec",
+        {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(submissionData),
+        }
+      );
+
       setIsSubmitted(true);
-    }, 1000);
+    } catch (err) {
+      setError("Failed to submit form. Please try again later.");
+      console.error("Submission error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -119,7 +153,7 @@ const PluginsPage = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white rounded-lg shadow-lg p-6 w-96 relative"
+              className="bg-white rounded-lg shadow-lg p-6 w-96 relative max-h-[90vh] overflow-y-auto"
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
@@ -130,7 +164,7 @@ const PluginsPage = () => {
               >
                 <X className="w-6 h-6" />
               </button>
-              
+
               {!isSubmitted ? (
                 <>
                   <h3 className="text-xl font-bold mb-4 text-center">
@@ -142,10 +176,15 @@ const PluginsPage = () => {
                     <strong>₹{selectedPlan?.price}</strong>/
                     {selectedPlan?.timeFrame}.
                   </p>
+
+                  {error && (
+                    <p className="text-red-500 text-center mb-4">{error}</p>
+                  )}
+
                   <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                       <label className="block text-gray-700 font-semibold mb-2">
-                        Name
+                        Name*
                       </label>
                       <input
                         type="text"
@@ -158,7 +197,7 @@ const PluginsPage = () => {
                     </div>
                     <div className="mb-4">
                       <label className="block text-gray-700 font-semibold mb-2">
-                        Email
+                        Email*
                       </label>
                       <input
                         type="email"
@@ -169,9 +208,9 @@ const PluginsPage = () => {
                         required
                       />
                     </div>
-                    <div className="mb-6">
+                    <div className="mb-4">
                       <label className="block text-gray-700 font-semibold mb-2">
-                        Contact Number
+                        Contact Number*
                       </label>
                       <input
                         type="tel"
@@ -182,31 +221,31 @@ const PluginsPage = () => {
                         required
                       />
                     </div>
-                    <div className="mb-6">
+                    <div className="mb-4">
                       <label className="block text-gray-700 font-semibold mb-2">
-                        Purpose
+                        Purpose*
                       </label>
                       <textarea
-                        type="tel"
                         name="purpose"
-                        placeholder="Type your message..."
+                        placeholder="Tell us about your project..."
                         value={formData.purpose}
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         required
+                        rows={4}
                       />
                     </div>
                     <div className="mb-6">
                       <label className="block text-gray-700 font-semibold mb-2">
-                        Website Link
+                        Website Link (if available)
                       </label>
                       <input
-                        type="tel"
+                        type="url"
                         name="websitelink"
                         value={formData.websitelink}
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        required
+                        placeholder="https://example.com"
                       />
                     </div>
                     <button
@@ -216,7 +255,7 @@ const PluginsPage = () => {
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-orange-500 hover:bg-orange-700 text-white"
                       }`}
-                      disabled={loading} 
+                      disabled={loading}
                     >
                       {loading ? "Submitting..." : "Submit"}
                     </button>

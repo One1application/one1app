@@ -12,6 +12,8 @@ const PluginsPage = () => {
     name: "",
     email: "",
     contact: "",
+    purpose: "",
+    websitelink: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,12 @@ const PluginsPage = () => {
     setSelectedPlan(plan);
     setIsModalOpen(true);
     setIsSubmitted(false);
-    setFormData({ name: "", email: "", contact: "", purpose: "", websitelink: "" });
+    setFormData({
+      name: "",
+      email: "",
+      contact: "",
+    
+    });
   };
 
   const closeModal = () => setIsModalOpen(false);
@@ -30,7 +37,7 @@ const PluginsPage = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -130,7 +137,7 @@ const PluginsPage = () => {
               >
                 <X className="w-6 h-6" />
               </button>
-              
+
               {!isSubmitted ? (
                 <>
                   <h3 className="text-xl font-bold mb-4 text-center">
@@ -216,7 +223,7 @@ const PluginsPage = () => {
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-orange-500 hover:bg-orange-700 text-white"
                       }`}
-                      disabled={loading} 
+                      disabled={loading}
                     >
                       {loading ? "Submitting..." : "Submit"}
                     </button>

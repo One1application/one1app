@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader } from "lucide-react";
 // import { Pinterest, YouTube } from "@mui/icons-material";
 import { Instagram, LinkedIn, Twitter } from "developer-icons";
+import { subscribeNewsLetter } from "../../services/auth/api.services";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import CustomThemes from "../../Zustand/CustomThemes";
+import { useThemeSelectorStore } from "../../Zustand/ThemeStore.js";
 
 const Footer = () => {
   const footerLinks = {
@@ -18,6 +23,7 @@ const Footer = () => {
     ],
   };
 
+  const { theme } = useThemeSelectorStore();
   const socialLinks = [
     // { icon: <YouTube size={20} />, href: "https://www.youtube.com/@OneApp8" },
     // { icon: <Facebook size={20} />, href: "https://www.facebook.com" },
@@ -33,8 +39,23 @@ const Footer = () => {
     },
   ];
 
+  const [data, setData] = useState({
+    email: "",
+    loading: false,
+  });
+
+  async function handleSubscribe(e) {
+    e.preventDefault();
+    if (!data.email) {
+      return toast.error("Please enter your email");
+    }
+    setData({ ...data, loading: true });
+    await subscribeNewsLetter(data.email.trim());
+    setData({ email: "", loading: false });
+  }
+
   return (
-    <footer className="bg-black text-gray-300">
+    <footer className="bg-{theme} text-gray-300" data-theme={theme}>
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-2">
@@ -55,16 +76,25 @@ const Footer = () => {
                 <h3 className="text-sm font-semibold text-white mb-3">
                   Subscribe to our newsletter
                 </h3>
-                <div className="flex gap-2">
+              <CustomThemes/>
+                <form className="flex gap-2" onSubmit={handleSubscribe}>
                   <input
                     type="email"
                     placeholder="Enter your email"
+                    value={data.email}
+                    onChange={(e) =>
+                      setData({ ...data, email: e.target.value })
+                    }
                     className="bg-gray-900 text-white px-4 py-2 rounded-lg flex-grow text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                    <ArrowRight size={16} />
+                    {data.loading ? (
+                      <Loader size={16} className="animate-spin" />
+                    ) : (
+                      <ArrowRight size={16} />
+                    )}
                   </button>
-                </div>
+                </form>
               </div>
             </div>
           </div>
@@ -134,11 +164,12 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
               <p className="text-sm text-gray-400">
-                © 2025 contiks one hub technology private limited (OneApp). All rights reserved.
+                © 2025 contiks one hub technology private limited (OneApp). All
+                rights reserved.
               </p>
               <p className="text-sm text-gray-400">Made with ❤️ in Bharat</p>
             </div>
-          <div className="flex space-x-6">
+            <div className="flex space-x-6">
               <Link
                 to="/publicpolicy"
                 className="text-sm text-gray-400 hover:text-orange-500 transition-colors duration-200"
@@ -163,7 +194,7 @@ const Footer = () => {
               >
                 Disclaimer
               </Link>
-            </div>  
+            </div>
           </div>
         </div>
       </div>
