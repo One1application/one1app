@@ -317,6 +317,7 @@ export async function purchaseWebinar(req, res) {
     let totalAmount = webinar.amount;
 
     const orderId = randomUUID();
+    console.log("orderId", orderId);
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
