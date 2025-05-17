@@ -437,11 +437,12 @@ const WalletPage = () => {
 
       {/* Transaction History */}
       <div className="bg-[#1A1D21] mt-6 rounded-xl">
+        {console.log(walletConfig)}
         <WalletTableComponent
-          // data={walletConfig.walletPage.allTransactions.tableData}
-          data={AllTransaction}
-          title={<span className="text-white">All Transactions</span>}
-          headers={walletConfig.walletPage.allTransactions.tableHeader}
+          data={walletConfig.allTransactionsPage.tableData}
+          // data={AllTransaction}
+          title={<span className="text-white">{walletConfig.title}</span>}
+          headers={walletConfig.allTransactionsPage.tableHeader}
           page="Wallet"
           CurrentPage={CurrentTransactionPage}
           TotalPages={TotalTransactionPages}

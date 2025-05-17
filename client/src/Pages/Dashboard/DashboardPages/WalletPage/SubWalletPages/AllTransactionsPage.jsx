@@ -14,13 +14,16 @@ const AllTransactionsPage = () => {
 
   useEffect(() => {
     const fetchTransactions = async () => {
-      const res = await fetchTransactionsPage({ page: CurrentTransactionPage });
-      setAllTransaction(res.data.payload.transactions);  
+      try {
+        const res = await fetchTransactionsPage({ page: CurrentTransactionPage });
+        setAllTransaction(res.data.payload.transactions);  
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      }
     };
 
     fetchTransactions();
   }, [CurrentTransactionPage]);
-
  
 
   return (
