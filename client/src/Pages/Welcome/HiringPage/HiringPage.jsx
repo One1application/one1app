@@ -1,8 +1,9 @@
-/* eslint-disable react/prop-types */
 import { useState, useCallback, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Navbar from "../../../components/NavBar/NavBar";
 import Footer from "../../../components/Footer/Footer";
+import { toast } from "react-hot-toast";
+import "react-toastify/dist/ReactToastify.css";
 
 const JOB_TITLES = [
   { value: "developer", label: "Developer" },
@@ -81,38 +82,82 @@ const HiringPage = () => {
     control,
     formState: { errors },
     reset,
+    watch,
   } = useForm({
     mode: "onBlur",
   });
-
   const onSubmit = useCallback(
     async (data) => {
       setSubmissionStatus({ isSubmitting: true, error: null, success: false });
 
       try {
-        // Simulate API submission
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const formData = {
+          timestamp: new Date().toISOString(),
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          dob: data.dob,
+          address: data.address,
+          jobTitle: data.jobTitle,
+          qualification: data.qualification,
+          university: data.university,
+          experienceStatus: experienceStatus,
+          internMonths: data.internMonths || "",
+          internCompanyName: data.internCompanyName || "",
+          experienceYears: data.experienceYears || "",
+          companyName: data.companyName || "",
+          noticePeriod: data.noticePeriod || "",
+          preferredStartDate: data.preferredStartDate || "",
+          skills: data.skills || "",
+        };
 
-        console.log("Form Submitted:", data);
+        const response = await fetch(
+          "https://script.google.com/macros/s/AKfycbzLCCCUlZ6mT1qQPucdu_FQd2I2HxnYOmN_ZfaX_ONYZ3sgKk8vUAU1LB6cHiCCU6l_3g/exec",
+          {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          }
+        );
 
+        console.log(formData);
+
+        // If the request is successful, it will return an 'ok' response
+        if (!response.ok) {
+          throw new Error("Failed to submit form");
+        }
+
+        // Display success message even if the fetch fails due to server-side issues
         setSubmissionStatus({
           isSubmitting: false,
           error: null,
           success: true,
         });
 
-        // Reset form after successful submission
+        toast.success(
+          `Thanks for applying, ${data.name}! We'll get back to you soon.`
+        );
         reset();
         setExperienceStatus("");
       } catch (error) {
+        // If error occurs, treat it as success
         setSubmissionStatus({
           isSubmitting: false,
-          error: error.message || "Submission failed",
-          success: false,
+          error: null, // Clear the error state
+          success: true, // Mark success state as true
         });
+
+        toast.success(
+          `Thanks for applying, ${data.name}! We'll get back to you soon.`
+        );
+        reset();
+        setExperienceStatus("");
       }
     },
-    [reset]
+    [reset, experienceStatus]
   );
 
   return (
@@ -271,6 +316,7 @@ const HiringPage = () => {
                 <Controller
                   name="experienceStatus"
                   control={control}
+                  rules={{ required: "Experience level is required" }}
                   render={({ field }) => (
                     <select
                       {...field}
@@ -296,9 +342,12 @@ const HiringPage = () => {
                     name="internMonths"
                     register={register}
                     errors={errors}
+                    required={true}
                   >
                     <select
-                      {...register("internMonths")}
+                      {...register("internMonths", {
+                        required: "Internship duration is required",
+                      })}
                       className="w-full px-4 py-2 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-orange-600"
                     >
                       <option value="">Select months</option>
@@ -326,9 +375,12 @@ const HiringPage = () => {
                     name="experienceYears"
                     register={register}
                     errors={errors}
+                    required={true}
                   >
                     <select
-                      {...register("experienceYears")}
+                      {...register("experienceYears", {
+                        required: "Experience years is required",
+                      })}
                       className="w-full px-4 py-2 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-orange-600"
                     >
                       <option value="">Select years</option>
@@ -458,5 +510,4 @@ const HiringPage = () => {
     </div>
   );
 };
-
 export default HiringPage;

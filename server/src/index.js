@@ -14,6 +14,7 @@ import { userRouter } from "./routes/userRoutes.js";
 import { walletRoutes } from "./routes/walletRoutes.js";
 import { webinarRouter } from "./routes/webinarRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 import { adminRouter } from "./routes/adminRoutes.js";
 
@@ -27,7 +28,7 @@ app.use(express.urlencoded({ limit: "1gb", extended: true }));
 
 app.use(
   cors({
-    origin: "*",
+    origin: "http://localhost:5173" || "*",
     credentials: true,
   })
 );
@@ -57,7 +58,7 @@ app.use("/self", userRouter);
 app.use("/premium", premiumRouter);
 app.use("/payment", paymentRouter);
 app.use("/newsletter", newsletterRoutes);
-
+app.use("/review", reviewRoutes);
 app.use("/admin", adminRouter);
 
 const Port = process.env.SERVER_PORT || 5000;

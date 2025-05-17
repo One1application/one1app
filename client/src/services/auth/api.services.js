@@ -3,6 +3,7 @@ import {
   servicesAxiosInstance,
   servicesAxiosInstanceForFileUpload,
 } from "../config";
+import toast from "react-hot-toast";
 /**
  *
  * Registers a new user with the provided details.
@@ -407,4 +408,33 @@ export const sendWithdrawAmount = async (data) => {
     data
   );
   return response;
+}
+
+export const subscribeNewsLetter = async(email) =>{
+  
+  try {
+  const response = await servicesAxiosInstance.post("/newsletter/subscribe" , {email})
+    if(response?.data?.subscription?.isSubscribed){
+      toast.success("You have successfully subscribed to our newsletter")
+    }else{
+      toast.success("Already Subscribed !")
+    }
+  } catch (error) {
+     toast.error(error?.response?.data?.message || "Something went wrong")
+  }
+ 
+}
+
+export const writeReview = async (data) =>{
+  return await servicesAxiosInstance.post("/review/write" , data)
+}
+
+export const deleteReview = async (id) => {
+  const response = await servicesAxiosInstance.delete(`/review/delete/${id}`)
+  return response
+}
+
+export const getAllReviews = async() =>{
+  const response = await servicesAxiosInstance.get("/review/allreviews")
+  return response
 }

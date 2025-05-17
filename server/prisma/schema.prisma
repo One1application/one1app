@@ -73,6 +73,7 @@ model User {
   premiumContent              PremiumContent[]
   premiumAccess               PremiumContentAccess[]
   creatorComission            Int?                   @default(8)
+  review                      Review[]
 }
 
 model Otp {
@@ -158,6 +159,7 @@ model BusinessInfo {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
 model Transaction {
   id            String      @id @default(uuid())
   walletId      String
@@ -174,7 +176,6 @@ model Transaction {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
-
 
 model Withdrawal {
   id               String           @id @default(uuid())
@@ -371,4 +372,16 @@ model Newsletter {
   isSubscribed Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username  String?
+  userimage String?
+  role      String?
+  rating    Int
+  review    String
+  createdAt DateTime @default(now())
 }

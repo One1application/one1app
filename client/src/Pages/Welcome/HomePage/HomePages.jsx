@@ -15,6 +15,7 @@ import FeatureImg6 from "../../../assets/User-friendly design.jpeg";
 // import LetStartImg2 from "../../../assets/started2.png";
 // import LetStartImg3 from "../../../assets/started3.png";
 // import LetStartImg4 from "../../../assets/started4.png";
+import { motion } from "framer-motion";
 
 import { testimonials, faqData } from "../HomePage/HomeConfig.js";
 import { useNavigate } from "react-router-dom";
@@ -197,6 +198,7 @@ const TestimonialsSection = () => {
 };
 
 // Features Section Component
+
 const FeaturesSection = () => {
   const features = [
     {
@@ -245,15 +247,44 @@ const FeaturesSection = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 ml-10">
         {features.map((feature, index) => (
-          <div key={index} className="space-y-4">
-            <img
-              src={feature.img}
-              alt="Feature"
-              className="rounded-lg w-full"
-            />
+          <motion.div
+            key={index}
+            className="space-y-4"
+            whileHover={{
+              scale: 1.05,
+              rotate: [0, 1, 1, -1, 0], // Gentle wobble effect
+              transition: {
+                duration: 0.5,
+                ease: "easeInOut",
+              },
+            }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+              transition: {
+                duration: 0.5,
+                delay: index * 0.1,
+              },
+            }}
+            viewport={{ once: true }}
+          >
+            <motion.div
+              whileHover={{
+                rotateY: 5,
+                rotateX: 5,
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              <img
+                src={feature.img}
+                alt="Feature"
+                className="rounded-lg w-full"
+              />
+            </motion.div>
             <h3 className="text-xl font-semibold">{feature.title}</h3>
             <p className="text-gray-400">{feature.description}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
