@@ -45,6 +45,12 @@ enum ProductType {
   PREMIUM_CONTENT
 }
 
+enum TransactionStatus {
+  COMPLETED
+  PENDING
+  FAILED
+}
+
 model User {
   id                          String                 @id @default(uuid())
   email                       String                 @unique
@@ -161,20 +167,21 @@ model BusinessInfo {
 }
 
 model Transaction {
-  id            String      @id @default(uuid())
-  walletId      String
-  wallet        Wallet      @relation(fields: [walletId], references: [id])
-  amount        Float
-  productId     String
-  productType   ProductType
-  buyerId       String
-  buyer         User        @relation(name: "Buyer", fields: [buyerId], references: [id])
-  creatorId     String
-  creator       User        @relation(name: "Creator", fields: [creatorId], references: [id])
-  modeOfPayment String
-  status        String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id              String            @id @default(uuid())
+  walletId        String
+  wallet          Wallet            @relation(fields: [walletId], references: [id])
+  amount          Float
+  productId       String
+  productType     ProductType
+  buyerId         String
+  buyer           User              @relation(name: "Buyer", fields: [buyerId], references: [id])
+  creatorId       String
+  creator         User              @relation(name: "Creator", fields: [creatorId], references: [id])
+  modeOfPayment   String
+  status          TransactionStatus @default(PENDING)
+  phonePayTransId String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
 
 model Withdrawal {
@@ -348,9 +355,10 @@ model PremiumContent {
   unlockPrice Float
   content     Json
   discount    Json?
+  expiryDate  DateTime?
   isVerified  Boolean                @default(false)
   createdById String
-  createdBy   User                   @relation(fields: [createdById], references: [id])
+  createdBy   User                   @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdAt   DateTime               @default(now()) // Timestamp for product creation
   access      PremiumContentAccess[]
 }
@@ -360,8 +368,8 @@ model PremiumContentAccess {
   contentId      String
   purchasedAt    DateTime       @default(now())
   expiryDate     DateTime?
-  user           User           @relation(fields: [userId], references: [id])
-  premiumContent PremiumContent @relation(fields: [contentId], references: [id])
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  premiumContent PremiumContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
   @@id([userId, contentId])
 }

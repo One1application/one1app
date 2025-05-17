@@ -119,6 +119,7 @@ export async function verifyPayment(req, res) {
       where: {
         id: user.id,
       },
+      
     });
 
     if (!existingUser) {
@@ -232,6 +233,8 @@ export async function verifyPayment(req, res) {
             creatorId: creator.createdById,
             productType: "WEBINAR",
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -307,6 +310,8 @@ export async function verifyPayment(req, res) {
             productType: "COURSE",
             creatorId: creator.createdBy,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -394,6 +399,8 @@ export async function verifyPayment(req, res) {
             productType: "PAYING_UP",
             creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -474,6 +481,8 @@ export async function verifyPayment(req, res) {
             productType: "PREMIUM_CONTENT",
             creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -558,6 +567,8 @@ export async function verifyPayment(req, res) {
             productType: "TELEGRAM",
             creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -1614,6 +1625,7 @@ export async function getTransactions(req, res) {
       where: {
         id: user.id,
       },
+     
     });
 
     if (!userExists) {
@@ -1660,6 +1672,7 @@ export async function getTransactions(req, res) {
       payload: {
         transactions: transactions.length === 0 ? [] : transactions,
         totalPages,
+        
       },
       message: "Fetched transactions successfully.",
     });
@@ -1676,14 +1689,28 @@ export async function getWithdrawals(req, res) {
   try {
     const user = req.user;
 
-    const { page } = req.query;
+    const {
+      page = 1,
+      upiId,
+      bankDetailsId,
+      status,
+      modeOfWithdrawal,
+      startDate,
+      endDate,
+      minAmount,
+      maxAmount,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
 
     const pageSize = 10;
+    const pageNumber = parseInt(page);
 
-    if (!page) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Page number is needed" });
+    if (isNaN(pageNumber) || pageNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid page Number",
+      });
     }
 
     const userExist = await prisma.user.findUnique({
@@ -1710,39 +1737,106 @@ export async function getWithdrawals(req, res) {
         .json({ success: false, message: "Wallet not found." });
     }
 
-    const totalWithdrawals = await prisma.withdrawal.count({
-      where: {
-        walletId: wallet.id,
-        status: "SUCCESS",
-      },
-    });
+    //build whereClause for filters
+    const whereClause = {
+      walletId: wallet.id,
+    };
 
-    // const totalWithdrawalAmount = await prisma.withdrawal.aggregate({
-    //   where: {
-    //     walletId: wallet.id,
-    //     status: "SUCCESS"
-    //   },
-    //   _sum: {
-    //     amount: true
-    //   }
-    // });
+    if (upiId) {
+      whereClause.upiId = upiId;
+    }
+    if (bankDetailsId) {
+      whereClause.bankDetailsId = bankDetailsId;
+    }
+    if (status) {
+      if (Array.isArray(status)) {
+        whereClause.status = {
+          in: status,
+        };
+      } else {
+        whereClause.status = status;
+      }
+    }
+
+    if (modeOfWithdrawal) {
+      if (Array.isArray(modeOfWithdrawal)) {
+        whereClause.modeOfWithdrawal = {
+          in: modeOfWithdrawal,
+        };
+      } else {
+        whereClause.modeOfWithdrawal = modeOfWithdrawal;
+      }
+    }
+
+    //Date range filter
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) {
+        whereClause.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        const endDateObj = new Date(endDate);
+        endDateObj.setHours(23, 59, 59, 999);
+        whereClause.createdAt.lte = endDateObj;
+      }
+    }
+
+    //Amount range filters
+    if (minAmount || maxAmount) {
+      whereClause.amount = {};
+
+      if (minAmount) {
+        whereClause.amount.gte = parseFloat(minAmount);
+      }
+      if (maxAmount) {
+        whereClause.amount.lte = parseFloat(maxAmount);
+      }
+    }
+
+    const totalWithdrawals = await prisma.withdrawal.count({
+      where: whereClause,
+    });
 
     const totalPages = Math.ceil(totalWithdrawals / pageSize);
 
-    if (page > totalPages && totalPages !== 0) {
+    if (pageNumber > totalPages && totalPages !== 0) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid page number" });
     }
 
+    //validate sorting parameters
+    const allowedSortFields = ["createdAt", "amount", "status"];
+    const actualSortBy = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+    const actualSortOrder = sortOrder === "asc" ? "asc" : "desc";
+
+    //Get withdrawals with applied filters, pagination and sorting
+
     const withdrawals = await prisma.withdrawal.findMany({
-      where: {
-        walletId: wallet.id,
-        status: "SUCCESS",
-      },
-      skip: (page - 1) * pageSize,
+      where: whereClause,
+      skip: (pageNumber - 1) * pageSize,
       take: pageSize,
+      orderBy: {
+        [actualSortBy]: actualSortOrder,
+      },
+      // include: {
+      //   bankDetails: Boolean(bankDetailsId) || true,
+      //   upi: Boolean(upiId) || true,
+      // },
     });
+
+    //calculate total withdrawal amount for the filtered result
+    const totalWithdrawalAmount = await prisma.withdrawal.aggregate({
+      where: whereClause,
+      _sum: {
+        amount: true,
+      },
+    });
+
+    // Get available filter options for dropdowns
+    const filterOptions = await getFilterOptions(wallet.id);
 
     if (!withdrawals) {
       return res
@@ -1755,7 +1849,10 @@ export async function getWithdrawals(req, res) {
       payload: {
         withdrawals: withdrawals.length === 0 ? [] : withdrawals,
         totalPages,
-        // totalWithdrawalAmount: totalWithdrawalAmount._sum.amount
+        currentPage: pageNumber,
+        totalWithdrawals,
+        totalWithdrawalAmount: totalWithdrawalAmount._sum.amount || 0,
+        filterOptions,
       },
       message: "Fetched withdrawals successfully.",
     });
@@ -1765,6 +1862,69 @@ export async function getWithdrawals(req, res) {
       success: false,
       message: "Internal server error.",
     });
+  }
+}
+
+// Helper function to get available filter options
+async function getFilterOptions(walletId) {
+  try {
+    // Get unique UPIs
+    const upis = await prisma.withdrawal.findMany({
+      where: { walletId },
+      select: {
+        upiId: true,
+        upi: {
+          select: {
+            upiId: true,
+          },
+        },
+      },
+      distinct: ["upiId"],
+    });
+
+    // Get unique bank details
+    const bankDetails = await prisma.withdrawal.findMany({
+      where: { walletId },
+      select: {
+        bankDetailsId: true,
+        bankDetails: {
+          select: {
+            accountNumber: true,
+            accountHolderName: true,
+          },
+        },
+      },
+      distinct: ["bankDetailsId"],
+    });
+
+    // Get unique withdrawal modes
+    const modesOfWithdrawal = await prisma.withdrawal.findMany({
+      where: { walletId },
+      select: { modeOfWithdrawal: true },
+      distinct: ["modeOfWithdrawal"],
+    });
+
+    // Get unique statuses
+    const statuses = await prisma.withdrawal.findMany({
+      where: { walletId },
+      select: { status: true },
+      distinct: ["status"],
+    });
+
+    return {
+      upis: upis.filter((item) => item.upiId), // Filter out null values
+      bankDetails: bankDetails.filter((item) => item.bankDetailsId), // Filter out null values
+      modesOfWithdrawal: modesOfWithdrawal.map((item) => item.modeOfWithdrawal),
+      statuses: statuses.map((item) => item.status),
+    };
+  } catch (error) {
+    console.error("Error getting filter options:", error);
+    return {
+      upis: [],
+      bankDetails: [],
+      modesOfWithdrawal: [],
+      statuses: [],
+    };
   }
 }
 
@@ -1925,12 +2085,12 @@ export async function updateBankOrUpi(req, res) {
 
     const user = req.user;
 
-    if(!id){
-       return res.status(400).json({
-         success: false,
-         message: "id is required",
-       })
-    };
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "id is required",
+      });
+    }
 
     const userExists = await prisma.user.findUnique({
       where: {
@@ -2061,7 +2221,6 @@ export async function updateBankOrUpi(req, res) {
         },
         data: {
           upiId: upiId || upiAccount.upiId,
-          
         },
       });
 
@@ -2133,15 +2292,12 @@ export async function deleteBankOrUpi(req, res) {
         });
 
         if (bankAccountsCount <= 1) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              message: "Cannot delete the primary bank account.",
-            });
+          return res.status(400).json({
+            success: false,
+            message: "Cannot delete the primary bank account.",
+          });
         }
 
-        
         // Find another bank account to set as primary
         const anotherBank = await prisma.bankDetails.findFirst({
           where: {
@@ -2201,12 +2357,10 @@ export async function deleteBankOrUpi(req, res) {
         message: "UPI ID deleted successfully.",
       });
     } else {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Invalid type. Use 'bank' or 'upi'.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid type. Use 'bank' or 'upi'.",
+      });
     }
   } catch (error) {
     console.error("Error in deleting bank or upi details.", error);
