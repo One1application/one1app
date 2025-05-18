@@ -1,5 +1,4 @@
 import express from "express";
-import bodyParser from "body-parser";
 import axios from "axios";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -13,13 +12,7 @@ import cron from "node-cron";
 dotenv.config();
 
 const app = express();
-app.use(bodyParser.json());
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+app.use(express.json());
 
 const prisma = new PrismaClient();
 
@@ -102,6 +95,7 @@ const createInviteLink = async (chatId) => {
       "Error creating invite link:",
       error.response?.data || error.message
     );
+    throw error;
   }
 };
 
@@ -165,10 +159,15 @@ const getChannelId = async (inviteLink) => {
       }
     } else {
       // Public channel or group (e.g., https://t.me/username)
-      const username = inviteLink
-        .replace("https://t.me/", "")
-        .replace("/", "")
-        .replace("@", "");
+      let urlObj;
+      try {
+        urlObj = new URL(
+          inviteLink.startsWith("http") ? inviteLink : `https://t.me/${inviteLink}`
+        );
+      } catch {
+        throw new Error("Invalid public invite link format.");
+      }
+      const username = urlObj.pathname.replace(/\//g, "").replace("@", "");
 
       if (!username) {
         throw new Error("Invalid public invite link format.");
@@ -264,6 +263,7 @@ app.post("/kick", async (req, res) => {
       user_id: "1143595297",
       only_if_banned: true,
     });
+    res.sendStatus(200);
   } catch (error) {
     return res.status(500).json({
       message: "Failed to verify channel.",
@@ -289,6 +289,9 @@ app.get("/generate-invitelink", async (req, res) => {
   try {
     const { channelId, boughtById } = req.query;
     console.log(channelId, boughtById);
+    if (!channelId || !boughtById) {
+      return res.status(400).json({ message: "channelId and boughtById are required" });
+    }
 
     const response = await createInviteLink(channelId);
     console.log("Set", response);
@@ -362,20 +365,32 @@ cron.schedule("0 * * * *", async () => {
   await checkExpiredSubscriptions();
 });
 
-(async () => {
-  await login();
-})();
-
-app.use((err, req, res, next) => {
-  console.error("Unhandled Error:", err);
-  res
-    .status(500)
-    .json({ message: "Internal Server Error", error: err.message });
+const requiredEnv = [
+  "TELEGRAM_TOKEN",
+  "BOT_SERVER_URL",
+  "BOT_MTPROTO_API_APPID",
+  "BOT_MTPROTO_API_HASH",
+  "BOT_PHONE_NUMBER",
+  "CLIENT_ORIGIN"
+];
+requiredEnv.forEach(name => {
+  if (!process.env[name]) {
+    console.error(`Missing ENV var ${name}`);
+    process.exit(1);
+  }
 });
 
-const PORT = process.env.PORT || 3000;
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN || "*"
+  })
+);
+
+;(async () => { await checkExpiredSubscriptions(); })()
+
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+  await login();
   await setupWebhook();
   console.log("Webhook setup completed");
 });
