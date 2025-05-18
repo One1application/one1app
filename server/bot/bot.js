@@ -8,6 +8,12 @@ import MTProto from "@mtproto/core";
 import readline from "readline";
 import { PrismaClient } from "@prisma/client";
 import cron from "node-cron";
+import rootRouter from './routes/rootRoutes.js';
+import webhookRouter from './routes/webhookRoutes.js';
+import kickRouter from './routes/kickRoutes.js';
+import healthRouter from './routes/healthRoutes.js';
+import channelRouter from './routes/channelRoutes.js';
+import notifyRouter from './routes/notifyRoutes.js';
 
 dotenv.config();
 
@@ -25,8 +31,8 @@ const __dirname = path.dirname(__filename);
 const ChannelUser = new Map();
 
 const mtproto = new MTProto({
-  api_id: process.env.BOT_MTPROTO_API_APPID,
-  api_hash: process.env.BOT_MTPROTO_API_HASH,
+  api_id: process.env.API_ID,
+  api_hash: process.env.API_HASH,
   storageOptions: {
     path: path.resolve(__dirname, "mtproto-session.json"),
   },
@@ -194,82 +200,56 @@ const getChannelId = async (inviteLink) => {
 };
 
 const setupWebhook = async () => {
+  // Attempt to set webhook
   try {
     const webhookUrl = `${SERVER_URL}/webhook`;
     const response = await axios.post(`${TELEGRAM_API}/setWebhook`, {
       url: webhookUrl,
-      allowed_updates: ["chat_member", "my_chat_member"],
+      // No allowed_updates: default to all update types
     });
     console.log("Webhook setup response:", response.data);
   } catch (error) {
-    console.error("Error setting up webhook:", error.message);
+    console.error("Error setting up webhook:", error.response?.data || error.message);
+  }
+  // Register slash commands for preview in Telegram clients
+  try {
+    // Default scope (all chats)
+    await axios.post(`${TELEGRAM_API}/setMyCommands`, {
+      commands: [
+        { command: 'getgroupid', description: 'Get the current group ID' },
+        { command: 'ping', description: 'Ping the bot' },
+        { command: 'setup', description: 'Revoke invite perms' },
+        { command: 'myid', description: 'Get your Telegram user ID' }
+      ]
+    });
+    // Group chats scope
+    await axios.post(`${TELEGRAM_API}/setMyCommands`, {
+      commands: [
+        { command: 'getgroupid', description: 'Get the current group ID' },
+        { command: 'ping', description: 'Ping the bot' },
+        { command: 'setup', description: 'Revoke invite perms' },
+        { command: 'myid', description: 'Get your Telegram user ID' }
+      ],
+      scope: { type: 'all_group_chats' }
+    });
+    console.log('Registered bot commands.');
+  } catch (error) {
+    console.error('Error registering bot commands:', error.response?.data || error.message);
   }
 };
 
-app.post("/webhook", async (req, res) => {
-  const update = req.body;
-  console.log("Received update:", JSON.stringify(update, null, 2));
-
-  // Check if the update contains a member status change
-  const chatMemberUpdate = update.chat_member || update.my_chat_member;
-
-  if (!chatMemberUpdate) {
-    console.log("No chat_member or my_chat_member field. Skipping.");
-    return res.sendStatus(200);
-  }
-
-  const { new_chat_member, old_chat_member, invite_link, chat } =
-    chatMemberUpdate;
-
-  if (invite_link) {
-    if (
-      old_chat_member?.status !== "member" &&
-      new_chat_member?.status === "member"
-    ) {
-      try {
-        const userId = ChannelUser.get(invite_link.invite_link);
-        console.log("User who joined:", userId);
-
-        if (userId) {
-          await prisma.telegramSubscription.update({
-            where: {
-              boughtById: userId,
-            },
-            data: {
-              chatId: new_chat_member.user.id.toString(),
-            },
-          });
-
-          console.log(`Updated subscription for user ${userId}`);
-        }
-      } catch (error) {
-        console.error("Error processing chat_member update:", error);
-      }
-    }
-  }
-
-  res.sendStatus(200);
-});
-
-app.post("/kick", async (req, res) => {
-  try {
-    await axios.post(`${TELEGRAM_API}/kickChatMember`, {
-      chat_id: "-1002340887899",
-      user_id: "1143595297",
-    });
-
-    await axios.post(`${TELEGRAM_API}/unbanChatMember`, {
-      chat_id: "-1002340887899",
-      user_id: "1143595297",
-      only_if_banned: true,
-    });
-    res.sendStatus(200);
-  } catch (error) {
-    return res.status(500).json({
-      message: "Failed to verify channel.",
-    });
-  }
-});
+app.use(
+  cors({ origin: process.env.CLIENT_ORIGIN || '*' })
+);
+// Mount moved routes
+app.use(rootRouter);
+app.use(kickRouter);
+app.use('/webhook', webhookRouter);
+app.use('/health', healthRouter);
+app.use('/channel', channelRouter);
+// Notification endpoints for sending DMs
+app.use('/notify', notifyRouter);
+app.use('/notify', notifyRouter); // Mount root POST /notify
 
 app.post("/verify-channel", async (req, res) => {
   try {
@@ -285,7 +265,7 @@ app.post("/verify-channel", async (req, res) => {
   }
 });
 
-app.get("/generate-invitelink", async (req, res) => {
+app.get("/generate-invite", async (req, res) => {
   try {
     const { channelId, boughtById } = req.query;
     console.log(channelId, boughtById);
@@ -323,6 +303,21 @@ app.get("/health-check", async (req, res) => {
   res.json({
     message: "Bot Server Up",
   });
+});
+
+app.post('/invite-link', async (req, res) => {
+  const { chat_id } = req.body;
+  if (!chat_id) {
+    return res.status(400).json({ message: 'chat_id is required' });
+  }
+  try {
+    const response = await axios.post(`${TELEGRAM_API}/createChatInviteLink`, { chat_id, member_limit: 1 });
+    const link = response.data.result.invite_link;
+    return res.status(200).json({ invite_link: link });
+  } catch (err) {
+    console.error('Invite link error:', err.response?.data || err.message);
+    return res.status(500).json({ message: 'Failed to create invite link' });
+  }
 });
 
 const checkExpiredSubscriptions = async () => {
@@ -368,11 +363,12 @@ cron.schedule("0 * * * *", async () => {
 const requiredEnv = [
   "TELEGRAM_TOKEN",
   "BOT_SERVER_URL",
-  "BOT_MTPROTO_API_APPID",
-  "BOT_MTPROTO_API_HASH",
+  "API_ID",
+  "API_HASH",
   "BOT_PHONE_NUMBER",
   "CLIENT_ORIGIN"
 ];
+const PORT = process.env.PORT || 3000;
 requiredEnv.forEach(name => {
   if (!process.env[name]) {
     console.error(`Missing ENV var ${name}`);
@@ -380,19 +376,44 @@ requiredEnv.forEach(name => {
   }
 });
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_ORIGIN || "*"
-  })
-);
+// Polling fallback for local dev (no webhook)
+import TelegramBotLib from 'node-telegram-bot-api';
+// Start polling if in non-production
+if (process.env.NODE_ENV !== 'production') {
+  const pollingBot = new TelegramBotLib(token, { polling: true });
+  pollingBot.onText(/\/ping$/, (msg) => {
+    pollingBot.sendMessage(msg.chat.id, 'pong');
+  });
+  pollingBot.onText(/\/getgroupid$/, (msg) => {
+    pollingBot.sendMessage(msg.chat.id, `This group ID is: ${msg.chat.id}`);
+  });
+  pollingBot.onText(/\/setup$/, async (msg) => {
+    const chatId = msg.chat.id;
+    try {
+      // Revoke invite permissions for normal members
+      await pollingBot.setChatPermissions(chatId, { can_send_messages: true, can_invite_users: false });
+      // Confirm setup
+      await pollingBot.sendMessage(chatId, 'Setup done.');
+    } catch (err) {
+      console.error('Error responding to /setup:', err);
+    }
+  });
+  pollingBot.onText(/\/myid$/, (msg) => {
+    pollingBot.sendMessage(msg.chat.id, `Your Telegram ID is: ${msg.from.id}`);
+  });
+  console.log('Polling bot started.');
+}
 
-;(async () => { await checkExpiredSubscriptions(); })()
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    // Skipping MTProto login in development to avoid blocking on invalid phone
+    // await login();
+    await setupWebhook();
+    console.log("Webhook setup completed");
+  });
+}
 
-app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
-  await login();
-  await setupWebhook();
-  console.log("Webhook setup completed");
-});
-
-app.get("/", (req, res) => res.send("Telegram Bot Webhook Server is running!"));
+export default app;
+// Export helpers for routes
+export { createInviteLink, getChannelId };
