@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev:server": "nodemon src/index.js",
-    "dev:bot": "node bot.js",
+    "dev:bot": "node bot/bot.js",
     "dev": "npm run dev:server",
     "start:server": "node src/index.js",
-    "start:bot": "node bot.js"
+    "start:bot": "node bot/bot.js",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --runInBand"
   },
   "keywords": [],
   "author": "",
@@ -28,7 +29,9 @@
     "imagekit": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
+    "ngrok": "^5.0.0-beta.2",
     "node-cron": "^3.0.3",
+    "node-telegram-bot-api": "^0.66.0",
     "nodemon": "^3.1.9",
     "pg-sdk-node": "https://phonepe.mycloudrepo.io/public/repositories/phonepe-pg-sdk-node/releases/v2/phonepe-pg-sdk-node.tgz",
     "razorpay": "^2.9.6",
@@ -37,7 +40,9 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "prisma": "^6.7.0"
+    "jest": "^29.7.0",
+    "prisma": "^6.7.0",
+    "supertest": "^6.3.4"
   },
   "description": ""
 }

@@ -14,7 +14,8 @@ export async function createTelegram(req, res) {
     }
     const {
       coverImage,
-      channelLink,
+      channelLink: cl,
+      chatId,
       title,
       description,
       discount,
@@ -25,14 +26,15 @@ export async function createTelegram(req, res) {
 
     console.log(req.body);
 
+    // Provide a default discount if none supplied
     await prisma.telegram.create({
       data: {
         coverImage: coverImage || "https://localhost.com",
-        channelLink,
+        channelLink: cl || chatId,
         title,
         description,
         genre,
-        discount: discount,
+        discount: discount ?? {},
         subscription: subscriptions,
         createdById: user.id,
       },
@@ -46,7 +48,7 @@ export async function createTelegram(req, res) {
     console.error("Error in creating telegram.", error);
     res.status(500).json({
       success: false,
-      meesage: "Internal server error.",
+      message: "Internal server error.",
     });
   }
 }
@@ -194,5 +196,28 @@ export async function purchaseTelegram(req, res) {
       success: false,
       message: "Please try again later.",
     });
+  }
+}
+
+// Notify user of subscriptions about to expire
+export async function getExpiringSubscriptions(req, res) {
+  try {
+    const user = req.user;
+    const daysBefore = parseInt(req.query.daysBefore, 10) || 3;
+    const subs = await prisma.telegramSubscription.findMany({
+      where: { boughtById: user.id },
+      include: { telegram: true },
+    });
+    const now = new Date();
+    const expiring = subs.filter((sub) => {
+      const expireDate = new Date(sub.createdAt);
+      expireDate.setDate(expireDate.getDate() + sub.validDays);
+      const diffDays = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+      return diffDays <= daysBefore;
+    });
+    return res.status(200).json({ success: true, payload: expiring });
+  } catch (error) {
+    console.error("Error fetching expiring subscriptions", error);
+    return res.status(500).json({ success: false, message: "Internal server error." });
   }
 }
