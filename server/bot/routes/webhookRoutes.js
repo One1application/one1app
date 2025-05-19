@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 const router = express.Router();
 const prisma = new PrismaClient();
 const ChannelUser = new Map();
+const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
 
 // Telegram webhook handler
 router.post('/', async (req, res) => {
@@ -18,7 +19,7 @@ router.post('/', async (req, res) => {
     if (command === '/getgroupid') {
       try {
         const chatId = message.chat.id;
-        await axios.post(`${process.env.TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: `This group ID is: ${chatId}` });
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: `This group ID is: ${chatId}` });
       } catch (err) {
         console.error('Error responding to /getgroupid:', err.response?.data || err.message);
       }
@@ -27,7 +28,7 @@ router.post('/', async (req, res) => {
     if (command === '/ping') {
       try {
         const chatId = message.chat.id;
-        await axios.post(`${process.env.TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: 'pong' });
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: 'pong' });
       } catch (err) {
         console.error('Error responding to /ping:', err.response?.data || err.message);
       }
@@ -37,24 +38,38 @@ router.post('/', async (req, res) => {
       try {
         const chatId = message.chat.id;
         // Revoke invite permission from regular members
-        await axios.post(`${process.env.TELEGRAM_API}/setChatPermissions`, {
+        await axios.post(`${TELEGRAM_API}/setChatPermissions`, {
           chat_id: chatId,
           permissions: { can_send_messages: true, can_invite_users: false }
         });
         // Confirm setup
-        await axios.post(`${process.env.TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: 'Setup done.' });
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: 'Setup done.' });
       } catch (err) {
         console.error('Error responding to /setup:', err.response?.data || err.message);
       }
       return res.sendStatus(200);
     }
-    if (command === '/myid') {
+    if (command.startsWith('/myid')) {
+      // Split and check for optional username argument
+      const parts = message.text.split(' ').filter(Boolean);
+      let responseText;
       try {
-        const chatId = message.chat.id;
-        const userId = message.from?.id;
-        await axios.post(`${process.env.TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: `Your Telegram ID is: ${userId}` });
+        if (parts.length > 1) {
+          // e.g. /myid @username
+          const identifier = parts[1];
+          const chatInfo = await axios.get(`${TELEGRAM_API}/getChat`, { params: { chat_id: identifier } });
+          const targetId = chatInfo.data.result.id;
+          responseText = `User ID for ${identifier} is: ${targetId}`;
+        } else {
+          // No arg: return caller's ID
+          const userId = message.from?.id;
+          responseText = `Your Telegram ID is: ${userId}`;
+        }
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: message.chat.id, text: responseText });
       } catch (err) {
         console.error('Error responding to /myid:', err.response?.data || err.message);
+        // Inform user
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: message.chat.id, text: 'Failed to fetch user ID.' });
       }
       return res.sendStatus(200);
     }
