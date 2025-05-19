@@ -97,7 +97,7 @@ export async function createContent(req, res) {
         unlockPrice: parseFloat(unlockPrice),
         content: content,
         discount: discount || null,
-        expiryDate: formattedExpiryDate,
+        // expiryDate: formattedExpiryDate,
         createdById: user.id,
       },
     });
