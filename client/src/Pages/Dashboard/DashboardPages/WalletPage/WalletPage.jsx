@@ -58,6 +58,7 @@ const WalletPage = () => {
   const [mpinStatus, setMpinStatus] = useState(false);
   const [upi, setUpi] = useState([]);
   const [account, setAccount] = useState([]);
+  const [reson, setReson] = useState();
   const navigate = useNavigate();
 
   const toggleModal = () => {
@@ -144,7 +145,6 @@ const WalletPage = () => {
         ],
         // financeIds: ['65654',"kahusdkahs@kjabs","65464"],
       });
-      console.log(response);
       setUpi(response.data.payload.upiIds)
       setAccount(response.data.payload.accountNumbers)
     }
@@ -154,6 +154,7 @@ const WalletPage = () => {
     try {
       const response = await fetchPrimaryPaymentInformation();
       setStatus(response.data.payload.kycRecord.status)
+      setReson(response.data.payload.kycRecord.rejectionReason);
     } catch (error) {
       console.error("Error fetching payment information:", error);
     }
@@ -368,9 +369,9 @@ const WalletPage = () => {
                 {status === "NULL" ? (
                   "Please update your KYC to withdraw your wallet amount!"
                 ) : status === "PENDING" ? (
-                  "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
+                  reson ? reson : "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
                 ) : status === "REJECTED" ? (
-                  "Your KYC was rejected. Please update your details!"
+                  reson ? reson : "Your KYC was rejected. Please update your details!"
                 ) : status === "VERIFIED" ? (
                   "Your KYC is verified. You can now withdraw your wallet amount."
                 ) : null}
@@ -437,7 +438,6 @@ const WalletPage = () => {
 
       {/* Transaction History */}
       <div className="bg-[#1A1D21] mt-6 rounded-xl">
-        {console.log(walletConfig)}
         <WalletTableComponent
           data={walletConfig.allTransactionsPage.tableData}
           // data={AllTransaction}

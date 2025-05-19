@@ -25,7 +25,7 @@ const VerificationTab = ({ setVal }) => {
     panCard: null,
     selfie: null,
   });
-
+  const [update, setUpdate] = useState(false);
   const handleSocialMediaChange = (e) => {
     const { name, value } = e.target;
     setSocialMediaLinks((prev) => ({ ...prev, [name]: value }));
@@ -130,6 +130,7 @@ const VerificationTab = ({ setVal }) => {
       console.log(response);
 
       if (response.status === 200) {
+        setUpdate(true);
         const {
           socialMedia,
           aadhaarNumber,
@@ -365,7 +366,7 @@ const VerificationTab = ({ setVal }) => {
             loading ? "bg-gray-400" : "bg-orange-500 hover:bg-orange-600"
           } text-white py-2 px-6 rounded-lg focus:ring focus:ring-orange-500 focus:ring-opacity-50`}
         >
-          {loading ? "Saving..." : "Save"}
+          {update ? loading ? 'Updating...' : 'Update' : loading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>
