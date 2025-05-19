@@ -105,19 +105,6 @@ Returns the list of administrator user IDs in the specified group.
 { "userIds": [11111111, 22222222, 33333333] }
 ```
 
-### POST /channel/user-id
-Fetches a user's Telegram ID by username.
-
-**Request**
-```json
-{ "username": "@someusername" }
-```
-
-**Response**
-```json
-{ "userId": 123456789 }
-```
-
 ### POST /contact/get-user-id-by-contact
 Sends a contact card into a chat and returns the embedded user ID.
 

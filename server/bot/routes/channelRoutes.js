@@ -100,30 +100,4 @@ router.post('/group-members', async (req, res) => {
   }
 });
 
-// Fetch a Telegram user ID by username
-router.post('/user-id', async (req, res) => {
-  let { username } = req.body;
-  if (!username) {
-    return res.status(400).json({ message: 'username is required' });
-  }
-  // Remove leading '@' if present
-  username = username.startsWith('@') ? username.slice(1) : username;
-  try {
-    console.log('Fetching user ID for username:', username);
-    const resp = await axios.get(`${TELEGRAM_API}/getChat`, {
-      params: { chat_id: username }
-    });
-    const userId = resp.data.result.id;
-    return res.status(200).json({ userId });
-  } catch (error) {
-    const errData = error.response?.data;
-    console.error('Error fetching user ID:', errData || error.message);
-    if (errData?.error_code === 400) {
-      // Telegram returns 400 if chat not found or user hasn't started bot
-      return res.status(404).json({ message: `User @${username} not found or hasn't started the bot.` });
-    }
-    return res.status(500).json({ message: 'Failed to fetch user ID', detail: errData || error.message });
-  }
-});
-
 export default router;
