@@ -14,6 +14,7 @@ import kickRouter from './routes/kickRoutes.js';
 import healthRouter from './routes/healthRoutes.js';
 import channelRouter from './routes/channelRoutes.js';
 import notifyRouter from './routes/notifyRoutes.js';
+import contactRouter from './routes/contactRoutes.js';
 
 dotenv.config();
 
@@ -249,6 +250,7 @@ app.use('/health', healthRouter);
 app.use('/channel', channelRouter);
 // Notification endpoints for sending DMs
 app.use('/notify', notifyRouter);
+app.use('/contact', contactRouter);
 app.use('/notify', notifyRouter); // Mount root POST /notify
 
 app.post("/verify-channel", async (req, res) => {
@@ -398,8 +400,21 @@ if (process.env.NODE_ENV !== 'production') {
       console.error('Error responding to /setup:', err);
     }
   });
-  pollingBot.onText(/\/myid$/, (msg) => {
-    pollingBot.sendMessage(msg.chat.id, `Your Telegram ID is: ${msg.from.id}`);
+  pollingBot.onText(/\/myid(?:\s+@\w+)?/, async (msg) => {
+    const parts = msg.text.split(' ').filter(Boolean);
+    try {
+      if (parts.length > 1) {
+        const identifier = parts[1];
+        const chatInfo = await axios.get(`${TELEGRAM_API}/getChat`, { params: { chat_id: identifier } });
+        const targetId = chatInfo.data.result.id;
+        await pollingBot.sendMessage(msg.chat.id, `User ID for ${identifier} is: ${targetId}`);
+      } else {
+        await pollingBot.sendMessage(msg.chat.id, `Your Telegram ID is: ${msg.from.id}`);
+      }
+    } catch (err) {
+      console.error('Polling /myid error:', err.response?.data || err.message);
+      await pollingBot.sendMessage(msg.chat.id, 'Failed to fetch user ID.');
+    }
   });
   console.log('Polling bot started.');
 }
