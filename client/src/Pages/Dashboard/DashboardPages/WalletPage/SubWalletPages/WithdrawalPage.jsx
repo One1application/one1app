@@ -7,8 +7,10 @@ import { StoreContext } from "../../../../../context/StoreContext/StoreContext";
 
 const WithdrawalPage = () => {
   const { AllWithdrawals, CurrentWithdrawalPage, TotalWithdrawalPages } =
-    useContext(StoreContext);
+  useContext(StoreContext);
   const { title, tableHeader, tableData } = walletConfig.allWithdrawalPage;
+  // console.log(AllWithdrawals);
+  
 
   
   return (
@@ -27,10 +29,20 @@ const WithdrawalPage = () => {
           title={<h1 className="text-lg font-semibold text-white">{title}</h1>}
           headers={tableHeader}
           // data={tableData}
+          type={"withdrawals"}
           data={AllWithdrawals}
           CurrentPage={CurrentWithdrawalPage}
           TotalPages={TotalWithdrawalPages}
         />
+
+         {/* <WalletTableComponent
+                  title={<h1 className="text-lg font-semibold text-white">{title}</h1>}
+                  headers={tableHeader}
+                  data={AllTransaction}
+                  CurrentPage={CurrentTransactionPage}
+                  TotalPages={TotalTransactionPages}
+                  // data={tableData}
+                /> */}
       </section>
     </div>
   );

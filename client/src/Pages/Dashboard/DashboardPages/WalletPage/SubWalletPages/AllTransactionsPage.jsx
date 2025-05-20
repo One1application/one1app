@@ -11,7 +11,6 @@ const AllTransactionsPage = () => {
 
   const { title, tableHeader, tableData } = walletConfig.allTransactionsPage;
 
-
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
@@ -41,6 +40,7 @@ const AllTransactionsPage = () => {
           title={<h1 className="text-lg font-semibold text-white">{title}</h1>}
           headers={tableHeader}
           data={AllTransaction}
+          type={"transactions"}
           CurrentPage={CurrentTransactionPage}
           TotalPages={TotalTransactionPages}
           // data={tableData}
