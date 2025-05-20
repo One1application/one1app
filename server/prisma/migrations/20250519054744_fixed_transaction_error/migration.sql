@@ -25,9 +25,6 @@ DROP COLUMN "status",
 ADD COLUMN     "status" "TransactionStatus" NOT NULL DEFAULT 'PENDING';
 
 -- AddForeignKey
-ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "PremiumContent" ADD CONSTRAINT "PremiumContent_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
