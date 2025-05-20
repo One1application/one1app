@@ -6,12 +6,22 @@ import { useContext } from "react";
 import { StoreContext } from "../../../../../context/StoreContext/StoreContext";
 
 const WithdrawalPage = () => {
-  const { AllWithdrawals, CurrentWithdrawalPage, TotalWithdrawalPages } =
+  const { AllWithdrawals, CurrentWithdrawalPage, TotalWithdrawalPages, setAllWithdrawals } =
   useContext(StoreContext);
   const { title, tableHeader, tableData } = walletConfig.allWithdrawalPage;
-  // console.log(AllWithdrawals);
-  
 
+        useEffect(() => {
+          const fetchTransactions = async () => {
+            try {
+              const res = await fetchWithdrawalPage({ page: CurrentTransactionPage });
+              setAllTransaction(res.data.payload.transactions);  
+            } catch (error) {
+              console.error("Error fetching transactions:", error);
+            }
+          };
+      
+          fetchTransactions();
+        }, [CurrentTransactionPage]);
   
   return (
     <div className="p-6 space-y-6 bg-[#0F1418] min-h-screen">
