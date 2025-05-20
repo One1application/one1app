@@ -1611,9 +1611,19 @@ export async function withdrawAmount(req, res) {
 export async function getTransactions(req, res) {
   try {
     const user = req.user;
-    const { page } = req.query;
+    const { page, status, buyerId } = req.query;
+
+    if (page && page < 1) {
+      return res.status(400).json({
+        success: false, message: "Invalid page number"
+      });
+    }
 
     const pageSize = 10;
+    let skip = page ? (page - 1) * pageSize : undefined;
+    if (skip === 0) {
+      skip = undefined;
+    }
 
     if (!page) {
       return res
@@ -1625,7 +1635,6 @@ export async function getTransactions(req, res) {
       where: {
         id: user.id,
       },
-     
     });
 
     if (!userExists) {
@@ -1646,11 +1655,25 @@ export async function getTransactions(req, res) {
         .json({ success: false, message: "Wallet not found." });
     }
 
+    // Build the where clause with filters
+    const whereClause = {
+      walletId: wallet.id,
+    };
+
+    // Add status filter if provided
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Add buyerId filter if provided
+    if (buyerId) {
+      whereClause.buyerId = buyerId;
+    }
+
     const totalTransactions = await prisma.transaction.count({
-      where: {
-        walletId: wallet.id,
-      },
+      where: whereClause,
     });
+    
     const totalPages = Math.ceil(totalTransactions / pageSize);
 
     if (page > totalPages && totalPages !== 0) {
@@ -1660,10 +1683,16 @@ export async function getTransactions(req, res) {
     }
 
     const transactions = await prisma.transaction.findMany({
-      where: {
-        walletId: wallet.id,
+      where: whereClause,
+      include: {
+        buyer: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
-      skip: (page - 1) * pageSize,
+      skip,
       take: pageSize,
     });
 
@@ -1672,7 +1701,6 @@ export async function getTransactions(req, res) {
       payload: {
         transactions: transactions.length === 0 ? [] : transactions,
         totalPages,
-        
       },
       message: "Fetched transactions successfully.",
     });

@@ -60,6 +60,64 @@ Content-Type: application/json
 { "success": true }
 ```
 
+### POST /kick-user
+Temporarily kicks a user from a group and then unbans them (reset membership).
+
+**Request**
+
+```json
+{ "groupId": -1001234567890, "userId": 123456789 }
+```
+
+**Response**
+
+```json
+{ "success": true }
+```
+
+### POST /ban-user
+Permanently bans a user from a group.
+
+**Request**
+
+```json
+{ "groupId": -1001234567890, "userId": 123456789 }
+```
+
+**Response**
+
+```json
+{ "success": true }
+```
+
+### POST /channel/group-members
+Returns the list of administrator user IDs in the specified group.
+
+**Request**
+
+```json
+{ "groupId": -1001234567890 }
+```
+
+**Response**
+
+```json
+{ "userIds": [11111111, 22222222, 33333333] }
+```
+
+### POST /contact/get-user-id-by-contact
+Sends a contact card into a chat and returns the embedded user ID.
+
+**Request**
+```json
+{ "chatId": -1001234567890, "phoneNumber": "+919896543045", "firstName": "Lookup" }
+```
+
+**Response**
+```json
+{ "userId": 123456789 }
+```
+
 ---
 
 This server supports both webhooks and polling for local development (`NODE_ENV=development`). For questions or issues, please open an issue.
