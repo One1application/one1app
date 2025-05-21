@@ -6,10 +6,22 @@ import { useContext } from "react";
 import { StoreContext } from "../../../../../context/StoreContext/StoreContext";
 
 const WithdrawalPage = () => {
-  const { AllWithdrawals, CurrentWithdrawalPage, TotalWithdrawalPages } =
-    useContext(StoreContext);
+  const { AllWithdrawals, CurrentWithdrawalPage, TotalWithdrawalPages, setAllWithdrawals } =
+  useContext(StoreContext);
   const { title, tableHeader, tableData } = walletConfig.allWithdrawalPage;
 
+        useEffect(() => {
+          const fetchTransactions = async () => {
+            try {
+              const res = await fetchWithdrawalPage({ page: CurrentTransactionPage });
+              setAllTransaction(res.data.payload.transactions);  
+            } catch (error) {
+              console.error("Error fetching transactions:", error);
+            }
+          };
+      
+          fetchTransactions();
+        }, [CurrentTransactionPage]);
   
   return (
     <div className="p-6 space-y-6 bg-[#0F1418] min-h-screen">
@@ -27,10 +39,20 @@ const WithdrawalPage = () => {
           title={<h1 className="text-lg font-semibold text-white">{title}</h1>}
           headers={tableHeader}
           // data={tableData}
+          type={"withdrawals"}
           data={AllWithdrawals}
           CurrentPage={CurrentWithdrawalPage}
           TotalPages={TotalWithdrawalPages}
         />
+
+         {/* <WalletTableComponent
+                  title={<h1 className="text-lg font-semibold text-white">{title}</h1>}
+                  headers={tableHeader}
+                  data={AllTransaction}
+                  CurrentPage={CurrentTransactionPage}
+                  TotalPages={TotalTransactionPages}
+                  // data={tableData}
+                /> */}
       </section>
     </div>
   );
