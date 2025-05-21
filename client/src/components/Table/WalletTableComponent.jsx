@@ -34,7 +34,15 @@ const TableComponent = ({
       return [
         idx + 1,
         row.id || "-",
-        row.createdAt || "-",
+        // row.createdAt || "-",
+        row.createdAt ? new Date(row.createdAt).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }) : "-",
         row.amount || "-",
         row.email || "-",
         row.phone || "-",
@@ -44,9 +52,20 @@ const TableComponent = ({
       ];
     } else {
       return [
-        row.date || "-",
+        idx + 1,
+        // row.createdAt || "-",
+        row.createdAt ? new Date(row.createdAt).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }) : "-",
         row.amount || "-",
-        row.account || "-",
+        'email id',
+        'phone number',
+        row.modeOfWithdrawal || "-",
         row.status || "-"
       ];
     }
