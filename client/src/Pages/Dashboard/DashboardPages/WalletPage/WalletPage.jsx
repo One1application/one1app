@@ -20,7 +20,7 @@ import UPIModal from "../../../../components/Modal/UPIModal";
 import MPINModal from "../../../../components/Modal/MPINModal";
 import toast from "react-hot-toast";
 import { Calendar } from "lucide-react";
-import { fetchBalanceDetails, fetchPrimaryPaymentInformation, sendWithdrawAmount } from "../../../../services/auth/api.services";
+import { fetchBalanceDetails, fetchPrimaryPaymentInformation, fetchTransactionsPage, sendWithdrawAmount } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -30,6 +30,7 @@ const WalletPage = () => {
   const { userDetails } = useAuth();
   const {
     AllTransaction,
+    setAllTransaction,
     getNextTransactionPage,
     CurrentTransactionPage,
     TotalTransactionPages,
@@ -178,6 +179,20 @@ const WalletPage = () => {
     getNextWithdrawalPage();
   }, []);
 
+  
+    useEffect(() => {
+      const fetchTransactions = async () => {
+        try {
+          const res = await fetchTransactionsPage({ page: CurrentTransactionPage });
+          setAllTransaction(res.data.payload.transactions);  
+        } catch (error) {
+          console.error("Error fetching transactions:", error);
+        }
+      };
+  
+      fetchTransactions();
+    }, [CurrentTransactionPage]);
+
   return (
     <div className="max-w-full min-h-screen md:px-5 md:py-3 px-2 py-2 bg-[#0F1418]">
       {/* Wallet Section */}
@@ -246,7 +261,7 @@ const WalletPage = () => {
             <Dropdown
               financeIds={
                 BalanceDetails.financeIds.length
-                  ? [...BalanceDetails.financeIds, "Add More"]
+                  ? [...BalanceDetails.financeIds]
                   : ["Not Added"]
               }
             />
@@ -355,27 +370,29 @@ const WalletPage = () => {
       {!walletConfig.walletPage.KYCStatus && (
         <div className="bg-[#1A1D21] w-full py-3 px-3 mt-5 rounded-xl">
           <div className="flex bg-[#1E2328] py-3 justify-between items-center rounded-xl px-3">
-            <div className="flex gap-3 items-center">
-              {status === "NULL" ? (
-                <IoIosWarning className="text-orange-600 size-8" />
-              ) : status === "PENDING" ? (
-                <IoIosWarning className="text-yellow-500 size-8" />
-              ) : status === "REJECTED" ? (
-                <IoIosWarning className="text-red-600 size-8" />
-              ) : status === "VERIFIED" ? (
-                <IoIosCheckmarkCircle className="text-green-600 size-8" />
-              ) : null}
-              <p className="font-poppins text-sm md:text-md tracking-tight text-gray-300">
+            <div className="flex w-full gap-3 justify-between">
+              <div className="flex gap-3 items-center">
                 {status === "NULL" ? (
-                  "Please update your KYC to withdraw your wallet amount!"
+                  <IoIosWarning className="text-orange-600 size-8" />
                 ) : status === "PENDING" ? (
-                  reson ? reson : "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
+                  <IoIosWarning className="text-yellow-500 size-8" />
                 ) : status === "REJECTED" ? (
-                  reson ? reson : "Your KYC was rejected. Please update your details!"
+                  <IoIosWarning className="text-red-600 size-8" />
                 ) : status === "VERIFIED" ? (
-                  "Your KYC is verified. You can now withdraw your wallet amount."
+                  <IoIosCheckmarkCircle className="text-green-600 size-8" />
                 ) : null}
-              </p>
+                <p className="font-poppins text-sm md:text-md tracking-tight text-gray-300">
+                  {status === "NULL" ? (
+                    "Please update your KYC to withdraw your wallet amount!"
+                  ) : status === "PENDING" ? (
+                    reson ? reson : "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
+                  ) : status === "REJECTED" ? (
+                    reson ? reson : "Your KYC was rejected. Please update your details!"
+                  ) : status === "VERIFIED" ? (
+                    "Your KYC is verified. You can now withdraw your wallet amount."
+                  ) : null}
+                </p>
+              </div>
               <Link
                 to="/dashboard/kyc-setting"
                 className={`${status === 'NULL' ? 'bg-orange-600 hover:bg-orange-700' :
@@ -439,8 +456,8 @@ const WalletPage = () => {
       {/* Transaction History */}
       <div className="bg-[#1A1D21] mt-6 rounded-xl">
         <WalletTableComponent
-          data={walletConfig.allTransactionsPage.tableData}
-          // data={AllTransaction}
+          // data={walletConfig.allTransactionsPage.tableData}
+          data={AllTransaction}
           title={<span className="text-white">{walletConfig.title}</span>}
           headers={walletConfig.allTransactionsPage.tableHeader}
           page="Wallet"
