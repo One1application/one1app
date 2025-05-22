@@ -423,6 +423,30 @@ export const subscribeNewsLetter = async(email) =>{
  
 }
 
+export const unSubscribeNewsLetter = async(email) =>{
+  console.log(email)
+  try {
+     const response = await servicesAxiosInstance.put("/newsletter/unsubscribe" , {email})
+    
+  } catch (error) {
+    console.log(error.message || error)
+  }
+}
+
+export const updateUserProfile = async(data) =>{
+
+  try {
+  const response = await servicesAxiosInstance.put("/self/update/profile" , data)
+  return response;
+
+  } catch (error) {
+    
+    toast.error(error?.response?.data?.message || "Something went wrong")
+    return error;
+  }
+
+}
+
 export const writeReview = async (data) =>{
   return await servicesAxiosInstance.post("/review/write" , data)
 }

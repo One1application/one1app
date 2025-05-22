@@ -1,225 +1,310 @@
 import { useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import SigninModal from "../../../../../components/Modal/SigninModal";
 import SupportModal from "../../../../../components/Modal/SupportModal";
 import { useAuth } from "../../../../../context/AuthContext";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+import { updateUserProfile } from "../../../../../services/auth/api.services.js";
+import Emailchange from "../../../../../components/Modal/Emailchange.jsx";
 
 const ProfileTab = () => {
+  const { userDetails, userdetailloading } = useAuth();
 
-  const { userDetails , userdetailloading } = useAuth();
-
-  const [firstName, setFirstName] = useState("Manish");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("manish@example.com");
-  const [phone, setPhone] = useState("9876543210");
-
-  const [isLastNameChanged, setIsLastNameChanged] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [modalLabel, setModalLabel] = useState("");
   const [modalValue, setModalValue] = useState("");
   const [currentField, setCurrentField] = useState("");
+  const [otpModel, setOtpModel] = useState(false);
 
-  const handleLastNameChange = (event) => {
-    setLastName(event.target.value);
-    setIsLastNameChanged(true);
-  };
+  const [edit, setEdit] = useState({
+    username: false,
+    email: false,
+  });
 
-  const handleSave = () => {
-    console.log("Saved:", { firstName, lastName });
-    setIsLastNameChanged(false);
+  const [tempValues, setTempValues] = useState({
+    username: userDetails?.name || "",
+    email: userDetails?.email || "",
+    phone: userDetails?.phone || "",
+  });
+
+  const getInitials = (name) => {
+    if (!name) return "USER";
+    const names = name.split(" ");
+    let initials = names[0].substring(0, 1).toUpperCase();
+    if (names.length > 1) {
+      initials += names[names.length - 1].substring(0, 1).toUpperCase();
+    }
+    return initials;
   };
 
   const handleEditClick = (field) => {
-    setModalLabel(
-      field === "email" ? "Registered Email" : "Registered Phone Number"
-    );
-    setModalValue(field === "email" ? email : phone);
-    setCurrentField(field);
-    setIsModalOpen(true);
+    setEdit({
+      username: field === "username",
+      email: field === "email",
+    });
   };
 
-  const handleModalSave = (newValue) => {
-    if (currentField === "email") {
-      setEmail(newValue);
-    } else {
-      setPhone(newValue);
+  const handleSave = (field) => {
+    setEdit({ ...edit, [field]: false });
+  };
+
+  const handleCancel = (field) => {
+    setTempValues({
+      ...tempValues,
+      [field]:
+        field === "username"
+          ? userDetails?.name
+          : field === "email"
+          ? userDetails?.email
+          : userDetails?.phone,
+    });
+    setEdit({ ...edit, [field]: false });
+  };
+
+  const handleChange = (field, value) => {
+    setTempValues({ ...tempValues, [field]: value });
+  };
+
+  const handleSubmit = async () => {
+    if (!tempValues.username || !tempValues.email) {
+      toast.error("Please enter both username and email");
+      return;
     }
-  };
 
-  const handleSupportModalSave = (newEmail, newPhone) => {
-    setEmail(newEmail);
-    setPhone(newPhone);
-    setIsSupportModalOpen(false);
+    if (edit.email && tempValues.email === userDetails?.email) {
+      toast.error("New email is the same as current email");
+      return;
+    }
+    const updatedData = {};
+
+    if (edit.username) updatedData.name = tempValues.username;
+    if (edit.email) updatedData.email = tempValues.email;
+
+    try {
+      const res = await updateUserProfile(updatedData);
+
+      if (edit.username) toast.success("Username updated!");
+
+      if (edit.email && res?.data?.requiresOtp) {
+        toast.success("Verification code has been sent !");
+        setOtpModel(true);
+      }
+    } catch (error) {
+      toast.error("Failed to update profile");
+    }
   };
 
   if (userdetailloading) {
     return (
-      <div className="min-h-screen w-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      <div className="min-h-screen w-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500"
+        ></motion.div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      
-      <div className="shadow-md rounded-lg p-6 w-full">
-        <h2 className="text-sm font-semibold mb-4 text-orange-500">
-          Basic Information
-        </h2>
-        <hr className="border-gray-600 mb-4" />
-        <div className="flex gap-6">
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto p-4 relative md:p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-center gap-6"
+      >
+        <div className="relative">
+          <motion.div
+            className="w-20 h-20 rounded-full bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            {getInitials(userDetails?.name || tempValues.username)}
+          </motion.div>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="absolute -bottom-1 -right-1 bg-gray-800 rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-700 shadow-md"
+            onClick={() => {
+              toast("Avatar change feature coming soon!", { icon: "🔄" });
+            }}
+          >
+            <EditIcon className="text-orange-400" fontSize="small" />
+          </motion.button>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg border border-gray-700"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-8 w-1 bg-orange-500 rounded-full"></div>
+          <h2 className="text-lg font-semibold text-orange-400">
+            Basic Information
+          </h2>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-6">
           <div className="w-full">
-            <label className="block text-sm font-medium text-orange-500 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               User Name
             </label>
-            <input
-              type="text"
-              disabled
-              value={userDetails.name}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
-              placeholder="Enter your First name"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                disabled={!edit.username}
+                value={tempValues.username}
+                onChange={(e) => handleChange("username", e.target.value)}
+                className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white placeholder-gray-400"
+                placeholder="Enter your name"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {edit.username ? (
+                  <>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-600"
+                      onClick={() => {
+                        handleSave("username");
+                        handleSubmit();
+                      }}
+                    >
+                      <CheckIcon className="text-green-400 cursor-pointer" />
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-600"
+                      onClick={() => handleCancel("username")}
+                    >
+                      <CloseIcon className="text-red-400 cursor-pointer" />
+                    </motion.div>
+                  </>
+                ) : (
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-600"
+                    onClick={() => handleEditClick("username")}
+                  >
+                    <EditIcon className="text-orange-400 cursor-pointer" />
+                  </motion.div>
+                )}
+              </div>
+            </div>
           </div>
-          {/* <div className="w-1/2">
-            <label className="block text-sm font-medium text-orange-500 mb-1">
-              Last Name
-            </label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={handleLastNameChange}
-              className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
-              placeholder="Enter your last name"
-            />
-          </div> */}
         </div>
-        {isLastNameChanged && (
-          <div className="flex justify-end mt-4">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="bg-orange-600 text-white rounded-full text-xs p-2 transition duration-200"
-            >
-              Save Changes
-            </button>
-          </div>
-        )}
-      </div>
+      </motion.div>
 
-      <div className="shadow-md rounded-lg p-6 w-full">
-        <h2 className="text-sm font-semibold mb-4 text-orange-500">
-          Signin Information
-        </h2>
-        <hr className="border-gray-600 mb-4" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg border border-gray-700 relative"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-8 w-1 bg-orange-500 rounded-full"></div>
+          <h2 className="text-lg font-semibold text-orange-400">
+            Signin Information
+          </h2>
+        </div>
+
         <div className="flex flex-col gap-6">
-          <div className="w-full relative">
-            <label className="block text-sm font-medium text-orange-500 mb-1">
+          <div className="w-full">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Registered Email
             </label>
-            <input
-              type="text"
-              value={userDetails.email}
-              disabled
-              readOnly
-              className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
-            />
-            {/* <div className="absolute right-2 top-5 bottom-0 flex items-center gap-2">
-              <EditIcon
-                className="cursor-pointer text-orange-700"
-                onClick={() => handleEditClick("email")}
+            <div className="relative">
+              <input
+                type="text"
+                value={tempValues.email}
+                readOnly={!edit.email}
+                onChange={(e) => handleChange("email", e.target.value)}
+                className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
               />
-              <span
-                className="text-sm mr-1 text-orange-700 cursor-pointer"
-                onClick={() => handleEditClick("email")}
-              >
-                Edit
-              </span>
-            </div> */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {edit.email ? (
+                  <>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-600"
+                      onClick={() => {
+                        handleSave("email");
+                        handleSubmit();
+                      }}
+                    >
+                      <CheckIcon className="text-green-400 cursor-pointer" />
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-600"
+                      onClick={() => handleCancel("email")}
+                    >
+                      <CloseIcon className="text-red-400 cursor-pointer" />
+                    </motion.div>
+                  </>
+                ) : (
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-600"
+                    onClick={() => handleEditClick("email")}
+                  >
+                    <EditIcon className="text-orange-400 cursor-pointer" />
+                  </motion.div>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="w-full relative">
-            <label className="block text-sm font-medium text-orange-500 mb-1">
+
+          <div className="w-full">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Registered Phone Number
             </label>
-            <input
-              type="text"
-              disabled
-              value={userDetails.phone}
-              readOnly
-              className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
-            />
-            {/* <div className="absolute right-2 top-5 bottom-0 flex items-center gap-2">
-              <EditIcon
-                className="cursor-pointer text-orange-700"
-                onClick={() => handleEditClick("phone")}
+            <div className="relative">
+              <input
+                type="text"
+                value={tempValues.phone}
+                readOnly
+                className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                placeholder="Add phone number"
               />
-              <span
-                className="text-sm mr-1 text-orange-700 cursor-pointer"
-                onClick={() => handleEditClick("phone")}
-              >
-                Edit
-              </span>
-            </div> */}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* <div className="shadow-md rounded-lg p-6 w-full">
-        <h2 className="text-sm font-semibold mb-4 text-orange-500">
-          Support Channel
-        </h2>
-        <hr className="border-gray-600 mb-4" />
-        <div className="flex flex-col gap-6">
-          <div className="w-full relative">
-            <label className="block text-sm font-medium text-orange-500 mb-1">
-              Support Email
-            </label>
-            <input
-              type="text"
-              value={email}
-              className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
+        {otpModel && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <Emailchange
+              email={tempValues.email}
+              handleClose={() => setOtpModel(false)}
             />
-            <button
-              className="absolute bg-orange-700 right-2 top-7 text-white text-xs rounded-xl p-2 transition duration-200"
-              onClick={() => setIsSupportModalOpen(true)}
-            >
-              Set up
-            </button>
           </div>
-          <div className="w-full relative">
-            <label className="block text-sm font-medium text-orange-500 mb-1">
-              Support Phone Number
-            </label>
-            <input
-              type="text"
-              value={phone}
-              className="w-full p-2 rounded-full border bg-gray-400 border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-black"
-            />
-            <button
-              className="absolute bg-orange-700 right-2 top-7 text-white text-xs rounded-xl p-2 transition duration-200"
-              onClick={() => setIsSupportModalOpen(true)}
-            >
-              Set up
-            </button>
-          </div>
-        </div>
-      </div> */}
+        )}
+      </motion.div>
 
       <SigninModal
         open={isModalOpen}
         handleClose={() => setIsModalOpen(false)}
         label={modalLabel}
         value={modalValue}
-        onSave={handleModalSave}
       />
       <SupportModal
         open={isSupportModalOpen}
         handleClose={() => setIsSupportModalOpen(false)}
         label={modalLabel}
         value={modalValue}
-        onSave={handleSupportModalSave}
       />
     </div>
   );

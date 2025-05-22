@@ -45,6 +45,7 @@ import Disclaimer from "./Pages/Welcome/Terms&Policy/Disclaimer.jsx";
 import PrivacyPolicy from "./Pages/Welcome/Terms&Policy/PrivacyPolicy.jsx";
 import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
+import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
 
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
@@ -133,7 +134,9 @@ const App = () => {
 
           <Route path="course/lessons" element={<LessonsPage />} />
         </Route>
+        <Route path="/unsubscribe/:email" element={<Unsubscribe/>} />
       </Routes>
+    
     </>
   );
 };

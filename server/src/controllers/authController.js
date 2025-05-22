@@ -10,6 +10,7 @@ import {
   signupValidation,
 } from "../types/signupValidation.js";
 import { sendOtp } from "../utils/sendOtp.js";
+import { sendWelcome_Email } from "../utils/EmailTemplates/sendemail.js";
 
 export const register = async (req, res) => {
   try {
@@ -134,6 +135,15 @@ export const verifyOtpForRegister = async (req, res) => {
       data: {
         verified: true,
       },
+
+      select : {
+        
+    id: true,
+    role: true,
+    email: true,
+    name: true,
+  },
+    
     });
 
     if (!updatedUser) {
@@ -148,7 +158,8 @@ export const verifyOtpForRegister = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "13d" }
     );
-
+  
+    sendWelcome_Email(updatedUser?.email,updatedUser?.name);
     res.status(200).json({
       message: "User verified successfully",
       success: true,
