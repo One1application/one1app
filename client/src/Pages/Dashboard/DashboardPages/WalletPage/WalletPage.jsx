@@ -20,7 +20,7 @@ import UPIModal from "../../../../components/Modal/UPIModal";
 import MPINModal from "../../../../components/Modal/MPINModal";
 import toast from "react-hot-toast";
 import { Calendar } from "lucide-react";
-import { fetchBalanceDetails, fetchPrimaryPaymentInformation, fetchTransactionsPage, sendWithdrawAmount } from "../../../../services/auth/api.services";
+import { fetchBalanceDetails, fetchPrimaryPaymentInformation, fetchTransactionsPage, fetchWithdrawalPage, sendWithdrawAmount } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -31,6 +31,8 @@ const WalletPage = () => {
   const {
     AllTransaction,
     setAllTransaction,
+    AllWithdrawals,
+    setAllWithdrawals,
     getNextTransactionPage,
     CurrentTransactionPage,
     TotalTransactionPages,
@@ -180,18 +182,18 @@ const WalletPage = () => {
   }, []);
 
   
-    useEffect(() => {
-      const fetchTransactions = async () => {
-        try {
-          const res = await fetchTransactionsPage({ page: CurrentTransactionPage });
-          setAllTransaction(res.data.payload.transactions);  
-        } catch (error) {
-          console.error("Error fetching transactions:", error);
-        }
-      };
-  
-      fetchTransactions();
-    }, [CurrentTransactionPage]);
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const res = await fetchWithdrawalPage({ page: 0 });
+        setAllWithdrawals(res.data.payload.transactions);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, [setAllWithdrawals]);
 
   return (
     <div className="max-w-full min-h-screen md:px-5 md:py-3 px-2 py-2 bg-[#0F1418]">
@@ -414,13 +416,16 @@ const WalletPage = () => {
         <div className="md:w-1/3 w-full bg-[#1A1D21] py-3 px-3 mt-5 rounded-xl order-2">
           <div className="flex justify-between">
             <div className="flex items-center gap-1 text-white">
-              <p className="font-poppins tracking-tight">Recent Withdrawal</p>
-              <MdKeyboardArrowRight className="size-5" />
+              <Link to={'../withdrawal'} className='flex'>
+                <p className="font-poppins tracking-tight">Recent Withdrawal</p>
+                <MdKeyboardArrowRight className="size-5" />
+              </Link>
             </div>
             <p className="font-poppins tracking-tight text-white">Amount</p>
           </div>
-          <div className="flex flex-col gap-6 mt-3">
-            {walletConfig.walletPage.recentWithdrawals.map(
+          <div className={`flex flex-col gap-6 mt-3 ${AllWithdrawals.length === 0 && 'h-[90%]'}`}>
+            {AllWithdrawals.length === 0 ?  <div className="flex justify-center h-full items-center">No Withdrawal</div> :
+            AllWithdrawals.map(
               (withdrawal, index) => (
                 <div
                   key={index}

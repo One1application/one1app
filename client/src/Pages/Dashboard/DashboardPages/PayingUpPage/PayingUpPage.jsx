@@ -43,6 +43,7 @@ const PayingUpPage = () => {
         className={`w-full h-64 ${bgGradient} flex justify-center items-center relative`}
       >
         <h1 className="font-bold text-white text-3xl md:text-4xl">{title}</h1>
+        
         <button
           type="button"
           className="bg-orange-600 text-white rounded-full text-xs md:text-sm px-4 md:px-6 py-2 transition duration-200 md:w-auto hover:bg-orange-700 absolute top-4 right-4 md:top-5 md:right-10 flex justify-center items-center gap-1"
@@ -76,6 +77,7 @@ const PayingUpPage = () => {
 
       {/* Tab Content */}
       <div className="p-6 h-full w-full flex items-center justify-center">
+        
         {isLoading ? (
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>

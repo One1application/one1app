@@ -19,7 +19,7 @@ const WebinarPage = () => {
   const getAllWebinars = async () => {
     setIsLoading(true);
     try {
-      const response = await fetchAllWebinarsData();
+      const response = await fetchAllWebinarsData()
       setAllWebinars(response.data.payload.createdWebinars);
     } catch (e) {
       console.log(e);
