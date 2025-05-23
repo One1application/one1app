@@ -162,7 +162,7 @@ export const userCustomers = async (req, res) => {
     const user = req.user;
    const page = parseInt(req.query.page) || 1;
     const pageSize = 20;
-    const skip = page > 1 ? (page - 1) * pageSize : undefined;
+    const skip = page > 1 ? (page - 1) * pageSize : 0;
 
     const userDetails = await prisma.user.findFirst({
       where: { id: user.id },

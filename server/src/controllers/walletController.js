@@ -100,6 +100,7 @@ export async function getWalletDetails(req, res) {
 }
 
 export async function verifyPayment(req, res) {
+ 
   try {
     const {
       webinarId,
@@ -461,6 +462,8 @@ export async function verifyPayment(req, res) {
           data: {
             userId: user.id,
             contentId: premiumContentId,
+            paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
+            orderId: phonePayOrderId,
             expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), //currently for 30 days
           },
         });
@@ -1620,10 +1623,8 @@ export async function getTransactions(req, res) {
     }
 
     const pageSize = 10;
-    let skip = page ? (page - 1) * pageSize : undefined;
-    if (skip === 0) {
-      skip = undefined;
-    }
+    let skip = page ? (page - 1) * pageSize : 0
+    
 
     if (!page) {
       return res

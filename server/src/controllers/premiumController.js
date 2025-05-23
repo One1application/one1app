@@ -289,6 +289,13 @@ export async function getCreatorContents(req, res) {
   try {
     const user = req.user;
 
+    if(!user){
+       return res.status(400).json({
+         success: false,
+         message: "User not found"
+       })
+    }
+
     const contents = await prisma.user.findUnique({
       where: { id: user.id },
       select: {
@@ -505,7 +512,7 @@ export const purchasePremiumContent = async (req, res) => {
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
       .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&contentIdId=${contentId}`
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&contentId=${contentId}`
       )
       .build();
 

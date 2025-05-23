@@ -376,10 +376,10 @@ export const fetchPremiumContentById = async (contentId) => {
   );
   return response;
 };
-export const purchasePremiumContent = async (id, userId) => {
+export const purchasePremiumContent = async (id) => {
   const response = await servicesAxiosInstance.post(
-    "/premium/create-premium-access", // Matches the route in premiumRoutes.js
-    { contentId: id, userId: userId } // Send the ID and userId in the request body
+    "/premium/purchase-premium-content", // Matches the route in premiumRoutes.js
+    { contentId: id} // Send the ID and userId in the request body
   );
   return response;
 };

@@ -22,6 +22,12 @@ export async function createPayingUp(req, res) {
     console.log("req body", req.body);
 
     const user = req.user;
+    if(!req.user){
+       return res.status(400).json({
+        success: false,
+        message: "User not found.",
+       })
+    }
 
     await prisma.payingUp.create({
       data: {

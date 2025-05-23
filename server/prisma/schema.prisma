@@ -105,7 +105,7 @@ model Otp {
 model Wallet {
   id               String        @id @default(uuid())
   userId           String        @unique
-  user             User          @relation(fields: [userId], references: [id])
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance          Float         @default(0.0)
   totalEarnings    Float         @default(0.0)
   totalWithdrawals Float         @default(0.0)
@@ -185,9 +185,9 @@ model Transaction {
   productId       String
   productType     ProductType
   buyerId         String
-  buyer           User              @relation(name: "Buyer", fields: [buyerId], references: [id])
+  buyer           User              @relation(name: "Buyer", fields: [buyerId], references: [id], onDelete: Cascade)
   creatorId       String
-  creator         User              @relation(name: "Creator", fields: [creatorId], references: [id])
+  creator         User              @relation(name: "Creator", fields: [creatorId], references: [id], onDelete: Cascade)
   modeOfPayment   String
   status          TransactionStatus @default(PENDING)
   phonePayTransId String?
@@ -202,7 +202,7 @@ model Withdrawal {
   amount           Float
   modeOfWithdrawal String
   bankDetailsId    String?
-  bankDetails      BankDetails?     @relation(fields: [bankDetailsId], references: [id])
+  bankDetails      BankDetails?     @relation(fields: [bankDetailsId], references: [id] )
   upiId            String?
   upi              UPI?             @relation(fields: [upiId], references: [id])
   status           WithdrawalStatus @default(PENDING)
@@ -229,7 +229,7 @@ model Webinar {
   isVerified     Boolean         @default(false)
   tickets        WebinarTicket[]
   createdById    String
-  createdBy      User            @relation(fields: [createdById], references: [id])
+  createdBy      User            @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
@@ -239,7 +239,7 @@ model WebinarTicket {
   webinarId  String
   webinar    Webinar @relation(fields: [webinarId], references: [id], onDelete: Cascade)
   boughtById String
-  boughtBy   User    @relation(fields: [boughtById], references: [id])
+  boughtBy   User    @relation(fields: [boughtById], references: [id], onDelete: Cascade)
   paymentId  String?
   orderId    String?
 }
@@ -275,7 +275,7 @@ model CourseProduct {
   isActive        Boolean @default(false)
   productMetaData Json
   courseId        String  @unique
-  course          Course  @relation(fields: [courseId], references: [id])
+  course          Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model Lessons {
@@ -283,7 +283,7 @@ model Lessons {
   isActive   Boolean
   lessonData Json
   courseId   String
-  course     Course  @relation(fields: [courseId], references: [id])
+  course     Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model CoursePurchasers {
@@ -292,8 +292,8 @@ model CoursePurchasers {
   purchaserId String
   paymentId   String
   orderId     String
-  purchaser   User     @relation(fields: [purchaserId], references: [id])
-  course      Course   @relation(fields: [courseId], references: [id])
+  purchaser   User     @relation(fields: [purchaserId], references: [id], onDelete: Cascade)
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 }
 
@@ -312,7 +312,7 @@ model PayingUp {
   files           Json
   isVerified      Boolean          @default(false)
   createdById     String
-  createdBy       User             @relation(fields: [createdById], references: [id])
+  createdBy       User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
   payingUpTickets PayingUpTicket[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt()
@@ -323,7 +323,7 @@ model PayingUpTicket {
   payingUpId String
   payingUp   PayingUp @relation(fields: [payingUpId], references: [id], onDelete: Cascade)
   boughtById String
-  boughtBy   User     @relation(fields: [boughtById], references: [id])
+  boughtBy   User     @relation(fields: [boughtById], references: [id], onDelete: Cascade)
   paymentId  String?
   orderId    String?
 }
@@ -339,7 +339,7 @@ model Telegram {
   subscription Json
   isVerified   Boolean @default(false)
   createdById  String
-  createdBy    User    @relation(fields: [createdById], references: [id])
+  createdBy    User    @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   telegramSubscriptions TelegramSubscription[]
   createdAt             DateTime               @default(now())
@@ -351,9 +351,9 @@ model TelegramSubscription {
   validDays  Int
   telegramId String
   chatId     String?
-  telegram   Telegram @relation(fields: [telegramId], references: [id])
+  telegram   Telegram @relation(fields: [telegramId], references: [id], onDelete: Cascade)
   boughtById String   @unique
-  boughtBy   User     @relation(fields: [boughtById], references: [id])
+  boughtBy   User     @relation(fields: [boughtById], references: [id], onDelete: Cascade)
   paymentId  String?
   orderId    String?
   createdAt  DateTime @default(now())
@@ -378,6 +378,8 @@ model PremiumContentAccess {
   contentId      String
   purchasedAt    DateTime       @default(now())
   expiryDate     DateTime?
+  paymentId      String
+  orderId        String
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   premiumContent PremiumContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
