@@ -223,43 +223,47 @@ const PayingUpPages = () => {
       )}
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-orange-600 to-orange-500 text-white py-12 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl font-bold mb-8 text-white">
-            {payingUpDetails.title}
-          </h1>
-          {!isPurchased ? (
-            <button
-              onClick={handlePayment}
-              disabled={!payingUpDetails.paymentDetails.paymentEnabled}
-              className="bg-black text-orange-500 py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>{payingUpDetails.paymentDetails.paymentButtonTitle}</span>
-              {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
-              <span>{payingUpDetails.paymentDetails.totalAmount}</span>
-            </button>
-          ) : currentUserId === payingUpDetails.createdById ? (
-            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
-              <Icons.CheckCircle className="w-5 h-5 mr-2" />
-              <span>You Created This</span>
+      {/* Cover Image Section */}
+      {payingUpDetails.coverImage.isActive && (
+        <section className="py-10 px-4">
+          <div className="max-w-6xl mx-auto">
+          
+            <div className="rounded-2xl overflow-hidden shadow-2xl border border-orange-500/20">
+              <img
+                src={payingUpDetails.coverImage.value}
+                alt="Course Cover"
+                className="w-full h-[450px] max-md:h-auto object-cover"
+              />
             </div>
-          ) : (
-            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
-              <Icons.CheckCircle className="w-5 h-5 mr-2" />
-              <span>Already Purchased</span>
-            </div>
-          )}
+             <div className="bg-gradient-to-br from-orange-600/80 to-gray-900/60 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
+          <img
+            className="w-28 h-28 rounded-full border-4 border-white"
+            src="https://placehold.co/120x120"
+            alt="Creator Avatar"
+          />
+          <div>
+            <p className="text-xl text-gray-300">Created by</p>
+            <h2 className="text-3xl font-bold text-white">{payingUpDetails.createdBy.name}</h2>
+          </div>
         </div>
-      </section>
-
+        <div className="text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-200">{payingUpDetails.title}</h1>
+          <p className="text-2xl font-semibold text-gray-300">Paying Up</p>
+        </div>
+      </div>
+          </div>
+        </section>
+      )}
+      
       {/* Payment Data URL Section */}
       {isPurchased && paymentUrl && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8  text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
               Your Files
             </h2>
-            <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500/20">
+            <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500">
               <div className="space-y-4">
                 {Array.isArray(paymentUrl) ? (
                   paymentUrl.map((file, index) => (
@@ -297,47 +301,18 @@ const PayingUpPages = () => {
       {/* Description Section */}
       <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8  text-orange-500">Overview</h2>
-          <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500/20">
-            <div
-              className="text-gray-300 mb-6 leading-relaxed text-lg"
-              dangerouslySetInnerHTML={{ __html: payingUpDetails.description }}
-            ></div>
-          </div>
-        </div>
-      </section>
-
-      {/* Cover Image Section */}
-      {payingUpDetails.coverImage.isActive && (
-        <section className="py-10 px-4">
+          <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">Overview</h2>
+          <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500">
+              {payingUpDetails.category.isActive && (
+        <section className="py-10 px-4 ">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8  text-orange-500">
-              Cover Image
-            </h2>
-            <div className="rounded-2xl overflow-hidden shadow-2xl border border-orange-500/20">
-              <img
-                src={payingUpDetails.coverImage.value}
-                alt="Course Cover"
-                className="w-full h-[450px] max-md:h-auto object-cover"
-              />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Categories Section */}
-      {payingUpDetails.category.isActive && (
-        <section className="py-10 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8  text-orange-500">
-              Categories
-            </h2>
+           
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {payingUpDetails.category.categoryMetaData.map(
                 (category, index) => (
                   <div
                     key={index}
-                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20 bg-orange-500 text-center"
                   >
                     <span className="text-xl font-semibold text-white">
                       {category}
@@ -349,12 +324,26 @@ const PayingUpPages = () => {
           </div>
         </section>
       )}
+            <div
+              className="text-gray-300 mb-6 leading-relaxed text-lg text-white"
+              dangerouslySetInnerHTML={{ __html: payingUpDetails.description }}
+            ></div>
+          
+        
+      </div>
+        </div>
+      </section>
+
+      
+
+      {/* Categories Section */}
+      
 
       {/* Testimonials */}
       {payingUpDetails.testimonials.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8  text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
               {payingUpDetails.testimonials.title}
             </h2>
             <div className="relative">
@@ -380,41 +369,40 @@ const PayingUpPages = () => {
               </button>
 
               {/* Testimonials Container */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {payingUpDetails.testimonials.testimonialsMetaData
-                  .slice(
-                    currentTestimonialIndex,
-                    currentTestimonialIndex + itemsPerView
-                  )
-                  .map((testimonial, index) => (
-                    <div
-                      key={index}
-                      className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
-                    >
-                      <div className="flex items-center mb-4">
-                        <img
-                          src={testimonial.profilePic || oneApp}
-                          alt={testimonial.name}
-                          className="w-14 h-14 rounded-full object-cover border-2 border-orange-500"
-                        />
-                        <div className="ml-4">
-                          <h3 className="font-semibold text-white text-lg">
-                            {testimonial.name}
-                          </h3>
-                          <div className="flex text-orange-500">
-                            {[...Array(testimonial.rating)].map((_, i) => (
-                              <Icons.Star
-                                key={i}
-                                className="w-4 h-4 fill-current"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-gray-300">{testimonial.description}</p>
-                    </div>
-                  ))}
-              </div>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  {payingUpDetails.testimonials.testimonialsMetaData
+    .slice(
+      currentTestimonialIndex,
+      currentTestimonialIndex + itemsPerView
+    )
+    .map((testimonial, index) => (
+      <div
+        key={index}
+        className="p-6 bg-gradient-to-r from-orange-500 to-yellow-600 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white transform hover:scale-105"
+      >
+        <div className="flex flex-col items-center mb-6">
+          <img
+            src={testimonial.profilePic || oneApp}
+            alt={testimonial.name}
+            className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md"
+          />
+          <div className="text-center mt-4">
+            <h3 className="font-semibold text-white text-2xl">{testimonial.name}</h3>
+            <div className="flex justify-center mt-2 text-yellow-400 font-bold">
+              {[...Array(testimonial.rating)].map((_, i) => (
+                <Icons.Star
+                  key={i}
+                  className="w-5 h-5 fill-current"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        <p className="text-gray-200 text-base text-center text-white font-semibold">{testimonial.statement}</p>
+      </div>
+    ))}
+</div>
+
             </div>
           </div>
         </section>
@@ -424,14 +412,14 @@ const PayingUpPages = () => {
       {payingUpDetails.faqs.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8  text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
               Frequently Asked Questions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {payingUpDetails.faqs.faQMetaData.map((faq, index) => (
                 <div
                   key={index}
-                  className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                  className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500"
                   onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
                 >
                   <h3 className="text-xl font-semibold mb-3 text-white flex justify-between items-center cursor-pointer">
@@ -460,7 +448,7 @@ const PayingUpPages = () => {
       {payingUpDetails.refundPolicies.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8  text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
               Refund Policies
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -468,7 +456,7 @@ const PayingUpPages = () => {
                 (policy, index) => (
                   <div
                     key={index}
-                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500"
                   >
                     <p className="text-gray-300">{policy}</p>
                   </div>
@@ -483,7 +471,7 @@ const PayingUpPages = () => {
       {payingUpDetails.tacs.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8  text-orange-500">
+            <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
               Terms & Conditions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -491,7 +479,7 @@ const PayingUpPages = () => {
                 (term, index) => (
                   <div
                     key={index}
-                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500"
                   >
                     <p className="text-gray-300">{term}</p>
                   </div>
@@ -505,11 +493,11 @@ const PayingUpPages = () => {
       {/* Need Help */}
       <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8  text-orange-500">
+          <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
             Need Help
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20">
+            <div className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-white">
               <a
                 href={`mailto:${payingUpDetails.paymentDetails.ownerEmail}`}
                 className=" text-orange-500  rounded-lg font-bold   shadow-xl inline-flex items-center space-x-3 text-lg"
@@ -518,7 +506,7 @@ const PayingUpPages = () => {
                 <span>{payingUpDetails.paymentDetails.ownerEmail}</span>
               </a>
             </div>
-            <div className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20">
+            <div className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-white">
               <a
                 href={`tel:${payingUpDetails.paymentDetails.ownerPhone}`}
                 className=" text-orange-500  font-bold shadow-xl inline-flex items-center space-x-3 text-lg"
@@ -529,6 +517,24 @@ const PayingUpPages = () => {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="flex justify-center">
+       {!isPurchased ? ( <button
+              onClick={handlePayment}
+              disabled={!payingUpDetails.paymentDetails.paymentEnabled}
+              className="bg-orange-500 text-white py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed border border-white"
+            >
+              <span>{payingUpDetails.paymentDetails.paymentButtonTitle}</span>
+              {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
+              <span>{payingUpDetails.paymentDetails.totalAmount}</span>
+            </button>)
+            :
+           ( <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
+              <Icons.CheckCircle className="w-5 h-5 mr-2" />
+              <span>Already Purchased</span>
+            </div>)
+}
       </section>
 
       {/* Contact Footer */}
