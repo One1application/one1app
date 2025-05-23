@@ -7,13 +7,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import {
-  fetchAllCoursesData,
-  fetchAllPayingUpsData,
-  fetchAllWebinarsData,
-} from "../../services/auth/api.services";
-import { useEffect, useState } from "react";
 
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { fetchWalletChartData } from "../../services/auth/api.services";
+
+
+// is dummy data
 const defaultEarningsData = [
   { month: "Jan", earnings: 5000 },
   { month: "Feb", earnings: 10000 },
@@ -28,6 +28,14 @@ const defaultEarningsData = [
   { month: "Nov", earnings: 27000 },
   { month: "Dec", earnings: 30000 },
 ];
+
+const ProductType  = {
+  WEBINAR: 'WEBINAR',
+  COURSE: 'COURSE',
+  PAYING_UP: 'PAYING_UP',
+  TELEGRAM: 'TELEGRAM',
+  PREMIUM_CONTENT: 'PREMIUM_CONTENT'
+};
 
 const defaultEr = [
   { month: "Jan", earnings: 0 },
@@ -45,70 +53,78 @@ const defaultEr = [
 ]
 
 const EarningsChart = () => {
-  const [AllPayingUps, setAllPayingUps] = useState(defaultEr);
-  const [AllWebinars, setAllWebinars] = useState(defaultEr);
-  const [AllCourses, setAllCourses] = useState(defaultEr);
   const [selectedCategory, setSelectedCategory] = useState("Product");
-  const [chartData, setChartData] = useState(defaultEarningsData);
+  const [chartData, setChartData] = useState(defaultEr);
+  const [totalEarnings, setTotalEarning] = useState(0);
+  const [fetchCat, setFetchCat] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const getAllPayingUps = async () => {
-    try {
-      const response = await fetchAllPayingUpsData();
-      // why this if is still true is this paying up arrya is empty 
-      if(response.data.payload.payingUps.length !== 0) {
-        setAllPayingUps(response.data.payload.payingUps);
-      }
-    } catch (e) {
-      console.log(e.message);
-    }
-  };
-
-  const getAllWebinars = async () => {
-    try {
-      const response = await fetchAllWebinarsData();
-      if(response.data.payload.createdWebinars.length !== 0){
-        setAllWebinars(response.data.payload.createdWebinars);
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  const getAllCourses = async () => {
-    try {
-      const response = await fetchAllCoursesData();
-      if(response.data.payload.courses.length !== 0){
-        setAllCourses(response.data.payload.courses.length);
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  useEffect(() => {
-    getAllCourses();
-    getAllWebinars();
-    getAllPayingUps();
-  }, []);
-
-  
   const handleCategoryChange = (category) => {
-    setSelectedCategory(category);
-    if (category === "Product") {
-      setChartData(defaultEarningsData);
-    } else if (category === "Courses") {
-      setChartData(AllCourses);
-    } else if (category === "PayingUp") {
-      setChartData(AllPayingUps);
-    } else if (category === "Webinar") {
-      setChartData(AllWebinars);
+    console.log(category);
+    setSelectedCategory(category)
+    switch (category) {
+      case 'PayingUp':
+        console.log(1);
+        setFetchCat(ProductType.PREMIUM_CONTENT)
+        break;
+      case 'Webinar':
+        console.log(2);
+        setFetchCat(ProductType.WEBINAR)
+        break;
+      case 'Courses':
+        console.log(3);
+        setFetchCat(ProductType.COURSE)
+        break;
+      case 'Telegram':
+        console.log(4);
+        setFetchCat(ProductType.TELEGRAM)
+        break;
+      case 'PrimeContent':
+        console.log(5);
+        setFetchCat(ProductType.PREMIUM_CONTENT)
+        break;
+      default:
+        setFetchCat('')
+        break;
     }
   };
 
-  const totalEarnings = chartData.reduce(
-    (acc, item) => acc + item.earnings,
-    0
-  );
+  async function getChartData() {
+  try {
+    setIsLoading(true)
+    const response = await fetchWalletChartData({ fetchCat });
+    if (response?.data) {
+      setTotalEarning(response.data.payload.totalEarnings)
+      toast.success(response.data.message);
+      if(!fetchCat) {
+        setChartData(response.data.payload.monthlyEarnings);
+      } else {
+        setChartData(response.data.payload.productBreakdown[fetchCat]);
+      }
+    } else {
+      setChartData(defaultEr);
+    }
+  } catch (e) {
+    toast.error(e.message);
+    setTotalEarning(0);
+    console.error(e.message);
+    setChartData(defaultEr);
+  } finally {
+    setIsLoading(false)
+  }
+}
+  useEffect(() => {
+    getChartData();
+  }, [fetchCat])
+
+
+    if (isLoading) {
+    return (
+      <div className="p-4 flex justify-center items-center bg-white rounded-lg shadow-md w-full max-w-4xl mx-auto">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md w-full max-w-4xl mx-auto">
@@ -130,6 +146,8 @@ const EarningsChart = () => {
               <option value="PayingUp">Paying Up</option>
               <option value="Webinar">Webinar</option>
               <option value="Courses">Courses</option>
+              <option value="Telegram">Telegram</option>
+              <option value="PrimeContent">Premium Content</option>
             </select>
             <select className="px-3 py-2 text-sm border font-poppins bg-white tracking-tight rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
               <option value="Last Year">Last Year</option>

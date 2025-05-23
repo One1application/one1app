@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, SortAsc, Mail, ArrowDown, ArrowUp } from 'lucide-react';
 import toast from "react-hot-toast";
 import Pagination from '@mui/material/Pagination';
+import Option from '../../Pages/Dashboard/DashboardPages/LockedContentPage/Option';
 
 const LockedContentTable = ({ data }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [optionPop, setOptionPop] = useState(false);
   const [page, setPage] = useState(1);
+  const [selectId, setSelectId] = useState('');
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: 'asc'
@@ -39,6 +42,10 @@ const LockedContentTable = ({ data }) => {
     if (id) {
         // Assuming a public view route like /locked-content/:id
         // Or a dashboard detail view like /dashboard/premium-content/:id
+        
+        toast.success(id)
+        setSelectId(id);
+        setOptionPop(true)
         console.log("Navigating to locked content detail for ID:", id);
         // Example: navigate(`/app/locked-content?id=${id}`);
     }
@@ -426,6 +433,8 @@ const LockedContentTable = ({ data }) => {
           />
         </div>
       )}
+
+      {optionPop && <Option selectId={selectId} setOptionPopUp={setOptionPop}/>}
     </div>
   );
 };
