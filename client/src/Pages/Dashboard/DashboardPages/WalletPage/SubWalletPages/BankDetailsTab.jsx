@@ -16,6 +16,7 @@ const BankDetailsTab = ({ setVal }) => {
     bankDocument: null,
     upiId: "",
   });
+  const [update, setUpdate] = useState(false);
 
   const handleBankingInfoChange = (e) => {
     const { name, value } = e.target;
@@ -108,6 +109,7 @@ const BankDetailsTab = ({ setVal }) => {
       const response = await fetchPrimaryPaymentInformation();
 
       if (response.status === 200) {
+        setUpdate(true);
         const {
           accountHolderName,
           accountNumber,
@@ -259,7 +261,7 @@ const BankDetailsTab = ({ setVal }) => {
             loading ? "bg-gray-400" : "bg-orange-500 hover:bg-orange-600"
           } text-white py-2 px-6 rounded-lg focus:ring focus:ring-orange-500 focus:ring-opacity-50`}
         >
-        {loading ? "Saving..." : "Save"}
+        {update ? loading ? 'Updating...' : 'Update' : loading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>

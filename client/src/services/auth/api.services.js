@@ -188,7 +188,7 @@ export const fetchPrimaryPaymentInformation = async () => {
   return response;
 };
 
-export const fetchTransactionsPage = async (data) => {
+export const fetchTransactionsPage = async (data=1) => {
   const response = await servicesAxiosInstance.get(`/wallet/get-transactions?page=${data}`);
   return response;
 };

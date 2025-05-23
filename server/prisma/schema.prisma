@@ -366,7 +366,6 @@ model PremiumContent {
   unlockPrice Float
   content     Json
   discount    Json?
-  expiryDate  DateTime?
   isVerified  Boolean                @default(false)
   createdById String
   createdBy   User                   @relation(fields: [createdById], references: [id], onDelete: Cascade)

@@ -22,9 +22,11 @@ export default function PaymentPage() {
           payingUpId,
           webinarId,
           telegramId,
+          premiumContentId,
         });
 
         if (response?.data.success) {
+          console.log("Payment verified successfully", response?.data.success);
           setStatus("success");
           // Redirect to course page after successful payment
           setTimeout(() => {

@@ -366,7 +366,7 @@ const AboutUsPage = () => {
             </motion.div>
           ))}
         </div>
-        {/* <PaymentInterface/> */}
+        <PaymentInterface/>
       </div>
       <Footer />
     </div>
