@@ -108,6 +108,12 @@ export async function getTelegramById(req, res) {
       where: {
         id: telegramId,
       },
+       include: {
+    createdBy: {
+      select: {
+        name: true,  // Select the username field from the related User model
+      },
+    }},
     });
 
     return res.status(200).json({
