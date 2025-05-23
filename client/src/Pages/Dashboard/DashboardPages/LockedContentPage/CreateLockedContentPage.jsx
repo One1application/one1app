@@ -145,6 +145,8 @@ const CreateLockedContentPage = () => {
     });
 
     try {
+      console.log(apiData);
+      
         const response = await createLockedContent(apiData);
         toast.dismiss();
         if(response.data.success){
