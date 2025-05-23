@@ -8,7 +8,7 @@ import {
   faMobileScreenButton,
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 // import Photo1 from "../../../assets/1.png";
 // import Photo2 from "../../../assets/2.png";
 // import Photo3 from "../../../assets/3.png";
@@ -21,7 +21,7 @@ import {
 } from "../../../services/auth/api.services";
 import Lottie from "lottie-react";
 import animation from "../../../assets/Animation - 4.json";
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from "../../../context/AuthContext";
 
 const SignInPage = () => {
   const [email, setEmail] = useState("");
@@ -53,6 +53,12 @@ const SignInPage = () => {
   }, [email]);
 
   useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, []);
+  useEffect(() => {
     setIsPhoneNumberValid(phoneNumber.length >= 10);
   }, [phoneNumber]);
 
@@ -79,7 +85,7 @@ const SignInPage = () => {
   const handleFormSubmit = async () => {
     const userData = isUsingEmail ? { email } : { phoneNumber };
     setIsLoading(true);
-    
+
     try {
       const { data } = await signInUser(userData);
       if (data.success) {
@@ -127,7 +133,8 @@ const SignInPage = () => {
       }}
     >
       <div className="flex justify-center items-start min-h-screen pt-8 mt-16">
-        <div className="shadow-xl flex flex-col lg:flex-row bg-white rounded-[24px] w-full max-w-[1000px] relative"
+        <div
+          className="shadow-xl flex flex-col lg:flex-row bg-white rounded-[24px] w-full max-w-[1000px] relative"
           style={{ height: "auto" }}
         >
           <div className="relative flex flex-col flex-1 p-6 md:p-12 pb-6 rounded-l-[24px] lg:rounded-l-[24px] w-full">
@@ -195,7 +202,11 @@ const SignInPage = () => {
                   }
                   onClick={handleFormSubmit}
                 >
-                  {isLoading ? "Sending..." : isUsingEmail ? "Send OTP to Email" : "Send OTP to Phone"}
+                  {isLoading
+                    ? "Sending..."
+                    : isUsingEmail
+                    ? "Send OTP to Email"
+                    : "Send OTP to Phone"}
                 </button>
               )}
 

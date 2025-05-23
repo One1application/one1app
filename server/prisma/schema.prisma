@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
@@ -81,6 +81,16 @@ model User {
   premiumAccess               PremiumContentAccess[]
   creatorComission            Int?                   @default(8)
   review                      Review[]
+  otpStore                    OTPStore?
+  otpStoreId                  String?                @unique
+}
+
+model OTPStore {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  otp       String
+  expiresAt DateTime
 }
 
 model Otp {
