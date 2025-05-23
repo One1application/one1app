@@ -181,6 +181,11 @@ export async function getPayingUpById(req, res) {
         id: payingUpId,
       },
       include: {
+         createdBy: {
+      select: {
+        name: true,  // Select the username field from the related User model
+      },
+    },
         payingUpTickets: user
           ? {
               where: {
