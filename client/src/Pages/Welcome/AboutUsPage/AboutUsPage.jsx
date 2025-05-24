@@ -367,6 +367,7 @@ const AboutUsPage = () => {
           ))}
         </div>
       </div>
+      <PaymentInterface/>
       <Footer />
     </div>
   );

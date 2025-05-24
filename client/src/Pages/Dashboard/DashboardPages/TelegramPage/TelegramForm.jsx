@@ -150,6 +150,7 @@ const TelegramsPages = () => {
   const [imageFile, setImageFile] = useState(null);
   const [genre, setGenre] = useState("Education");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [chatid, setChatid] = useState("");
 
   const getInitials = (name) => {
     if (!name) return "USER";
@@ -398,14 +399,18 @@ const TelegramsPages = () => {
           </div>
 
           {/* Form Fields */}
-          <div className="space-y-6">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-orange-500 mb-2">
+              Chatid <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               maxLength={75}
-              value={chatId}
-              readOnly
+              value={chatId || chatid}
+              readOnly={!!chatId}
+              onChange={(e) => !chatId && setChatid(e.target.value)}
               className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white placeholder-orange-400 cursor-default focus:outline-none"
-              placeholder="Enter your Telegram Channel Link"
+              placeholder="Enter your chat id"
             />
 
             {/* Page Title */}
