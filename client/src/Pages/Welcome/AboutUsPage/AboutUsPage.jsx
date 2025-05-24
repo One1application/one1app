@@ -11,7 +11,7 @@ import Footer from "../../../components/Footer/Footer";
 import { aboutusConfig } from "./aboutusConfig";
 import { useRef } from "react";
 import { motion } from "framer-motion";
- 
+
 import PaymentInterface from "../../../newPurchase/PaymentInterface";
 const AboutUsPage = () => {
   const { cardDetails } = aboutusConfig;
@@ -366,8 +366,8 @@ const AboutUsPage = () => {
             </motion.div>
           ))}
         </div>
-        <PaymentInterface/>
       </div>
+      <PaymentInterface/>
       <Footer />
     </div>
   );

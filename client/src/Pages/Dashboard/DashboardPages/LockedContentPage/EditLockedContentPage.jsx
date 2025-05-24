@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { createLockedContent, handelUplaodFile } from "../../../../services/auth/api.services";
 import * as Icons from "lucide-react";
 
-const CreateLockedContentPage = () => {
+const EditLockedContentPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
@@ -482,4 +482,4 @@ const CreateLockedContentPage = () => {
   );
 };
 
-export default CreateLockedContentPage;
+export default EditLockedContentPage;
