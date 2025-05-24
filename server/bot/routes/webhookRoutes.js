@@ -11,6 +11,25 @@ const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`
 router.post('/', async (req, res) => {
   const update = req.body;
   console.log('Received update:', JSON.stringify(update, null, 2));
+  if (update.my_chat_member) {
+    console.log('my_chat_member event payload:', JSON.stringify(update.my_chat_member, null, 2));
+  }
+
+  // Handle bot being added via service message new_chat_members
+  if (update.message?.new_chat_members) {
+    const botJoined = update.message.new_chat_members.some(m => m.is_bot);
+    if (botJoined) {
+      const adminId = update.message.from.id;
+      const chat = update.message.chat;
+      const details = `Bot was added to group:\nName: ${chat.title || 'N/A'}\nID: ${chat.id}\nType: ${chat.type}\nI don't have admin permissions yet, please grant them.\nThis group is not registered on one1app yet. Please register here: https://example.com/form.html?chatid=${chat.id}`;
+      try {
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: adminId, text: details });
+        console.log(`Sent service-message DM to user ${adminId} for group ${chat.id}`);
+      } catch (err) {
+        console.error(`Failed to send service-message DM to ${adminId}:`, err.response?.data || err.message);
+      }
+    }
+  }
 
   // Handle slash commands early
   const message = update.message;
@@ -34,18 +53,15 @@ router.post('/', async (req, res) => {
       }
       return res.sendStatus(200);
     }
-    if (command === '/setup') {
-      try {
-        const chatId = message.chat.id;
-        // Revoke invite permission from regular members
-        await axios.post(`${TELEGRAM_API}/setChatPermissions`, {
-          chat_id: chatId,
-          permissions: { can_send_messages: true, can_invite_users: false }
-        });
-        // Confirm setup
-        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: 'Setup done.' });
-      } catch (err) {
-        console.error('Error responding to /setup:', err.response?.data || err.message);
+    if (command === '/start') {
+      const chatId = message.chat.id;
+      const chatType = message.chat.type;
+      if (chatType !== 'private') {
+        // Group chat: prompt registration and /setup
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: `Please register this group on https://example.com/form.html?chatid=${chatId} and run the /setup command` });
+      } else {
+        // Private chat: welcome user
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: chatId, text: 'Hey, welcome to one1app bot! Please add the bot in your group and run the /start command again.' });
       }
       return res.sendStatus(200);
     }
@@ -72,6 +88,20 @@ router.post('/', async (req, res) => {
         await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: message.chat.id, text: 'Failed to fetch user ID.' });
       }
       return res.sendStatus(200);
+    }
+  }
+
+  // Notify user when bot is added to a group with details
+  if (update.my_chat_member) {
+    const { chat, new_chat_member, from } = update.my_chat_member;
+    if (new_chat_member.user.is_bot && new_chat_member.status === 'member') {
+      const details = `Bot was added to group:\nName: ${chat.title || 'N/A'}\nID: ${chat.id}\nType: ${chat.type}\nI don't have admin permissions yet, please grant them.\nThis group is not registered on one1app yet. Please register here: https://example.com/form.html?chatid=${chat.id}`;
+      try {
+        await axios.post(`${TELEGRAM_API}/sendMessage`, { chat_id: from.id, text: details });
+        console.log(`Sent group addition DM to user ${from.id} for group ${chat.id}`);
+      } catch (err) {
+        console.error(`Failed to send group addition DM to ${from.id}:`, err.response?.data || err.message);
+      }
     }
   }
 
