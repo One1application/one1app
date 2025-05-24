@@ -15,6 +15,7 @@ import healthRouter from './routes/healthRoutes.js';
 import channelRouter from './routes/channelRoutes.js';
 import notifyRouter from './routes/notifyRoutes.js';
 import contactRouter from './routes/contactRoutes.js';
+import otpRouter from './routes/otpRoutes.js';
 
 dotenv.config();
 
@@ -206,7 +207,7 @@ const setupWebhook = async () => {
     const webhookUrl = `${SERVER_URL}/webhook`;
     const response = await axios.post(`${TELEGRAM_API}/setWebhook`, {
       url: webhookUrl,
-      // No allowed_updates: default to all update types
+      allowed_updates: ['message', 'my_chat_member', 'chat_member']
     });
     console.log("Webhook setup response:", response.data);
   } catch (error) {
@@ -251,6 +252,7 @@ app.use('/channel', channelRouter);
 // Notification endpoints for sending DMs
 app.use('/notify', notifyRouter);
 app.use('/contact', contactRouter);
+app.use('/otp', otpRouter);
 app.use('/notify', notifyRouter); // Mount root POST /notify
 
 app.post("/verify-channel", async (req, res) => {
@@ -329,7 +331,7 @@ const checkExpiredSubscriptions = async () => {
     const expiredSubscriptions = await prisma.telegramSubscription.findMany({
       where: {
         createdAt: {
-          lte: new Date(Date.now() - `24 * 60 * 60 * 1000`),
+          lte: new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
       },
       include: {
@@ -389,15 +391,15 @@ if (process.env.NODE_ENV !== 'production') {
   pollingBot.onText(/\/getgroupid$/, (msg) => {
     pollingBot.sendMessage(msg.chat.id, `This group ID is: ${msg.chat.id}`);
   });
-  pollingBot.onText(/\/setup$/, async (msg) => {
+  pollingBot.onText(/\/start$/, async (msg) => {
     const chatId = msg.chat.id;
-    try {
-      // Revoke invite permissions for normal members
-      await pollingBot.setChatPermissions(chatId, { can_send_messages: true, can_invite_users: false });
-      // Confirm setup
-      await pollingBot.sendMessage(chatId, 'Setup done.');
-    } catch (err) {
-      console.error('Error responding to /setup:', err);
+    const chatType = msg.chat.type;
+    if (chatType !== 'private') {
+      // Group chat: prompt to register and setup
+      await pollingBot.sendMessage(chatId, `Please register this group on https://example.com/form.html?chatid=${chatId} and run the /setup command`);
+    } else {
+      // Private chat: welcome user
+      await pollingBot.sendMessage(chatId, 'Hey, welcome to one1app bot! Please register an account on https://one1app.com/app/create-telegram and add the bot.');
     }
   });
   pollingBot.onText(/\/myid(?:\s+@\w+)?/, async (msg) => {
@@ -414,6 +416,20 @@ if (process.env.NODE_ENV !== 'production') {
     } catch (err) {
       console.error('Polling /myid error:', err.response?.data || err.message);
       await pollingBot.sendMessage(msg.chat.id, 'Failed to fetch user ID.');
+    }
+  });
+  // Handle bot being added to a group via service message
+  pollingBot.on('message', async (msg) => {
+    if (msg.new_chat_members && msg.new_chat_members.some(m => m.is_bot)) {
+      const chat = msg.chat;
+      const adminId = msg.from.id;
+      const details = `Bot was added to group:\nName: ${chat.title || 'N/A'}\nID: ${chat.id}\nType: ${chat.type}\nI don't have admin permissions yet, please grant them.\nThis group is not registered on one1app yet. Please register here: https://example.com/form.html?chatid=${chat.id}`;
+      try {
+        await pollingBot.sendMessage(adminId, details);
+        console.log(`Sent polling service-message DM to user ${adminId} for group ${chat.id}`);
+      } catch (err) {
+        console.error(`Failed to send polling DM to ${adminId}:`, err.response?.data || err.message);
+      }
     }
   });
   console.log('Polling bot started.');
