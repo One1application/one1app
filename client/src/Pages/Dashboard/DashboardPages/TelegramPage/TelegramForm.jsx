@@ -335,8 +335,9 @@ const TelegramsPages = () => {
         discount: discounts,
       };
 
-      await createTelegram(body);
-      window.location.href = "/dashboard/telegram";
+      // await createTelegram(body);
+      // window.location.href = "/dashboard/telegram";
+      toast.success("Telegram Is in the Development Phase")
     } catch (error) {
       console.log("Error in creating telegram.", error);
     } finally {
@@ -527,9 +528,8 @@ const TelegramsPages = () => {
                         className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white pr-8"
                       />
                       <ChevronDown
-                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                          sub.showDropdown ? "transform rotate-180" : ""
-                        }`}
+                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${sub.showDropdown ? "transform rotate-180" : ""
+                          }`}
                       />
                     </div>
 
@@ -549,26 +549,26 @@ const TelegramsPages = () => {
                             .toLowerCase()
                             .includes(sub.inputValue.toLowerCase())
                         ).length > 0 && (
-                          <div className="max-h-48 overflow-auto">
-                            {predefinedTypes
-                              .filter((type) =>
-                                type
-                                  .toLowerCase()
-                                  .includes(sub.inputValue.toLowerCase())
-                              )
-                              .map((option) => (
-                                <div
-                                  key={option}
-                                  className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                                  onClick={() =>
-                                    handleOptionClick(option, index)
-                                  }
-                                >
-                                  {option}
-                                </div>
-                              ))}
-                          </div>
-                        )}
+                            <div className="max-h-48 overflow-auto">
+                              {predefinedTypes
+                                .filter((type) =>
+                                  type
+                                    .toLowerCase()
+                                    .includes(sub.inputValue.toLowerCase())
+                                )
+                                .map((option) => (
+                                  <div
+                                    key={option}
+                                    className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                                    onClick={() =>
+                                      handleOptionClick(option, index)
+                                    }
+                                  >
+                                    {option}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>

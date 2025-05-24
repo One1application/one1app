@@ -17,6 +17,7 @@ import newsletterRoutes from "./routes/newsletterRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 
 import { adminRouter } from "./routes/adminRoutes.js";
+import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 
 dotenv.config();
 
@@ -79,3 +80,5 @@ app.use((err, req, res, next) => {
     error: message,
   });
 });
+
+app.use(globalErrorHandler)
