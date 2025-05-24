@@ -118,6 +118,32 @@ Sends a contact card into a chat and returns the embedded user ID.
 { "userId": 123456789 }
 ```
 
+### POST /otp/send
+Sends an OTP to a Telegram user via Bot API (requires mutual chat).
+
+**Request**
+```json
+{ "chatId": -1001234567890, "otp": "123456" }
+```
+
+**Response**
+```json
+{ "success": true }
+```
+
+### POST /otp/send-mtproto
+Sends an OTP to a Telegram user via MTProto (no mutual chat needed).
+
+**Request**
+```json
+{ "phoneNumber": "+919896543045", "otp": "123456" }
+```
+
+**Response**
+```json
+{ "success": true, "userId": 123456789 }
+```
+
 ---
 
 This server supports both webhooks and polling for local development (`NODE_ENV=development`). For questions or issues, please open an issue.

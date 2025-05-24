@@ -46,12 +46,15 @@ enum ProductType {
   PREMIUM_CONTENT
 }
 
+
+
 enum TransactionStatus {
   COMPLETED
   PENDING
   FAILED
 }
 
+// TODO: userID schema
 model User {
   id                          String                 @id @default(uuid())
   email                       String                 @unique
@@ -328,6 +331,11 @@ model PayingUpTicket {
   orderId    String?
 }
 
+
+// TODO: add chatID in schema
+// TODO: isGroupMoniterd schema
+// TODO: owner phone number
+// TODO: BotHaveAdmin
 model Telegram {
   id           String  @id @unique @default(uuid())
   coverImage   String
