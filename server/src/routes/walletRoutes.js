@@ -1,6 +1,6 @@
 import express from 'express';
 import { authMiddleware } from "../middlewares/authMiddleware.js";
-import { verifyPayment,addBusinessInfo, getBusinessInfo, addKycDetails,getKycDetails, addBankDetails, getBankDetails, getWalletDetails, getTransactions, getWithdrawals, withdrawAmount, addBankOrUpi, getBankAndUpis, setMPIN, verifyMpinOtp, updateBankDetails, updateBusinessInfo, deleteBusinessInfo, updateKycDetails, deleteKycDetails, updateBankOrUpi, deleteBankOrUpi} from '../controllers/walletController.js';
+import { verifyPayment,addBusinessInfo, getBusinessInfo, addKycDetails,getKycDetails, addBankDetails, getBankDetails, getWalletDetails, getTransactions, getWithdrawals, withdrawAmount, addBankOrUpi, getBankAndUpis, setMPIN, verifyMpinOtp, updateBankDetails, updateBusinessInfo, deleteBusinessInfo, updateKycDetails, deleteKycDetails, updateBankOrUpi, deleteBankOrUpi, getAllTimeEarnings} from '../controllers/walletController.js';
 import path from 'path';
 
 export const walletRoutes = express.Router();
@@ -36,6 +36,7 @@ walletRoutes.post('/update-bank-details/:bankDetailsId', updateBankDetails);
 walletRoutes.get('/get-bank-details',getBankDetails);
 
 walletRoutes.get('/get-transactions',getTransactions)
+walletRoutes.get('/earnings', getAllTimeEarnings)
 walletRoutes.get('/get-withdrawals',getWithdrawals)
 
 walletRoutes.post('/withdraw',withdrawAmount)

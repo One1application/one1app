@@ -100,7 +100,6 @@ export async function getWalletDetails(req, res) {
 }
 
 export async function verifyPayment(req, res) {
- 
   try {
     const {
       webinarId,
@@ -120,7 +119,6 @@ export async function verifyPayment(req, res) {
       where: {
         id: user.id,
       },
-      
     });
 
     if (!existingUser) {
@@ -1614,23 +1612,17 @@ export async function withdrawAmount(req, res) {
 export async function getTransactions(req, res) {
   try {
     const user = req.user;
-    const { page, status, buyerId } = req.query;
+    const { page = 1, status, buyerId } = req.query;
 
-    if (page && page < 1) {
+    const pageNumber = parseInt(page);
+    if (isNaN(pageNumber) || pageNumber < 1) {
       return res.status(400).json({
-        success: false, message: "Invalid page number"
+        success: false,
+        message: "Invalid page Number",
       });
     }
 
     const pageSize = 10;
-    let skip = page ? (page - 1) * pageSize : 0
-    
-
-    if (!page) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Page number is needed" });
-    }
 
     const userExists = await prisma.user.findUnique({
       where: {
@@ -1674,10 +1666,10 @@ export async function getTransactions(req, res) {
     const totalTransactions = await prisma.transaction.count({
       where: whereClause,
     });
-    
+
     const totalPages = Math.ceil(totalTransactions / pageSize);
 
-    if (page > totalPages && totalPages !== 0) {
+    if (pageNumber > totalPages && totalPages !== 0) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid page number" });
@@ -1693,7 +1685,7 @@ export async function getTransactions(req, res) {
           },
         },
       },
-      skip,
+      skip: (pageNumber - 1) * pageSize,
       take: pageSize,
     });
 
@@ -2602,6 +2594,143 @@ export async function verifyMpinOtp(req, res) {
     });
   } catch (error) {
     console.error("Error in verifying MPIN OTP.", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+}
+
+// Get monthly earnings with filtering by product type
+export async function getAllTimeEarnings(req, res) {
+  const user = req.user;
+  const { year = new Date().getFullYear(), productType } = req.query;
+
+  try {
+    const userExists = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+    });
+
+    if (!userExists) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const wallet = await prisma.wallet.findFirst({
+      where: {
+        userId: userExists.id,
+      },
+    });
+
+    if (!wallet) {
+      return res.status(400).json({
+        success: false,
+        message: "Wallet not found.",
+      });
+    }
+
+    // Create date range for the specified year
+    const startDate = new Date(year, 0, 1); // January 1st
+    const endDate = new Date(year, 11, 31, 23, 59, 59); // December 31st
+
+    // Base query conditions
+    const whereConditions = {
+      creatorId: user.id,
+      walletId: wallet.id,
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+      status: "COMPLETED",
+    };
+
+    if (productType) {
+      whereConditions.productType = productType;
+    }
+
+    // Query transactions
+    const transactions = await prisma.transaction.findMany({
+      where: whereConditions,
+      select: {
+        amount: true,
+        createdAt: true,
+        productType: true,
+      },
+    });
+
+    const defaultEr = [
+      { month: "Jan", earnings: 0 },
+      { month: "Feb", earnings: 0 },
+      { month: "Mar", earnings: 0 },
+      { month: "Apr", earnings: 0 },
+      { month: "May", earnings: 0 },
+      { month: "Jun", earnings: 0 },
+      { month: "Jul", earnings: 0 },
+      { month: "Aug", earnings: 0 },
+      { month: "Sep", earnings: 0 },
+      { month: "Oct", earnings: 0 },
+      { month: "Nov", earnings: 0 },
+      { month: "Dec", earnings: 0 },
+    ];
+
+    // Create a copy to avoid modifying the original
+    const monthlyEarnings = JSON.parse(JSON.stringify(defaultEr));
+
+    // Process transactions to calculate monthly earnings
+    transactions.forEach((transaction) => {
+      const month = transaction.createdAt.getMonth(); // 0-11 for Jan-Dec
+      monthlyEarnings[month].earnings += Number(transaction.amount);
+    });
+
+    // Get product type breakdown
+    const productBreakdown = {};
+
+    transactions.forEach((transaction) => {
+      const prodType = transaction.productType;
+      const month = transaction.createdAt.getMonth();
+
+      if (!productBreakdown[prodType]) {
+        productBreakdown[prodType] = JSON.parse(JSON.stringify(defaultEr));
+      }
+
+      productBreakdown[prodType][month].earnings += Number(transaction.amount);
+    });
+
+    // Get available product types for filtering UI
+    const availableProductTypes = await prisma.transaction.findMany({
+      where: {
+        creatorId: user.id,
+      },
+      select: {
+        productType: true,
+      },
+      distinct: ["productType"],
+    });
+
+    // Calculate total earnings for the year
+    const totalEarnings = monthlyEarnings.reduce(
+      (total, month) => total + month.earnings,
+      0
+    );
+
+    return res.status(200).json({
+      success: true,
+      payload: {
+        monthlyEarnings,
+        productBreakdown,
+        totalEarnings,
+        year: Number(year),
+        filter: productType || "All",
+        availableFilters: availableProductTypes.map((item) => item.productType),
+      },
+      message: "Monthly earnings fetched successfully.",
+    });
+  } catch (error) {
+    console.error("Error in getting all time earnings:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
