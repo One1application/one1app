@@ -20,7 +20,9 @@ const LockedContentPage = () => {
     setIsLoading(true);
     try {
       const response = await fetchPremiumDashboardData();
-      setPremiumContentData(response.data || []);
+      console.log(response.data.payload.premiumContent);
+      
+      setPremiumContentData(response.data.payload.premiumContent || []);
     } catch (error) {
       toast.error(
         error.response?.data?.message ||

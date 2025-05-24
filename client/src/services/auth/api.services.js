@@ -376,6 +376,14 @@ export const fetchPremiumContentById = async (contentId) => {
   );
   return response;
 };
+
+export const deletePremiumContentById = async (contentId) => {
+  const response = await servicesAxiosInstance.delete(
+    `/premium/delete-premium-content/${contentId}` // Matches the route in premiumRoutes.js
+  );
+  return response;
+};
+
 export const purchasePremiumContent = async (id, userId) => {
   const response = await servicesAxiosInstance.post(
     "/premium/create-premium-access", // Matches the route in premiumRoutes.js
@@ -459,4 +467,11 @@ export const deleteReview = async (id) => {
 export const getAllReviews = async() =>{
   const response = await servicesAxiosInstance.get("/review/allreviews")
   return response
+}
+
+export const fetchWalletChartData = async ({ fetchCat }) => {
+  const d = new Date()
+  const year = d.getFullYear();
+  const response = await servicesAxiosInstance.get(`/wallet/earnings?year=${year}&productType=${fetchCat}`)
+  return response;
 }
