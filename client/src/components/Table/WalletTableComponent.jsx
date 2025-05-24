@@ -12,6 +12,7 @@ const TableComponent = ({
   page,
   CurrentPage,
   TotalPages,
+  type
 }) => {
   
   const [filterText, setFilterText] = useState("");
@@ -21,11 +22,57 @@ const TableComponent = ({
   });
   const rowsPerPage = 10;
 
+  console.log(data);
+  
   // Ensure data is an array
   const safeData = Array.isArray(data) ? data : [];
   
   // Transform data into an array of arrays
-  const transformedData = safeData.map((row, idx) => [idx + 1 ,row.id, row.createdAt, row.amount, 'email', 'phone', row.productType, row.modeOfPayment, row.status]);
+
+  const transformedData = safeData.map((row, idx) => {
+    if (type === "transactions") {
+      return [
+        idx + 1,
+        row.id || "-",
+        // row.createdAt || "-",
+        row.createdAt ? new Date(row.createdAt).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }) : "-",
+        row.amount || "-",
+        row.email || "-",
+        row.phone || "-",
+        row.productType || "-",
+        row.modeOfPayment || "-",
+        row.status || "-"
+      ];
+    } else {
+      return [
+        idx + 1,
+        // row.createdAt || "-",
+        row.createdAt ? new Date(row.createdAt).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }) : "-",
+        row.amount || "-",
+        'email id',
+        'phone number',
+        row.modeOfWithdrawal || "-",
+        row.status || "-"
+      ];
+    }
+  });
+
+  console.log(transformedData);
+  
   // Processed Data: Filtered and Sorted
   const processedData = transformedData
     .filter((row) =>
@@ -78,9 +125,9 @@ const TableComponent = ({
   };
 
   // Handle Pagination
-  const handlePageChange = (_, page) => {
-    setCurrentPage(page);
-  };
+  // const handlePageChange = (_, page) => {
+  //   setCurrentPage(page);
+  // };
 
   // Determine the status color
   const getStatusClass = (status) => {
@@ -141,16 +188,18 @@ const TableComponent = ({
       {paginatedData.length > 0 ? (
         <div className="overflow-hidden rounded-lg border border-orange-500 bg-orange-300 shadow-lg">
           <table className="min-w-full divide-y divide-orange-500">
-            <thead className="bg-orange-300 ">
+            <thead className="bg-orange-300">
               <tr>
                 {headers.map((header, index) => (
                   <th
                     key={index}
                     onClick={() => handleSort(header)}
-                    className="px-1 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-orange-200 transition duration-300 group"
+                    className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-orange-200 transition duration-300 group"
                   >
                     <div className="flex items-center justify-between font-poppins ">
-                      {header}
+                      <div className="text-center w-full">
+                        {header}
+                      </div>
                       <Filter className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition" />
                     </div>
                   </th>
@@ -167,7 +216,7 @@ const TableComponent = ({
                   {row.map((cell, cellIndex) => (
                     <td
                       key={cellIndex}
-                      className={`px-1 py-4 whitespace-nowrap text-sm ${
+                      className={`px-1 py-4 whitespace-nowrap text-sm text-center ${
                         headers[cellIndex].toLowerCase() === "status"
                           ? getStatusClass(cell)
                           : "text-gray-700"
@@ -192,7 +241,7 @@ const TableComponent = ({
         <Pagination
           count={TotalPages}
           page={CurrentPage}
-          onChange={handlePageChange}
+          // onChange={handlePageChange}
           sx={{
             "& .MuiPaginationItem-root": {
               backgroundColor: "rgb(212 212 212)",

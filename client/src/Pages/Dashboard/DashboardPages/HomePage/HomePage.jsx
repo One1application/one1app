@@ -6,8 +6,10 @@ import {
   Map,
   MessageCircle,
   Share2,
+  MessageSquareQuoteIcon,
+  CircleX,
 } from "lucide-react";
- 
+
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { HomePageConfig } from "./homeConfig";
@@ -16,6 +18,7 @@ import CustomThemes from "../../../../Zustand/CustomThemes";
 import { useThemeSelectorStore } from "../../../../Zustand/ThemeStore.js";
 import ComingSoonSection from "../../../../ComingSoonSection/ComingSoonSection.jsx";
 import ReviewForm from "../../../../Review/ReviewForm.jsx";
+import { MessageCircleHeart } from "lucide-react";
 
 // Enhanced visitor data with Indian states
 const generateVisitorData = (count = 10) => {
@@ -400,10 +403,10 @@ const CommunitySection = ({ isLoading }) => {
 };
 
 const HomePage = () => {
-   
   const [visitorData, setVisitorData] = useState(generateVisitorData(8));
   const [isLoading] = useState(false);
   const { theme } = useThemeSelectorStore();
+  const [isOpen, setIsopen] = useState(false);
   useEffect(() => {
     const interval = setInterval(() => {
       setVisitorData((prevData) => {
@@ -425,7 +428,6 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, []);
 
- 
   const statsConfig = [
     {
       title: "Total Visitors",
@@ -457,13 +459,10 @@ const HomePage = () => {
     },
   ];
 
-    
-
-
   return (
-    <div className="min-h-screen flex flex-col relative" data-theme={theme}>
+    <div className="min-h-screen flex flex-col relative z-0" data-theme={theme}>
       <div className="flex-grow px-4 sm:px-6 lg:px-8 py-8">
-        <div className="w-full max-w-7xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto relative z-10">
           {/* Hero Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -477,7 +476,11 @@ const HomePage = () => {
               {HomePageConfig.noticeText}
             </p>
           </motion.div>
-          <CustomThemes />
+
+          <div className="absolute right-10 top-10 z-20">
+            <CustomThemes />
+          </div>
+
           {/* Live Updates Banner */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -506,13 +509,51 @@ const HomePage = () => {
           </div>
 
           {/* Map Component */}
-          <MapComponent data={visitorData} />
+          <div className="relative z-0">
+            <MapComponent data={visitorData} />
+          </div>
 
-          {/* Community Section */}
-          {/* <CommunitySection isLoading={isLoading} /> */}
-
+          {/* Coming Soon */}
           <ComingSoonSection />
-          <ReviewForm/>
+
+          {/* Review Modal */}
+          {isOpen && (
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+              <div className="relative bg-orange-400 rounded-xl p-6 shadow-lg w-full max-w-md overflow-hidden">
+                <button
+                  onClick={() => setIsopen(false)}
+                  className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
+                >
+                  <CircleX size={20} className="w-6 h-6 text-orange-50" />
+                </button>
+                <ReviewForm />
+              </div>
+            </div>
+          )}
+
+          {/* Floating Review Button */}
+          <motion.div
+            className="fixed bottom-5 right-5 z-40 cursor-pointer flex items-center justify-center"
+            onClick={() => setIsopen((prev) => !prev)}
+            animate={{ y: [0, -10, 0] }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "loop",
+              ease: "easeInOut",
+            }}
+          >
+            <motion.div
+              className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-red-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+              whileHover={{
+                scale: 1.1,
+                rotate: [0, 10, -10, 0],
+                transition: { duration: 0.5, type: "spring" },
+              }}
+            >
+              <MessageSquareQuoteIcon size={30} color="#ffffff" />
+            </motion.div>
+          </motion.div>
 
           {/* Footer Section */}
           <motion.div

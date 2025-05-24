@@ -1,15 +1,28 @@
 export const walletConfig = {
     allWithdrawalPage: {
         title: "All Withdrawal Amounts",
+        // sr. no , date, amount, user register email , phone, mode of payment, fetch name from kyc ) 
         tableHeader: [
+            'Sl No.',
             "Date & Time",
             "Amount",
+            "Email Id",
+            "Mobile Number",
             "Mode of Withdrawal",
             "Status"
         ],
         tableData: [
-            ["2022-01-01 10:00 AM", "500", "0000@ylb", "Success"],
-            ["2022-01-02 11:30 AM", "1000", "0000@jkl", "Pending"]
+            {
+                "id": "374881ea-9b72-44e4-885c-005121e443ce",
+                "walletId": "8253407e-6fe0-4591-b8de-22371cb5fb2d",
+                "amount": 100,
+                "modeOfWithdrawal": "bank",
+                "bankDetailsId": "20b33b38-a97c-4b6c-b36c-70743b2f0d1b",
+                "upiId": null,
+                "status": "SUCCESS",
+                "failedReason": null,
+                "createdAt": "2025-05-17T03:53:07.315Z"
+            }
         ]
         
     },

@@ -318,7 +318,7 @@ export const editCourseDetails = async (req, res) => {
 export const getCreatorCourses = async (req, res) => {
   try {
     const user = req.user;
-
+    
     if (user.role !== "Creator") {
       return res.status(400).json({
         success: false,
@@ -468,6 +468,9 @@ export const purchaseCourse = async (req, res) => {
       });
     }
 
+   
+    
+
     // const options = {
     //   amount: course.price * 100,
     //   currency: "INR",
@@ -477,6 +480,8 @@ export const purchaseCourse = async (req, res) => {
     // const order = await razorpay.orders.create(options);
    
     let totalAmount = course.price;
+    
+    
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)

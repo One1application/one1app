@@ -70,6 +70,7 @@ export const subscribeNewsletter = async (req, res) => {
 export const unsubscribeNewsletter = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log(email)
 
     if (!email) {
       return res.status(400).json({

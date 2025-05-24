@@ -7,6 +7,7 @@ import {
   getTelegramSubscriptions,
   getWebinarPurchases,
   selfIdentification,
+  updateUserProfile,
   userCustomers,
 } from "../controllers/userController.js";
 
@@ -21,3 +22,4 @@ userRouter.get("/purchases/courses", getCoursePurchases);
 userRouter.get("/purchases/premium-content", getPremiumContentAccess);
 userRouter.get("/purchases/paying-up", getPayingUpPurchases);
 userRouter.get("/purchases/telegram", getTelegramSubscriptions);
+userRouter.put("/update/profile" , updateUserProfile)

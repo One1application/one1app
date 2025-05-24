@@ -3,8 +3,66 @@ import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext.jsx";
 import { writeReview } from "../services/auth/api.services.js";
 import toast from "react-hot-toast";
+import { MessageSquareQuoteIcon, XIcon } from "lucide-react";
 
-const ReviewForm = () => {
+const ReviewButtonWithForm = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <motion.div
+        className="absolute bottom-5 right-5 cursor-pointer flex items-center justify-center"
+        onClick={() => setIsOpen(true)}
+        animate={{
+          y: [0, -10, 0],
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          repeatType: "loop",
+          ease: "easeInOut",
+        }}
+      >
+        <motion.div
+          className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-red-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+          whileHover={{
+            scale: 1.1,
+            rotate: [0, 10, -10, 0],
+            transition: { duration: 0.5, type: "spring" },
+          }}
+        >
+          <MessageSquareQuoteIcon size={30} color="#ffffff" />
+        </motion.div>
+      </motion.div>
+
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="relative w-full max-w-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl border border-gray-700 shadow-xl"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <XIcon size={24} />
+            </button>
+            <ReviewForm onClose={() => setIsOpen(false)} />
+          </motion.div>
+        </motion.div>
+      )}
+    </>
+  );
+};
+
+const ReviewForm = ({ onClose }) => {
   const { userDetails } = useAuth();
 
   const [rating, setRating] = useState(0);
@@ -32,8 +90,7 @@ const ReviewForm = () => {
       username: userDetails?.name,
       userimage:
         userDetails?.image ||
-        `https://api.dicebear.com/6.x/personas/svg?seed=${encodeURIComponent(
-          userDetails?.name
+        `https://robohash.org/${encodeURIComponent(userDetails?.name)}?set=set5
         )}`,
     });
 
@@ -42,18 +99,20 @@ const ReviewForm = () => {
 
     setIsSubmitting(false);
     setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    setTimeout(() => {
+      setSubmitted(false);
+      onClose();
+    }, 3000);
   };
 
   return (
-    <div className="flex justify-center items-center p-4">
+    <div className="flex justify-center items-center p-4 z-70 ">
       <motion.div
         className="w-full max-w-lg bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
       >
-        {/* Glow effects */}
         <div className="absolute -top-20 -left-20 w-64 h-64 bg-purple-600/10 rounded-full filter blur-3xl" />
         <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-600/10 rounded-full filter blur-3xl" />
 
@@ -158,7 +217,7 @@ const ReviewForm = () => {
                 className={`w-full py-3 px-6 text-base font-medium rounded-xl transition-all duration-300 flex items-center justify-center ${
                   rating === 0
                     ? "bg-gray-700/30 text-gray-500 cursor-not-allowed"
-                    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-indigo-500/30"
+                    : "bg-gradient-to-r from-orange-400 to-orange-600 text-white hover:shadow-indigo-500/30"
                 }`}
                 whileHover={rating === 0 ? {} : { scale: 1.02 }}
                 whileTap={rating === 0 ? {} : { scale: 0.98 }}

@@ -32,6 +32,7 @@
     "ngrok": "^5.0.0-beta.2",
     "node-cron": "^3.0.3",
     "node-telegram-bot-api": "^0.66.0",
+    "nodemailer": "^7.0.3",
     "nodemon": "^3.1.9",
     "pg-sdk-node": "https://phonepe.mycloudrepo.io/public/repositories/phonepe-pg-sdk-node/releases/v2/phonepe-pg-sdk-node.tgz",
     "razorpay": "^2.9.6",

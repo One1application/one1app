@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Loader } from "lucide-react";
 // import { Pinterest, YouTube } from "@mui/icons-material";
-import { Instagram, LinkedIn, Twitter } from "developer-icons";
+import { Facebook, Instagram, LinkedIn, Pinterest, Twitter, YouTube } from "developer-icons";
 import { subscribeNewsLetter } from "../../services/auth/api.services";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -25,10 +25,11 @@ const Footer = () => {
 
   const { theme } = useThemeSelectorStore();
   const socialLinks = [
-    // { icon: <YouTube size={20} />, href: "https://www.youtube.com/@OneApp8" },
-    // { icon: <Facebook size={20} />, href: "https://www.facebook.com" },
-    // { icon: <Pinterest size={20} />, href: "https://in.pinterest.com/one1app/" },
+    { icon: <YouTube size={20} />, href: "https://www.youtube.com/@OneApp8" },
+    { icon: <Facebook size={20} />, href: "https://www.facebook.com" },
+    { icon: <Pinterest size={20} />, href: "https://in.pinterest.com/one1app/" },
     { icon: <Twitter size={20} />, href: "https://www.twitter.com" },
+    
     {
       icon: <Instagram size={20} />,
       href: "https://www.instagram.com/one_1app/",
@@ -76,7 +77,7 @@ const Footer = () => {
                 <h3 className="text-sm font-semibold text-white mb-3">
                   Subscribe to our newsletter
                 </h3>
-              <CustomThemes/>
+              
                 <form className="flex gap-2" onSubmit={handleSubscribe}>
                   <input
                     type="email"

@@ -6,7 +6,7 @@ const CustomThemes = () => {
   const { theme, setTheme } = useThemeSelectorStore();
 
   return (
-    <div className="dropdown dropdown-end absolute right-4 top-4 z-40">
+    <div className="dropdown dropdown-end">
       <button
         tabIndex={0}
         className="btn btn-ghost btn-circle"

@@ -22,6 +22,12 @@ export async function createPayingUp(req, res) {
     console.log("req body", req.body);
 
     const user = req.user;
+    if(!req.user){
+       return res.status(400).json({
+        success: false,
+        message: "User not found.",
+       })
+    }
 
     await prisma.payingUp.create({
       data: {
@@ -127,6 +133,12 @@ export async function editPayingUpDetails(req, res) {
 export async function getCreatorPayingUps(req, res) {
   try {
     const user = req.user;
+    if(!user){
+      return res.status(403).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
 
     const payingUps = await prisma.user.findUnique({
       where: {
@@ -148,9 +160,16 @@ export async function getCreatorPayingUps(req, res) {
       },
     });
 
+    if(!payingUps){
+       return res.status(400).json({
+        success: false,
+        message: "No Paying Ups found.",
+       })
+    }
+
     return res.status(200).json({
       success: true,
-      message: "Fetched webinars successfully.",
+      message: "Fetched paying Ups successfully.",
       payload: {
         payingUps: payingUps?.createdPayingUps || [],
       },
@@ -181,6 +200,11 @@ export async function getPayingUpById(req, res) {
         id: payingUpId,
       },
       include: {
+         createdBy: {
+      select: {
+        name: true,  // Select the username field from the related User model
+      },
+    },
         payingUpTickets: user
           ? {
               where: {
@@ -202,15 +226,17 @@ export async function getPayingUpById(req, res) {
       user &&
       (payingUp.createdById === user.id || payingUp.payingUpTickets.length > 0);
 
+      const payload = {
+         payingUp: {
+          ...payingUp,
+          ...(sendFiles ? { files: payingUp.files } : { files: null }),
+         }
+      }
+
     return res.status(200).json({
       success: true,
       message: "Fetched payingUp successfully.",
-      payload: {
-        payingUp: {
-          ...payingUp,
-          ...(sendFiles ? { files: payingUp.files } : { files: null }),
-        },
-      },
+      payload,
     });
   } catch (error) {
     console.error("Error in fetching paying up.", error);
@@ -288,6 +314,7 @@ export async function purchasePayingUp(req, res) {
     // };
 
     const orderId = randomUUID();
+    console.log("orderId", orderId);
     
 
     let totalAmount = payingUp.paymentDetails.totalAmount;

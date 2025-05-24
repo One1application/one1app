@@ -185,20 +185,25 @@ export async function getWebinarById(req, res) {
       });
     }
 
-    const webinar = await prisma.webinar.findUnique({
-      where: {
-        id: webinarId,
+   const webinar = await prisma.webinar.findUnique({
+  where: {
+    id: webinarId,
+  },
+   include: {
+    createdBy: {
+      select: {
+        name: true,  // Select the username field from the related User model
       },
-      include: {
-        tickets: user
-          ? {
-              where: {
-                boughtById: user.id,
-              },
-            }
-          : false,
+    },
+    ...(user && {
+      tickets: {
+        where: {
+          boughtById: user.id,
+        },
       },
-    });
+    }),
+  },
+});
 
     if (!webinar) {
       return res.status(401).json({
@@ -317,6 +322,7 @@ export async function purchaseWebinar(req, res) {
     let totalAmount = webinar.amount;
 
     const orderId = randomUUID();
+    console.log("orderId", orderId);
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
