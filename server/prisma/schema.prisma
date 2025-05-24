@@ -378,8 +378,8 @@ model PremiumContentAccess {
   contentId      String
   purchasedAt    DateTime       @default(now())
   expiryDate     DateTime?
-  paymentId      String
-  orderId        String
+  paymentId      String?
+  orderId        String?
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   premiumContent PremiumContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
