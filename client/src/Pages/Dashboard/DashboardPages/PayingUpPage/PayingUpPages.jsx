@@ -12,6 +12,13 @@ import {
 } from "../../../../services/auth/api.services";
 import PageFooter from "./PageFooter";
 import { payingUpConfig } from "./payingUpConfig";
+import HeaderImage from "../../../../components/SellingPageShare/HeaderImage";
+import CreatorInfo from "../../../../components/SellingPageShare/CreatorInfo";
+import OverView from "../../../../components/SellingPageShare/OverView";
+import TestiMonials from "../../../../components/SellingPageShare/TestiMonials";
+import DropDown from "../../../../components/SellingPageShare/DropDown";
+import BackGroundCard from "../../../../components/SellingPageShare/BackGroundCard";
+import TextBox from "../../../../components/SellingPageShare/TextBox";
 
 const PayingUpPages = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -195,7 +202,81 @@ const PayingUpPages = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
+    <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll ">
+
+      <div className="px-5">
+        <HeaderImage imageurl={payingUpDetails.coverImage.value}/>
+        <CreatorInfo />
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+        OverView
+      </div>
+
+      <div className="px-10">
+        <OverView />
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        TestiMonials
+      </div>
+      <div className="flex w-full justify-center items-center">
+        <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+        </div>
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        Frequently Asked Questions
+      </div>
+      <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<DropDown />} />
+          <BackGroundCard childrenCom={<DropDown />} />
+          <BackGroundCard childrenCom={<DropDown />} />
+        </div>
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        Refunds Policies
+      </div>
+      <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+        </div>
+      </div>
+      
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        Terms & Conditions
+      </div>
+      <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+        </div>
+      </div>
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        Need Help
+      </div>
+      <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+        </div>
+      </div>
+
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        
+      </div>
       <PaymentSignUpModel
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}

@@ -12,6 +12,12 @@ import {
 } from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
 import { courseConfig } from "./courseConfig";
+import HeaderImage from "../../../../components/SellingPageShare/HeaderImage";
+import CreatorInfo from "../../../../components/SellingPageShare/CreatorInfo";
+import BackGroundCard from "../../../../components/SellingPageShare/BackGroundCard";
+import OverViewExploreData from "../../../../components/SellingPageShare/OverViewExploreData";
+import TestiMonials from "../../../../components/SellingPageShare/TestiMonials";
+import TextBox from "../../../../components/SellingPageShare/TextBox";
 
 const NewCourse = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -177,7 +183,100 @@ const NewCourse = () => {
 
   if (!courseDetails) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white">
+        <div className="px-5">
+          <div className="bg-gray-700"> 
+            <HeaderImage imageurl={'payingUpDetails.coverImage.value'}/>
+          </div>
+          <CreatorInfo />
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          About the Course
+        </div>
+
+        <div className="px-10">
+          <BackGroundCard childrenCom={<div className="mt-4 flex flex-col gap-8">
+                    <OverViewExploreData />
+                    <OverViewExploreData />
+                    <OverViewExploreData />
+                </div>}/>
+        </div>
+
+        <div className="flex justify-between">
+
+          <div className="flex flex-col w-full justify-center items-center">
+            <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+              Features
+            </div>
+
+            <div>
+              <BackGroundCard childrenCom={'data'}/>
+            </div>
+          </div>
+          <div className="flex flex-col w-full justify-center items-center">
+            <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+              Course Linked
+            </div>
+            <div>
+              <BackGroundCard childrenCom={'data'}/>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          Course Benefits
+        </div>
+        <div className="flex w-full justify-center items-center mb-5">
+          <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          Products
+        </div>
+        <div className="flex w-full justify-center items-center mb-5">
+          <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+              <BackGroundCard childrenCom={<div>Data</div>}/>
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          TestiMonials
+        </div>
+        <div className="flex w-full justify-center items-center">
+        <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+        </div>
+      </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          Frequently Asked Questions
+        </div>
+        <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+        </div>
+      </div>
         No course data available
       </div>
     );

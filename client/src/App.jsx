@@ -83,6 +83,7 @@ const App = () => {
           {/* Dashboard Pages */}
           <Route path="dashboard" element={<DashboardPage />}>
             <Route path="" element={<HomePage />} />
+            
             <Route path="mystore" element={<MyStorePage />} />
             <Route path="your-customers" element={<AudiencePage />} />
             <Route path="wallets" element={<WalletPage />} />
@@ -106,7 +107,8 @@ const App = () => {
           {/* Sub-Pages for App-Specific Routes */}
           <Route path="app" element={<Outlet />}>
             <Route path="create-webinar" element={<CreateWebinarPage />} />
-            <Route path="create-course" element={<CreateCoursePage />} />
+            {/* <Route path="create-course" element={<CreateCoursePage />} /> */}
+            <Route path="create-course" element={<NewCourse />} />
             <Route path="create-pay-up" element={<CreatePayUp />} />
             <Route path="create-telegram" element={<TelegramForm />} />
             <Route
