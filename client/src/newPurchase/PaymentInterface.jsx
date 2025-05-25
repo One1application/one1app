@@ -1,23 +1,39 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowLeft,
-  ChevronRight,
-  
-  Check,
-  X,
-  ShieldCheck,
-} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ArrowLeft, ChevronRight, Check, X, ShieldCheck } from "lucide-react";
+import { purchaseCourse, purchaseWebinar, purchasePayingUp } from "../services/auth/api.services";
+import toast from "react-hot-toast";
 
 export default function PaymentInterface() {
   // const [selectedPlan, setSelectedPlan] = useState("2000");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const productData = location.state || {};
   const [showCoupon, setShowCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [baseAmount] = useState(2000);
+  const [baseAmount, setBaseAmount] = useState(
+    Math.round(productData.baseAmount) || 0
+  );
+  const [productTitle, setProductTitle] = useState(
+    productData.title || "product"
+  );
+  const [productId, setProductId] = useState(productData.id || "");
 
+  const [courseType, setCourseType] = useState(productData.courseType || "");
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [isVerifyingCoupon, setIsVerifyingCoupon] = useState(false);
+
+  useEffect(() => {
+    if (location.state) {
+      setBaseAmount(Math.round(location.state.baseAmount) || 0);
+      setProductTitle(location.state.title || "product");
+      setProductId(location.state.id || "");
+      setCourseType(location.state.courseType || "");
+    }
+  }, [location.state]);
 
   const paymentMethods = [
     {
@@ -52,11 +68,73 @@ export default function PaymentInterface() {
     },
   ];
 
-  const applyCoupon = () => {
-    if (couponCode.trim() !== "") {
-      setDiscountAmount(50);
-      setDiscountApplied(true);
-      setShowCoupon(false);
+  const applyCoupon = async () => {
+    if (couponCode.trim() === "") {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+    setIsVerifyingCoupon(true);
+    try {
+      let res;
+      switch (courseType) {
+        case "course":
+          res = await purchaseCourse({
+            courseId: productId,
+            couponCode,
+            validateOnly: true,
+          });
+          if (res?.data?.success) {
+            setDiscountAmount(
+              parseFloat((res.data.payload.discountPrice || 0).toFixed(2))
+            );
+            setDiscountApplied(true);
+            setShowCoupon(false);
+            toast.success("Coupon apllied successfully");
+          }
+          break;
+
+        case "webinar":
+          res = await purchaseWebinar({
+            webinarId: productId,
+            couponCode,
+            validateOnly: true,
+          });
+          if (res?.data?.success) {
+            setDiscountAmount(
+              parseFloat((res.data.payload.discountPrice || 0).toFixed(2))
+            );
+            setDiscountApplied(true);
+            setShowCoupon(false);
+            toast.success("Coupon apllied successfully");
+          }
+          break;
+
+          case "payingUp": 
+           res = await purchasePayingUp({
+            payingUpId: productId,
+            couponCode,
+            validateOnly: true,
+           });
+            if (res?.data?.success) {
+            setDiscountAmount(
+              parseFloat((res.data.payload.discountPrice || 0).toFixed(2))
+            );
+            setDiscountApplied(true);
+            setShowCoupon(false);
+            toast.success("Coupon apllied successfully");
+          }
+          break;
+
+        default:
+          toast.error("Invalid Product type");
+          break;
+      }
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      toast.error(error.response?.data?.message || "Invalid coupon code");
+      setDiscountApplied(false);
+    } finally {
+      setIsVerifyingCoupon(false);
     }
   };
 
@@ -66,15 +144,63 @@ export default function PaymentInterface() {
     setDiscountApplied(false);
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     setShowPaymentModal(true);
+
+    try {
+      let res;
+
+      switch (courseType) {
+        case "course":
+          res = await purchaseCourse({
+            courseId: productId,
+            couponCode: discountApplied ? couponCode : null,
+          });
+          break;
+
+        case "webinar":
+          res = await purchaseWebinar({
+            webinarId: productId,
+            couponCode: discountApplied ? couponCode : null,
+          });
+          break;
+
+        case "payingUp":
+          res = await purchasePayingUp({
+             payingUpId: productId,
+            couponCode: discountApplied ? couponCode : null,
+          });
+          break;  
+
+        default:
+          toast.error("Invalid product type");
+          throw new Error("Invalid product type");
+      }
+
+      if (res?.data?.success && res?.data?.payload?.redirectUrl) {
+        setTimeout(() => {
+          window.location.href = res.data.payload.redirectUrl;
+        }, 1500);
+      } else {
+        toast.error("Payment initialization failed");
+        throw new Error("Payment initialization failed");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error("Failed to initialize payment");
+      setShowPaymentModal(false);
+    }
   };
 
   const closeModal = () => {
     setShowPaymentModal(false);
   };
 
-  const totalAmount = baseAmount - discountAmount;
+  const goBack = () => {
+    navigate(-1);
+  };
+
+  const totalAmount = Math.round(baseAmount - discountAmount);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
@@ -92,7 +218,7 @@ export default function PaymentInterface() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center p-6 border-b border-gray-700"
           >
-            <ArrowLeft className="w-6 h-6 text-white mr-3" />
+            <ArrowLeft className="w-6 h-6 text-white mr-3" onClick={goBack} />
             <span className="text-white text-lg font-medium">
               Make payment and get access now
             </span>
@@ -110,12 +236,15 @@ export default function PaymentInterface() {
                 <div className="flex items-center space-x-4 mb-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-purple-500 rounded-full flex items-center justify-center">
                     <div className="text-white text-sm font-bold">
-                      <img src="https://cdn.discordapp.com/attachments/1368862317877530684/1373680257604915311/App_Icon__2_-removebg-preview.png?ex=682fe82f&is=682e96af&hm=02e977524d5823772a79d7562cc8453193102de8440d67d4f7e5f8f13ffca8f3&" alt="" />
+                      <img
+                        src="https://cdn.discordapp.com/attachments/1368862317877530684/1373680257604915311/App_Icon__2_-removebg-preview.png?ex=682fe82f&is=682e96af&hm=02e977524d5823772a79d7562cc8453193102de8440d67d4f7e5f8f13ffca8f3&"
+                        alt=""
+                      />
                     </div>
                   </div>
                   <div>
                     <h3 className="text-white text-lg font-semibold">
-                      One1App payment
+                      {productTitle}
                     </h3>
                     <p className="text-gray-400 text-sm">By contiks one hub</p>
                   </div>
@@ -201,6 +330,7 @@ export default function PaymentInterface() {
                     Selected Plan
                   </span>
                   <motion.button
+                    onClick={goBack}
                     whileHover={{ scale: 1.05 }}
                     className="text-blue-400 text-sm hover:text-blue-300 mr-2"
                   >
@@ -213,7 +343,7 @@ export default function PaymentInterface() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex items-center justify-between"
                 >
-                  <span className="text-white">2000</span>
+                  <span className="text-white">{baseAmount}</span>
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -237,7 +367,7 @@ export default function PaymentInterface() {
                     <div className="flex items-center">
                       <Check className="w-5 h-5 text-green-400 mr-2" />
                       <span className="text-green-400">
-                        Coupon applied (-₹50)
+                        Coupon applied (-₹{discountAmount})
                       </span>
                     </div>
                     <button
@@ -265,7 +395,7 @@ export default function PaymentInterface() {
                         onClick={applyCoupon}
                         className="bg-purple-600 text-white px-4 py-2 rounded-r-lg hover:bg-purple-700 transition-colors"
                       >
-                        Apply
+                        {isVerifyingCoupon ? "Verifying..." : "Apply"}
                       </button>
                     </div>
                   </motion.div>

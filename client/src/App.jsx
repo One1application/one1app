@@ -46,6 +46,8 @@ import PrivacyPolicy from "./Pages/Welcome/Terms&Policy/PrivacyPolicy.jsx";
 import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
 import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
+import PaymentInterface from "./newPurchase/PaymentInterface.jsx";
+
 
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
@@ -71,10 +73,12 @@ const App = () => {
         <Route path="/about-us" element={<AboutUsPage />} />
         <Route path="/hiring" element={<HiringPage />} />
         <Route path="/contactus" element={<ContactUsPage />} />
+        
         <Route path="/publicpolicy" element={<PrivacyPolicy />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
         {/* <Route path="/refund-cancellation" element={<RefundCancellation />} /> */}
         <Route path="/TermCondition" element={<TermCondition />} />
+        
         <Route path="/payment/verify" element={<PaymentPage />} />
         {/* Authentication Pages */}
         <Route path="/signin" element={<SignInPage />} />
@@ -84,6 +88,7 @@ const App = () => {
           {/* Dashboard Pages */}
           <Route path="dashboard" element={<DashboardPage />}>
             <Route path="" element={<HomePage />} />
+            
             <Route path="mystore" element={<MyStorePage />} />
             <Route path="your-customers" element={<AudiencePage />} />
             <Route path="wallets" element={<WalletPage />} />
@@ -131,6 +136,7 @@ const App = () => {
             path="premium-content"
             element={<LockedContentDisplayPage />}
           />
+          <Route path = "payment" element={<PaymentInterface/>} />
 
           <Route path="course/lessons" element={<LessonsPage />} />
         </Route>

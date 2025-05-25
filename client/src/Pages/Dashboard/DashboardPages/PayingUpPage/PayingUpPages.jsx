@@ -12,8 +12,10 @@ import {
 } from "../../../../services/auth/api.services";
 import PageFooter from "./PageFooter";
 import { payingUpConfig } from "./payingUpConfig";
+import {useNavigate} from "react-router-dom"
 
 const PayingUpPages = () => {
+  const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(-1);
   const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +62,7 @@ const PayingUpPages = () => {
       }
     };
     payup();
-  }, [payingUpId]);
+  }, [payingUpId, currentUserId]);
 
   // useEffect(() => {
   //   const script = document.createElement("script");
@@ -103,8 +105,32 @@ const PayingUpPages = () => {
       localStorage.setItem("AuthToken", data.token);
       setShowSignupModal(false);
       toast.success("Signup successful!");
+      navigate("/app/payment", {
+        state: {
+          id: payingUpId,
+          title: payingUpDetails.title,
+          baseAmount: payingUpDetails.paymentDetails.totalAmount,
+          courseType: "payingUp",
+        },
+      });
     }
   };
+
+  const handleSuccessfulSignIn = (data) => {
+      if (data.token) {
+        localStorage.setItem("AuthToken", data.token);
+        setShowSigninModal(false);
+        toast.success("SignIn successful!");
+        navigate("/app/payment", {
+          state: {
+            id: payingUpId,
+            title: payingUpDetails.title,
+            baseAmount: payingUpDetails.paymentDetails.totalAmount,
+            courseType: "payingUp",
+          },
+        });
+      }
+    };
 
   const handleSwitchToSignin = () => {
     setShowSignupModal(false);
@@ -116,67 +142,67 @@ const PayingUpPages = () => {
     setShowSignupModal(true);
   };
 
-  const handlePayment = async () => {
-    try {
-      const response = await purchasePayingUp(payingUpId);
-      window.location.href = response.data.payload.redirectUrl;
-      // var options = {
-      //   key: import.meta.env.VITE_RAZORPAY_KEY,
-      //   amount: orderDetails.amount,
-      //   currency: orderDetails.currency,
-      //   name: "One App",
-      //   description: "Complete Your Purchase",
-      //   order_id: orderDetails.orderId,
-      //   handler: async function (response) {
-      //     console.log("payment");
-      //     const body = {
-      //       razorpay_order_id: response.razorpay_order_id,
-      //       razorpay_payment_id: response.razorpay_payment_id,
-      //       razorpay_signature: response.razorpay_signature,
-      //       webinarId: orderDetails.webinarId ? orderDetails.webinarId : null,
-      //       courseId: orderDetails.courseId ? orderDetails.courseId : null,
-      //       payingUpId: orderDetails.payingUpId
-      //         ? orderDetails.payingUpId
-      //         : null,
-      //     };
+  // const handlePayment = async () => {
+  //   try {
+  //     const response = await purchasePayingUp(payingUpId);
+  //     window.location.href = response.data.payload.redirectUrl;
+  //     // var options = {
+  //     //   key: import.meta.env.VITE_RAZORPAY_KEY,
+  //     //   amount: orderDetails.amount,
+  //     //   currency: orderDetails.currency,
+  //     //   name: "One App",
+  //     //   description: "Complete Your Purchase",
+  //     //   order_id: orderDetails.orderId,
+  //     //   handler: async function (response) {
+  //     //     console.log("payment");
+  //     //     const body = {
+  //     //       razorpay_order_id: response.razorpay_order_id,
+  //     //       razorpay_payment_id: response.razorpay_payment_id,
+  //     //       razorpay_signature: response.razorpay_signature,
+  //     //       webinarId: orderDetails.webinarId ? orderDetails.webinarId : null,
+  //     //       courseId: orderDetails.courseId ? orderDetails.courseId : null,
+  //     //       payingUpId: orderDetails.payingUpId
+  //     //         ? orderDetails.payingUpId
+  //     //         : null,
+  //     //     };
 
-      //     try {
-      //       setIsPaymentVerifying(true);
-      //       const response = await verifyPayment(body);
-      //       if (
-      //         response.data &&
-      //         response.data.payload &&
-      //         response.data.payload.urls
-      //       ) {
-      //         setPaymentUrl(response.data.payload.urls);
-      //         setIsPurchased(true);
-      //         toast.success("Payment successful!");
-      //       }
-      //     } catch (error) {
-      //       console.error("Error while verifying payment.", error);
-      //       toast("Payment Failed");
-      //     } finally {
-      //       setIsPaymentVerifying(false);
-      //     }
-      //   },
-      //   prefill: {
-      //     name: "John Doe",
-      //     email: "john.doe@example.com",
-      //     contact: "9999999999",
-      //   },
-      //   theme: {
-      //     color: "#F37254",
-      //   },
-      // };
+  //     //     try {
+  //     //       setIsPaymentVerifying(true);
+  //     //       const response = await verifyPayment(body);
+  //     //       if (
+  //     //         response.data &&
+  //     //         response.data.payload &&
+  //     //         response.data.payload.urls
+  //     //       ) {
+  //     //         setPaymentUrl(response.data.payload.urls);
+  //     //         setIsPurchased(true);
+  //     //         toast.success("Payment successful!");
+  //     //       }
+  //     //     } catch (error) {
+  //     //       console.error("Error while verifying payment.", error);
+  //     //       toast("Payment Failed");
+  //     //     } finally {
+  //     //       setIsPaymentVerifying(false);
+  //     //     }
+  //     //   },
+  //     //   prefill: {
+  //     //     name: "John Doe",
+  //     //     email: "john.doe@example.com",
+  //     //     contact: "9999999999",
+  //     //   },
+  //     //   theme: {
+  //     //     color: "#F37254",
+  //     //   },
+  //     // };
 
-      // const rzp1 = new window.Razorpay(options);
-      // rzp1.open();
-    } catch (error) {
-      if (!handleAuthError(error)) {
-        toast.error("Error during payment of paying up.", error);
-      }
-    }
-  };
+  //     // const rzp1 = new window.Razorpay(options);
+  //     // rzp1.open();
+  //   } catch (error) {
+  //     if (!handleAuthError(error)) {
+  //       toast.error("Error during payment of paying up.", error);
+  //     }
+  //   }
+  // };
 
   if (isLoading) {
     return (
@@ -208,6 +234,7 @@ const PayingUpPages = () => {
         handleClose={() => setShowSigninModal(false)}
         label="Email"
         value={userEmail}
+        onSuccessfulLogin={handleSuccessfulSignIn}
         onSave={handleSaveEmail}
         onSwitchToSignup={handleSwitchToSignup}
       />
@@ -227,7 +254,6 @@ const PayingUpPages = () => {
       {payingUpDetails.coverImage.isActive && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-          
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-orange-500/20">
               <img
                 src={payingUpDetails.coverImage.value}
@@ -235,27 +261,33 @@ const PayingUpPages = () => {
                 className="w-full h-[450px] max-md:h-auto object-cover"
               />
             </div>
-             <div className="bg-gradient-to-br from-orange-600/80 to-gray-900/60 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
-          <img
-            className="w-28 h-28 rounded-full border-4 border-white"
-            src="https://placehold.co/120x120"
-            alt="Creator Avatar"
-          />
-          <div>
-            <p className="text-xl text-gray-300">Created by</p>
-            <h2 className="text-3xl font-bold text-white">{payingUpDetails.createdBy.name}</h2>
-          </div>
-        </div>
-        <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-200">{payingUpDetails.title}</h1>
-          <p className="text-2xl font-semibold text-gray-300">Paying Up</p>
-        </div>
-      </div>
+            <div className="bg-gradient-to-br from-orange-600/80 to-gray-900/60 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-6">
+                <img
+                  className="w-28 h-28 rounded-full border-4 border-white"
+                  src="https://placehold.co/120x120"
+                  alt="Creator Avatar"
+                />
+                <div>
+                  <p className="text-xl text-gray-300">Created by</p>
+                  <h2 className="text-3xl font-bold text-white">
+                    {payingUpDetails.createdBy.name}
+                  </h2>
+                </div>
+              </div>
+              <div className="text-center">
+                <h1 className="text-4xl md:text-6xl font-bold text-gray-200">
+                  {payingUpDetails.title}
+                </h1>
+                <p className="text-2xl font-semibold text-gray-300">
+                  Paying Up
+                </p>
+              </div>
+            </div>
           </div>
         </section>
       )}
-      
+
       {/* Payment Data URL Section */}
       {isPurchased && paymentUrl && (
         <section className="py-10 px-4">
@@ -301,43 +333,39 @@ const PayingUpPages = () => {
       {/* Description Section */}
       <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">Overview</h2>
+          <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
+            Overview
+          </h2>
           <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500">
-              {payingUpDetails.category.isActive && (
-        <section className="py-10 px-4 ">
-          <div className="max-w-6xl mx-auto">
-           
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {payingUpDetails.category.categoryMetaData.map(
-                (category, index) => (
-                  <div
-                    key={index}
-                    className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20 bg-orange-500 text-center"
-                  >
-                    <span className="text-xl font-semibold text-white">
-                      {category}
-                    </span>
+            {payingUpDetails.category.isActive && (
+              <section className="py-10 px-4 ">
+                <div className="max-w-6xl mx-auto">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {payingUpDetails.category.categoryMetaData.map(
+                      (category, index) => (
+                        <div
+                          key={index}
+                          className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20 bg-orange-500 text-center"
+                        >
+                          <span className="text-xl font-semibold text-white">
+                            {category}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
-                )
-              )}
-            </div>
-          </div>
-        </section>
-      )}
+                </div>
+              </section>
+            )}
             <div
               className="text-gray-300 mb-6 leading-relaxed text-lg text-white"
               dangerouslySetInnerHTML={{ __html: payingUpDetails.description }}
             ></div>
-          
-        
-      </div>
+          </div>
         </div>
       </section>
 
-      
-
       {/* Categories Section */}
-      
 
       {/* Testimonials */}
       {payingUpDetails.testimonials.isActive && (
@@ -369,40 +397,43 @@ const PayingUpPages = () => {
               </button>
 
               {/* Testimonials Container */}
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-  {payingUpDetails.testimonials.testimonialsMetaData
-    .slice(
-      currentTestimonialIndex,
-      currentTestimonialIndex + itemsPerView
-    )
-    .map((testimonial, index) => (
-      <div
-        key={index}
-        className="p-6 bg-gradient-to-r from-orange-500 to-yellow-600 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white transform hover:scale-105"
-      >
-        <div className="flex flex-col items-center mb-6">
-          <img
-            src={testimonial.profilePic || oneApp}
-            alt={testimonial.name}
-            className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md"
-          />
-          <div className="text-center mt-4">
-            <h3 className="font-semibold text-white text-2xl">{testimonial.name}</h3>
-            <div className="flex justify-center mt-2 text-yellow-400 font-bold">
-              {[...Array(testimonial.rating)].map((_, i) => (
-                <Icons.Star
-                  key={i}
-                  className="w-5 h-5 fill-current"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-        <p className="text-gray-200 text-base text-center text-white font-semibold">{testimonial.statement}</p>
-      </div>
-    ))}
-</div>
-
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {payingUpDetails.testimonials.testimonialsMetaData
+                  .slice(
+                    currentTestimonialIndex,
+                    currentTestimonialIndex + itemsPerView
+                  )
+                  .map((testimonial, index) => (
+                    <div
+                      key={index}
+                      className="p-6 bg-gradient-to-r from-orange-500 to-yellow-600 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white transform hover:scale-105"
+                    >
+                      <div className="flex flex-col items-center mb-6">
+                        <img
+                          src={testimonial.profilePic || oneApp}
+                          alt={testimonial.name}
+                          className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md"
+                        />
+                        <div className="text-center mt-4">
+                          <h3 className="font-semibold text-white text-2xl">
+                            {testimonial.name}
+                          </h3>
+                          <div className="flex justify-center mt-2 text-yellow-400 font-bold">
+                            {[...Array(testimonial.rating)].map((_, i) => (
+                              <Icons.Star
+                                key={i}
+                                className="w-5 h-5 fill-current"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-gray-200 text-base text-center text-white font-semibold">
+                        {testimonial.statement}
+                      </p>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         </section>
@@ -520,21 +551,37 @@ const PayingUpPages = () => {
       </section>
 
       <section className="flex justify-center">
-       {!isPurchased ? ( <button
-              onClick={handlePayment}
-              disabled={!payingUpDetails.paymentDetails.paymentEnabled}
-              className="bg-orange-500 text-white py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed border border-white"
-            >
-              <span>{payingUpDetails.paymentDetails.paymentButtonTitle}</span>
-              {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
-              <span>{payingUpDetails.paymentDetails.totalAmount}</span>
-            </button>)
-            :
-           ( <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
-              <Icons.CheckCircle className="w-5 h-5 mr-2" />
-              <span>Already Purchased</span>
-            </div>)
-}
+        {!isPurchased ? (
+          <button
+            onClick={
+              () => {
+                if(!currentUserId) {
+                   setShowSignupModal(true);
+                }else{
+                  navigate("/app/payment", {
+                    state: {
+                      id: payingUpId,
+                      title: payingUpDetails.title,
+                      baseAmount: payingUpDetails.paymentDetails.totalAmount,
+                      courseType: "payingUp",
+                    },
+                  });
+                }
+              }
+            }
+            disabled={!payingUpDetails.paymentDetails.paymentEnabled}
+            className="bg-orange-500 text-white py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed border border-white"
+          >
+            <span>{payingUpDetails.paymentDetails.paymentButtonTitle}</span>
+            {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
+            <span>{payingUpDetails.paymentDetails.totalAmount}</span>
+          </button>
+        ) : (
+          <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
+            <Icons.CheckCircle className="w-5 h-5 mr-2" />
+            <span>Already Purchased</span>
+          </div>
+        )}
       </section>
 
       {/* Contact Footer */}

@@ -41,9 +41,9 @@ enum WithdrawalStatus {
 enum ProductType {
   WEBINAR
   COURSE
-  PAYING_UP
+  PAYINGUP
   TELEGRAM
-  PREMIUM_CONTENT
+  PREMIUMCONTENT
 }
 
 
@@ -86,6 +86,7 @@ model User {
   review                      Review[]
   otpStore                    OTPStore?
   otpStoreId                  String?                @unique
+  userImage                   String?
 }
 
 model OTPStore {
@@ -185,6 +186,7 @@ model Transaction {
   walletId        String
   wallet          Wallet            @relation(fields: [walletId], references: [id])
   amount          Float
+  amountAfterFee  Float?
   productId       String
   productType     ProductType
   buyerId         String

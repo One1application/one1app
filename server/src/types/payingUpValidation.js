@@ -65,11 +65,17 @@ export const payingUpSchema = z.object({
             })
         )
     }),
-    discount: z.array({
-        discountCode: z.string().optional(),
-        discountPercent: z.preprocess((val) => Number(val), z.number().min(1, "Discount percentage must be at least 1").max(99, "Discount percentage must not exceed 99")).optional(),
-        discountExpiry: z.string().refine((val) => !isNaN(Date.parse(val)), {
-          message: "End date must be a valid ISO date-time string",
-        })
-      }).optional()
+
+ discount: z.array(
+  z.object({
+    id: z.number().or(z.string().regex(/^\d+$/, "ID must be a numeric string")),
+    code: z.string(),
+    percent: z.number().or(z.string().transform(val => Number(val))),
+    expiry: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: "Expiry date must be a valid ISO date-time string",
+    })
+  })
+).optional()
+
+   
 })

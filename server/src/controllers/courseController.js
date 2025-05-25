@@ -102,6 +102,8 @@ export const createCourse = async (req, res) => {
           courseId: course.id,
         },
       });
+       
+      console.log("discount",course.discount);
 
       if (!saveCourseLessons) {
         throw new Error("Failed to save course lessons.");
@@ -153,6 +155,7 @@ export const editCourseDetails = async (req, res) => {
       language,
       coverImage,
       lessons,
+      discount
     } = req.body;
 
     const { courseId } = req.params;
@@ -196,6 +199,7 @@ export const editCourseDetails = async (req, res) => {
     if (coverImage) updatedData.coverImage = coverImage;
     if (lessons) updatedData.lessons = lessons;
     if (validity) updatedData.validity = validity;
+    if (discount) updatedData.discount = discount;
 
     const course = await prisma.course.update({
       where: {
@@ -232,6 +236,7 @@ export const editCourseDetails = async (req, res) => {
           ? updatedData.validity
           : courseExists.validity,
         faqs: updatedData.faqs ? updatedData.faqs : courseExists.faqs,
+        discount: updatedData.discount ? updatedData.discount : courseExists.discount
       },
     });
 
@@ -259,6 +264,7 @@ export const editCourseDetails = async (req, res) => {
       });
 
       console.log("saveCourseProducts", saveCourseProducts);
+       console.log("discount",course.discount.code);
 
       if (!saveCourseProducts)
         return res.status(400).json({
@@ -419,7 +425,7 @@ export const getCourseById = async (req, res) => {
 
 export const purchaseCourse = async (req, res) => {
   try {
-    const { courseId } = req.body;
+    const { courseId, couponCode, validateOnly } = req.body;
     const user = req.user;
 
     if (!courseId) {
@@ -433,6 +439,7 @@ export const purchaseCourse = async (req, res) => {
       where: {
         id: courseId,
       },
+      
       include: {
         products: true,
         lessons: true,
@@ -447,6 +454,7 @@ export const purchaseCourse = async (req, res) => {
       },
     });
 
+
     if (!course) {
       return res.status(404).json({
         success: false,
@@ -454,7 +462,10 @@ export const purchaseCourse = async (req, res) => {
       });
     }
 
-    if (course.purchasedBy.length > 0) {
+    console.log("course", course);
+
+   if(!validateOnly){
+     if (course.purchasedBy.length > 0) {
       return res.status(403).json({
         success: false,
         message: "You have already purchased the course.",
@@ -467,9 +478,46 @@ export const purchaseCourse = async (req, res) => {
         message: "You cannot purchase your own course.",
       });
     }
-
+   };
    
-    
+    let discountData=course?.discount || null
+    console.log("discountData", discountData);
+    let discountPrice=0;
+   if(couponCode && discountData && discountData.length > 0 ){
+       const matchingDiscount = discountData.find(
+          discount => discount.code === couponCode 
+       )
+       if(!matchingDiscount){
+        return res.status(400).json({
+          success: false,
+          message: "Invalid discount code.",
+        });
+       }
+       
+       const expiryDate = new Date(matchingDiscount.expiry);
+       const currentDate = new Date();
+       if(currentDate > expiryDate){
+           return res.status(400).json({
+               success: false,
+               message: "Coupon code has expired.",
+           })
+       }
+       discountPrice = parseInt(course.price*(Number(matchingDiscount.percent)/100).toFixed(2));
+   } 
+   let totalAmount = Math.round(course.price - discountPrice);
+   if(totalAmount < 0) totalAmount = 0;
+   console.log("totalAmount", totalAmount);
+   console.log("discountPrice", discountPrice);
+   if(validateOnly){
+     return res.status(200).json({
+        success: true,
+        payload: {
+          totalAmount,
+          discountPrice,
+          originalPrice: course.price
+        },
+      });
+   }
 
     // const options = {
     //   amount: course.price * 100,
@@ -479,25 +527,27 @@ export const purchaseCourse = async (req, res) => {
     const orderId = randomUUID();
     // const order = await razorpay.orders.create(options);
    
-    let totalAmount = course.price;
-    
     
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
       .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&courseId=${courseId}`
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&courseId=${courseId}&discountedPrice=${totalAmount}`
       )
       .build();
 
     const response = await PhonePayClient.pay(request);
+   
     return res.status(200).json({
       success: true,
       payload: {
         redirectUrl: response.redirectUrl,
+        totalAmount,
+        discountPrice,
       },
     });
+
   } catch (error) {
     console.error("Error in purchasing course.", error);
     return res.status(500).json({

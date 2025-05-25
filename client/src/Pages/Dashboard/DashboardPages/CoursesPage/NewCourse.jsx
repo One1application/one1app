@@ -4,14 +4,14 @@ import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import oneApp from "../../../../assets/oneapp.jpeg";
 import SigninModal from "../../../../components/Modal/SigninModal";
-import SignupModal from "../../../../components/Modal/SignupModal";
 import { useAuth } from "../../../../context/AuthContext";
 import {
   fetchCourse,
-  purchaseCourse,
+  
 } from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
 import { courseConfig } from "./courseConfig";
+import PaymentSignUpModel from "../../../../components/Modal/PaymentSignUpModel";
 
 const NewCourse = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -43,7 +43,16 @@ const NewCourse = () => {
 
   const handleSaveEmail = (email) => {
     setUserEmail(email);
+    setShowSignupModal(false);
     toast.success("Email updated successfully!");
+    navigate("/app/payment", {
+      state: {
+        id: courseId,
+        title: courseDetails.title,
+        baseAmount: courseDetails.price,
+        courseType: "course",
+      },
+    });
   };
 
   const handleSuccessfulSignup = (data) => {
@@ -51,6 +60,30 @@ const NewCourse = () => {
       localStorage.setItem("AuthToken", data.token);
       setShowSignupModal(false);
       toast.success("Signup successful!");
+      navigate("/app/payment", {
+        state: {
+          id: courseId,
+          title: courseDetails.title,
+          baseAmount: courseDetails.price,
+          courseType: "course",
+        },
+      });
+    }
+  };
+
+   const handleSuccessfulSignIn = (data) => {
+    if (data.token) {
+      localStorage.setItem("AuthToken", data.token);
+      setShowSigninModal(false);
+      toast.success("SignIn successful!");
+      navigate("/app/payment", {
+        state: {
+          id: courseId,
+          title: courseDetails.title,
+          baseAmount: courseDetails.price,
+          courseType: "course",
+        },
+      });
     }
   };
 
@@ -110,62 +143,62 @@ const NewCourse = () => {
     setCurrentTestimonialIndex((prevIndex) => Math.max(prevIndex - 1, 0));
   };
 
-  const handlePayment = async () => {
-    try {
-      const response = await purchaseCourse(courseId);
-      window.location.href = response.data.payload.redirectUrl;
-      // const orderDetails = response.data.payload;
+  // const handlePayment = async () => {
+  //   try {
+  //     const response = await purchaseCourse(courseId);
+  //     window.location.href = response.data.payload.redirectUrl;
+  //     // const orderDetails = response.data.payload;
 
-      // var options = {
-      //   "key": import.meta.env.VITE_RAZORPAY_KEY,
-      //   "amount": orderDetails.amount,
-      //   "currency": orderDetails.currency,
-      //   "name": "One App",
-      //   "description": "Complete Your Course Purchase",
-      //   "order_id": orderDetails.orderId,
-      //   "handler": async function (response) {
-      //     const body = {
-      //       razorpay_order_id: response.razorpay_order_id,
-      //       razorpay_payment_id: response.razorpay_payment_id,
-      //       razorpay_signature: response.razorpay_signature,
-      //       courseId: orderDetails.courseId
-      //     };
+  //     // var options = {
+  //     //   "key": import.meta.env.VITE_RAZORPAY_KEY,
+  //     //   "amount": orderDetails.amount,
+  //     //   "currency": orderDetails.currency,
+  //     //   "name": "One App",
+  //     //   "description": "Complete Your Course Purchase",
+  //     //   "order_id": orderDetails.orderId,
+  //     //   "handler": async function (response) {
+  //     //     const body = {
+  //     //       razorpay_order_id: response.razorpay_order_id,
+  //     //       razorpay_payment_id: response.razorpay_payment_id,
+  //     //       razorpay_signature: response.razorpay_signature,
+  //     //       courseId: orderDetails.courseId
+  //     //     };
 
-      //     try {
-      //       setIsPaymentVerifying(true);
-      //       const verifyResponse = await verifyPayment(body);
-      //       if (verifyResponse.data.success) {
-      //         setIsPurchased(true);
+  //     //     try {
+  //     //       setIsPaymentVerifying(true);
+  //     //       const verifyResponse = await verifyPayment(body);
+  //     //       if (verifyResponse.data.success) {
+  //     //         setIsPurchased(true);
 
-      //         toast.success("Payment successful!");
-      //         window.location.href = `/app/course/lessons?courseid=${courseId}`;
-      //       }
-      //     } catch (error) {
-      //       console.error("Error while verifying payment.", error);
-      //       toast.error("Payment Failed");
-      //     } finally {
-      //       setIsPaymentVerifying(false);
-      //     }
-      //   },
-      //   "prefill": {
-      //     "name": "John Doe",
-      //     "email": "john.doe@example.com",
-      //     "contact": "9999999999"
-      //   },
-      //   "theme": {
-      //     "color": "#F37254"
-      //   }
-      // };
+  //     //         toast.success("Payment successful!");
+  //     //         window.location.href = `/app/course/lessons?courseid=${courseId}`;
+  //     //       }
+  //     //     } catch (error) {
+  //     //       console.error("Error while verifying payment.", error);
+  //     //       toast.error("Payment Failed");
+  //     //     } finally {
+  //     //       setIsPaymentVerifying(false);
+  //     //     }
+  //     //   },
+  //     //   "prefill": {
+  //     //     "name": "John Doe",
+  //     //     "email": "john.doe@example.com",
+  //     //     "contact": "9999999999"
+  //     //   },
+  //     //   "theme": {
+  //     //     "color": "#F37254"
+  //     //   }
+  //     // };
 
-      // const rzp1 = new window.Razorpay(options);
-      // rzp1.open();
-    } catch (error) {
-      if (!handleAuthError(error)) {
-        console.log("Error during course payment.", error);
-        toast("Payment initiation failed");
-      }
-    }
-  };
+  //     // const rzp1 = new window.Razorpay(options);
+  //     // rzp1.open();
+  //   } catch (error) {
+  //     if (!handleAuthError(error)) {
+  //       console.log("Error during course payment.", error);
+  //       toast("Payment initiation failed");
+  //     }
+  //   }
+  // };
 
   if (isLoading) {
     return (
@@ -185,7 +218,7 @@ const NewCourse = () => {
 
   return (
     <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
-      <SignupModal
+      <PaymentSignUpModel
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
         onSuccessfulSignup={handleSuccessfulSignup}
@@ -196,6 +229,7 @@ const NewCourse = () => {
         open={showSigninModal}
         handleClose={() => setShowSigninModal(false)}
         label="Email"
+        onSuccessfulLogin={handleSuccessfulSignIn}
         value={userEmail}
         onSave={handleSaveEmail}
         onSwitchToSignup={handleSwitchToSignup}
@@ -219,7 +253,21 @@ const NewCourse = () => {
           </h1>
           {!isPurchased ? (
             <button
-              onClick={handlePayment}
+              onClick={() => {
+                //first check if user is authenticated
+                if (!currentUserId) {
+                  setShowSignupModal(true);
+                } else {
+                  navigate("/app/payment", {
+                    state: {
+                      id: courseId,
+                      title: courseDetails.title,
+                      baseAmount: courseDetails.price,
+                      courseType: "course",
+                    },
+                  });
+                }
+              }}
               className="bg-black text-orange-500 py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
             >
               <span>Enroll for</span>
