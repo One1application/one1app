@@ -73,6 +73,7 @@ export async function editWebinar(req, res) {
       endDateTime,
       coverImage,
       occurrence,
+      discount
     } = req.body;
 
     const user = req.user;
@@ -99,6 +100,7 @@ export async function editWebinar(req, res) {
         isOnline: isOnline,
         venue,
         link,
+        discount,
         occurrence,
         isPaid: isPaid,
         quantity: parseInt(quantity, 10),
@@ -108,6 +110,7 @@ export async function editWebinar(req, res) {
         createdById: user.id,
       },
     });
+    console.log("webinar.discount", discount);
 
     return res.status(200).json({
       success: true,
@@ -185,25 +188,25 @@ export async function getWebinarById(req, res) {
       });
     }
 
-   const webinar = await prisma.webinar.findUnique({
-  where: {
-    id: webinarId,
-  },
-   include: {
-    createdBy: {
-      select: {
-        name: true,  // Select the username field from the related User model
+    const webinar = await prisma.webinar.findUnique({
+      where: {
+        id: webinarId,
       },
-    },
-    ...(user && {
-      tickets: {
-        where: {
-          boughtById: user.id,
+      include: {
+        createdBy: {
+          select: {
+            name: true, // Select the username field from the related User model
+          },
         },
+        ...(user && {
+          tickets: {
+            where: {
+              boughtById: user.id,
+            },
+          },
+        }),
       },
-    }),
-  },
-});
+    });
 
     if (!webinar) {
       return res.status(401).json({
@@ -236,7 +239,7 @@ export async function getWebinarById(req, res) {
 
 export async function purchaseWebinar(req, res) {
   try {
-    const { webinarId } = req.body;
+    const { webinarId, couponCode, validateOnly } = req.body;
     const user = req.user;
 
     if (!webinarId) {
@@ -255,6 +258,7 @@ export async function purchaseWebinar(req, res) {
         isPaid: true,
         amount: true,
         quantity: true,
+        discount: true,
         amount: true,
         _count: {
           select: {
@@ -270,13 +274,6 @@ export async function purchaseWebinar(req, res) {
       },
     });
 
-    if (webinar.createdBy.id === user.id) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot purchase your own webinar.",
-      });
-    }
-
     if (!webinar) {
       return res.status(400).json({
         success: false,
@@ -284,18 +281,27 @@ export async function purchaseWebinar(req, res) {
       });
     }
 
-    if (webinar.tickets?.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already purchased the tickets.",
-      });
-    }
+    if (!validateOnly) {
+      if (webinar.createdBy.id === user.id) {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot purchase your own webinar.",
+        });
+      }
 
-    if (webinar._count.tickets.length >= webinar.quantity) {
-      return res.status(400).json({
-        success: false,
-        message: "No tickets available for this webinar.",
-      });
+      if (webinar.tickets?.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "You have already purchased the tickets.",
+        });
+      }
+
+      if (webinar._count.tickets.length >= webinar.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: "No tickets available for this webinar.",
+        });
+      }
     }
 
     if (!webinar.isPaid) {
@@ -312,14 +318,46 @@ export async function purchaseWebinar(req, res) {
       });
     }
 
-    // const option = {
-    //     amount: webinar.amount * 100,
-    //     currency: "INR",
-    //     payment_capture: 1
-    // }
+    const discountData = webinar?.discount || null;
+    console.log("discountData", discountData);
+    let discountPrice = 0;
+    if (couponCode && discountData && discountData.length > 0) {
+      const matchingDiscount = discountData.find(
+        (discount) => discount.code === couponCode
+      );
+      if (!matchingDiscount) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid coupon code.",
+        });
+      }
+
+      const expiryDate = new Date(matchingDiscount.expiry);
+      const currentDate = new Date();
+
+      if (expiryDate < currentDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Coupon code has expired.",
+        });
+      }
+
+      discountPrice = parseInt(webinar.amount*(Number(matchingDiscount.percent)/100).toFixed(2));
+    }
 
     // const order = await razorpay.orders.create(option);
-    let totalAmount = webinar.amount;
+    let totalAmount = Math.round(webinar.amount - discountPrice);
+    if(totalAmount < 0) totalAmount = 0;
+    if(validateOnly){
+       return res.status(200).json({
+          success: true,
+          payload: {
+            totalAmount,
+            discountPrice,
+            originalPrice: webinar.amount
+          }
+       });
+    }
 
     const orderId = randomUUID();
     console.log("orderId", orderId);
@@ -328,9 +366,11 @@ export async function purchaseWebinar(req, res) {
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
       .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&webinarId=${webinar.id}`
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&webinarId=${webinar.id}&discountedPrice=${totalAmount}`
       )
       .build();
+
+      console.log("request", request)
 
     const response = await PhonePayClient.pay(request);
     return res.status(200).json({
@@ -338,6 +378,8 @@ export async function purchaseWebinar(req, res) {
       payload: {
         redirectUrl: response.redirectUrl,
         webinarId: webinar.id,
+        totalAmount,
+        discountPrice,
       },
     });
   } catch (error) {

@@ -18,6 +18,7 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 
 import { adminRouter } from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middlewares/globalErrorHandler.js";
+import { productRouter } from "./routes/productRoutes.js";
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ app.use("/payment", paymentRouter);
 app.use("/newsletter", newsletterRoutes);
 app.use("/review", reviewRoutes);
 app.use("/admin", adminRouter);
+app.use('/product', productRouter)
 
 const Port = process.env.SERVER_PORT || 5000;
 

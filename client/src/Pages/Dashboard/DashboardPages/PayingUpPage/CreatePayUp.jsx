@@ -210,6 +210,18 @@ const CreatePayUp = () => {
       if (response.status === 200) {
         const payUpData = response.data.payload.payingUp;
         
+        let discountData = [];
+        if(payUpData.discount){
+          if (Array.isArray(payUpData.discount)) {
+          discountData = payUpData.discount;
+        } 
+        // If it's an object, make it an array with one element
+        else if (typeof payUpData.discount === 'object') {
+          discountData = [payUpData.discount];
+        }
+        }
+
+        setDiscounts(discountData)
         // Update form data with fetched data
         setFormData({
           title: payUpData.title || " ",

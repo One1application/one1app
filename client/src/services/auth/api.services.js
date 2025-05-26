@@ -189,7 +189,9 @@ export const fetchPrimaryPaymentInformation = async () => {
 };
 
 export const fetchTransactionsPage = async (data = 1) => {
-  const response = await servicesAxiosInstance.get(`/wallet/get-transactions?page=${data}`);
+  const response = await servicesAxiosInstance.get(
+    `/wallet/get-transactions?page=${data}`
+  );
   return response;
 };
 export const fetchWithdrawalPage = async (data) => {
@@ -219,12 +221,10 @@ export const fetchWebinar = async (id) => {
   return response;
 };
 
-export const purchaseWebinar = async (id) => {
+export const purchaseWebinar = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/webinar/purchase-webinar",
-    {
-      webinarId: id,
-    }
+    data
   );
   return response;
 };
@@ -247,10 +247,11 @@ export const fetchCourse = async (id) => {
   );
   return response;
 };
-export const purchaseCourse = async (id) => {
-  const response = await servicesAxiosInstance.post("/course/purchase-course", {
-    courseId: id,
-  });
+export const purchaseCourse = async (data) => {
+  const response = await servicesAxiosInstance.post(
+    "/course/purchase-course",
+    data
+  );
   return response;
 };
 
@@ -269,12 +270,10 @@ export const fetchPayingUp = async (id) => {
   return response;
 };
 
-export const purchasePayingUp = async (id) => {
+export const purchasePayingUp = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/payingup/purchase-payingup",
-    {
-      payingUpId: id,
-    }
+     data
   );
   return response;
 };
@@ -393,85 +392,79 @@ export const purchasePremiumContent = async (id, userId) => {
 };
 
 export const saveMpin = async (data) => {
-  const response = await servicesAxiosInstance.post(
-    "wallet/set-mpin",
-    data
-  );
+  const response = await servicesAxiosInstance.post("wallet/set-mpin", data);
   return response;
-}
+};
 
 export const verifyMpin = async (data) => {
-  const response = await servicesAxiosInstance.post(
-    "wallet/verify-mpin",
-    data
-  );
+  const response = await servicesAxiosInstance.post("wallet/verify-mpin", data);
   return response;
-}
+};
 
 export const sendWithdrawAmount = async (data) => {
-  const response = await servicesAxiosInstance.post(
-    "wallet/withdraw",
-    data
-  );
+  const response = await servicesAxiosInstance.post("wallet/withdraw", data);
   return response;
-}
+};
 
 export const subscribeNewsLetter = async (email) => {
-
   try {
-    const response = await servicesAxiosInstance.post("/newsletter/subscribe", { email })
+    const response = await servicesAxiosInstance.post("/newsletter/subscribe", {
+      email,
+    });
     if (response?.data?.subscription?.isSubscribed) {
-      toast.success("You have successfully subscribed to our newsletter")
+      toast.success("You have successfully subscribed to our newsletter");
     } else {
-      toast.success("Already Subscribed !")
+      toast.success("Already Subscribed !");
     }
   } catch (error) {
-    toast.error(error?.response?.data?.message || "Something went wrong")
+    toast.error(error?.response?.data?.message || "Something went wrong");
   }
-
-}
+};
 
 export const unSubscribeNewsLetter = async (email) => {
-  console.log(email)
+  console.log(email);
   try {
-    const response = await servicesAxiosInstance.put("/newsletter/unsubscribe", { email })
-
+    const response = await servicesAxiosInstance.put(
+      "/newsletter/unsubscribe",
+      { email }
+    );
   } catch (error) {
-    console.log(error.message || error)
+    console.log(error.message || error);
   }
-}
+};
 
 export const updateUserProfile = async (data) => {
-
   try {
-    const response = await servicesAxiosInstance.put("/self/update/profile", data)
+    const response = await servicesAxiosInstance.put(
+      "/self/update/profile",
+      data
+    );
     return response;
-
   } catch (error) {
-
-    toast.error(error?.response?.data?.message || "Something went wrong")
+    toast.error(error?.response?.data?.message || "Something went wrong");
     return error;
   }
-
-}
+};
 
 export const writeReview = async (data) => {
-  return await servicesAxiosInstance.post("/review/write", data)
-}
+  return await servicesAxiosInstance.post("/review/write", data);
+};
 
 export const deleteReview = async (id) => {
-  const response = await servicesAxiosInstance.delete(`/review/delete/${id}`)
-  return response
-}
+  const response = await servicesAxiosInstance.delete(`/review/delete/${id}`);
+  return response;
+};
 
 export const getAllReviews = async () => {
-  const response = await servicesAxiosInstance.get("/review/allreviews")
-  return response
-}
+  const response = await servicesAxiosInstance.get("/review/allreviews");
+  return response;
+};
 
 export const fetchWalletChartData = async ({ fetchCat }) => {
-  const d = new Date()
+  const d = new Date();
   const year = d.getFullYear();
-  const response = await servicesAxiosInstance.get(`/wallet/earnings?year=${year}&productType=${fetchCat}`)
+  const response = await servicesAxiosInstance.get(
+    `/wallet/earnings?year=${year}&productType=${fetchCat}`
+  );
   return response;
-}
+};

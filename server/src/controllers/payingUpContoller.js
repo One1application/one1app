@@ -22,18 +22,22 @@ export async function createPayingUp(req, res) {
     console.log("req body", req.body);
 
     const user = req.user;
-    if(!req.user){
-       return res.status(400).json({
+    if (!req.user) {
+      return res.status(400).json({
         success: false,
         message: "User not found.",
-       })
+      });
     }
-
+    const discountData = Array.isArray(discount)
+      ? discount
+      : discount
+      ? [discount]
+      : [];
     await prisma.payingUp.create({
       data: {
         title,
         description,
-        discount,
+        discount: discountData,
         paymentDetails,
         category,
         testimonials,
@@ -73,9 +77,16 @@ export async function editPayingUpDetails(req, res) {
       tacs,
       coverImage,
       files,
+      discount,
     } = req.body;
 
     const user = req.user;
+
+    const discountData = Array.isArray(discount)
+      ? discount
+      : discount
+      ? [discount]
+      : [];
 
     const payingUp = await prisma.payingUp.findUnique({
       where: {
@@ -105,6 +116,7 @@ export async function editPayingUpDetails(req, res) {
         coverImage,
         tacs,
         files,
+        discount: discountData,
       },
     });
 
@@ -133,7 +145,7 @@ export async function editPayingUpDetails(req, res) {
 export async function getCreatorPayingUps(req, res) {
   try {
     const user = req.user;
-    if(!user){
+    if (!user) {
       return res.status(403).json({
         success: false,
         message: "User not found.",
@@ -160,11 +172,11 @@ export async function getCreatorPayingUps(req, res) {
       },
     });
 
-    if(!payingUps){
-       return res.status(400).json({
+    if (!payingUps) {
+      return res.status(400).json({
         success: false,
         message: "No Paying Ups found.",
-       })
+      });
     }
 
     return res.status(200).json({
@@ -200,11 +212,11 @@ export async function getPayingUpById(req, res) {
         id: payingUpId,
       },
       include: {
-         createdBy: {
-      select: {
-        name: true,  // Select the username field from the related User model
-      },
-    },
+        createdBy: {
+          select: {
+            name: true, // Select the username field from the related User model
+          },
+        },
         payingUpTickets: user
           ? {
               where: {
@@ -226,12 +238,12 @@ export async function getPayingUpById(req, res) {
       user &&
       (payingUp.createdById === user.id || payingUp.payingUpTickets.length > 0);
 
-      const payload = {
-         payingUp: {
-          ...payingUp,
-          ...(sendFiles ? { files: payingUp.files } : { files: null }),
-         }
-      }
+    const payload = {
+      payingUp: {
+        ...payingUp,
+        ...(sendFiles ? { files: payingUp.files } : { files: null }),
+      },
+    };
 
     return res.status(200).json({
       success: true,
@@ -249,7 +261,7 @@ export async function getPayingUpById(req, res) {
 
 export async function purchasePayingUp(req, res) {
   try {
-    const { payingUpId } = req.body;
+    const { payingUpId, couponCode, validateOnly } = req.body;
     const user = req.user;
 
     if (!payingUpId) {
@@ -263,7 +275,9 @@ export async function purchasePayingUp(req, res) {
       where: {
         id: payingUpId,
       },
-      include: {
+      select: {
+        paymentDetails: true,
+        discount: true,
         payingUpTickets: {
           where: {
             boughtById: user.id,
@@ -272,7 +286,8 @@ export async function purchasePayingUp(req, res) {
         createdBy: true,
       },
     });
-
+    console.log("payingUp", payingUp);
+    console.log("discountData", payingUp.discount);
     if (!payingUp) {
       return res.status(400).json({
         success: false,
@@ -280,18 +295,20 @@ export async function purchasePayingUp(req, res) {
       });
     }
 
-    if (payingUp.createdById === user.id) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot purchase your own paying up.",
-      });
-    }
+    if (!validateOnly) {
+      if (payingUp.createdById === user.id) {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot purchase your own paying up.",
+        });
+      }
 
-    if (payingUp.payingUpTickets?.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already purchased the tickets.",
-      });
+      if (payingUp.payingUpTickets?.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "You have already purchased the tickets.",
+        });
+      }
     }
 
     if (!payingUp.paymentDetails.paymentEnabled) {
@@ -307,23 +324,57 @@ export async function purchasePayingUp(req, res) {
       });
     }
 
-    // const option = {
-    //   amount: payingUp.paymentDetails.totalAmount * 100,
-    //   currency: "INR",
-    //   payment_capture: 1,
-    // };
+    let discountData = payingUp.discount || null;
+    let discountPrice = 0;
+    if (couponCode && discountData && discountData.length > 0) {
+      const matchingDiscount = discountData.find(
+        (discount) => discount.code === couponCode
+      );
 
+      if (!matchingDiscount) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid coupon code.",
+        });
+      }
+
+      const expiryDate = new Date(matchingDiscount.expiry);
+      const currentDate = new Date();
+      if (currentDate > expiryDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Coupon code has expired.",
+        });
+      }
+
+      discountPrice = parseInt(
+        payingUp.paymentDetails.totalAmount *
+          (Number(matchingDiscount.percent) / 100).toFixed(2)
+      );
+    }
+
+    let totalAmount = Math.round(
+      payingUp.paymentDetails.totalAmount - discountPrice
+    );
+    if(totalAmount < 0) totalAmount = 0;
+    console.log("totalAmount", totalAmount);
+    if(validateOnly){
+         return res.status(200).json({
+            success: true,
+            payload: {
+              totalAmount,
+              discountPrice,
+              originalPrice: payingUp.paymentDetails.totalAmount
+            },
+          });
+       }
     const orderId = randomUUID();
     console.log("orderId", orderId);
-    
-
-    let totalAmount = payingUp.paymentDetails.totalAmount;
-
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
       .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&payingUpId=${payingUp.id}`
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&payingUpId=${payingUpId}&discountedPrice=${totalAmount}`
       )
       .build();
 
@@ -334,6 +385,9 @@ export async function purchasePayingUp(req, res) {
       payload: {
         redirectUrl: response.redirectUrl,
         payingUpId: payingUp.id,
+        totalAmount,
+        discountPrice,
+       
       },
     });
   } catch (error) {

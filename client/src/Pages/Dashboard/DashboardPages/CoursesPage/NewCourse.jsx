@@ -4,11 +4,10 @@ import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import oneApp from "../../../../assets/oneapp.jpeg";
 import SigninModal from "../../../../components/Modal/SigninModal";
-import SignupModal from "../../../../components/Modal/SignupModal";
 import { useAuth } from "../../../../context/AuthContext";
 import {
   fetchCourse,
-  purchaseCourse,
+
 } from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
 import { courseConfig } from "./courseConfig";
@@ -18,6 +17,7 @@ import BackGroundCard from "../../../../components/SellingPageShare/BackGroundCa
 import OverViewExploreData from "../../../../components/SellingPageShare/OverViewExploreData";
 import TestiMonials from "../../../../components/SellingPageShare/TestiMonials";
 import TextBox from "../../../../components/SellingPageShare/TextBox";
+import PaymentSignUpModel from "../../../../components/Modal/PaymentSignUpModel";
 
 const NewCourse = () => {
   const [openFaq, setOpenFaq] = useState(-1);
@@ -49,7 +49,16 @@ const NewCourse = () => {
 
   const handleSaveEmail = (email) => {
     setUserEmail(email);
+    setShowSignupModal(false);
     toast.success("Email updated successfully!");
+    navigate("/app/payment", {
+      state: {
+        id: courseId,
+        title: courseDetails.title,
+        baseAmount: courseDetails.price,
+        courseType: "course",
+      },
+    });
   };
 
   const handleSuccessfulSignup = (data) => {
@@ -57,6 +66,30 @@ const NewCourse = () => {
       localStorage.setItem("AuthToken", data.token);
       setShowSignupModal(false);
       toast.success("Signup successful!");
+      navigate("/app/payment", {
+        state: {
+          id: courseId,
+          title: courseDetails.title,
+          baseAmount: courseDetails.price,
+          courseType: "course",
+        },
+      });
+    }
+  };
+
+  const handleSuccessfulSignIn = (data) => {
+    if (data.token) {
+      localStorage.setItem("AuthToken", data.token);
+      setShowSigninModal(false);
+      toast.success("SignIn successful!");
+      navigate("/app/payment", {
+        state: {
+          id: courseId,
+          title: courseDetails.title,
+          baseAmount: courseDetails.price,
+          courseType: "course",
+        },
+      });
     }
   };
 
@@ -116,62 +149,62 @@ const NewCourse = () => {
     setCurrentTestimonialIndex((prevIndex) => Math.max(prevIndex - 1, 0));
   };
 
-  const handlePayment = async () => {
-    try {
-      const response = await purchaseCourse(courseId);
-      window.location.href = response.data.payload.redirectUrl;
-      // const orderDetails = response.data.payload;
+  // const handlePayment = async () => {
+  //   try {
+  //     const response = await purchaseCourse(courseId);
+  //     window.location.href = response.data.payload.redirectUrl;
+  //     // const orderDetails = response.data.payload;
 
-      // var options = {
-      //   "key": import.meta.env.VITE_RAZORPAY_KEY,
-      //   "amount": orderDetails.amount,
-      //   "currency": orderDetails.currency,
-      //   "name": "One App",
-      //   "description": "Complete Your Course Purchase",
-      //   "order_id": orderDetails.orderId,
-      //   "handler": async function (response) {
-      //     const body = {
-      //       razorpay_order_id: response.razorpay_order_id,
-      //       razorpay_payment_id: response.razorpay_payment_id,
-      //       razorpay_signature: response.razorpay_signature,
-      //       courseId: orderDetails.courseId
-      //     };
+  //     // var options = {
+  //     //   "key": import.meta.env.VITE_RAZORPAY_KEY,
+  //     //   "amount": orderDetails.amount,
+  //     //   "currency": orderDetails.currency,
+  //     //   "name": "One App",
+  //     //   "description": "Complete Your Course Purchase",
+  //     //   "order_id": orderDetails.orderId,
+  //     //   "handler": async function (response) {
+  //     //     const body = {
+  //     //       razorpay_order_id: response.razorpay_order_id,
+  //     //       razorpay_payment_id: response.razorpay_payment_id,
+  //     //       razorpay_signature: response.razorpay_signature,
+  //     //       courseId: orderDetails.courseId
+  //     //     };
 
-      //     try {
-      //       setIsPaymentVerifying(true);
-      //       const verifyResponse = await verifyPayment(body);
-      //       if (verifyResponse.data.success) {
-      //         setIsPurchased(true);
+  //     //     try {
+  //     //       setIsPaymentVerifying(true);
+  //     //       const verifyResponse = await verifyPayment(body);
+  //     //       if (verifyResponse.data.success) {
+  //     //         setIsPurchased(true);
 
-      //         toast.success("Payment successful!");
-      //         window.location.href = `/app/course/lessons?courseid=${courseId}`;
-      //       }
-      //     } catch (error) {
-      //       console.error("Error while verifying payment.", error);
-      //       toast.error("Payment Failed");
-      //     } finally {
-      //       setIsPaymentVerifying(false);
-      //     }
-      //   },
-      //   "prefill": {
-      //     "name": "John Doe",
-      //     "email": "john.doe@example.com",
-      //     "contact": "9999999999"
-      //   },
-      //   "theme": {
-      //     "color": "#F37254"
-      //   }
-      // };
+  //     //         toast.success("Payment successful!");
+  //     //         window.location.href = `/app/course/lessons?courseid=${courseId}`;
+  //     //       }
+  //     //     } catch (error) {
+  //     //       console.error("Error while verifying payment.", error);
+  //     //       toast.error("Payment Failed");
+  //     //     } finally {
+  //     //       setIsPaymentVerifying(false);
+  //     //     }
+  //     //   },
+  //     //   "prefill": {
+  //     //     "name": "John Doe",
+  //     //     "email": "john.doe@example.com",
+  //     //     "contact": "9999999999"
+  //     //   },
+  //     //   "theme": {
+  //     //     "color": "#F37254"
+  //     //   }
+  //     // };
 
-      // const rzp1 = new window.Razorpay(options);
-      // rzp1.open();
-    } catch (error) {
-      if (!handleAuthError(error)) {
-        console.log("Error during course payment.", error);
-        toast("Payment initiation failed");
-      }
-    }
-  };
+  //     // const rzp1 = new window.Razorpay(options);
+  //     // rzp1.open();
+  //   } catch (error) {
+  //     if (!handleAuthError(error)) {
+  //       console.log("Error during course payment.", error);
+  //       toast("Payment initiation failed");
+  //     }
+  //   }
+  // };
 
   if (isLoading) {
     return (
@@ -185,8 +218,8 @@ const NewCourse = () => {
     return (
       <div className="min-h-screen bg-black text-white">
         <div className="px-5">
-          <div className="bg-gray-700"> 
-            <HeaderImage imageurl={'payingUpDetails.coverImage.value'}/>
+          <div className="bg-gray-700">
+            <HeaderImage imageurl={'payingUpDetails.coverImage.value'} />
           </div>
           <CreatorInfo />
         </div>
@@ -197,10 +230,10 @@ const NewCourse = () => {
 
         <div className="px-10">
           <BackGroundCard childrenCom={<div className="mt-4 flex flex-col gap-8">
-                    <OverViewExploreData />
-                    <OverViewExploreData />
-                    <OverViewExploreData />
-                </div>}/>
+            <OverViewExploreData />
+            <OverViewExploreData />
+            <OverViewExploreData />
+          </div>} />
         </div>
 
         <div className="flex justify-between">
@@ -211,7 +244,7 @@ const NewCourse = () => {
             </div>
 
             <div>
-              <BackGroundCard childrenCom={'data'}/>
+              <BackGroundCard childrenCom={'data'} />
             </div>
           </div>
           <div className="flex flex-col w-full justify-center items-center">
@@ -219,7 +252,7 @@ const NewCourse = () => {
               Course Linked
             </div>
             <div>
-              <BackGroundCard childrenCom={'data'}/>
+              <BackGroundCard childrenCom={'data'} />
             </div>
           </div>
         </div>
@@ -229,13 +262,13 @@ const NewCourse = () => {
         </div>
         <div className="flex w-full justify-center items-center mb-5">
           <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
           </div>
         </div>
 
@@ -244,13 +277,13 @@ const NewCourse = () => {
         </div>
         <div className="flex w-full justify-center items-center mb-5">
           <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
-              <BackGroundCard childrenCom={<div>Data</div>}/>
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
           </div>
         </div>
 
@@ -258,25 +291,25 @@ const NewCourse = () => {
           TestiMonials
         </div>
         <div className="flex w-full justify-center items-center">
-        <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
-          <TestiMonials />
-          <TestiMonials />
-          <TestiMonials />
-          <TestiMonials />
-          <TestiMonials />
-          <TestiMonials />
+          <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+            <TestiMonials />
+            <TestiMonials />
+            <TestiMonials />
+            <TestiMonials />
+            <TestiMonials />
+            <TestiMonials />
+          </div>
         </div>
-      </div>
 
         <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
           Frequently Asked Questions
         </div>
         <div className="flex justify-center items-center">
-        <div className=" grid grid-cols-2  justify-center items-center gap-4">
-          <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
-          <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+          <div className=" grid grid-cols-2  justify-center items-center gap-4">
+            <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+            <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+          </div>
         </div>
-      </div>
         No course data available
       </div>
     );
@@ -284,7 +317,7 @@ const NewCourse = () => {
 
   return (
     <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
-      <SignupModal
+      <PaymentSignUpModel
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
         onSuccessfulSignup={handleSuccessfulSignup}
@@ -295,6 +328,7 @@ const NewCourse = () => {
         open={showSigninModal}
         handleClose={() => setShowSigninModal(false)}
         label="Email"
+        onSuccessfulLogin={handleSuccessfulSignIn}
         value={userEmail}
         onSave={handleSaveEmail}
         onSwitchToSignup={handleSwitchToSignup}
@@ -318,7 +352,21 @@ const NewCourse = () => {
           </h1>
           {!isPurchased ? (
             <button
-              onClick={handlePayment}
+              onClick={() => {
+                //first check if user is authenticated
+                if (!currentUserId) {
+                  setShowSignupModal(true);
+                } else {
+                  navigate("/app/payment", {
+                    state: {
+                      id: courseId,
+                      title: courseDetails.title,
+                      baseAmount: courseDetails.price,
+                      courseType: "course",
+                    },
+                  });
+                }
+              }}
               className="bg-black text-orange-500 py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
             >
               <span>Enroll for</span>
@@ -506,7 +554,7 @@ const NewCourse = () => {
                 disabled={
                   currentTestimonialIndex >=
                   courseDetails.testimonials.testimonialsMetaData.length -
-                    itemsPerView
+                  itemsPerView
                 }
                 className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-orange-500 p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -635,15 +683,13 @@ const NewCourse = () => {
                       <h3 className="text-xl font-semibold mb-3 text-white flex justify-between items-center cursor-pointer">
                         {faq.question}
                         <Icons.ChevronDown
-                          className={`w-5 h-5 transition-transform ${
-                            openFaq === index ? "rotate-180" : ""
-                          }`}
+                          className={`w-5 h-5 transition-transform ${openFaq === index ? "rotate-180" : ""
+                            }`}
                         />
                       </h3>
                       <div
-                        className={`overflow-hidden transition-all ${
-                          openFaq === index ? "block" : "hidden"
-                        }`}
+                        className={`overflow-hidden transition-all ${openFaq === index ? "block" : "hidden"
+                          }`}
                       >
                         <p className="text-gray-300">{faq.answer}</p>
                       </div>

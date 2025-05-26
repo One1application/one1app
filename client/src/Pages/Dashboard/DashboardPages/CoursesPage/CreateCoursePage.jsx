@@ -894,7 +894,7 @@ const NewCoursePage = () => {
           const response = await fetchCourse(courseId);
           if (response.status === 200) {
             const courseData = response.data.payload.course;
-
+            
             // Update form data with existing course data
             setFormData({
               title: courseData.title || "",
@@ -965,9 +965,19 @@ const NewCoursePage = () => {
             });
 
             // Set discounts if available
-            if (courseData.discounts && Array.isArray(courseData.discounts)) {
-              setDiscounts(courseData.discounts);
-            }
+           if(courseData.discount){
+             if(Array.isArray(courseData.discount)){
+              setDiscounts(courseData.discount)
+             }
+             else if(typeof courseData.discount === 'object'){
+               setDiscounts([{
+                  id: courseData.discount.id,
+                  code: courseData.discount.code || "",
+                  percent: courseData.discount.percent || "",
+                  expiry: courseData.discount.expiry || ""
+                }]);
+             }
+           }
 
             // Set image preview if available
             if (courseData.coverImage?.value) {
@@ -1110,7 +1120,7 @@ const NewCoursePage = () => {
       }
 
       // Add other transform properties
-      transformedData.discount = discounts;
+      transformedData.discount = discounts.length > 0 ? discounts : null;
       transformedData.lessons = {
         isActive: transformedData.lessons.isActive,
         lessonData: transformedData.lessons.lessonData,

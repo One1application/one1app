@@ -47,9 +47,9 @@ const CreateWebinarPage = () => {
   
   const [coupons, setCoupons] = useState([]);
   const [formData, setFormData] = useState({
-    discountCode: '',
-    discountPercent: '',
-    discountExpiry: ''
+    code: '',
+    percent: '',
+    expiry: ''
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -107,12 +107,12 @@ const CreateWebinarPage = () => {
         setSelectedOccurrence(webinarData.occurrence || "");
         
         // Load coupons if available
-        if (webinarData.coupons && webinarData.coupons.length > 0) {
-          setCoupons(webinarData.coupons.map(coupon => ({
+        if (webinarData.discount && webinarData.discount.length > 0) {
+          setCoupons(webinarData.discount.map(coupon => ({
             id: coupon.id,
-            discountCode: coupon.discountCode,
-            discountPercent: coupon.discountPercent,
-            discountExpiry: coupon.discountExpiry
+            code: coupon.code,
+            percent: coupon.percent,
+            expiry: coupon.expiry
           })));
         }
         
@@ -140,9 +140,9 @@ const CreateWebinarPage = () => {
     }
     
     setFormData({
-      discountCode: '',
-      discountPercent: '',
-      discountExpiry: ''
+       code: '',
+      percent: '',
+      expiry: ''
     });
     setShowDiscount(false);
   };
@@ -797,11 +797,11 @@ const CreateWebinarPage = () => {
                             Coupon Code:
                           </label>
                           <input
-                            value={formData.discountCode}
+                            value={formData.code}
                             onChange={(e) => {
                               setFormData((prev) => ({
                                 ...prev,
-                                discountCode: e.target.value,
+                                code: e.target.value,
                               }));
                             }}
                             type="text"
@@ -816,11 +816,11 @@ const CreateWebinarPage = () => {
                           </label>
                           <div className="relative">
                             <input
-                              value={formData.discountPercent}
+                              value={formData.percent}
                               onChange={(e) => {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  discountPercent: e.target.value,
+                                  percent: e.target.value,
                                 }));
                               }}
                               type="number"
@@ -840,11 +840,11 @@ const CreateWebinarPage = () => {
                             Expiry Date:
                           </label>
                           <input
-                            value={formData.discountExpiry}
+                            value={formData.expiry}
                             onChange={(e) => {
                               setFormData((prev) => ({
                                 ...prev,
-                                discountExpiry: e.target.value,
+                                expiry: e.target.value,
                               }));
                             }}
                             type="date"
@@ -868,9 +868,9 @@ const CreateWebinarPage = () => {
                           {coupons.map(coupon => (
                             <div key={coupon.id} className="flex items-center justify-between p-4 border border-orange-500/20 rounded-lg bg-black/40">
                               <div className="space-y-1">
-                                <div className="font-semibold text-orange-400">{coupon.discountCode}</div>
+                                <div className="font-semibold text-orange-400">{coupon.code}</div>
                                 <div className="text-sm text-orange-400/80">
-                                  {coupon.discountPercent}% off • Expires: {coupon.discountExpiry}
+                                  {coupon.percent}% off • Expires: {coupon.expiry}
                                 </div>
                               </div>
                               <div className="flex gap-2">

@@ -16,18 +16,18 @@ export default function PaymentPage() {
         const payingUpId = searchParams.get("payingUpId");
         const webinarId = searchParams.get("webinarId");
         const telegramId = searchParams.get("telegramId");
-        const contentId = searchParams.get("contentId");
-
+        const discountedPrice = searchParams.get("discountedPrice");
         const response = await verifyPayment({
           phonePayOrderId: merchantOrderId,
           courseId,
           payingUpId,
           webinarId,
           telegramId,
-          premiumContentId: contentId,
+          discountedPrice
+         
         });
 
-        if (response?.data.success) {
+        if (response?.data?.success) {
           setStatus("success");
 
           // Redirect to dashboard page after successful payment

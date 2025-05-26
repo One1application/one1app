@@ -110,6 +110,7 @@ export async function verifyPayment(req, res) {
       days,
       channelId,
       phonePayOrderId,
+      discountedPrice,
     } = req.body;
 
     const user = req.user;
@@ -182,11 +183,11 @@ export async function verifyPayment(req, res) {
             .json({ success: false, message: "Creator not found." });
         }
 
-        let amountToBeAdded = creator.amount;
+        let amountToBeAdded = discountedPrice ? parseFloat(discountedPrice) : creator.amount;
         if (creator.createdBy.creatorComission) {
           const commissionAmount =
             Math.round(
-              ((creator.createdBy.creatorComission * creator.amount) / 100) *
+              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
                 100
             ) / 100;
           const gstOnCommission =
@@ -225,7 +226,8 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(creator.amount),
+            amount: parseFloat(discountedPrice || creator.amount),
+            amountAfterFee: parseFloat(amountToBeAdded),
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: webinarId,
             buyerId: existingUser.id,
@@ -237,7 +239,7 @@ export async function verifyPayment(req, res) {
             walletId: creatorWallet.id,
           },
         });
-
+              console.log("transaction", transaction);
         if (!transaction) {
           return res.status(400).json({
             success: false,
@@ -247,6 +249,7 @@ export async function verifyPayment(req, res) {
       }
 
       if (courseId) {
+        
         const creator = await prisma.course.findFirst({
           where: {
             id: courseId,
@@ -261,7 +264,7 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amountToBeAdded = creator.price;
+        let amountToBeAdded = discountedPrice ? parseFloat(discountedPrice) : creator.price;
         console.log("amount", amountToBeAdded);
         if (creator.creator.creatorComission) {
           const commissionAmount =
@@ -302,7 +305,8 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(creator.price),
+            amount:  parseFloat(discountedPrice || creator.price),
+            amountAfterFee:parseFloat( amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: courseId,
@@ -343,14 +347,14 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amount = creator.paymentDetails.totalAmount;
+        let amount = discountedPrice ? parseFloat(discountedPrice) :  creator.paymentDetails.totalAmount;
 
         let amountToBeAdded = parseFloat(amount);
 
         if (creator.createdBy.creatorComission) {
           const commissionAmount =
             Math.round(
-              ((creator.createdBy.creatorComission * amount) / 100) * 100
+              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) * 100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -391,11 +395,12 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(creator.paymentDetails.totalAmount),
+            amount: parseFloat(discountedPrice || creator.paymentDetails.totalAmount),
+            amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: payingUpId,
-            productType: "PAYING_UP",
+            productType: "PAYINGUP",
             creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
             phonePayTransId:
@@ -476,10 +481,11 @@ export async function verifyPayment(req, res) {
         const transaction = await prisma.transaction.create({
           data: {
             amount: parseFloat(creator.unlockPrice),
+            amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: premiumContentId,
-            productType: "PREMIUM_CONTENT",
+            productType: "PREMIUMCONTENT",
             creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
             phonePayTransId:
@@ -562,6 +568,7 @@ export async function verifyPayment(req, res) {
         const transaction = await prisma.transaction.create({
           data: {
             amount: parseFloat(subscriptionDetails.cost),
+            amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: telegramId,
