@@ -28,16 +28,63 @@ export async function createPayingUp(req, res) {
         message: "User not found.",
       });
     }
-    const discountData = Array.isArray(discount)
-      ? discount
-      : discount
-      ? [discount]
-      : [];
+    // const discountData = Array.isArray(discount)
+    //   ? discount
+    //   : discount
+    //   ? [discount]
+    //   : [];
+
+    if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+    // Validate percentage
+    if (
+        d.percent !== undefined &&
+        d.percent !== null &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
     await prisma.payingUp.create({
       data: {
         title,
         description,
-        discount: discountData,
+        discount: discount,
         paymentDetails,
         category,
         testimonials,
@@ -100,6 +147,53 @@ export async function editPayingUpDetails(req, res) {
         message: "You are not authorized to edit this payingUp.",
       });
     }
+    
+    if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+    // Validate percentage
+    if (
+      d.percent !== undefined &&
+        d.percent !== null &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
 
     await prisma.payingUp.update({
       where: {
