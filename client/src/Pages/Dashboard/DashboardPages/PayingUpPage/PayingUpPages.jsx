@@ -12,7 +12,14 @@ import {
 } from "../../../../services/auth/api.services";
 import PageFooter from "./PageFooter";
 import { payingUpConfig } from "./payingUpConfig";
-import {useNavigate} from "react-router-dom"
+import HeaderImage from "../../../../components/SellingPageShare/HeaderImage";
+import CreatorInfo from "../../../../components/SellingPageShare/CreatorInfo";
+import OverView from "../../../../components/SellingPageShare/OverView";
+import TestiMonials from "../../../../components/SellingPageShare/TestiMonials";
+import DropDown from "../../../../components/SellingPageShare/DropDown";
+import BackGroundCard from "../../../../components/SellingPageShare/BackGroundCard";
+import TextBox from "../../../../components/SellingPageShare/TextBox";
+import { useNavigate } from "react-router-dom"
 
 const PayingUpPages = () => {
   const navigate = useNavigate();
@@ -117,20 +124,20 @@ const PayingUpPages = () => {
   };
 
   const handleSuccessfulSignIn = (data) => {
-      if (data.token) {
-        localStorage.setItem("AuthToken", data.token);
-        setShowSigninModal(false);
-        toast.success("SignIn successful!");
-        navigate("/app/payment", {
-          state: {
-            id: payingUpId,
-            title: payingUpDetails.title,
-            baseAmount: payingUpDetails.paymentDetails.totalAmount,
-            courseType: "payingUp",
-          },
-        });
-      }
-    };
+    if (data.token) {
+      localStorage.setItem("AuthToken", data.token);
+      setShowSigninModal(false);
+      toast.success("SignIn successful!");
+      navigate("/app/payment", {
+        state: {
+          id: payingUpId,
+          title: payingUpDetails.title,
+          baseAmount: payingUpDetails.paymentDetails.totalAmount,
+          courseType: "payingUp",
+        },
+      });
+    }
+  };
 
   const handleSwitchToSignin = () => {
     setShowSignupModal(false);
@@ -221,7 +228,81 @@ const PayingUpPages = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
+    <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll ">
+
+      <div className="px-5">
+        <HeaderImage imageurl={payingUpDetails.coverImage.value} />
+        <CreatorInfo />
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+        OverView
+      </div>
+
+      <div className="px-10">
+        <OverView />
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        TestiMonials
+      </div>
+      <div className="flex w-full justify-center items-center">
+        <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+          <TestiMonials />
+        </div>
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        Frequently Asked Questions
+      </div>
+      <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<DropDown />} />
+          <BackGroundCard childrenCom={<DropDown />} />
+          <BackGroundCard childrenCom={<DropDown />} />
+        </div>
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        Refunds Policies
+      </div>
+      <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+        </div>
+      </div>
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        Terms & Conditions
+      </div>
+      <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='normal' />} />
+        </div>
+      </div>
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+        Need Help
+      </div>
+      <div className="flex justify-center items-center">
+        <div className=" grid grid-cols-2  justify-center items-center gap-4">
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+          <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+        </div>
+      </div>
+
+
+      <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4 mt-12">
+
+      </div>
       <PaymentSignUpModel
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
@@ -389,7 +470,7 @@ const PayingUpPages = () => {
                 disabled={
                   currentTestimonialIndex >=
                   payingUpDetails.testimonials.testimonialsMetaData.length -
-                    itemsPerView
+                  itemsPerView
                 }
                 className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-orange-500 p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -456,15 +537,13 @@ const PayingUpPages = () => {
                   <h3 className="text-xl font-semibold mb-3 text-white flex justify-between items-center cursor-pointer">
                     {faq.question}
                     <Icons.ChevronDown
-                      className={`w-5 h-5 transition-transform ${
-                        openFaq === index ? "rotate-180" : ""
-                      }`}
+                      className={`w-5 h-5 transition-transform ${openFaq === index ? "rotate-180" : ""
+                        }`}
                     />
                   </h3>
                   <div
-                    className={`overflow-hidden transition-all ${
-                      openFaq === index ? "block" : "hidden"
-                    }`}
+                    className={`overflow-hidden transition-all ${openFaq === index ? "block" : "hidden"
+                      }`}
                   >
                     <p className="text-gray-300">{faq.answer}</p>
                   </div>
@@ -555,9 +634,9 @@ const PayingUpPages = () => {
           <button
             onClick={
               () => {
-                if(!currentUserId) {
-                   setShowSignupModal(true);
-                }else{
+                if (!currentUserId) {
+                  setShowSignupModal(true);
+                } else {
                   navigate("/app/payment", {
                     state: {
                       id: payingUpId,

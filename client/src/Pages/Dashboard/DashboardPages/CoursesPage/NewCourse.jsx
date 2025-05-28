@@ -7,10 +7,16 @@ import SigninModal from "../../../../components/Modal/SigninModal";
 import { useAuth } from "../../../../context/AuthContext";
 import {
   fetchCourse,
-  
+
 } from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
 import { courseConfig } from "./courseConfig";
+import HeaderImage from "../../../../components/SellingPageShare/HeaderImage";
+import CreatorInfo from "../../../../components/SellingPageShare/CreatorInfo";
+import BackGroundCard from "../../../../components/SellingPageShare/BackGroundCard";
+import OverViewExploreData from "../../../../components/SellingPageShare/OverViewExploreData";
+import TestiMonials from "../../../../components/SellingPageShare/TestiMonials";
+import TextBox from "../../../../components/SellingPageShare/TextBox";
 import PaymentSignUpModel from "../../../../components/Modal/PaymentSignUpModel";
 
 const NewCourse = () => {
@@ -71,7 +77,7 @@ const NewCourse = () => {
     }
   };
 
-   const handleSuccessfulSignIn = (data) => {
+  const handleSuccessfulSignIn = (data) => {
     if (data.token) {
       localStorage.setItem("AuthToken", data.token);
       setShowSigninModal(false);
@@ -210,7 +216,100 @@ const NewCourse = () => {
 
   if (!courseDetails) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white">
+        <div className="px-5">
+          <div className="bg-gray-700">
+            <HeaderImage imageurl={'payingUpDetails.coverImage.value'} />
+          </div>
+          <CreatorInfo />
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          About the Course
+        </div>
+
+        <div className="px-10">
+          <BackGroundCard childrenCom={<div className="mt-4 flex flex-col gap-8">
+            <OverViewExploreData />
+            <OverViewExploreData />
+            <OverViewExploreData />
+          </div>} />
+        </div>
+
+        <div className="flex justify-between">
+
+          <div className="flex flex-col w-full justify-center items-center">
+            <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+              Features
+            </div>
+
+            <div>
+              <BackGroundCard childrenCom={'data'} />
+            </div>
+          </div>
+          <div className="flex flex-col w-full justify-center items-center">
+            <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+              Course Linked
+            </div>
+            <div>
+              <BackGroundCard childrenCom={'data'} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          Course Benefits
+        </div>
+        <div className="flex w-full justify-center items-center mb-5">
+          <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          Products
+        </div>
+        <div className="flex w-full justify-center items-center mb-5">
+          <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+            <BackGroundCard childrenCom={<div>Data</div>} />
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          TestiMonials
+        </div>
+        <div className="flex w-full justify-center items-center">
+          <div className="grid md:grid-cols-4 grid-cols-1 sm:grid-cols-2 gap-8 justify-center items-center px-10">
+            <TestiMonials />
+            <TestiMonials />
+            <TestiMonials />
+            <TestiMonials />
+            <TestiMonials />
+            <TestiMonials />
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
+          Frequently Asked Questions
+        </div>
+        <div className="flex justify-center items-center">
+          <div className=" grid grid-cols-2  justify-center items-center gap-4">
+            <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+            <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+          </div>
+        </div>
         No course data available
       </div>
     );
@@ -455,7 +554,7 @@ const NewCourse = () => {
                 disabled={
                   currentTestimonialIndex >=
                   courseDetails.testimonials.testimonialsMetaData.length -
-                    itemsPerView
+                  itemsPerView
                 }
                 className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-orange-500 p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -584,15 +683,13 @@ const NewCourse = () => {
                       <h3 className="text-xl font-semibold mb-3 text-white flex justify-between items-center cursor-pointer">
                         {faq.question}
                         <Icons.ChevronDown
-                          className={`w-5 h-5 transition-transform ${
-                            openFaq === index ? "rotate-180" : ""
-                          }`}
+                          className={`w-5 h-5 transition-transform ${openFaq === index ? "rotate-180" : ""
+                            }`}
                         />
                       </h3>
                       <div
-                        className={`overflow-hidden transition-all ${
-                          openFaq === index ? "block" : "hidden"
-                        }`}
+                        className={`overflow-hidden transition-all ${openFaq === index ? "block" : "hidden"
+                          }`}
                       >
                         <p className="text-gray-300">{faq.answer}</p>
                       </div>

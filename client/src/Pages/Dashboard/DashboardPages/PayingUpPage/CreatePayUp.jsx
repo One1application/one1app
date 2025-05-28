@@ -839,12 +839,12 @@ const CreatePayUp = () => {
           formRef.current.reset();
           navigate("/dashboard/payingup");
         } else {
-          throw new Error("PayUp Page Creation Failed");
+          throw new Error(error.response?.data?.message);
         }
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error(isEditMode ? "PayUp Page Update Failed" : "PayUp Page Creation Failed");
+      toast.error(error.response?.data?.message);
     } finally {
       // Set loading state back to false
       setIsSubmitting(false);
