@@ -35,35 +35,32 @@ export const StoreProvider = ({ children }) => {
     dispatch({ type, payload });
   }, []);
 
-  const [AllTransaction, setAllTransaction] = useState([...transactions]); // for experimental purpose only remove this line for production
+  const [AllTransaction, setAllTransaction] = useState([]); // for experimental purpose only remove this line for production
   const [TotalTransactionPages, setTotalTransactionPages] = useState(1);
   const [CurrentTransactionPage, setCurrentTransactionPage] = useState(1);
 
-  const [AllWithdrawals, setAllWithdrawals] = useState([...withdrawals]); // for experimental purpose only remove this line for production
+  const [AllWithdrawals, setAllWithdrawals] = useState([]); // for experimental purpose only remove this line for production
   const [TotalWithdrawalPages, setTotalWithdrawalPages] = useState(1);
   const [CurrentWithdrawalPage, setCurrentWithdrawalPage] = useState(1);
 
-  const getNextTransactionPage = async () => {
-    const data = {
-      page: CurrentTransactionPage + 1,
-    };
+  const getNextTransactionPage = async (page) => {
+      const requestPage = page || CurrentTransactionPage;
     try {
-      const response = await fetchTransactionsPage(data);
-      console.log(response);
+      const response = await fetchTransactionsPage({ page: requestPage });
+      console.log("Transaction",response);
       if (response.status == 200) {
-        setAllTransaction(response.data.payload.transactions);
-        if (response.data.payload.transactions.length == 0) {
-          toast.warning("No more data to show");
-          return;
-        }
-        setCurrentTransactionPage(CurrentTransactionPage + 1);
+        setAllTransaction(response.data.payload.transactions|| []);
         setTotalTransactionPages(response.data.payload.totalPages || 1);
+        setCurrentTransactionPage(page);
+        return response.data.payload;
+        
       } else {
-        console.log("No more data to show");
-        toast.warning(response.data.message);
+        console.log("No more data to show", response.data.message);
+        return null;
       }
     } catch (error) {
       console.error(error);
+      return null;
     }
   };
   const getPreviousTransactionPage = async () => {
@@ -72,45 +69,47 @@ export const StoreProvider = ({ children }) => {
     };
     try {
       const response = await fetchTransactionsPage(data);
-      console.log(response);
-      if (response.status == 200) {
-        setAllTransaction(response.data.payload.transactions);
+      if (response?.status == 200) {
+        setAllTransaction(response?.data?.payload?.transactions);
+         setCurrentTransactionPage(CurrentTransactionPage - 1 || 1);
+        setTotalTransactionPages(response.data.payload.totalPages || 1);
         if (response.data.payload.transactions.length == 0) {
-          toast.warning("No more data to show");
+          toast.error("NO TRANSACTION FOUND");
           return;
         }
-        setCurrentTransactionPage(CurrentTransactionPage - 1 || 1);
-        setTotalTransactionPages(response.data.payload.totalPages || 1);
+       
       } else {
         console.log("No more data to show");
-        toast.warning(response.data.message);
+        toast.error(response.data.message);
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const getNextWithdrawalPage = async () => {
-    const data = {
-      page: CurrentWithdrawalPage + 1,
-    };
+  const getNextWithdrawalPage = async (page) => {
+    const requestPage = page || CurrentWithdrawalPage;
+    
     try {
-      const response = await fetchWithdrawalPage(data);
+      const response = await fetchWithdrawalPage({page: requestPage});
       console.log(response);
       if (response.status == 200) {
-        setAllWithdrawals(response.data.payload.withdrawals);
+        setAllWithdrawals(response.data.payload.withdrawals|| []);
         if (response.data.payload.withdrawals.length == 0) {
-          toast.warning("No more data to show");
+          toast.error("No more data to show");
           return;
         }
         setCurrentWithdrawalPage(CurrentWithdrawalPage + 1);
         setTotalWithdrawalPages(response.data.payload.totalPages || 1);
+        return response.data.payload;
       } else {
         console.log("No more data to show");
-        toast.warning(response.data.message);
+        return null;
+       
       }
     } catch (error) {
       console.error(error);
+      return null;
     }
   };
   const getPreviousWithdrawalPage = async () => {
@@ -149,12 +148,14 @@ export const StoreProvider = ({ children }) => {
         setHeader: (data) => updateState(SET_HEADER, data),
         setLinks: (data) => updateState(SET_LINKS, data),
         AllTransaction,
+        setAllTransaction,
         CurrentTransactionPage,
         TotalTransactionPages,
         getNextTransactionPage,
         getPreviousTransactionPage,
         AllWithdrawals,
         CurrentWithdrawalPage,
+        setAllWithdrawals,
         TotalWithdrawalPages,
         getNextWithdrawalPage,
         getPreviousWithdrawalPage,

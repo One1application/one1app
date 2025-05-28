@@ -183,7 +183,9 @@ export async function verifyPayment(req, res) {
             .json({ success: false, message: "Creator not found." });
         }
 
-        let amountToBeAdded = discountedPrice ? parseFloat(discountedPrice) : creator.amount;
+        let amountToBeAdded = discountedPrice
+          ? parseFloat(discountedPrice)
+          : creator.amount;
         if (creator.createdBy.creatorComission) {
           const commissionAmount =
             Math.round(
@@ -239,7 +241,7 @@ export async function verifyPayment(req, res) {
             walletId: creatorWallet.id,
           },
         });
-              console.log("transaction", transaction);
+        console.log("transaction", transaction);
         if (!transaction) {
           return res.status(400).json({
             success: false,
@@ -249,7 +251,6 @@ export async function verifyPayment(req, res) {
       }
 
       if (courseId) {
-        
         const creator = await prisma.course.findFirst({
           where: {
             id: courseId,
@@ -264,7 +265,9 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amountToBeAdded = discountedPrice ? parseFloat(discountedPrice) : creator.price;
+        let amountToBeAdded = discountedPrice
+          ? parseFloat(discountedPrice)
+          : creator.price;
         console.log("amount", amountToBeAdded);
         if (creator.creator.creatorComission) {
           const commissionAmount =
@@ -305,8 +308,8 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount:  parseFloat(discountedPrice || creator.price),
-            amountAfterFee:parseFloat( amountToBeAdded),
+            amount: parseFloat(discountedPrice || creator.price),
+            amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: courseId,
@@ -347,14 +350,17 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amount = discountedPrice ? parseFloat(discountedPrice) :  creator.paymentDetails.totalAmount;
+        let amount = discountedPrice
+          ? parseFloat(discountedPrice)
+          : creator.paymentDetails.totalAmount;
 
         let amountToBeAdded = parseFloat(amount);
 
         if (creator.createdBy.creatorComission) {
           const commissionAmount =
             Math.round(
-              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) * 100
+              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
+                100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -395,7 +401,9 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(discountedPrice || creator.paymentDetails.totalAmount),
+            amount: parseFloat(
+              discountedPrice || creator.paymentDetails.totalAmount
+            ),
             amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
@@ -432,7 +440,9 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amountToBeAdded = creator.unlockPrice;
+        let amountToBeAdded = discountedPrice
+          ? parseFloat(discountedPrice)
+          : creator.unlockPrice;
         if (creator.createdBy.creatorComission) {
           const commissionAmount =
             Math.round(
@@ -480,7 +490,7 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(creator.unlockPrice),
+            amount: parseFloat(discountedPrice || creator.unlockPrice),
             amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
@@ -1619,7 +1629,7 @@ export async function withdrawAmount(req, res) {
 export async function getTransactions(req, res) {
   try {
     const user = req.user;
-    const { page = 1, status, buyerId } = req.query;
+    const { page = 1, status, buyerId, limit=10, sortBy="createdAt", sortOrder='desc' } = req.query;
 
     const pageNumber = parseInt(page);
     if (isNaN(pageNumber) || pageNumber < 1) {
@@ -1629,7 +1639,7 @@ export async function getTransactions(req, res) {
       });
     }
 
-    const pageSize = 10;
+    const pageSize = parseInt(limit);
 
     const userExists = await prisma.user.findUnique({
       where: {
@@ -1674,13 +1684,12 @@ export async function getTransactions(req, res) {
       where: whereClause,
     });
 
-    const totalPages = Math.ceil(totalTransactions / pageSize);
-
-    if (pageNumber > totalPages && totalPages !== 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid page number" });
-    }
+    const totalPages = Math.max(1, Math.ceil(totalTransactions / pageSize));
+    const effectivePage = Math.min(pageNumber, totalPages);
+     const validSortFields = ['createdAt', 'amount', 'status', 'productType'];
+    const actualSortBy = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const actualSortOrder = sortOrder.toLowerCase() === 'asc' ? 'asc' : 'desc';
+   
 
     const transactions = await prisma.transaction.findMany({
       where: whereClause,
@@ -1692,8 +1701,11 @@ export async function getTransactions(req, res) {
           },
         },
       },
-      skip: (pageNumber - 1) * pageSize,
+       skip: (effectivePage - 1) * pageSize,
       take: pageSize,
+      orderBy: {
+        [actualSortBy]: actualSortOrder
+      }
     });
 
     return res.status(200).json({
@@ -1701,6 +1713,8 @@ export async function getTransactions(req, res) {
       payload: {
         transactions: transactions.length === 0 ? [] : transactions,
         totalPages,
+        currentPage: effectivePage,
+        totalItems: totalTransactions
       },
       message: "Fetched transactions successfully.",
     });
@@ -1719,6 +1733,7 @@ export async function getWithdrawals(req, res) {
 
     const {
       page = 1,
+      limit=10,
       upiId,
       bankDetailsId,
       status,
@@ -1731,7 +1746,7 @@ export async function getWithdrawals(req, res) {
       sortOrder = "desc",
     } = req.query;
 
-    const pageSize = 10;
+    const pageSize = parseInt(limit);
     const pageNumber = parseInt(page);
 
     if (isNaN(pageNumber) || pageNumber < 1) {
@@ -1825,7 +1840,8 @@ export async function getWithdrawals(req, res) {
       where: whereClause,
     });
 
-    const totalPages = Math.ceil(totalWithdrawals / pageSize);
+    const totalPages = Math.max(1, Math.ceil(totalWithdrawals / pageSize));
+    const effectivePage = Math.min(pageNumber, totalPages);
 
     if (pageNumber > totalPages && totalPages !== 0) {
       return res
@@ -1877,7 +1893,7 @@ export async function getWithdrawals(req, res) {
       payload: {
         withdrawals: withdrawals.length === 0 ? [] : withdrawals,
         totalPages,
-        currentPage: pageNumber,
+        currentPage: effectivePage,
         totalWithdrawals,
         totalWithdrawalAmount: totalWithdrawalAmount._sum.amount || 0,
         filterOptions,
@@ -2663,7 +2679,7 @@ export async function getAllTimeEarnings(req, res) {
     const transactions = await prisma.transaction.findMany({
       where: whereConditions,
       select: {
-        amount: true,
+        amountAfterFee: true,
         createdAt: true,
         productType: true,
       },
@@ -2690,7 +2706,7 @@ export async function getAllTimeEarnings(req, res) {
     // Process transactions to calculate monthly earnings
     transactions.forEach((transaction) => {
       const month = transaction.createdAt.getMonth(); // 0-11 for Jan-Dec
-      monthlyEarnings[month].earnings += Number(transaction.amount);
+      monthlyEarnings[month].earnings += Number(transaction.amountAfterFee);
     });
 
     // Get product type breakdown
@@ -2704,7 +2720,7 @@ export async function getAllTimeEarnings(req, res) {
         productBreakdown[prodType] = JSON.parse(JSON.stringify(defaultEr));
       }
 
-      productBreakdown[prodType][month].earnings += Number(transaction.amount);
+      productBreakdown[prodType][month].earnings += Number(transaction.amountAfterFee);
     });
 
     // Get available product types for filtering UI

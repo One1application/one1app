@@ -188,15 +188,37 @@ export const fetchPrimaryPaymentInformation = async () => {
   return response;
 };
 
-export const fetchTransactionsPage = async (data = 1) => {
+export const fetchTransactionsPage = async (data) => {
   const response = await servicesAxiosInstance.get(
-    `/wallet/get-transactions?page=${data}`
+    `/wallet/get-transactions`, {
+       params: {
+        page: data?.page || 1,
+        limit: data?.limit || 10,
+        sortBy: data?.sortBy || 'createdAt',
+        sortOrder: data?.sortOrder || 'desc',
+        status: data?.status,
+        buyerId: data?.buyerId
+      }
+    }
   );
   return response;
 };
 export const fetchWithdrawalPage = async (data) => {
   const response = await servicesAxiosInstance.get("/wallet/get-withdrawals", {
-    params: data,
+    params: {
+       page: data?.page || 1,
+      limit: data?.limit || 10,
+      upiId: data?.upiId,
+      bankDetailsId: data?.bankDetailsId,
+      status: data?.status,
+      modeOfWithdrawal: data?.modeOfWithdrawal,
+      startDate: data?.startDate,
+      endDate: data?.endDate,
+      minAmount: data?.minAmount,
+      maxAmount: data?.maxAmount,
+      sortBy: data.sortBy || "createdAt",
+      sortOrder: data.sortOrder || "desc",
+    }
   });
   return response;
 };
@@ -383,10 +405,10 @@ export const deletePremiumContentById = async (contentId) => {
   return response;
 };
 
-export const purchasePremiumContent = async (id, userId) => {
+export const purchasePremiumContent = async (data) => {
   const response = await servicesAxiosInstance.post(
-    "/premium/purchase-premium-content", // Matches the route in premiumRoutes.js
-    { contentId: id } // Send the ID and userId in the request body
+    "/premium/purchase-premium-content", 
+    data
   );
   return response;
 };
