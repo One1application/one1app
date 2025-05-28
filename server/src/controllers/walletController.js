@@ -1696,7 +1696,7 @@ export async function getTransactions(req, res) {
       include: {
         buyer: {
           select: {
-            name: true,
+            phone: true,
             email: true,
           },
         },

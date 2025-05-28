@@ -27,74 +27,34 @@ const TableComponent = ({
   // Ensure data is an array
   const safeData = Array.isArray(data) ? data : [];
 
-  // const renderCell = (row, header) => {
-  //   const key = typeof header === "object" ? header.key : header;
+  // Toggle Transaction ID display
+  const [expandedTransactionIds, setExpandedTransactionIds] = useState({});
 
-  //   if (row[key] === undefined || row[key] === null) {
-  //     return "-";
-  //   }
-
-  //   switch (key) {
-  //     case "slNo":
-  //       return row.slNo;
-
-  //     case "transactionId":
-  //       return row.transactionId;
-
-  //     case "dateTime":
-  //       return row.createdAt;
-
-  //     case "amount":
-  //       return row.amount;
-
-  //     case "emailId":
-  //       return row.buyer.email;
-
-  //     case "name":
-  //       return row.name;
-
-  //     case "amountAfterFee":
-  //       return row.amountAfterFee;
-
-  //     case "product":
-  //       return row.productType;
-
-  //     case "modeOfPayment":
-  //       return row.modeOfPayment;
-
-  //     case "status":
-  //       const status = row.status || "PENDING";
-  //       return (
-  //         <span
-  //           className={`px-2 py-1 rounded text-xs ${
-  //             status === "COMPLETED" || status === "SUCCESS"
-  //               ? "bg-green-100 text-green-800"
-  //               : status === "FAILED" || status === "FAILURE"
-  //               ? "bg-red-100 text-red-800"
-  //               : "bg-yellow-100 text-yellow-800"
-  //           }`}
-  //         >
-  //           {status}
-  //         </span>
-  //       );
-
-  //     default:
-  //       return row[key] || "-";
-  //   }
-  // };
-  // Transform data into an array of arrays
+  const toggleTransactionId = (idx) => {
+    setExpandedTransactionIds((prev) => ({
+      ...prev,
+      [idx]: !prev[idx],
+    }));
+  };
 
   const transformedData = safeData.map((row, idx) => {
     if (type === "transactions") {
+      const transactionId = row.phonePayTransId || "-";
+      const truncatedId =
+        transactionId !== "-" ? `${transactionId.substring(0, 8)}...` : "-";
       return [
         idx + 1,
-        row.phonePayTransId || "-",
+        {
+          value: transactionId,
+          truncated: truncatedId,
+        },
+
         // row.createdAt || "-",
 
-        row.amount ? ` ₹${row.amount}`: "-",
-        row.amountAfterFee ? ` ₹${row.amountAfterFee}`: "-",
+        row.amount ? ` ₹${row.amount}` : "-",
+        row.amountAfterFee ? ` ₹${row.amountAfterFee}` : "-",
         row.buyer.email || "-",
-        row.buyer.name || "-",
+        row.buyer.phone || "-",
         row.productType ? row.productType.toLowerCase() : "-",
         row.modeOfPayment || "-",
         row.status || "-",
@@ -275,7 +235,30 @@ const TableComponent = ({
                   className="hover:bg-gray-50 transition-colors duration-200 font-poppins text-sm tracking-tight"
                 >
                   {row.map((cell, cellIndex) => {
-                    const isStatusColumn = cellIndex === row.length - 2 || cellIndex === row.length - 1;
+                    if (
+                      type === "transactions" &&
+                      cellIndex === 1 &&
+                      typeof cell === "object"
+                    ) {
+                      return (
+                        <td
+                          key={cellIndex}
+                          className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-700 cursor-pointer hover:text-orange-600"
+                          onClick={() => toggleTransactionId(rowIndex)}
+                          title="Click to expand/collapse"
+                        >
+                          <span className="transition-all duration-300">
+                            {expandedTransactionIds[rowIndex]
+                              ? cell.value
+                              : cell.truncated}
+                          </span>
+                        </td>
+                      );
+                    }
+                    const isStatusColumn =
+                      cellIndex === row.length - 2 ||
+                      cellIndex === row.length - 1;
+
                     return (
                       <td
                         key={cellIndex}

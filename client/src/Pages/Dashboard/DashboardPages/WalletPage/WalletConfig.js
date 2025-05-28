@@ -35,7 +35,7 @@ export const walletConfig = {
     "AMOUNT",
     "AMOUNT CREDITED",
     "EMAIL ID",
-    "NAME",
+    "MOBILE NO",
     "PRODUCT",
     "MODE OF PAYMENT",
      "STATUS",
