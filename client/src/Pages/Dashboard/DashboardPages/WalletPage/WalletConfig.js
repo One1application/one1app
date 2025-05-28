@@ -28,17 +28,20 @@ export const walletConfig = {
     },
     allTransactionsPage:{
         title: "All Transactions",
-        tableHeader: [
-            "Sl No.",
-            "Transaction Id",
-            "Date & Time",
-            "Amount",
-            "Email Id",
-            "Mobile Number",
-            "product",
-            "Mode of Payment",
-            "Status"
-        ],
+         tableHeader: [
+    "SL NO.",           // Must be exactly this capitalization and order
+    "TRANSACTION ID",
+   
+    "AMOUNT",
+    "AMOUNT CREDITED",
+    "EMAIL ID",
+    "MOBILE NO",
+    "PRODUCT",
+    "MODE OF PAYMENT",
+     "STATUS",
+    "DATE & TIME",
+   
+  ],
         tableData: [
                         {
                             "id": "2a184d90-5c40-4b0b-8aec-32627d3120bd",

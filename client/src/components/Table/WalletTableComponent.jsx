@@ -12,9 +12,9 @@ const TableComponent = ({
   page,
   CurrentPage,
   TotalPages,
-  type
+  type,
+  onPageChange,
 }) => {
-  
   const [filterText, setFilterText] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -23,56 +23,77 @@ const TableComponent = ({
   const rowsPerPage = 10;
 
   console.log(data);
-  
+
   // Ensure data is an array
   const safeData = Array.isArray(data) ? data : [];
-  
-  // Transform data into an array of arrays
+
+  // Toggle Transaction ID display
+  const [expandedTransactionIds, setExpandedTransactionIds] = useState({});
+
+  const toggleTransactionId = (idx) => {
+    setExpandedTransactionIds((prev) => ({
+      ...prev,
+      [idx]: !prev[idx],
+    }));
+  };
 
   const transformedData = safeData.map((row, idx) => {
     if (type === "transactions") {
+      const transactionId = row.phonePayTransId || "-";
+      const truncatedId =
+        transactionId !== "-" ? `${transactionId.substring(0, 8)}...` : "-";
       return [
         idx + 1,
-        row.id || "-",
+        {
+          value: transactionId,
+          truncated: truncatedId,
+        },
+
         // row.createdAt || "-",
-        row.createdAt ? new Date(row.createdAt).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        }) : "-",
-        row.amount || "-",
-        row.email || "-",
-        row.phone || "-",
-        row.productType || "-",
+
+        row.amount ? ` ₹${row.amount}` : "-",
+        row.amountAfterFee ? ` ₹${row.amountAfterFee}` : "-",
+        row.buyer.email || "-",
+        row.buyer.phone || "-",
+        row.productType ? row.productType.toLowerCase() : "-",
         row.modeOfPayment || "-",
-        row.status || "-"
+        row.status || "-",
+        row.createdAt
+          ? new Date(row.createdAt).toLocaleString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })
+          : "-",
       ];
     } else {
       return [
         idx + 1,
         // row.createdAt || "-",
-        row.createdAt ? new Date(row.createdAt).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        }) : "-",
+        row.createdAt
+          ? new Date(row.createdAt).toLocaleString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })
+          : "-",
         row.amount || "-",
-        'email id',
-        'phone number',
+        "email id",
+        "phone number",
         row.modeOfWithdrawal || "-",
-        row.status || "-"
+        row.status || "-",
       ];
     }
   });
 
   console.log(transformedData);
-  
+
   // Processed Data: Filtered and Sorted
   const processedData = transformedData
     .filter((row) =>
@@ -82,8 +103,11 @@ const TableComponent = ({
     )
     .sort((a, b) => {
       if (!sortConfig.key) return 0;
-      const aValue = a[headers.indexOf(sortConfig.key)];
-      const bValue = b[headers.indexOf(sortConfig.key)];
+
+      // Get the correct key to sort by
+      const key = sortConfig.key;
+      const aValue = a[key] || "";
+      const bValue = b[key] || "";
 
       if (aValue < bValue) return sortConfig.direction === "ascending" ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === "ascending" ? 1 : -1;
@@ -124,7 +148,7 @@ const TableComponent = ({
     URL.revokeObjectURL(url);
   };
 
-  // Handle Pagination
+  //Handle Pagination
   // const handlePageChange = (_, page) => {
   //   setCurrentPage(page);
   // };
@@ -197,9 +221,7 @@ const TableComponent = ({
                     className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-orange-200 transition duration-300 group"
                   >
                     <div className="flex items-center justify-between font-poppins ">
-                      <div className="text-center w-full">
-                        {header}
-                      </div>
+                      <div className="text-center w-full">{header}</div>
                       <Filter className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition" />
                     </div>
                   </th>
@@ -212,19 +234,58 @@ const TableComponent = ({
                   key={rowIndex}
                   className="hover:bg-gray-50 transition-colors duration-200 font-poppins text-sm tracking-tight"
                 >
-                
-                  {row.map((cell, cellIndex) => (
-                    <td
-                      key={cellIndex}
-                      className={`px-1 py-4 whitespace-nowrap text-sm text-center ${
-                        headers[cellIndex].toLowerCase() === "status"
-                          ? getStatusClass(cell)
-                          : "text-gray-700"
-                      }`}
-                    >
-                      {cell}
-                    </td> 
-                  ))}
+                  {row.map((cell, cellIndex) => {
+                    if (
+                      type === "transactions" &&
+                      cellIndex === 1 &&
+                      typeof cell === "object"
+                    ) {
+                      return (
+                        <td
+                          key={cellIndex}
+                          className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-700 cursor-pointer hover:text-orange-600"
+                          onClick={() => toggleTransactionId(rowIndex)}
+                          title="Click to expand/collapse"
+                        >
+                          <span className="transition-all duration-300">
+                            {expandedTransactionIds[rowIndex]
+                              ? cell.value
+                              : cell.truncated}
+                          </span>
+                        </td>
+                      );
+                    }
+                    const isStatusColumn =
+                      cellIndex === row.length - 2 ||
+                      cellIndex === row.length - 1;
+
+                    return (
+                      <td
+                        key={cellIndex}
+                        className={`px-3 py-4 whitespace-nowrap text-sm text-center ${
+                          headers[cellIndex] === "Status" || isStatusColumn
+                            ? ""
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {isStatusColumn ? (
+                          <span
+                            className={`px-2 py-1 rounded text-xs ${
+                              cell === "COMPLETED" || cell === "SUCCESS"
+                                ? "bg-green-100 text-green-800"
+                                : cell === "FAILED" || cell === "FAILURE"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {cell}
+                          </span>
+                        ) : (
+                          cell
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -235,13 +296,16 @@ const TableComponent = ({
           <p className="text-gray-500 text-lg">No data available</p>
         </div>
       )}
-
       {/* Pagination */}
       <div className="mt-6 flex justify-center">
         <Pagination
           count={TotalPages}
           page={CurrentPage}
-          // onChange={handlePageChange}
+          onChange={(_, page) => {
+            if (typeof onPageChange === "function") {
+              onPageChange(page);
+            }
+          }}
           sx={{
             "& .MuiPaginationItem-root": {
               backgroundColor: "rgb(212 212 212)",
@@ -257,12 +321,11 @@ const TableComponent = ({
           }}
         />
       </div>
-
       {/* Summary Section */}
       <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
         <p className="font-poppins tracking-tight text-sm text-orange-500">
           Showing {paginatedData.length} of {processedData.length} filtered
-          entries 
+          entries
         </p>
         <p className="hidden md:block font-poppins tracking-tight text-orange-500">
           Tip: Click column headers to sort

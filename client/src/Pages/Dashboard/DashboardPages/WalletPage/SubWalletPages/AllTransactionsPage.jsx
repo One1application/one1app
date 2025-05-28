@@ -8,7 +8,7 @@ import { StoreContext } from "../../../../../context/StoreContext/StoreContext";
 
 const AllTransactionsPage = () => {
   const { AllTransaction, CurrentTransactionPage, TotalTransactionPages, setAllTransaction } = useContext(StoreContext);
-
+ console.log("all transaction", AllTransaction);
   const { title, tableHeader, tableData } = walletConfig.allTransactionsPage;
 
   useEffect(() => {

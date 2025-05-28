@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ChevronRight, Check, X, ShieldCheck } from "lucide-react";
-import { purchaseCourse, purchaseWebinar, purchasePayingUp } from "../services/auth/api.services";
+import { purchaseCourse, purchaseWebinar, purchasePayingUp, purchasePremiumContent } from "../services/auth/api.services";
 import toast from "react-hot-toast";
 
 export default function PaymentInterface() {
@@ -125,6 +125,23 @@ export default function PaymentInterface() {
           }
           break;
 
+          case "premiumcontent":
+            res = await purchasePremiumContent({
+              contentId: productId,
+              couponCode,
+              validateOnly: true,
+            });
+            if (res?.data?.success) {
+              setDiscountAmount(
+                parseFloat((res.data.payload.discountPrice || 0).toFixed(2))
+              );
+              setDiscountApplied(true);
+              setShowCoupon(false);
+              toast.success("Coupon apllied successfully");
+            }
+            break;
+           
+
         default:
           toast.error("Invalid Product type");
           break;
@@ -172,6 +189,13 @@ export default function PaymentInterface() {
           });
           break;  
 
+        case "premiumcontent":
+          res = await purchasePremiumContent({
+            contentId: productId,
+            couponCode: discountApplied ? couponCode : null,
+          });
+          break;
+
         default:
           toast.error("Invalid product type");
           throw new Error("Invalid product type");
@@ -180,7 +204,7 @@ export default function PaymentInterface() {
       if (res?.data?.success && res?.data?.payload?.redirectUrl) {
         setTimeout(() => {
           window.location.href = res.data.payload.redirectUrl;
-        }, 1500);
+        }, 500);
       } else {
         toast.error("Payment initialization failed");
         throw new Error("Payment initialization failed");
@@ -225,7 +249,7 @@ export default function PaymentInterface() {
           </motion.div>
 
           <div className="flex flex-col lg:flex-row">
-            {/* Left Side - Course Info */}
+            { /* Left Side - Course Info */ }
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -233,21 +257,24 @@ export default function PaymentInterface() {
               className="lg:w-1/2 p-6 flex flex-col"
             >
               <div className="bg-gray-800 bg-opacity-50 rounded-xl p-6 mb-4">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-purple-500 rounded-full flex items-center justify-center">
-                    <div className="text-white text-sm font-bold">
-                      <img
-                        src="https://cdn.discordapp.com/attachments/1368862317877530684/1373680257604915311/App_Icon__2_-removebg-preview.png?ex=682fe82f&is=682e96af&hm=02e977524d5823772a79d7562cc8453193102de8440d67d4f7e5f8f13ffca8f3&"
-                        alt=""
-                      />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-purple-500 rounded-full flex items-center justify-center">
+                      <div className="text-white text-sm font-bold">
+                        <img
+                          src="https://cdn.discordapp.com/attachments/1368862317877530684/1373680257604915311/App_Icon__2_-removebg-preview.png?ex=682fe82f&is=682e96af&hm=02e977524d5823772a79d7562cc8453193102de8440d67d4f7e5f8f13ffca8f3&"
+                          alt=""
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-gray-300 text-sm">
+                        Created by
+                      </h3>
+                      <p className="text-gray-100 text-md font-semibold pl-2">sumit</p>
                     </div>
                   </div>
-                  <div>
-                    <h3 className="text-white text-lg font-semibold">
-                      {productTitle}
-                    </h3>
-                    <p className="text-gray-400 text-sm">By contiks one hub</p>
-                  </div>
+                  <h2 className="text-white text-2xl font-semibold mb-2">{productTitle}</h2>
                 </div>
               </div>
 

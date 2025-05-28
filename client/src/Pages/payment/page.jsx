@@ -15,6 +15,7 @@ export default function PaymentPage() {
         const courseId = searchParams.get("courseId");
         const payingUpId = searchParams.get("payingUpId");
         const webinarId = searchParams.get("webinarId");
+        const contentId = searchParams.get("contentId");
         const telegramId = searchParams.get("telegramId");
         const discountedPrice = searchParams.get("discountedPrice");
         const response = await verifyPayment({
@@ -23,6 +24,7 @@ export default function PaymentPage() {
           payingUpId,
           webinarId,
           telegramId,
+          premiumContentId: contentId,
           discountedPrice
          
         });

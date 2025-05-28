@@ -14,9 +14,9 @@ const CreateLockedContentPage = () => {
     contentText: "",
     contentImage: "",
     contentFile: "",
-    discountCode: "",
-    discountPercent: "",
-    expiryDate: "",
+    code: "",
+    percent: "",
+    expiry: "",
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
@@ -88,9 +88,9 @@ const CreateLockedContentPage = () => {
 
     setFormData(prev => ({
         ...prev,
-        discountCode,
-        discountPercent,
-        expiryDate
+          code: discountCode,
+        percent: discountPercent,
+        expiry: expiryDate
     }));
 
     console.log(
@@ -109,7 +109,8 @@ const CreateLockedContentPage = () => {
         toast.dismiss();
         toast.error("Please fill in Title, Category, and Unlock Price.");
         setIsSubmitting(false);
-        return;
+        throw new error ("Please fill in Title, Category, and Unlock Price.");
+        
     }
     if (!formData.contentText && !formData.contentImage && !formData.contentFile) {
         toast.dismiss();
@@ -125,9 +126,9 @@ const CreateLockedContentPage = () => {
     }
 
     const discount={
-      'code': formData.discountCode,
-      'percentage': formData.discountPercent,
-      'expiry': formData.expiryDate,
+      'code': formData.code,
+      'percent': formData.percent,
+      'expiry': formData.expiry,
     }
 
     const apiData = {
@@ -147,11 +148,12 @@ const CreateLockedContentPage = () => {
     try {      
         const response = await createLockedContent(apiData);
         toast.dismiss();
-        if(response.data.success){
+        if(response?.data?.success){
              toast.success("Content published successfully!");
              navigate("/dashboard/premium-content");
         } else {
              toast.error(response.data.message || "Failed to publish content.");
+             console.error("Error publishing content:", response.data.message);
         }
 
     } catch (error) {
@@ -374,6 +376,7 @@ const CreateLockedContentPage = () => {
                 <h3 className="text-orange-500 text-sm">Discount Code</h3>
                 <button
                   onClick={() => setShowDiscountModal(true)}
+                  type="button"
                   className="w-full py-3 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 flex items-center justify-center gap-2"
                 >
                   <span>+</span> Add Discount Code
@@ -421,7 +424,7 @@ const CreateLockedContentPage = () => {
                   id="discountCodeModal"
                   name="discountCode"
                   type="text"
-                  defaultValue={formData.discountCode}
+                  defaultValue={formData.code}
                   className="w-full bg-gray-800 rounded-lg p-3 text-gray-300 border border-transparent focus:border-orange-500 focus:ring-0 outline-none"
                   placeholder="e.g., LAUNCH10"
                 />
@@ -437,7 +440,7 @@ const CreateLockedContentPage = () => {
                   id="discountPercentModal"
                   name="discountPercent"
                   type="number"
-                  defaultValue={formData.discountPercent}
+                  defaultValue={formData.percent}
                   className="w-full bg-gray-800 rounded-lg p-3 text-gray-300 border border-transparent focus:border-orange-500 focus:ring-0 outline-none"
                   placeholder="e.g., 10"
                   max="99"
@@ -455,7 +458,7 @@ const CreateLockedContentPage = () => {
                   id="expiryDateModal"
                   name="expiryDate"
                   type="date"
-                  defaultValue={formData.expiryDate}
+                  defaultValue={formData.expiry}
                   className="w-full bg-gray-800 rounded-lg p-3 text-gray-300 border border-transparent focus:border-orange-500 focus:ring-0 outline-none"
                 />
               </div>
