@@ -58,6 +58,53 @@ export const createCourse = async (req, res) => {
 
     const { startDate, endDate } = getCourseDuration(validity);
 
+      if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+    // Validate percentage
+    if (
+       d.percent !== undefined &&
+        d.percent !== null &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
+
     const transactionResult = await prisma.$transaction(async (prisma) => {
       const course = await prisma.course.create({
         data: {
@@ -121,7 +168,7 @@ export const createCourse = async (req, res) => {
     console.error("Error in creating course.", error);
     return res.status(500).json({
       success: false,
-      message: "Error in creating course.",
+      message: error.message,
     });
   }
 };
@@ -200,6 +247,53 @@ export const editCourseDetails = async (req, res) => {
     if (lessons) updatedData.lessons = lessons;
     if (validity) updatedData.validity = validity;
     if (discount) updatedData.discount = discount;
+
+     if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+    // Validate percentage
+    if (
+       d.percent !== undefined &&
+        d.percent !== null &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
 
     const course = await prisma.course.update({
       where: {
@@ -316,7 +410,7 @@ export const editCourseDetails = async (req, res) => {
     console.error("Error in editing course details.", error);
     return res.status(500).json({
       success: false,
-      message: "Error in editing course details.",
+      message: error.message,
     });
   }
 };
@@ -414,7 +508,7 @@ export const getCourseById = async (req, res) => {
         },
       },
     });
-  } catch {
+  } catch(error) {
     console.error("Error in getting course by id.", error);
     return res.status(500).json({
       success: false,

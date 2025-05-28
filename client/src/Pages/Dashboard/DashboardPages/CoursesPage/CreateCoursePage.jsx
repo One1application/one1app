@@ -34,6 +34,14 @@ const DiscountForm = ({
     editingDiscount?.percent || ""
   );
   const [expiryDate, setExpiryDate] = useState(editingDiscount?.expiry || "");
+
+   useEffect(() => {
+    if (editingDiscount) {
+      setDiscountCode(editingDiscount.code || "");
+      setDiscountPercent(editingDiscount.percent || "");
+      setExpiryDate(editingDiscount.expiry || "");
+    }
+  }, [editingDiscount]);
   
 
   const handleSubmit = () => {
@@ -1151,13 +1159,13 @@ const NewCoursePage = () => {
           toast.success("Course created successfully");
           navigate("/dashboard/courses");
         } else {
-          toast.error("Course creation failed");
+          toast.error(error.response?.data?.message);
         }
       }
     } catch (err) {
       console.error(err);
       toast.error(
-        isEditMode ? "Course update failed" : "Course creation failed"
+        err.response?.data?.message
       );
     } finally {
       // Set loading state back to false
