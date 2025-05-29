@@ -48,12 +48,12 @@ export default function PaymentInterface() {
     },
     {
       name: "Google pay",
-      icon: "https://cdn.discordapp.com/attachments/1288531236503027724/1374969011506380830/icons8-google-pay-240.png?ex=682ffb2e&is=682ea9ae&hm=6dfc7649c3e91734d2e6debef042ff08155419265c02893498df70e391a28369&",
+      icon: "https://toppng.com/uploads/preview/google-pay-gpay-logo-11530962961mwws81tde9.png",
       color: "bg-blue-500",
     },
     {
       name: "Phone pay",
-      icon: "https://cdn.discordapp.com/attachments/1288531236503027724/1374624540864417844/phonepe-icon.png?ex=682f631d&is=682e119d&hm=a2fa1053933a1a86de17e2f541731e199c7c3d5ee2df9d0544ae5306eeaf1ed4&",
+      icon: "https://vectorseek.com/wp-content/uploads/2023/09/Phone-Pe-2020-Logo-Vector.svg-.png",
       color: "bg-purple-600",
     },
     {
@@ -66,6 +66,7 @@ export default function PaymentInterface() {
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/RuPay.svg/1200px-RuPay.svg.png",
       color: "bg-orange-600",
     },
+    
   ];
 
   const applyCoupon = async () => {
@@ -343,7 +344,12 @@ export default function PaymentInterface() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex items-center justify-between"
                 >
-                  <span className="text-white">{baseAmount}</span>
+                  <span className="text-white">
+                  {courseType === "course" && "Course"}
+                  {courseType === "webinar" && "Webinar"}
+                  {courseType === "payingUp" && "Paying Up"}
+                  </span>
+
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
