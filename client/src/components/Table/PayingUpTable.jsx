@@ -7,7 +7,7 @@ import {
   SortAsc,
   Mail,
   ArrowDown,
-  ArrowUp,
+  ArrowUp,Copy
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Pagination from "@mui/material/Pagination";
@@ -61,6 +61,7 @@ const PayingUpTable = ({ data }) => {
     }));
   };
 
+  console.log("Data:", data);
   const filteredData = useMemo(() => {
     return data.filter(
       (item) =>
@@ -70,6 +71,7 @@ const PayingUpTable = ({ data }) => {
           .includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
+
 
   const sortedData = useMemo(() => {
     if (!sortConfig.key) return filteredData;
@@ -122,6 +124,7 @@ const PayingUpTable = ({ data }) => {
         "Price",
         "Sales",
         "Revenue",
+        "Coupon",
         "Payment Status",
         "Created At",
         "Updated At",
@@ -134,7 +137,8 @@ const PayingUpTable = ({ data }) => {
             item.paymentDetails?.totalAmount || 0,
             item._count?.payingUpTickets || 0,
             calculateRevenue(item),
-            item.paymentDetails?.paymentEnabled ? "Enabled" : "Disabled",
+           item.discount?.map(d => d.code).join(", ") || 'OFF10',
+           item.paymentDetails?.paymentEnabled ? "Enabled" : "Disabled",
             `"${new Date(item.createdAt).toLocaleString()}"`,
             `"${new Date(item.updatedAt).toLocaleString()}"`,
           ].join(",")
@@ -236,6 +240,7 @@ const PayingUpTable = ({ data }) => {
                   "Price",
                   "Sale",
                   "Revenue",
+                  "Coupon",
                   "Payment",
                   "Actions",
                   "Created At",
@@ -275,6 +280,9 @@ const PayingUpTable = ({ data }) => {
                   <td className="px-6 py-4 text-sm text-gray-500">
                     ₹{calculateRevenue(item)}
                   </td>
+                   <td className="px-6 py-4 text-sm text-gray-500">
+                        {item.discount?.map(d => d.code).join(", ") || "No"}
+                  </td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 text-xs rounded-full ${
@@ -301,14 +309,14 @@ const PayingUpTable = ({ data }) => {
                           }}
                           className="text-blue-600 hover:text-blue-700 text-sm"
                         >
-                          Share
+                         <Copy className="h-4 w-4 ml-1"/>
                         </button>
                       )}
                       <button
                         onClick={(e) => handleEdit(e, item)}
                         className="inline-flex items-center text-orange-500 hover:text-orange-600 text-sm"
                       >
-                        Edit <Edit2 className="h-4 w-4 ml-1" />
+                         <Edit2 className="h-4 w-4 ml-1" />
                       </button>
                     </div>
                   </td>

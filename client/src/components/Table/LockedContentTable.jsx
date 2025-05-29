@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, SortAsc, Mail, ArrowDown, ArrowUp } from 'lucide-react';
+import { Search, Filter, SortAsc, Mail, ArrowDown, ArrowUp,Edit2, Copy } from 'lucide-react';
 import toast from "react-hot-toast";
 import Pagination from '@mui/material/Pagination';
 import Option from '../../Pages/Dashboard/DashboardPages/LockedContentPage/Option';
@@ -286,6 +286,7 @@ const LockedContentTable = ({ data }) => {
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Sales</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Revenue</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Coupon</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Created At</th>
@@ -310,6 +311,9 @@ const LockedContentTable = ({ data }) => {
                   <td className="px-6 py-4 text-sm text-gray-500">
                     ₹{calculateRevenue(item)}
                   </td>
+                   <td className="px-6 py-4 text-sm text-gray-500">
+                        {item.discount?.code || "No"}
+                  </td>
                   <td className="px-6 py-4">
                     {/* Assuming status is always 'Published' for items listed here */}
                     <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800">
@@ -329,9 +333,16 @@ const LockedContentTable = ({ data }) => {
                           }}
                           className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                         >
-                          Share
+                          <Copy className="h-4 w-4 ml-1"/>
                       </button>
                       {/* No Edit Button */}
+                        <button 
+                        onClick={(e) => handleEdit(e, webinar)}
+                        className= "inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium"
+                      >
+                        
+                        <Edit2 className="h-4 w-4 ml-1" />
+                      </button>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">{formatDate(item.createdAt)}</td>
@@ -374,6 +385,10 @@ const LockedContentTable = ({ data }) => {
               <div>
                 <span className="text-gray-500">Revenue: </span>
                 <span>₹{calculateRevenue(item)}</span>
+              </div>
+               <div>
+                <span className="text-gray-500">Coupon: </span>
+                <span> {item.discount?.code || "No"}</span>
               </div>
               <div>
                 <span className="text-gray-500">Created: </span>

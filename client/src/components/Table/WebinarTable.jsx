@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp } from 'lucide-react';
+import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp, Copy } from 'lucide-react';
 import Pagination from '@mui/material/Pagination';
 import  toast  from "react-hot-toast";
 
@@ -117,7 +117,7 @@ const WebinarTable = ({ data }) => {
 
     try {
       // Convert data to CSV format
-      const headers = ['Title', 'Price', 'Sales', 'Revenue', 'Payment Status', 'Created At', 'Updated At'];
+      const headers = ['Title', 'Price', 'Sales', 'Revenue','Coupon', 'Payment Status', 'Created At', 'Updated At'];
       const csvData = [
         headers.join(','),
         ...sortedData.map(webinar => [
@@ -262,6 +262,7 @@ const WebinarTable = ({ data }) => {
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Sale</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Revenue</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Coupon</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Payment</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Created At</th>
@@ -279,6 +280,9 @@ const WebinarTable = ({ data }) => {
                   <td className="px-6 py-4 text-sm text-gray-500">₹{webinar.amount || 0}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{webinar._count.tickets}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">₹{calculateRevenue(webinar)}</td>
+                   <td className="px-6 py-4 text-sm text-gray-500">
+                        {webinar.discount?.map(d => d.code).join(", ") || "No"}
+                  </td>
                   <td className="px-6 py-4">
                     {webinar.paymentEnabled ? (
                       <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800">
@@ -300,13 +304,13 @@ const WebinarTable = ({ data }) => {
                         }}
                         className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                       >
-                        Share
+                       <Copy className="h-4 w-4 ml-1"/>
                       </button>
                       <button 
                         onClick={(e) => handleEdit(e, webinar)}
                         className= "inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium"
                       >
-                        Edit
+                        
                         <Edit2 className="h-4 w-4 ml-1" />
                       </button>
                     </div>
@@ -349,6 +353,10 @@ const WebinarTable = ({ data }) => {
               <div>
                 <span className="text-gray-500">Revenue: </span>
                 <span>₹{calculateRevenue(webinar)}</span>
+              </div>
+                            <div>
+                <span className="text-gray-500">Coupon: </span>
+                <span> {webinar.discount?.map(d => d.code).join(", ") || "No"}</span>
               </div>
               <div>
                 {webinar.paymentEnabled ? (
