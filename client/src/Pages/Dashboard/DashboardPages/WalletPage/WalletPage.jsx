@@ -8,7 +8,11 @@ import CountUp from "react-countup";
 import Dropdown from "../../../../components/Dropdown/Dropdown";
 import Coin from "../../../../assets/coin.png";
 import Cash from "../../../../assets/cash.png";
-import { IoIosCheckmarkCircle, IoIosCloseCircle, IoIosWarning } from "react-icons/io";
+import {
+  IoIosCheckmarkCircle,
+  IoIosCloseCircle,
+  IoIosWarning,
+} from "react-icons/io";
 import { MdKeyboardArrowRight, MdOutlinePin } from "react-icons/md";
 import { FaLongArrowAltDown, FaLongArrowAltUp } from "react-icons/fa";
 import EarningsChart from "../../../../components/Charts/EarningsChart";
@@ -20,13 +24,18 @@ import UPIModal from "../../../../components/Modal/UPIModal";
 import MPINModal from "../../../../components/Modal/MPINModal";
 import toast from "react-hot-toast";
 import { Calendar } from "lucide-react";
-import { fetchBalanceDetails, fetchPrimaryPaymentInformation, fetchTransactionsPage, fetchWithdrawalPage, sendWithdrawAmount } from "../../../../services/auth/api.services";
+import {
+  fetchBalanceDetails,
+  fetchPrimaryPaymentInformation,
+  fetchTransactionsPage,
+  fetchWithdrawalPage,
+  sendWithdrawAmount,
+} from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import AmountWithdraw from "./SubWalletPages/AmountWithdraw";
 const WalletPage = () => {
-
   const { userDetails } = useAuth();
   const {
     AllTransaction,
@@ -35,9 +44,11 @@ const WalletPage = () => {
     setAllWithdrawals,
     getNextTransactionPage,
     CurrentTransactionPage,
+    CurrentWithdrawalPage,
     TotalTransactionPages,
     getNextWithdrawalPage,
   } = useContext(StoreContext);
+  
   const [BalanceDetails, setBalanceDetails] = useState({
     balance: 0,
     totalEarnings: 0,
@@ -57,12 +68,16 @@ const WalletPage = () => {
   const [openUPI, setOpenUPI] = useState(false);
   const [openMPIN, setOpenMPIN] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [status, setStatus] = useState('NULL');
+  const [status, setStatus] = useState("NULL");
   const [mpinStatus, setMpinStatus] = useState(false);
   const [upi, setUpi] = useState([]);
   const [account, setAccount] = useState([]);
   const [reson, setReson] = useState();
   const navigate = useNavigate();
+
+ 
+  
+  
 
   const toggleModal = () => {
     if (openWithdrawal || openUPI || openMPIN) {
@@ -98,42 +113,41 @@ const WalletPage = () => {
   const openWithdrawalModal = () => {
     return userDetails?.verified
       ? (() => {
-        setOpenWithdrawal(true);
-        setOpenModal(false);
-      })()
+          setOpenWithdrawal(true);
+          setOpenModal(false);
+        })()
       : toast.error("Please complete your KYC verification first!");
   };
 
   const openUPIModal = () => {
     return userDetails?.verified
       ? (() => {
-        setOpenUPI(true);
-        setOpenModal(false);
-      })()
+          setOpenUPI(true);
+          setOpenModal(false);
+        })()
       : toast.error("Please complete your KYC verification first!");
   };
 
   const openMPINModal = () => {
     return userDetails?.verified
       ? (() => {
-        setOpenMPIN(true);
-        setOpenModal(false);
-      })()
+          setOpenMPIN(true);
+          setOpenModal(false);
+        })()
       : toast.error("Please complete your KYC verification first!");
   };
 
   const hadleWithdrawal = () => {
-    if (status !== 'VERIFIED') {
+    if (status !== "VERIFIED") {
       toast.error("Please complete your KYC verification first!");
-      navigate('/dashboard/kyc-setting')
+      navigate("/dashboard/kyc-setting");
     } else if (!mpinStatus) {
       toast.error("Please set your MPIN first!");
       openMPINModal();
     } else {
-      setIsModalOpen(true)
+      setIsModalOpen(true);
     }
-
-  }
+  };
   const getWalletBalanceDetails = async () => {
     const response = await fetchBalanceDetails();
     if (response.data.success) {
@@ -148,26 +162,25 @@ const WalletPage = () => {
         ],
         // financeIds: ['65654',"kahusdkahs@kjabs","65464"],
       });
-      setUpi(response.data.payload.upiIds)
-      setAccount(response.data.payload.accountNumbers)
+      setUpi(response.data.payload.upiIds);
+      setAccount(response.data.payload.accountNumbers);
     }
   };
 
   const getPrimaryPaymentInformation = async () => {
     try {
       const response = await fetchPrimaryPaymentInformation();
-      setStatus(response.data.payload.kycRecord.status)
+      setStatus(response.data.payload.kycRecord.status);
       setReson(response.data.payload.kycRecord.rejectionReason);
     } catch (error) {
       console.error("Error fetching payment information:", error);
     }
-  }
+  };
 
   const getWalletInformation = async () => {
     try {
       const response = await fetchBalanceDetails();
       setMpinStatus(response.data.payload.mpin);
-
     } catch (error) {
       console.error("Error fetching wallet information:", error);
     }
@@ -177,18 +190,21 @@ const WalletPage = () => {
     getPrimaryPaymentInformation();
     getWalletInformation();
     getWalletBalanceDetails();
-    getNextTransactionPage();
-    getNextWithdrawalPage();
+    getNextWithdrawalPage(1);
+    getNextTransactionPage(1)
   }, []);
 
-  
+  // Add useEffect to load data when component mounts
+
+  // Remove any other duplicate useEffect calls that fetch the same data
+
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const res = await fetchWithdrawalPage({ page: 0 });
-        setAllWithdrawals(res.data.payload.transactions);
+        const res = await fetchWithdrawalPage({ page: CurrentWithdrawalPage });
+        setAllWithdrawals(res?.data?.payload?.withdrawals);
       } catch (error) {
-        console.error("Error fetching transactions:", error);
+        console.error("Error fetching withdrawals:", error);
       }
     };
 
@@ -250,7 +266,9 @@ const WalletPage = () => {
             </p>
             <h2 className="font-bold tracking-tight font-poppins text-3xl flex gap-1 text-white">
               ₹
-              <div className="text-3xl font-bold">{BalanceDetails?.balance.toFixed(2)}</div>
+              <div className="text-3xl font-bold">
+                {BalanceDetails?.balance.toFixed(2)}
+              </div>
             </h2>
             <p className="font-poppins tracking-tight text-sm text-gray-400">
               Last Updated on{" "}
@@ -288,8 +306,9 @@ const WalletPage = () => {
             </p>
             <h2 className="font-bold text-3xl text-white tracking-tight flex gap-1">
               ₹
-              <div className="text-3xl font-bold">{BalanceDetails?.totalEarnings.toFixed(2)}</div>
-
+              <div className="text-3xl font-bold">
+                {BalanceDetails?.totalEarnings.toFixed(2)}
+              </div>
             </h2>
           </div>
           <img src={Coin} alt="" className="absolute bottom-0 right-0" />
@@ -343,8 +362,7 @@ const WalletPage = () => {
               Total Withdrawal
             </p>
             <h2 className="font-bold text-3xl text-white tracking-tight flex gap-2">
-              ₹
-              <div>{BalanceDetails.totalWithdrawals?.toFixed(2)}</div>
+              ₹<div>{BalanceDetails.totalWithdrawals?.toFixed(2)}</div>
             </h2>
           </div>
           <img src={Cash} alt="" className="absolute bottom-0 right-0" />
@@ -384,22 +402,32 @@ const WalletPage = () => {
                   <IoIosCheckmarkCircle className="text-green-600 size-8" />
                 ) : null}
                 <p className="font-poppins text-sm md:text-md tracking-tight text-gray-300">
-                  {status === "NULL" ? (
-                    "Please update your KYC to withdraw your wallet amount!"
-                  ) : status === "PENDING" ? (
-                    reson ? reson : "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
-                  ) : status === "REJECTED" ? (
-                    reson ? reson : "Your KYC was rejected. Please update your details!"
-                  ) : status === "VERIFIED" ? (
-                    "Your KYC is verified. You can now withdraw your wallet amount."
-                  ) : null}
+                  {status === "NULL"
+                    ? "Please update your KYC to withdraw your wallet amount!"
+                    : status === "PENDING"
+                    ? reson
+                      ? reson
+                      : "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
+                    : status === "REJECTED"
+                    ? reson
+                      ? reson
+                      : "Your KYC was rejected. Please update your details!"
+                    : status === "VERIFIED"
+                    ? "Your KYC is verified. You can now withdraw your wallet amount."
+                    : null}
                 </p>
               </div>
               <Link
                 to="/dashboard/kyc-setting"
-                className={`${status === 'NULL' ? 'bg-orange-600 hover:bg-orange-700' :
-                  status === "PENDING" ? 'bg-yellow-500 hover:bg-yellow-700' :
-                    status === "REJECTED" ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+                className={`${
+                  status === "NULL"
+                    ? "bg-orange-600 hover:bg-orange-700"
+                    : status === "PENDING"
+                    ? "bg-yellow-500 hover:bg-yellow-700"
+                    : status === "REJECTED"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
+                }
                    py-2 px-3 text-sm rounded-md text-white font-poppins`}
               >
                 {status === "NULL" ? "Update KYC" : status}
@@ -409,24 +437,30 @@ const WalletPage = () => {
         </div>
       )}
 
-
       {/* Chart and graphs */}
       <div className="flex md:flex-row flex-col gap-4 w-full">
         {/* Recent Withdrawal */}
         <div className="md:w-1/3 w-full bg-[#1A1D21] py-3 px-3 mt-5 rounded-xl order-2">
           <div className="flex justify-between">
             <div className="flex items-center gap-1 text-white">
-              <Link to={'../withdrawal'} className='flex'>
+              <Link to={"../withdrawal"} className="flex">
                 <p className="font-poppins tracking-tight">Recent Withdrawal</p>
                 <MdKeyboardArrowRight className="size-5" />
               </Link>
             </div>
             <p className="font-poppins tracking-tight text-white">Amount</p>
           </div>
-          <div className={`flex flex-col gap-6 mt-3 ${AllWithdrawals.length === 0 && 'h-[90%]'}`}>
-            {AllWithdrawals.length === 0 ?  <div className="flex justify-center h-full items-center">No Withdrawal</div> :
-            AllWithdrawals.map(
-              (withdrawal, index) => (
+          <div
+            className={`flex flex-col gap-6 mt-3 ${
+              AllWithdrawals.length === 0 && "h-[90%]"
+            }`}
+          >
+            {AllWithdrawals.length === 0 ? (
+              <div className="flex justify-center h-full items-center">
+                No Withdrawal
+              </div>
+            ) : (
+              AllWithdrawals.map((withdrawal, index) => (
                 <div
                   key={index}
                   className="flex justify-between items-center cursor-pointer"
@@ -447,7 +481,7 @@ const WalletPage = () => {
                     ₹ {withdrawal.amount}
                   </p>
                 </div>
-              )
+              ))
             )}
           </div>
         </div>
@@ -468,6 +502,7 @@ const WalletPage = () => {
           page="Wallet"
           CurrentPage={CurrentTransactionPage}
           TotalPages={TotalTransactionPages}
+          type={"transactions"}
         />
       </div>
 
@@ -499,10 +534,7 @@ const WalletPage = () => {
       {openMPIN && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 w-full">
           <div className="transform opacity-0 scale-95 transition-all duration-500 ease-out animate-fadeInUp relative">
-            <MPINModal
-              setOpen={setOpenMPIN}
-              setMpinSt={setMpinStatus}
-            />
+            <MPINModal setOpen={setOpenMPIN} setMpinSt={setMpinStatus} />
             <IoIosCloseCircle
               onClick={() => setOpenMPIN(false)}
               className="cursor-pointer text-red-600 absolute size-6 md:size-8 top-3 right-2"
@@ -512,7 +544,11 @@ const WalletPage = () => {
       )}
 
       {isModalOpen && (
-        <AmountWithdraw setIsModalOpen={setIsModalOpen} accountNumbers={account} upiIds={upi} />
+        <AmountWithdraw
+          setIsModalOpen={setIsModalOpen}
+          accountNumbers={account}
+          upiIds={upi}
+        />
       )}
     </div>
   );

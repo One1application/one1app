@@ -1,11 +1,25 @@
 import prisma from "../db/dbClient.js";
-import { premiumSchema } from "../types/premiumValidation.js"; // Import Zod validation schema
 import { upload } from "../config/multer.js";
 import { uploadOnImageKit } from "../config/imagekit.js";
 import { randomUUID } from "crypto";
 import { StandardCheckoutPayRequest } from "pg-sdk-node";
 import { PhonePayClient } from "../config/phonepay.js";
+
 import { log } from "console";
+
+import { z } from "zod";
+
+// const discountSchema = z.array(
+//   z.object({
+//     id: z.number().or(z.string().regex(/^\d+$/, "ID must be a numeric string")),
+//     code: z.string(),
+//     percent: z.number().or(z.string().transform(val => Number(val))),
+//     expiry: z.string().refine((val) => !isNaN(Date.parse(val)), {
+//       message: "Expiry date must be a valid ISO date-time string",
+//     })
+//   })
+// ).optional();
+
 
 export async function createContent(req, res) {
   const { title, category, unlockPrice, discount, expiryDate, content } =
@@ -296,11 +310,11 @@ export async function getCreatorContents(req, res) {
   try {
     const user = req.user;
 
-    if(!user){
-       return res.status(400).json({
-         success: false,
-         message: "User not found"
-       })
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     const contents = await prisma.user.findUnique({
@@ -401,11 +415,31 @@ export async function deleteContent(req, res) {
   }
 }
 
-export const getPremiumContentById= async (req, res) => {
+export const getPremiumContentById = async (req, res) => {
   const { contentId } = req.params;
 
   try {
     const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const content = await prisma.premiumContent.findUnique({
+      where: {
+        id: contentId,
+      },
+    });
+    console.log("content", content)
+
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        message: "Premium content not found.",
+      });
+    }
 
     // Check user has access to the premium content
     const access = await prisma.premiumContentAccess.findFirst({
@@ -417,13 +451,25 @@ export const getPremiumContentById= async (req, res) => {
         },
       },
     });
+    console.log("access", access);
 
-    if (!access) {
+    // 
+
+    //  content if the user can access it
+    if (content.createdById === userId || access) {
+      return res.status(200).json({
+        success: true,
+        message: "premium content fetch successfully.",
+        content: content,
+      });
+    }
+    if  (!access) {
       const content = await prisma.premiumContent.findFirst({
-        where: { id: contentId },
+       where: { id: contentId },
         select: {
-          title: true,
+         title: true,
           unlockPrice: true,
+          createdById: true,
         },
       });
       return res.status(200).json({
@@ -432,25 +478,6 @@ export const getPremiumContentById= async (req, res) => {
         content: content,
       });
     }
-
-    //  content if the user can access it
-    const content = await prisma.premiumContent.findUnique({
-      where: {
-        id: contentId,
-      },
-    });
-
-    if (!content) {
-      return res.status(404).json({
-        success: false,
-        message: "Content not found.",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: content,
-    });
   } catch (error) {
     console.error("Error fetching content:", error);
     res.status(500).json({
@@ -463,7 +490,7 @@ export const getPremiumContentById= async (req, res) => {
 
 export const purchasePremiumContent = async (req, res) => {
   try {
-    const { contentId } = req.body;
+    const { contentId, couponCode, validateOnly } = req.body;
 
     const user = req.user;
 
@@ -478,8 +505,15 @@ export const purchasePremiumContent = async (req, res) => {
       where: {
         id: contentId,
       },
-      include: {
+      select: {
         createdBy: true,
+        discount: true,
+        unlockPrice: true,
+        createdBy: {
+          select: {
+            name: true,
+          },
+        },
         access: user
           ? {
               where: {
@@ -490,6 +524,9 @@ export const purchasePremiumContent = async (req, res) => {
       },
     });
 
+    console.log(content, "content");
+    console.log("discount", content.discount);
+
     if (!content) {
       return res.status(400).json({
         success: false,
@@ -497,29 +534,66 @@ export const purchasePremiumContent = async (req, res) => {
       });
     }
 
-    if (content.access.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "You already have access to this content.",
-      });
+    if (validateOnly) {
+      if (content.access.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "You already have access to this content.",
+        });
+      }
+
+      if (content.createdById == user.id) {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot buy your own content.",
+        });
+      }
     }
 
-    if (content.createdById == user.id) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot buy your own content.",
+    let discountData = content?.discount || null;
+    let discountPrice = 0;
+    if (couponCode && discountData) {
+      const matchingDiscount = discountData.code === couponCode;
+      if (!matchingDiscount) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid discount code.",
+        });
+      }
+      const expiryDate = new Date(discountData.expiry);
+      const currentDate = new Date();
+      if (currentDate > expiryDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Coupon code has expired.",
+        });
+      }
+      discountPrice = parseInt(
+        content.unlockPrice * Number(discountData.percent / 100).toFixed(2)
+      );
+    }
+
+    let totalAmount = Math.round(content.unlockPrice - discountPrice);
+    if (totalAmount < 0) totalAmount = 0;
+    console.log("totalAmount", totalAmount);
+    if (validateOnly) {
+      return res.status(200).json({
+        success: true,
+        payload: {
+          totalAmount,
+          discountPrice,
+          originalPrice: content.unlockPrice,
+        },
       });
     }
 
     const orderId = randomUUID();
 
-    let totalAmount = content.unlockPrice;
-
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
       .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&contentId=${contentId}`
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&contentId=${contentId}&discountedPrice=${totalAmount}`
       )
       .build();
 
@@ -528,6 +602,8 @@ export const purchasePremiumContent = async (req, res) => {
       success: true,
       payload: {
         redirectUrl: response.redirectUrl,
+        totalAmount,
+        discountPrice,
       },
     });
   } catch (error) {

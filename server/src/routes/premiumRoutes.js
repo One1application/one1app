@@ -11,7 +11,7 @@ const premiumRouter = express.Router();
 
 premiumRouter.use(authMiddleware);
 
-premiumRouter.post('/create-content',createContent);  //to create premium content
+premiumRouter.post('/create-content', createContent);  //to create premium content
 premiumRouter.post('/edit-premium-content/:contentId', editContent)
 premiumRouter.delete('/delete-premium-content/:contentId', deleteContent)
 premiumRouter.get('/premium-content/:contentId', getPremiumContentById );  //to get premium content by contentId in params
