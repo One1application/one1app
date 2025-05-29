@@ -1865,10 +1865,24 @@ export async function getWithdrawals(req, res) {
       orderBy: {
         [actualSortBy]: actualSortOrder,
       },
-      // include: {
-      //   bankDetails: Boolean(bankDetailsId) || true,
-      //   upi: Boolean(upiId) || true,
-      // },
+      include: {
+        bankDetails: {
+          select: {
+            accountNumber: true,
+            accountHolderName: true,
+          },
+        },
+        upi: {
+          select: {
+            upiId: true,
+            bankDetails: {
+              select: {
+                accountHolderName: true,
+              }
+            }
+          }
+        }
+      },
     });
 
     //calculate total withdrawal amount for the filtered result

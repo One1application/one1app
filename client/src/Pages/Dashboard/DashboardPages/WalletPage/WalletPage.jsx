@@ -14,7 +14,7 @@ import {
   IoIosWarning,
 } from "react-icons/io";
 import { MdKeyboardArrowRight, MdOutlinePin } from "react-icons/md";
-import { FaLongArrowAltDown, FaLongArrowAltUp } from "react-icons/fa";
+import { FaLongArrowAltDown, FaLongArrowAltUp, FaSpinner } from "react-icons/fa";
 import EarningsChart from "../../../../components/Charts/EarningsChart";
 import WalletTableComponent from "../../../../components/Table/WalletTableComponent";
 import WithdrawModal from "../../../../components/Modal/WithdrawModal";
@@ -23,7 +23,7 @@ import { CiBank } from "react-icons/ci";
 import UPIModal from "../../../../components/Modal/UPIModal";
 import MPINModal from "../../../../components/Modal/MPINModal";
 import toast from "react-hot-toast";
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import {
   fetchBalanceDetails,
   fetchPrimaryPaymentInformation,
@@ -35,6 +35,7 @@ import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import AmountWithdraw from "./SubWalletPages/AmountWithdraw";
+
 const WalletPage = () => {
   const { userDetails } = useAuth();
   const {
@@ -48,7 +49,7 @@ const WalletPage = () => {
     TotalTransactionPages,
     getNextWithdrawalPage,
   } = useContext(StoreContext);
-  
+
   const [BalanceDetails, setBalanceDetails] = useState({
     balance: 0,
     totalEarnings: 0,
@@ -56,11 +57,14 @@ const WalletPage = () => {
     lastModified: "",
     financeIds: [],
   });
+  const [withdrawalsLoading, setWithdrawalsLoading] = useState(true);
+  const [transactionLoading, setTransactionLoading] = useState(true);
   const [selectedDateRange, setSelectedDateRange] = useState("Last Year");
   const [isCustomRange, setIsCustomRange] = useState(false);
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
   const [appliedDateRange, setAppliedDateRange] = useState(null);
+  
 
   const dateOptions = ["Last Week", "Last Month", "Last Year", "Custom Range"];
   const [modal, setOpenModal] = useState(false);
@@ -74,10 +78,6 @@ const WalletPage = () => {
   const [account, setAccount] = useState([]);
   const [reson, setReson] = useState();
   const navigate = useNavigate();
-
- 
-  
-  
 
   const toggleModal = () => {
     if (openWithdrawal || openUPI || openMPIN) {
@@ -187,29 +187,31 @@ const WalletPage = () => {
   };
 
   useEffect(() => {
+     if(AllWithdrawals.length > 0 && withdrawalsLoading){
+      setWithdrawalsLoading(false);
+     }
+     if(AllTransaction.length > 0 && transactionLoading){
+      setTransactionLoading(false);
+     }
+  },[AllWithdrawals])
+
+  useEffect(() => {
     getPrimaryPaymentInformation();
     getWalletInformation();
     getWalletBalanceDetails();
     getNextWithdrawalPage(1);
-    getNextTransactionPage(1)
+    getNextTransactionPage(1);
+    setWithdrawalsLoading(true);
+    setTransactionLoading(true);
   }, []);
 
-  // Add useEffect to load data when component mounts
+ 
 
-  // Remove any other duplicate useEffect calls that fetch the same data
-
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const res = await fetchWithdrawalPage({ page: CurrentWithdrawalPage });
-        setAllWithdrawals(res?.data?.payload?.withdrawals);
-      } catch (error) {
-        console.error("Error fetching withdrawals:", error);
-      }
-    };
-
-    fetchTransactions();
-  }, [setAllWithdrawals]);
+  //pagination
+  const handleTransactionPageChange = (page) => {
+    console.log("Changing to transaction page:", page);
+    getNextTransactionPage(page);
+  };
 
   return (
     <div className="max-w-full min-h-screen md:px-5 md:py-3 px-2 py-2 bg-[#0F1418]">
@@ -439,54 +441,67 @@ const WalletPage = () => {
 
       {/* Chart and graphs */}
       <div className="flex md:flex-row flex-col gap-4 w-full">
-        {/* Recent Withdrawal */}
-        <div className="md:w-1/3 w-full bg-[#1A1D21] py-3 px-3 mt-5 rounded-xl order-2">
-          <div className="flex justify-between">
-            <div className="flex items-center gap-1 text-white">
-              <Link to={"../withdrawal"} className="flex">
-                <p className="font-poppins tracking-tight">Recent Withdrawal</p>
-                <MdKeyboardArrowRight className="size-5" />
-              </Link>
-            </div>
-            <p className="font-poppins tracking-tight text-white">Amount</p>
-          </div>
-          <div
-            className={`flex flex-col gap-6 mt-3 ${
-              AllWithdrawals.length === 0 && "h-[90%]"
-            }`}
-          >
-            {AllWithdrawals.length === 0 ? (
-              <div className="flex justify-center h-full items-center">
-                No Withdrawal
+        { /* Recent Withdrawal */ }
+          <div className="md:w-1/3 w-full bg-[#1A1D21] py-3 px-3 mt-5 rounded-xl order-2">
+            <div className="flex justify-between">
+              <div className="flex items-center gap-1 text-white">
+                <Link to={"../withdrawal"} className="flex">
+            <p className="font-poppins tracking-tight">Recent Withdrawal</p>
+            <MdKeyboardArrowRight className="size-5" />
+                </Link>
               </div>
-            ) : (
-              AllWithdrawals.map((withdrawal, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center cursor-pointer"
-                >
-                  <a className="flex gap-3 items-center">
-                    {withdrawal.status === "paid" ? (
-                      <span className="w-7 h-7 bg-green-900 rounded flex items-center justify-center">
-                        <FaLongArrowAltUp className="text-green-400" />
-                      </span>
-                    ) : (
-                      <span className="w-7 h-7 bg-red-900 rounded flex items-center justify-center">
-                        <FaLongArrowAltDown className="text-red-400" />
-                      </span>
-                    )}
-                    <p className="text-gray-300">{withdrawal.date}</p>
-                  </a>
-                  <p className="font-semibold font-poppins tracking-tight text-white">
-                    ₹ {withdrawal.amount}
-                  </p>
+              <p className="font-poppins tracking-tight text-white">Amount</p>
+            </div>
+            <div
+              className={`flex flex-col gap-6 mt-3 ${
+                AllWithdrawals.length === 0 && "h-[90%]"
+              }`}
+            >
+              {withdrawalsLoading ? (
+                <div className="flex justify-center items-center h-full">
+                <Loader2 className="animate-spin text-orange-500 text-3xl" />
                 </div>
-              ))
-            )}
+              ) : AllWithdrawals.length === 0 ? (
+                <div className="flex justify-center h-full items-center">
+                  No Withdrawal
+                </div>
+              ) : (
+                AllWithdrawals.slice(0, 7).map((withdrawal, index) => (
+            <div
+              key={index}
+              className="flex justify-between items-center cursor-pointer"
+            >
+              <a className="flex gap-3 items-center">
+                {withdrawal.status === "SUCCESS" ? (
+                  <span className="w-7 h-7 bg-green-900 rounded flex items-center justify-center">
+              <FaLongArrowAltUp className="text-green-400" />
+                  </span>
+                ) : (
+                  <span className="w-7 h-7 bg-red-900 rounded flex items-center justify-center">
+              <FaLongArrowAltDown className="text-red-400" />
+                  </span>
+                )}
+                <p className="text-gray-300">
+                  {new Date(withdrawal.createdAt).toLocaleString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+                  })}
+                </p>
+              </a>
+              <p className="font-semibold font-poppins tracking-tight text-white">
+                ₹ {withdrawal.amount}
+              </p>
+            </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Charts */}
+          {/* Charts */}
         <div className="md:w-2/3 w-full bg-[#1A1D21] py-3 px-3 mt-5 rounded-xl order-2">
           <EarningsChart />
         </div>
@@ -496,13 +511,15 @@ const WalletPage = () => {
       <div className="bg-[#1A1D21] mt-6 rounded-xl">
         <WalletTableComponent
           // data={walletConfig.allTransactionsPage.tableData}
-          data={AllTransaction}
+          data={AllTransaction.slice(0, 5)}
           title={<span className="text-white">{walletConfig.title}</span>}
           headers={walletConfig.allTransactionsPage.tableHeader}
           page="Wallet"
           CurrentPage={CurrentTransactionPage}
           TotalPages={TotalTransactionPages}
+          onPageChange={handleTransactionPageChange}
           type={"transactions"}
+          isLoading={transactionLoading}
         />
       </div>
 
