@@ -5,6 +5,7 @@ import { uploadOnImageKit } from "../config/imagekit.js";
 import { randomUUID } from "crypto";
 import { StandardCheckoutPayRequest } from "pg-sdk-node";
 import { PhonePayClient } from "../config/phonepay.js";
+import { log } from "console";
 
 export async function createContent(req, res) {
   const { title, category, unlockPrice, discount, expiryDate, content } =
@@ -66,12 +67,17 @@ export async function createContent(req, res) {
 
     // Validate expiry date if provided
     let formattedExpiryDate = null;
-    if (expiryDate) {
-      const expDate = new Date(expiryDate);
+    if (discount.expiry) {
+      const expDate = new Date(discount.expiry);
       const today = new Date();
+      console.log("expiry date:",expDate);
+      console.log("today date:",today);
+      
+      
 
       // Clear time portion for date comparison
       today.setHours(0, 0, 0, 0);
+       expDate.setHours(0, 0, 0, 0);
 
       if (isNaN(expDate.getTime())) {
         return res.status(400).json({
@@ -83,7 +89,7 @@ export async function createContent(req, res) {
       if (expDate < today) {
         return res.status(400).json({
           success: false,
-          message: "Expiry date must be greater than or equal to today's date.",
+          message: "Expiry date of coupon date must be greater than or equal to today's date.",
         });
       }
 
@@ -199,15 +205,16 @@ export async function editContent(req, res) {
         updateData.discount = null;
       } else if (typeof discount === "object") {
         if (
-          discount.percentage &&
+          d.percent !== undefined &&
+        d.percent !== null &&
           (isNaN(parseFloat(discount.percentage)) ||
-            parseFloat(discount.percentage) < 0 ||
+            parseFloat(discount.percentage) < 1 ||
             parseFloat(discount.percentage) > 100)
         ) {
           return res.status(400).json({
             success: false,
             message:
-              "Invalid discount percentage. Should be between 0 and 100.",
+              "Invalid discount percentage. Should be between 1 and 100.",
           });
         }
         updateData.discount = discount;
