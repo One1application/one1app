@@ -278,16 +278,11 @@ export default function PaymentInterface() {
                       <p className="text-gray-100 text-md font-semibold pl-2">sumit</p>
                     </div>
                   </div>
-<<<<<<< Updated upstream
+
                   <h2 className="text-white text-2xl font-semibold mb-2">{productTitle}</h2>
-=======
-                  <div>
-                    <h3 className="text-white text-lg font-semibold">
-                      {productTitle}
-                    </h3>
-                    <p className="text-gray-400 text-sm">Created by-  </p>
-                  </div>
->>>>>>> Stashed changes
+
+               
+
                 </div>
               </div>
 
