@@ -1370,13 +1370,21 @@ export async function updateBankDetails(req, res) {
         userId: user.id,
       },
     });
-    console.log("existingBankDetails", existingBankDetails);
-
+   
+    
     if (!existingBankDetails) {
       return res
         .status(400)
         .json({ success: false, message: "Bank details not found." });
     }
+
+     const existingUpiRecords = await prisma.uPI.findMany({
+      where: {
+        bankDetailsId: bankDetailsId,
+        userId: user.id
+      }
+    });
+    console.log("existingupi records", existingUpiRecords)
 
     //update bank details
     const updatedBankDetails = await prisma.bankDetails.update({
@@ -1394,17 +1402,25 @@ export async function updateBankDetails(req, res) {
 
     //update UPI if provided
     let updatedUpi = null;
-    if (upiId) {
-      if (existingBankDetails.upiId && existingBankDetails.upiId.length > 0) {
+   if (upiId) {
+    
+
+      if (existingUpiRecords && existingUpiRecords.length > 0) {
+         const matchingUpi = existingUpiRecords.find(upi => upi.upiId === upiId);
+        if (matchingUpi) {
+          updatedUpi = matchingUpi;
+        }
+        // Update existing UPI record
         updatedUpi = await prisma.uPI.update({
           where: {
-            id: existingBankDetails.upiId[0].id,
+            id: existingUpiRecords[0].id,
           },
           data: {
             upiId,
           },
         });
       } else {
+        // Create new UPI record if none exists
         updatedUpi = await prisma.uPI.create({
           data: {
             upiId: upiId,
@@ -1454,7 +1470,11 @@ export async function getBankDetails(req, res) {
         userId: userExists.id,
         primary: true,
       },
+      include: {
+        upiIds: true,
+      },
     });
+    console.log("bankDetails", bankDetails)
 
     const kycRecord = await prisma.kycRecords.findFirst({
       where: {
@@ -1865,10 +1885,24 @@ export async function getWithdrawals(req, res) {
       orderBy: {
         [actualSortBy]: actualSortOrder,
       },
-      // include: {
-      //   bankDetails: Boolean(bankDetailsId) || true,
-      //   upi: Boolean(upiId) || true,
-      // },
+      include: {
+        bankDetails: {
+          select: {
+            accountNumber: true,
+            accountHolderName: true,
+          },
+        },
+        upi: {
+          select: {
+            upiId: true,
+            bankDetails: {
+              select: {
+                accountHolderName: true,
+              }
+            }
+          }
+        }
+      },
     });
 
     //calculate total withdrawal amount for the filtered result

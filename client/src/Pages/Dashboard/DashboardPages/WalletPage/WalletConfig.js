@@ -4,12 +4,12 @@ export const walletConfig = {
         // sr. no , date, amount, user register email , phone, mode of payment, fetch name from kyc ) 
         tableHeader: [
             'Sl No.',
-            "Date & Time",
-            "Amount",
-            "Email Id",
-            "Mobile Number",
-            "Mode of Withdrawal",
-            "Status"
+           "Name",
+           "Account Info",
+            "Payment Method",
+            "Amount Withdrawn",
+             "Status",
+             "Date & Time",
         ],
         tableData: [
             {

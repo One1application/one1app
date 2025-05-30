@@ -4,7 +4,9 @@ import {
   fetchVerificationInformation,
   handelUplaodFile,
   saveVerificationInformation,
+  updateVerificationInformation,
 } from "../../../../../services/auth/api.services";
+import { Loader2 } from "lucide-react";
 
 const VerificationTab = ({ setVal }) => {
   const [loading, setLoading] = useState(false);
@@ -106,10 +108,15 @@ const VerificationTab = ({ setVal }) => {
 
     try {
       setLoading(true);
-      const response = await saveVerificationInformation(data);
+      let response;
+      if (update) {
+        response = await updateVerificationInformation(data);
+      }else{
+        response = await saveVerificationInformation(data);
+      }
       console.log(response);
-      if (response.status === 200) {
-        toast.success("Verification details saved successfully!");
+      if (response?.status === 200) {
+        toast.success(update ? "Verification details updated successfully!" : "Verification details saved successfully!");
         setVal("3");
       } else {
         toast.error(
@@ -129,7 +136,7 @@ const VerificationTab = ({ setVal }) => {
       const response = await fetchVerificationInformation();
       console.log(response);
 
-      if (response.status === 200) {
+      if (response?.status === 200) {
         setUpdate(true);
         const {
           socialMedia,
@@ -366,7 +373,16 @@ const VerificationTab = ({ setVal }) => {
             loading ? "bg-gray-400" : "bg-orange-500 hover:bg-orange-600"
           } text-white py-2 px-6 rounded-lg focus:ring focus:ring-orange-500 focus:ring-opacity-50`}
         >
-          {update ? loading ? 'Updating...' : 'Update' : loading ? "Saving..." : "Save"}
+         {loading ? (
+                     <span className="flex items-center justify-center">
+                       <Loader2 className="animate-spin mr-2" />
+                       {update ? "Updating..." : "Saving..."}
+                     </span>
+                   ) : update ? (
+                     "Update"
+                   ) : (
+                     "Save"
+                   )}
         </button>
       </div>
     </div>

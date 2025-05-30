@@ -14,18 +14,18 @@ const TableComponent = ({
   TotalPages,
   type,
   onPageChange,
+  isLoading = false,
 }) => {
   const [filterText, setFilterText] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: "ascending",
   });
-  const rowsPerPage = 10;
-
-  console.log(data);
+  //const rowsPerPage = 10;
 
   // Ensure data is an array
   const safeData = Array.isArray(data) ? data : [];
+  
 
   // Toggle Transaction ID display
   const [expandedTransactionIds, setExpandedTransactionIds] = useState({});
@@ -55,7 +55,7 @@ const TableComponent = ({
         row.amountAfterFee ? ` ₹${row.amountAfterFee}` : "-",
         row.buyer.email || "-",
         row.buyer.phone || "-",
-        row.productType ? row.productType.toLowerCase() : "-",
+        row.productType ? row.productType.charAt(0).toUpperCase() + row.productType.slice(1).toLowerCase() : "-",
         row.modeOfPayment || "-",
         row.status || "-",
         row.createdAt
@@ -70,29 +70,40 @@ const TableComponent = ({
           : "-",
       ];
     } else {
+      let accountInfo = "-";
+      if(row.upi && row.upi.upiId){
+        accountInfo = `UpiId: ${ row.upi.upiId}`;
+      }else if(row.bankDetails && row.bankDetails.accountNumber){
+         accountInfo =`Acc No: ${row.bankDetails.accountNumber}`;
+      }
+      let accountName = "-";
+      if(row.upi && row.upi.bankDetails.accountHolderName){
+        accountName = row.upi.bankDetails.accountHolderName;
+      }else if(row.bankDetails && row.bankDetails.accountHolderName){
+         accountName = row.bankDetails.accountHolderName;
+      }
       return [
         idx + 1,
-        // row.createdAt || "-",
+        accountName,
+        accountInfo,
+        row.modeOfWithdrawal
+          ? row.modeOfWithdrawal.charAt(0).toUpperCase() + row.modeOfWithdrawal.slice(1).toLowerCase()
+          : "-",
+        row.amount ? ` ₹${row.amount}` : "-",
+        row.status || "-",
         row.createdAt
           ? new Date(row.createdAt).toLocaleString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
           : "-",
-        row.amount || "-",
-        "email id",
-        "phone number",
-        row.modeOfWithdrawal || "-",
-        row.status || "-",
       ];
     }
   });
-
-  console.log(transformedData);
 
   // Processed Data: Filtered and Sorted
   const processedData = transformedData
@@ -115,11 +126,12 @@ const TableComponent = ({
     });
 
   // Pagination: Get current page data
-  const startIndex = (CurrentPage - 1) * rowsPerPage;
-  const paginatedData = processedData.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
+  // const startIndex = (CurrentPage - 1) * rowsPerPage;
+  // const paginatedData = processedData.slice(
+  //   startIndex,
+  //   startIndex + rowsPerPage
+  // );
+  const paginatedData = processedData;
 
   // Handle Sorting
   const handleSort = (header) => {
@@ -148,24 +160,25 @@ const TableComponent = ({
     URL.revokeObjectURL(url);
   };
 
-  //Handle Pagination
-  // const handlePageChange = (_, page) => {
-  //   setCurrentPage(page);
-  // };
+  console.log("tableComponent Render", {
+    CurrentPage,
+    TotalPages,
+    dataLength: paginatedData.length,
+  });
 
   // Determine the status color
-  const getStatusClass = (status) => {
-    switch (status.toLowerCase()) {
-      case "success":
-        return "text-green-600 font-bold";
-      case "pending":
-        return "text-yellow-600 font-bold";
-      case "failed":
-        return "text-red-600 font-bold";
-      default:
-        return "text-gray-600";
-    }
-  };
+  // const getStatusClass = (status) => {
+  //   switch (status.toLowerCase()) {
+  //     case "success":
+  //       return "text-green-600 font-bold";
+  //     case "pending":
+  //       return "text-yellow-600 font-bold";
+  //     case "failed":
+  //       return "text-red-600 font-bold";
+  //     default:
+  //       return "text-gray-600";
+  //   }
+  // };
 
   return (
     <div className=" p-4 rounded-xl max-w-full mx-auto">
@@ -185,6 +198,8 @@ const TableComponent = ({
             {title}
           </h2>
         </div>
+
+
 
         {/* Filter and Export Section */}
         <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
@@ -209,7 +224,15 @@ const TableComponent = ({
       </div>
 
       {/* Table Section */}
-      {paginatedData.length > 0 ? (
+      { 
+      isLoading ? (
+        <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-orange-500 shadow-lg">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+          <p className="mt-4 text-orange-500 text-sm font-medium">Loading data...</p>
+        </div>
+
+      )
+      : paginatedData.length > 0 ? (
         <div className="overflow-hidden rounded-lg border border-orange-500 bg-orange-300 shadow-lg">
           <table className="min-w-full divide-y divide-orange-500">
             <thead className="bg-orange-300">
@@ -302,6 +325,7 @@ const TableComponent = ({
           count={TotalPages}
           page={CurrentPage}
           onChange={(_, page) => {
+            console.log("Changing to page:", page);
             if (typeof onPageChange === "function") {
               onPageChange(page);
             }

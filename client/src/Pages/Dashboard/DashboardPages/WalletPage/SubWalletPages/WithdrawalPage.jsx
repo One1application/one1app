@@ -1,27 +1,42 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useState } from "react";
 import { PiHandWithdraw } from "react-icons/pi";
 import WalletTableComponent from "../../../../../components/Table/WalletTableComponent";
 import { StoreContext } from "../../../../../context/StoreContext/StoreContext";
 import { fetchWithdrawalPage } from "../../../../../services/auth/api.services";
 import { walletConfig } from "../WalletConfig";
+import toast from "react-hot-toast";
 
 const WithdrawalPage = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const {
     AllWithdrawals,
     CurrentWithdrawalPage,
     TotalWithdrawalPages,
     setAllWithdrawals,
+    getNextWithdrawalPage
   } = useContext(StoreContext);
-
-  const { title, tableHeader, tableData } = walletConfig.allWithdrawalPage;
+ console.log("withdrawals dogggg:::", AllWithdrawals);
+  const { title, tableHeader } = walletConfig.allWithdrawalPage;
+   const handleWithdrawPageChange = (page) => {
+    console.log("Changing to withdraw page:", page);
+    getNextWithdrawalPage(page);
+  };
 
   useEffect(() => {
     const fetchTransactions = async () => {
+       setIsLoading(true);
+      const data = {
+        page: CurrentWithdrawalPage,
+      }
       try {
-        const res = await fetchWithdrawalPage({ page: CurrentWithdrawalPage });
-        setAllWithdrawals(res.data.payload.transactions);
+        const res = await fetchWithdrawalPage(data);
+        setAllWithdrawals(res?.data?.payload?.withdrawals || [] );
+        toast.success(res.data.message);
       } catch (error) {
-        console.error("Error fetching transactions:", error);
+        console.error("Error fetching withdrawals:", error);
+        toast.error(res.data.message)
+      }finally{
+        setIsLoading(false);
       }
     };
 
@@ -44,7 +59,9 @@ const WithdrawalPage = () => {
           data={AllWithdrawals}
           type="withdrawals"
           CurrentPage={CurrentWithdrawalPage}
+          onPageChange={handleWithdrawPageChange}
           TotalPages={TotalWithdrawalPages}
+          isLoading={isLoading}
         />
       </section>
     </div>
