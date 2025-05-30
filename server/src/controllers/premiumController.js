@@ -65,7 +65,16 @@ export async function createContent(req, res) {
         });
       }
 
-      // Check if discount has valid properties (optional validation)
+        // Validate discount code contains only uppercase letters and numbers
+    if (discount.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(discount.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${discount.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
       if (
         discount.percentage &&
         (isNaN(parseFloat(discount.percentage)) ||
@@ -218,6 +227,16 @@ export async function editContent(req, res) {
       if (discount === null) {
         updateData.discount = null;
       } else if (typeof discount === "object") {
+          // Validate discount code contains only uppercase letters and numbers
+    if (d.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(d.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
         if (
           d.percent !== undefined &&
         d.percent !== null &&

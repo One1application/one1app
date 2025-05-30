@@ -335,8 +335,8 @@ const TelegramsPages = () => {
         discount: discounts,
       };
 
-      // await createTelegram(body);
-      // window.location.href = "/dashboard/telegram";
+      await createTelegram(body);
+      window.location.href = "/dashboard/telegram";
       toast.success("Telegram Is in the Development Phase")
     } catch (error) {
       console.log("Error in creating telegram.", error);

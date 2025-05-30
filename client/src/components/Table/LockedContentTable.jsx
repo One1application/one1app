@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, SortAsc, Mail, ArrowDown, ArrowUp,Edit2, Copy } from 'lucide-react';
+import { Search, Filter, SortAsc, Mail, ArrowDown, ArrowUp,Edit2, Copy, Trash2 } from 'lucide-react';
 import toast from "react-hot-toast";
 import Pagination from '@mui/material/Pagination';
 import Option from '../../Pages/Dashboard/DashboardPages/LockedContentPage/Option';
@@ -18,6 +18,7 @@ const LockedContentTable = ({ data }) => {
   const itemsPerPage = 10;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  // const [coupons, setCoupons] = useState(item.discount);
 
   useEffect(() => {
     setPage(1);
@@ -49,6 +50,15 @@ const LockedContentTable = ({ data }) => {
         console.log("Navigating to locked content detail for ID:", id);
         // Example: navigate(`/app/locked-content?id=${id}`);
     }
+  };
+
+   const handleEdit = (e, id) => {
+    e.stopPropagation();
+    navigate(`/app/edit-premium-content?id=${id}`);
+  };
+  
+   const handleCouponDelete = (id) => {
+    setCoupons(coupons.filter(coupon => coupon.id !== id));
   };
 
   // Assuming 'purchases' or similar field exists in the _count object
@@ -311,9 +321,29 @@ const LockedContentTable = ({ data }) => {
                   <td className="px-6 py-4 text-sm text-gray-500">
                     ₹{calculateRevenue(item)}
                   </td>
-                   <td className="px-6 py-4 text-sm text-gray-500">
-                        {item.discount?.code || "No"}
-                  </td>
+                   <td className="px-6 py-7 text-sm text-gray-500 flex gap-2">
+                       {
+                   item.discount.code ? (
+                  <>
+                <span>{item.discount.code}</span>
+               <button
+                 onClick={(e) => {
+                  e.stopPropagation();
+                  navigator.clipboard.writeText(item.discount.code);
+                  toast.success('Coupon copied to clipboard');
+                   }}
+                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                     >
+                  <Copy className="h-4 w-4 ml-1" />
+               </button>
+                 <button onClick={() => handleDelete(coupon.id)} className="text-red-600 hover:text-red-700 text-sm font-medium" >
+        <Trash2 className="h-4 w-4 ml-1" />
+            </button>
+              </>
+              ) : (
+          <span>N/A</span>
+                 )}
+                      </td>
                   <td className="px-6 py-4">
                     {/* Assuming status is always 'Published' for items listed here */}
                     <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800">
@@ -336,13 +366,13 @@ const LockedContentTable = ({ data }) => {
                           <Copy className="h-4 w-4 ml-1"/>
                       </button>
                       {/* No Edit Button */}
-                        <button 
-                        onClick={(e) => handleEdit(e, webinar)}
+                        {/* <button 
+                        onClick={(e) => handleEdit(e, id)}
                         className= "inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium"
                       >
                         
                         <Edit2 className="h-4 w-4 ml-1" />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">{formatDate(item.createdAt)}</td>

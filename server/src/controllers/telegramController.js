@@ -14,7 +14,7 @@ export async function createTelegram(req, res) {
     }
     const {
       coverImage,
-      channelLink: cl,
+      // channelLink: cl,
       chatId,
       title,
       description,
@@ -26,7 +26,62 @@ export async function createTelegram(req, res) {
 
     console.log(req.body);
 
-    // Provide a default discount if none supplied
+    if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+      // Validate discount code contains only uppercase letters and numbers
+    if (d.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(d.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
+    // Validate percentage
+    if (
+      d.percent &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 0 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
+
     await prisma.telegram.create({
       data: {
         coverImage: coverImage || "https://localhost.com",

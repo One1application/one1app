@@ -10,6 +10,7 @@ export default function PaymentInterface() {
   const navigate = useNavigate();
   const location = useLocation();
   const productData = location.state || {};
+  console.log('product data',productData)
   const [showCoupon, setShowCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
@@ -20,6 +21,7 @@ export default function PaymentInterface() {
   const [productTitle, setProductTitle] = useState(
     productData.title || "product"
   );
+  // const [createdBy, setCreatedBy]= useState(productData.createdBy.name || "")
   const [productId, setProductId] = useState(productData.id || "");
 
   const [courseType, setCourseType] = useState(productData.courseType || "");
@@ -32,6 +34,7 @@ export default function PaymentInterface() {
       setProductTitle(location.state.title || "product");
       setProductId(location.state.id || "");
       setCourseType(location.state.courseType || "");
+      // setCreatedBy(location.state.createdBy.name || "N/A")
     }
   }, [location.state]);
 
@@ -275,7 +278,16 @@ export default function PaymentInterface() {
                       <p className="text-gray-100 text-md font-semibold pl-2">sumit</p>
                     </div>
                   </div>
+<<<<<<< Updated upstream
                   <h2 className="text-white text-2xl font-semibold mb-2">{productTitle}</h2>
+=======
+                  <div>
+                    <h3 className="text-white text-lg font-semibold">
+                      {productTitle}
+                    </h3>
+                    <p className="text-gray-400 text-sm">Created by-  </p>
+                  </div>
+>>>>>>> Stashed changes
                 </div>
               </div>
 
