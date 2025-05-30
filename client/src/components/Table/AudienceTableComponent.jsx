@@ -14,7 +14,7 @@ import {
   Check,
   IndianRupee,
 } from "lucide-react";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import Pagination from "@mui/material/Pagination";
 
 const AudienceTableComponent = ({ data }) => {
@@ -52,49 +52,61 @@ const AudienceTableComponent = ({ data }) => {
   };
 
   const handleExport = () => {
-    toast('Starting export...', {
+    toast("Starting export...", {
       position: "top-right",
       autoClose: 1000,
     });
 
     try {
       // Convert data to CSV format
-      const headers = ['Customer Name', 'Email', 'Phone Number', 'Purchased Products', 'Amount Spent', 'Active Subscriptions'];
+      const headers = [
+        "Customer Name",
+        "Email",
+        "Phone Number",
+        "Purchased Products",
+        "Amount Spent",
+        "Active Subscriptions",
+      ];
       const csvData = [
-        headers.join(','),
-        ...data.map(item => [
-          item.name.replace(/,/g, ';'),
-          item.email.replace(/,/g, ';'),
-          item.phone,
-          item.purchasedProducts.join(';'),
-          item.amountSpent,
-          item.activeSubscriptions
-        ].join(','))
-      ].join('\n');
+        headers.join(","),
+        ...data.map((item) =>
+          [
+            item.name.replace(/,/g, ";"),
+            item.email.replace(/,/g, ";"),
+            item.phone,
+            item.purchasedProducts.join(";"),
+            item.amountSpent,
+            item.activeSubscriptions,
+          ].join(",")
+        ),
+      ].join("\n");
 
       // Create blob and download link
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `audience_export_${new Date().toLocaleDateString()}.csv`);
-      link.style.visibility = 'hidden';
-      
+
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `audience_export_${new Date().toLocaleDateString()}.csv`
+      );
+      link.style.visibility = "hidden";
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      toast.success('Export completed successfully!', {
+      toast.success("Export completed successfully!", {
         position: "top-right",
         autoClose: 3000,
       });
     } catch (error) {
-      toast.error('Export failed. Please try again.', {
+      toast.error("Export failed. Please try again.", {
         position: "top-right",
         autoClose: 3000,
       });
-      console.error('Export error:', error);
+      console.error("Export error:", error);
     }
   };
 
@@ -103,9 +115,21 @@ const AudienceTableComponent = ({ data }) => {
   };
 
   const sortOptions = [
-    { id: 'alphabetical', label: 'Name (A to Z)', icon: <ArrowUpDown className="h-4 w-4" /> },
-    { id: 'amountAsc', label: 'Amount (Low to High)', icon: <IndianRupee className="h-4 w-4" /> },
-    { id: 'amountDesc', label: 'Amount (High to Low)', icon: <IndianRupee className="h-4 w-4" /> },
+    {
+      id: "alphabetical",
+      label: "Name (A to Z)",
+      icon: <ArrowUpDown className="h-4 w-4" />,
+    },
+    {
+      id: "amountAsc",
+      label: "Amount (Low to High)",
+      icon: <IndianRupee className="h-4 w-4" />,
+    },
+    {
+      id: "amountDesc",
+      label: "Amount (High to Low)",
+      icon: <IndianRupee className="h-4 w-4" />,
+    },
   ];
 
   // Filter and sort data
@@ -113,9 +137,18 @@ const AudienceTableComponent = ({ data }) => {
     return data.filter(
       (event) =>
         event.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.phone?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.amountSpent?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.activeSubscriptions?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+        event.phone
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        event.amountSpent
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        event.activeSubscriptions
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
@@ -210,26 +243,26 @@ const AudienceTableComponent = ({ data }) => {
         </div>
       </div>
 
-      <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full divide-y-0 divide-gray-200">
+      <div className="hidden md:block overflow-x-auto text-center">
+        <table className="min-w-full divide-y-0 divide-gray-200 border-collapse">
           <thead className="bg-orange-300">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Customer Name
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className=" py-3 px-4 text-center text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Email
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Phone Number
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Purchased Products
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Amount Spent (in Rupees)
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Active Subscriptions
               </th>
             </tr>
@@ -239,24 +272,30 @@ const AudienceTableComponent = ({ data }) => {
               <tr
                 key={index}
                 onClick={() => handleRowClick(event.path)}
-                className="cursor-pointer transform transition-all duration-200  mb-3"
+                className="cursor-pointer transform transition-all duration-200 mb-3"
               >
-                <td className="bg-white   px-4 py-4 text-sm">
+                <td className="bg-white border px-4 py-4 text-sm">
                   <div className="font-medium text-gray-900">{event.name}</div>
                 </td>
-                <td className="bg-white border-t border-b px-4 py-4 text-sm text-gray-500">
+                <td className="bg-white border px-4 py-4 text-sm text-gray-500">
                   {event.email}
                 </td>
-                <td className="bg-white border-t border-b px-4 py-4 text-sm text-gray-500">
+                <td className="bg-white border px-4 py-4 text-sm text-gray-500">
                   {event.phone}
                 </td>
-                <td className="bg-white border-t border-b px-4 py-4 text-sm text-gray-500">
+                <td className="bg-white border px-4 py-4 text-sm text-gray-500">
                   {event.purchasedProducts.join(", ")}
                 </td>
-                <td className="bg-white border-t border-b px-4 py-4 text-sm text-gray-500">
+                <td className="bg-white border px-4 py-4 text-sm text-gray-500">
                   {event.amountSpent}
                 </td>
-                <td className="bg-white border  px-4 py-4 text-sm">
+                <td
+                  className={`bg-white border px-4 py-4 text-sm ${
+                    event.activeSubscriptions === "Yes"
+                      ? "text-green-600 font-semibold" // Green for "Yes"
+                      : "text-red-600 font-semibold" // Red for "No"
+                  }`}
+                >
                   {event.activeSubscriptions}
                 </td>
               </tr>
@@ -274,7 +313,9 @@ const AudienceTableComponent = ({ data }) => {
             className="border rounded-lg mb-4 bg-white p-4 shadow-md cursor-pointer transform transition-all duration-200 hover:scale-[1.02]"
           >
             <div className="flex justify-between items-start mb-2">
-              <h3 className="font-medium text-gray-900 text-lg">{event.name}</h3>
+              <h3 className="font-medium text-gray-900 text-lg">
+                {event.name}
+              </h3>
               <ChevronRight className="h-5 w-5 text-gray-400" />
             </div>
             <div className="text-sm space-y-2">

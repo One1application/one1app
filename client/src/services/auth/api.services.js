@@ -158,6 +158,14 @@ export const saveBusinessInformation = async (data) => {
   return response;
 };
 
+export const updateBusinessInfo = async (data) => {
+   const response  = await servicesAxiosInstance.post(
+    "/wallet/update-business-info",
+    data
+   );
+  return response;
+}
+
 export const fetchBusinessInformation = async () => {
   const response = await servicesAxiosInstance.get("/wallet/get-business-info");
   return response;
@@ -166,6 +174,14 @@ export const fetchBusinessInformation = async () => {
 export const saveVerificationInformation = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/wallet/add-verfication-details",
+    data
+  );
+  return response;
+};
+
+export const updateVerificationInformation = async (data) => {
+  const response = await servicesAxiosInstance.post(
+    "/wallet/update-verfication-details",
     data
   );
   return response;
@@ -179,6 +195,13 @@ export const fetchVerificationInformation = async () => {
 export const savePrimaryPaymentInformation = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/wallet/add-bank-details",
+    data
+  );
+  return response;
+};
+export const updatePrimaryPaymentInformation = async (bankDetailsId,data) => {
+  const response = await servicesAxiosInstance.post(
+    `/wallet/update-bank-details/${bankDetailsId}`,
     data
   );
   return response;
@@ -372,8 +395,8 @@ export const fetchUserDetails = async () => {
   return response;
 };
 
-export const fetchCustomers = async (page = 1) => {
-  const response = await servicesAxiosInstance.get(`/self/customers/${page}`);
+export const fetchCustomers = async (page=1) => {
+  const response = await servicesAxiosInstance.get(`/self/customers/`, page);
   return response;
 };
 
