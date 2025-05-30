@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp } from 'lucide-react';
+import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp, Copy } from 'lucide-react';
 import toast from "react-hot-toast";
 
 import Pagination from '@mui/material/Pagination';
@@ -277,6 +277,7 @@ const Table = ({ data }) => {
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sale</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Revenue</th>
+               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Coupon</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created At</th>
@@ -302,6 +303,10 @@ const Table = ({ data }) => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {"variable"}
                 </td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                 {event.discount?.map(d => d.code).join(", ") || "No"}
+                </td>
+
                 <td className="px-6 py-4 text-sm">
                   {event.paymentDetails?.paymentEnabled || event.paymentEnabled ? (
                     <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -324,13 +329,13 @@ const Table = ({ data }) => {
                       }}
                       className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
                     >
-                      Share
+                     <Copy className="h-4 w-4 ml-1"/>
                     </button>
                     <button
                       onClick={(e) => handleEdit(e, event)}
                       className="inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium transition-colors duration-200"
                     >
-                      Edit
+                      
                       <Edit2 className="h-4 w-4 ml-1" />
                     </button>
                   </div>
@@ -372,6 +377,10 @@ const Table = ({ data }) => {
               <div className="space-y-1">
                 <span className="text-gray-500 block">Revenue</span>
                 <span className="font-medium text-gray-900">{event.revenue}</span>
+              </div>
+               <div className="space-y-1">
+                <span className="text-gray-500 block">Coupon</span>
+                <span className="font-medium text-gray-900"> {event.discount?.map(d => d.code).join(", ") || "No"}</span>
               </div>
               <div className="space-y-1">
                 <span className="text-gray-500 block">Payment</span>

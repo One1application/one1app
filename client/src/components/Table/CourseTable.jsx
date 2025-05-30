@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, ArrowUpDown, Pencil, ChevronRight, Mail, SortAsc, ArrowDown, ArrowUp } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Pencil, ChevronRight, Mail, SortAsc, ArrowDown, ArrowUp, Copy } from 'lucide-react';
 import { Pagination } from '@mui/material';
 import  toast  from "react-hot-toast";
 
@@ -270,6 +270,7 @@ const CourseTable = ({ data }) => {
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Sale</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Revenue</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Coupon</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Payment</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Created At</th>
@@ -287,6 +288,9 @@ const CourseTable = ({ data }) => {
                   <td className="px-6 py-4 text-sm text-gray-500">₹{course.price || 0}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{course.purchasedBy?.length || 0}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">₹{calculateRevenue(course)}</td>
+                   <td className="px-6 py-4 text-sm text-gray-500">
+                        {course.discount?.map(d => d.code).join(", ") || "No"}
+                  </td>
                   <td className="px-6 py-4">
                     <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800">
                       Enabled
@@ -302,13 +306,13 @@ const CourseTable = ({ data }) => {
                         }}
                         className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                       >
-                        Share
+                        <Copy className="h-4 w-4 ml-1"/>
                       </button>
                       <button 
                         onClick={(e) => handleEdit(e, course)}
                         className="inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium"
                       >
-                        Edit
+                        
                         <Pencil className="h-4 w-4 ml-1" />
                       </button>
                     </div>
@@ -348,6 +352,10 @@ const CourseTable = ({ data }) => {
               <div>
                 <span className="text-gray-500">Revenue: </span>
                 <span>₹{calculateRevenue(course)}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">Coupon: </span>
+                <span>{course.discount?.map(d => d.code).join(", ") || "No"}</span>
               </div>
               <div>
                 <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
