@@ -12,6 +12,7 @@ import {
 import { signInUser, verifyLoginUser } from "../../services/auth/api.services";
 
 const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}) => {
+   const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -21,6 +22,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
+  const countryCodes = ["+1", "+91", "+44", "+61"];
   
   useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -42,7 +44,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
 
   const handleSendOTP = async () => {
     setIsLoading(true);
-    const userData = isUsingEmail ? { email } : { phoneNumber };
+    const userData = isUsingEmail? { email } : { phoneNumber: selectedCountryCode + phoneNumber };
 
     try {
       const { data } = await signInUser(userData);
@@ -62,7 +64,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
 
   const handleOTPSubmit = async () => {
     setIsOtpLoading(true);
-    const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber }) };
+    const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber:selectedCountryCode + phoneNumber }) };
     
     try {
       const { data } = await verifyLoginUser(otpData);
@@ -113,14 +115,31 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
                 />
               </div>
             ) : (
-              <div className="flex flex-col gap-1 w-full">
-                <input
-                  type="text"
-                  placeholder="Phone Number With Country Code"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
+               <div className="flex flex-col gap-1 w-full">
+                <div className="flex border border-gray-300 rounded-lg">
+                  <select
+                    className="p-3 border-r border-gray-300 rounded-l-lg focus:outline-none"
+                    value={selectedCountryCode}
+                    onChange={(e) => setSelectedCountryCode(e.target.value)}
+                  >
+                    {countryCodes.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Phone Number"
+                    value={phoneNumber}
+                    // onBlur={validatePhoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="p-3 flex-1 rounded-r-lg focus:outline-none"
+                  />
+                </div>
+                {/* {phoneError && (
+                  <span className="text-red-500 text-xs">{phoneError}</span>
+                )} */}
               </div>
             )}
 
