@@ -428,8 +428,17 @@ export const deletePremiumContentById = async (contentId) => {
   return response;
 };
 
+export const editPremiumContentById = async (contentId, updatedContent) => {
+  // Assuming `updatedContent` is the data you want to update (e.g., title, description, etc.)
+  const response = await servicesAxiosInstance.put(
+    `/premium/edit-premium-content/${contentId}`, // This matches the edit route you would define on the server
+    updatedContent // Sending the data that you want to update
+  );
+  return response;
+};
+
 export const purchasePremiumContent = async (data) => {
-  const response = await servicesAxiosInstance.post(
+const response = await servicesAxiosInstance.post(
     "/premium/purchase-premium-content", 
     data
   );

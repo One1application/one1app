@@ -37,6 +37,8 @@ const SignInPage = () => {
   const { verifyToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
+  const countryCodes = ["+1", "+91", "+44", "+61"];
 
   // const images = [
   //   "https://d3qp9zvlyuxos1.cloudfront.net/Group+46944GlobalSignin4.png",
@@ -157,13 +159,28 @@ const SignInPage = () => {
                   />
                 </div>
               ) : (
-                <div className="flex flex-col gap-1 w-[85%]">
+               
+                     <div className="flex gap-2 w-[85%]">
+                  {/* Country Code Dropdown */}
+                  <select
+                    className="p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedCountryCode}
+                    onChange={(e) => setSelectedCountryCode(e.target.value)}
+                  >
+                    {countryCodes.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Phone Number Input */}
                   <input
                     type="text"
-                    placeholder="Phone Number With Country Code"
+                    placeholder="Phone Number"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full mt-2.5 text-sm p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               )}

@@ -33,6 +33,16 @@ export async function createWebinar(req, res) {
   }
 
   for (let d of discount) {
+      // Validate discount code contains only uppercase letters and numbers
+    if (d.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(d.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
     // Validate percentage
     if (
       d.percent !== undefined &&
@@ -145,6 +155,17 @@ export async function editWebinar(req, res) {
   }
 
   for (let d of discount) {
+     // Validate discount code contains only uppercase letters and numbers
+    if (d.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(d.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
+
     // Validate percentage
     if (
       d.percent !== undefined &&

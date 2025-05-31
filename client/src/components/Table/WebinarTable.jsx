@@ -281,7 +281,37 @@ const WebinarTable = ({ data }) => {
                   <td className="px-6 py-4 text-sm text-gray-500">{webinar._count.tickets}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">₹{calculateRevenue(webinar)}</td>
                    <td className="px-6 py-4 text-sm text-gray-500">
-                        {webinar.discount?.map(d => d.code).join(", ") || "No"}
+                        {
+    webinar.discount && webinar.discount.length > 0 ? (
+    // Find the coupon with the highest discount percentage
+    (() => {
+      const highestDiscountCoupon = webinar.discount.reduce((max, current) => {
+        // Compare the discount percentage to find the maximum
+        return (current.percent > max.percent) ? current : max;
+      });
+
+      // Return the JSX for the highest discount coupon
+      return (
+        <div className="flex gap-2">
+          <span>{highestDiscountCoupon.code}</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(highestDiscountCoupon.code);
+              toast.success('Coupon copied to clipboard');
+            }}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            <Copy className="h-4 w-4 ml-1" />
+          </button>
+        </div>
+      );
+    })()
+  ) : (
+    <span>N/A</span>
+  )
+}
+
                   </td>
                   <td className="px-6 py-4">
                     {webinar.paymentEnabled ? (

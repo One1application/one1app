@@ -112,7 +112,7 @@ const App = () => {
           {/* Sub-Pages for App-Specific Routes */}
           <Route path="app" element={<Outlet />}>
             <Route path="create-webinar" element={<CreateWebinarPage />} />
-            {/* <Route path="create-course" element={<CreateCoursePage />} /> */}
+            <Route path="create-course" element={<CreateCoursePage />} />
             <Route path="create-course" element={<NewCourse />} />
             <Route path="create-pay-up" element={<CreatePayUp />} />
             <Route path="create-telegram" element={<TelegramForm />} />
@@ -124,6 +124,8 @@ const App = () => {
             <Route path="edit-course" element={<CreateCoursePage />} />
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
+            <Route path="edit-premium-content" element={< CreateLockedContentPage/>} />
+
           </Route>
         </Route>
 

@@ -345,7 +345,7 @@ model Telegram {
   title        String
   description  String
   genre        String
-  discount     Json
+  discount     Json?
   subscription Json
   isVerified   Boolean @default(false)
   createdById  String
