@@ -2,7 +2,7 @@ import { useState } from "react";
 import UPI from "../../assets/UPI.png";
 import { saveSecondaryBankorUpiAccount } from "../../services/auth/api.services";
 import  toast  from "react-hot-toast";
-const UPIModal = () => {
+const UPIModal = ({onRefresh}) => {
   const [UPIid, setUPIid] = useState("");
   const addSecondaryUpi = async () => {
     try {
@@ -13,6 +13,7 @@ const UPIModal = () => {
       console.log(response);
       if (response.status === 200) {
         toast.success("UPI ID added successfully");
+        onRefresh();
       } else {
         toast.error(response.data.message);
       }
@@ -47,7 +48,7 @@ const UPIModal = () => {
             onClick={addSecondaryUpi}
             className="font-poppins tracking-tight text-white bg-[#EA580C] rounded-lg py-3"
           >
-            Verify UPI ID
+            Add UPI ID
           </button>
         </div>
       </div>

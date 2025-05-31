@@ -252,6 +252,14 @@ export const saveSecondaryBankorUpiAccount = async (data) => {
   );
   return response;
 };
+
+export const deleteSecondaryBankorUpiAccount = async (data) => {
+  const response = await servicesAxiosInstance.delete(
+    "/wallet/delete-bank-or-upi",
+    {data}
+  );
+  return response;
+};
 export const fetchAllWebinarsData = async () => {
   const response = await servicesAxiosInstance.get(
     "/webinar/get-creator-webinars"

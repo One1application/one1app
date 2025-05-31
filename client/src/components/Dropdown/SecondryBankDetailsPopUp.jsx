@@ -5,7 +5,7 @@ import {
   saveSecondaryBankorUpiAccount,
 } from "../../services/auth/api.services";
 
-const SecondryBankDetailsPopUp = ({ onClose }) => {
+const SecondryBankDetailsPopUp = ({ onClose, onRefresh}) => {
   const [loading, setLoading] = useState(false);
   const [BankingInfo, setBankingInfo] = useState({
     accountHolderName: "",
@@ -85,6 +85,7 @@ const SecondryBankDetailsPopUp = ({ onClose }) => {
     try {
       setLoading(true);
       const response = await saveSecondaryBankorUpiAccount(BankingInfo);
+      onRefresh();
       console.log(response);
       if (response.status === 200) {
         toast.success("Banking Information saved successfully!");
@@ -99,6 +100,8 @@ const SecondryBankDetailsPopUp = ({ onClose }) => {
       toast.error(error.response?.data?.message);
     } finally{
       setLoading(false);
+      onClose();
+
     }
   };
 

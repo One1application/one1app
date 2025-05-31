@@ -247,22 +247,22 @@ const AudienceTableComponent = ({ data }) => {
         <table className="min-w-full divide-y-0 divide-gray-200 border-collapse">
           <thead className="bg-orange-300">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Customer Name
               </th>
               <th className=" py-3 px-4 text-center text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Email
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Phone Number
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Purchased Products
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
-                Amount Spent (in Rupees)
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
+                Amount Spent
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-600  tracking-wider border border-gray-200">
                 Active Subscriptions
               </th>
             </tr>
@@ -287,11 +287,11 @@ const AudienceTableComponent = ({ data }) => {
                   {event.purchasedProducts.join(", ")}
                 </td>
                 <td className="bg-white border px-4 py-4 text-sm text-gray-500">
-                  {event.amountSpent}
+                  {`₹${event.amountSpent}`}
                 </td>
                 <td
                   className={`bg-white border px-4 py-4 text-sm ${
-                    event.activeSubscriptions === "Yes"
+                    event.activeSubscriptions === "Active"
                       ? "text-green-600 font-semibold" // Green for "Yes"
                       : "text-red-600 font-semibold" // Red for "No"
                   }`}
