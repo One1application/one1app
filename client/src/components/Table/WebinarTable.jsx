@@ -158,13 +158,9 @@ const WebinarTable = ({ data }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   };
+
 
   // Create dropdown component for sorting
   const renderSortButton = () => (
