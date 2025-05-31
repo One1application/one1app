@@ -56,7 +56,7 @@ export default function PaymentInterface() {
     },
     {
       name: "Phone pay",
-      icon: "https://vectorseek.com/wp-content/uploads/2023/09/Phone-Pe-2020-Logo-Vector.svg-.png",
+      icon: "https://i.pinimg.com/736x/19/29/17/1929176785bcaf86ef6518447e5f6914.jpg",
       color: "bg-purple-600",
     },
     {
@@ -303,7 +303,7 @@ export default function PaymentInterface() {
                   </div>
                   <div className="text-xs bg-gray-700 px-2 py-1 rounded text-white flex items-center gap-1">
                     <span>powered by</span>
-                    <div className="w-5 h-5 flex items-center justify-center">
+                    <div className="w-8 h-8 flex items-center justify-center">
                       {typeof paymentMethods[3].icon === "string" ? (
                         <img
                           src={paymentMethods[3].icon}
@@ -382,6 +382,7 @@ export default function PaymentInterface() {
                   {courseType === "course" && "Course"}
                   {courseType === "webinar" && "Webinar"}
                   {courseType === "payingUp" && "Paying Up"}
+                  {courseType === "premiumcontent" && "Premium Content"}
                   </span>
 
                   <motion.div
