@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import Pagination from '@mui/material/Pagination';
 import Option from '../../Pages/Dashboard/DashboardPages/LockedContentPage/Option';
 
-const LockedContentTable = ({ data }) => {
+const LockedContentTable = ({ data, refreshData }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [optionPop, setOptionPop] = useState(false);
@@ -41,25 +41,13 @@ const LockedContentTable = ({ data }) => {
   // TODO: Update the navigation path if needed for viewing locked content details
   const handleRowClick = (id) => {
     if (id) {
-        // Assuming a public view route like /locked-content/:id
-        // Or a dashboard detail view like /dashboard/premium-content/:id
-        
-        toast.success(id)
+      //  toast.success(id)
         setSelectId(id);
         setOptionPop(true)
-        console.log("Navigating to locked content detail for ID:", id);
         // Example: navigate(`/app/locked-content?id=${id}`);
     }
   };
 
-   const handleEdit = (e, id) => {
-    e.stopPropagation();
-    navigate(`/app/edit-premium-content?id=${id}`);
-  };
-  
-   const handleCouponDelete = (id) => {
-    setCoupons(coupons.filter(coupon => coupon.id !== id));
-  };
 
   // Assuming 'purchases' or similar field exists in the _count object
   const calculateRevenue = (item) => {
@@ -187,14 +175,10 @@ const LockedContentTable = ({ data }) => {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+ const formatDate = (dateString) => {
+    return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   };
+
 
   // Dropdown component for sorting
   const renderSortButton = () => (
@@ -292,7 +276,6 @@ const LockedContentTable = ({ data }) => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Title</th>
-                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Category</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Sales</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Revenue</th>
@@ -307,11 +290,10 @@ const LockedContentTable = ({ data }) => {
               {paginatedData.map((item) => (
                 <tr
                   key={item.id}
-                  onClick={() => handleRowClick(item.id)}
+                  // onClick={() => handleRowClick(item.id)}
                   className='cursor-pointer hover:bg-gray-50' // Always clickable for viewing details
                 >
                   <td className="px-6 py-4 text-sm text-gray-900">{item.title}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{item.category || 'N/A'}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     ₹{item.unlockPrice || '0'}
                   </td>
@@ -336,9 +318,7 @@ const LockedContentTable = ({ data }) => {
                      >
                   <Copy className="h-4 w-4 ml-1" />
                </button>
-                 <button onClick={() => handleDelete(coupon.id)} className="text-red-600 hover:text-red-700 text-sm font-medium" >
-        <Trash2 className="h-4 w-4 ml-1" />
-            </button>
+            
               </>
               ) : (
           <span>N/A</span>
@@ -366,13 +346,9 @@ const LockedContentTable = ({ data }) => {
                           <Copy className="h-4 w-4 ml-1"/>
                       </button>
                       {/* No Edit Button */}
-                        {/* <button 
-                        onClick={(e) => handleEdit(e, id)}
-                        className= "inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium"
-                      >
-                        
-                        <Edit2 className="h-4 w-4 ml-1" />
-                      </button> */}
+                           <button onClick={() => handleRowClick(item.id)} className="text-red-600 hover:text-red-700 text-sm font-medium" >
+        <Trash2 className="h-4 w-4 ml-1" />
+            </button>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">{formatDate(item.createdAt)}</td>
@@ -389,7 +365,7 @@ const LockedContentTable = ({ data }) => {
         {paginatedData.map((item) => (
           <div
             key={item.id}
-            onClick={() => handleRowClick(item.id)}
+            // onClick={() => handleRowClick(item.id)}
             className={`bg-white rounded-xl border p-4 cursor-pointer`}
           >
             <div className="flex justify-between items-start mb-3">
@@ -428,7 +404,7 @@ const LockedContentTable = ({ data }) => {
                 <span className="text-gray-500">Updated: </span>
                 <span>{formatDate(item.updatedAt)}</span>
               </div>
-              <div className="col-span-2 flex justify-end space-x-3 mt-2 pt-2 border-t">
+              <div className="col-span-2 flex gap-2 justify-end space-x-3 mt-2 pt-2 border-t">
                  {/* TODO: Update the share link structure */}
                  <button
                     onClick={(e) => {
@@ -442,6 +418,9 @@ const LockedContentTable = ({ data }) => {
                   >
                     Share
                 </button>
+                <button onClick={() => handleRowClick(item.id)} className="text-red-600 hover:text-red-700 text-sm font-medium" >
+        delete
+            </button>
                 {/* No Edit Button */}
               </div>
             </div>
@@ -479,7 +458,7 @@ const LockedContentTable = ({ data }) => {
         </div>
       )}
 
-      {optionPop && <Option selectId={selectId} setOptionPopUp={setOptionPop}/>}
+      {optionPop && <Option selectId={selectId} setOptionPopUp={setOptionPop} refreshData={refreshData} />}
     </div>
   );
 };
