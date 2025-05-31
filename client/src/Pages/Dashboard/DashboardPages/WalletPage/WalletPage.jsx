@@ -56,6 +56,7 @@ const WalletPage = () => {
     totalWithdrawals: 0,
     lastModified: "",
     financeIds: [],
+    
   });
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(true);
   const [transactionLoading, setTransactionLoading] = useState(true);
@@ -195,6 +196,36 @@ const WalletPage = () => {
      }
   },[AllWithdrawals])
 
+  // Updated onRefresh function that fetches fresh data
+const onRefresh = async () => {
+  try {
+    // Fetch latest wallet balance details
+    const response = await fetchBalanceDetails();
+    
+    if (response.data.success) {
+      const accountNumbers = response.data.payload.accountNumbers || [];
+      const upiIds = response.data.payload.upiIds || [];
+      
+      
+      // Update all related state variables
+      setUpi(upiIds);
+      setAccount(accountNumbers);
+      setBalanceDetails({
+        balance: response.data.payload.balance,
+        totalEarnings: response.data.payload.totalEarnings,
+        totalWithdrawals: response.data.payload.totalWithdrawals,
+        lastModified: response.data.payload.lastModified,
+        financeIds: [...accountNumbers, ...upiIds],
+        
+      });
+      console.log("refreshing wallet data")
+    }
+  } catch (error) {
+    console.error("Error refreshing wallet data:", error);
+    toast.error("Failed to refresh account data");
+  }
+};
+
   useEffect(() => {
     getPrimaryPaymentInformation();
     getWalletInformation();
@@ -203,6 +234,8 @@ const WalletPage = () => {
     getNextTransactionPage(1);
     setWithdrawalsLoading(true);
     setTransactionLoading(true);
+    
+    
   }, []);
 
  
@@ -286,6 +319,7 @@ const WalletPage = () => {
                   ? [...BalanceDetails.financeIds]
                   : ["Not Added"]
               }
+              onRefresh={onRefresh}
             />
             <button
               onClick={hadleWithdrawal}
@@ -539,7 +573,7 @@ const WalletPage = () => {
       {openUPI && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 w-full">
           <div className="transform opacity-0 scale-95 transition-all duration-500 ease-out animate-fadeInUp relative">
-            <UPIModal />
+            <UPIModal onRefresh={onRefresh} />
             <IoIosCloseCircle
               onClick={() => setOpenUPI(false)}
               className="cursor-pointer text-red-600 absolute size-6 md:size-8 top-3 right-2"

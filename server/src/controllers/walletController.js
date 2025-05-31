@@ -2349,7 +2349,7 @@ export async function deleteBankOrUpi(req, res) {
       // Find the bank account
       const bankAccount = await prisma.bankDetails.findFirst({
         where: {
-          id: id,
+          accountNumber: id,
           userId: user.id,
         },
       });
@@ -2369,7 +2369,7 @@ export async function deleteBankOrUpi(req, res) {
           },
         });
 
-        if (bankAccountsCount <= 1) {
+        if (bankAccountsCount <= 1 || bankAccount.primary) {
           return res.status(400).json({
             success: false,
             message: "Cannot delete the primary bank account.",
@@ -2377,31 +2377,31 @@ export async function deleteBankOrUpi(req, res) {
         }
 
         // Find another bank account to set as primary
-        const anotherBank = await prisma.bankDetails.findFirst({
-          where: {
-            userId: user.id,
-            NOT: {
-              id: id,
-            },
-          },
-        });
+        // const anotherBank = await prisma.bankDetails.findFirst({
+        //   where: {
+        //     userId: user.id,
+        //     NOT: {
+        //       accountNumber: id,
+        //     },
+        //   },
+        // });
 
-        if (anotherBank) {
-          await prisma.bankDetails.update({
-            where: {
-              id: anotherBank.id,
-            },
-            data: {
-              primary: true,
-            },
-          });
-        }
+        // if (anotherBank) {
+        //   await prisma.bankDetails.update({
+        //     where: {
+        //       accountNumber: anotherBank.id,
+        //     },
+        //     data: {
+        //       primary: true,
+        //     },
+        //   });
+        // }
       }
 
       // Delete the bank account
       await prisma.bankDetails.delete({
         where: {
-          id: id,
+          accountNumber: id,
         },
       });
 
@@ -2412,7 +2412,7 @@ export async function deleteBankOrUpi(req, res) {
     } else if (type === "upi") {
       const upiAccount = await prisma.uPI.findFirst({
         where: {
-          id: id,
+          upiId: id,
           userId: user.id,
         },
       });
@@ -2426,7 +2426,7 @@ export async function deleteBankOrUpi(req, res) {
       // Delete the UPI
       await prisma.uPI.delete({
         where: {
-          id: id,
+          upiId: id,
         },
       });
 
@@ -2511,7 +2511,7 @@ export async function getBankAndUpis(req, res) {
   }
 }
 
-//const mpinOtpMap = {};
+
 
 export async function setMPIN(req, res) {
   try {

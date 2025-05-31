@@ -30,7 +30,7 @@ const AudiencePage = () => {
       if (response.data.success) {
         const formattedCustomers = response.data.customers.map(
           (customer, idx) => ({
-            name: customer.name || "N/A",
+            name: customer.name.charAt(0).toUpperCase() + customer.name.slice(1).toLowerCase() || "N/A",
             email: customer.email || "N/A",
             phone: customer.phone || "N/A",
             purchasedProducts: customer.product ? [customer.product] : [],
@@ -38,9 +38,9 @@ const AudiencePage = () => {
             activeSubscriptions:
               typeof customer.activeSubscriptions === "boolean"
                 ? customer.activeSubscriptions
-                  ? "Yes"
-                  : "No"
-                : customer.activeSubscriptions || "No",
+                  ? "Active"
+                  : "Expired"
+                : customer.activeSubscriptions || "Active",
             rawData: customer,
           })
         );

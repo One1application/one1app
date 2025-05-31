@@ -124,7 +124,7 @@ model Wallet {
 model BankDetails {
   id                    String       @id @default(uuid())
   accountHolderName     String
-  accountNumber         String
+  accountNumber         String    @unique
   ifscCode              String
   bankDocument          String?
   upiId                 String[]
