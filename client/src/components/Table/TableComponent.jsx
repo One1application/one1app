@@ -173,14 +173,10 @@ const Table = ({ data }) => {
     setPage(value);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+ const formatDate = (dateString) => {
+    return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   };
+
 
   // Create dropdown component for sorting
   const renderSortButton = () => (

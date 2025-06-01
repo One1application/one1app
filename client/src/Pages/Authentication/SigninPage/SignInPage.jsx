@@ -85,7 +85,7 @@ const SignInPage = () => {
   // };
 
   const handleFormSubmit = async () => {
-    const userData = isUsingEmail ? { email } : { phoneNumber };
+    const userData = isUsingEmail ? { email } : { phoneNumber:selectedCountryCode + phoneNumber };
     setIsLoading(true);
 
     try {
@@ -106,7 +106,7 @@ const SignInPage = () => {
 
   const handleOTPSubmit = async () => {
     setIsOtpLoading(true);
-    const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber }) };
+    const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber:selectedCountryCode + phoneNumber }) };
 
     try {
       const { data } = await verifyLoginUser(otpData);
