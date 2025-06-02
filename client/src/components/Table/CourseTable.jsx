@@ -419,33 +419,32 @@ const CourseTable = ({ data }) => {
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center mt-6">
-        <Pagination 
-          count={Math.ceil(sortedData.length / itemsPerPage)} 
-          page={page} 
-          onChange={handleChangePage} 
-          size="medium"
-          sx={{
-            '& .MuiPaginationItem-root': {
-              backgroundColor: 'rgb(249, 250, 251)',
-              border: '1px solid rgb(229, 231, 235)',
-              color: 'rgb(107, 114, 128)',
-              '&:hover': {
-                backgroundColor: 'rgb(234, 88, 12)',
-                color: 'white',
-              },
-              '&.Mui-selected': {
-                backgroundColor: 'rgb(234, 88, 12)',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'rgb(194, 65, 12)',
-                },
-              },
-            },
-          }}
-        />
-      </div>
+       {/* pagination */}
+    {sortedData.length > itemsPerPage && (
+             <div className="flex justify-center mt-6">
+               <Pagination 
+                 count={Math.ceil(sortedData.length / itemsPerPage)} 
+                 page={page} 
+                 onChange={(_, value) => setPage(value)}
+                 size="medium"
+                 sx={{
+                   '& .MuiPaginationItem-root': {
+                     backgroundColor: 'rgb(249, 250, 251)',
+                     border: '1px solid rgb(229, 231, 235)',
+                     color: 'rgb(107, 114, 128)',
+                     '&:hover': {
+                       backgroundColor: 'rgb(234, 88, 12)',
+                       color: 'white',
+                     },
+                     '&.Mui-selected': {
+                       backgroundColor: 'rgb(234, 88, 12)',
+                       color: 'white',
+                     },
+                   },
+                 }}
+               />
+             </div>
+           )}
     </div>
   );
 };
