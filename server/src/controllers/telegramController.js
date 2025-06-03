@@ -7,7 +7,7 @@ import { telegramValidation } from "../types/telegramValidation.js";
 import { SchemaValidator } from "../utils/validator.js";
 import axios from "axios";
 import { sendOtp } from "../utils/sendOtp.js";
-import { send } from "process";
+
 dotenv.config();
 export async function createTelegram(req, res) {
   try {
