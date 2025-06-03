@@ -362,14 +362,32 @@ const PayingUpTable = ({ data }) => {
         </div>
       </div>
 
-      <div className="flex justify-center">
-        <Pagination
-          count={Math.ceil(filteredData.length / itemsPerPage)}
-          page={page}
-          onChange={(event, value) => setPage(value)}
-          color="primary"
-        />
-      </div>
+     {/* pagination */}
+    {sortedData.length > itemsPerPage && (
+             <div className="flex justify-center mt-6">
+               <Pagination 
+                 count={Math.ceil(sortedData.length / itemsPerPage)} 
+                 page={page} 
+                 onChange={(_, value) => setPage(value)}
+                 size="medium"
+                 sx={{
+                   '& .MuiPaginationItem-root': {
+                     backgroundColor: 'rgb(249, 250, 251)',
+                     border: '1px solid rgb(229, 231, 235)',
+                     color: 'rgb(107, 114, 128)',
+                     '&:hover': {
+                       backgroundColor: 'rgb(234, 88, 12)',
+                       color: 'white',
+                     },
+                     '&.Mui-selected': {
+                       backgroundColor: 'rgb(234, 88, 12)',
+                       color: 'white',
+                     },
+                   },
+                 }}
+               />
+             </div>
+           )}
     </div>
   );
 };
