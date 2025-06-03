@@ -515,7 +515,7 @@ export async function verifyPayment(req, res) {
       if (telegramId && days) {
         const creator = await prisma.telegram.findFirst({
           where: {
-            id: payingUpId,
+            id: telegramId,
           },
           select: {
             createdById: true,
@@ -531,7 +531,7 @@ export async function verifyPayment(req, res) {
         }
 
         const subscriptionDetails = creator.subscription.find(
-          (sub) => sub.days === days
+          (sub) => sub.days == days
         );
         let amountToBeAdded = subscriptionDetails.cost;
         if (creator.createdBy.creatorComission) {
@@ -563,7 +563,7 @@ export async function verifyPayment(req, res) {
           data: {
             telegramId,
             boughtById: existingUser.id,
-            validDays: days,
+            validDays: parseInt(days),
             paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
             orderId: phonePayOrderId,
           },
@@ -659,8 +659,16 @@ export async function verifyPayment(req, res) {
 
     if (telegramId && days) {
       const response = await axios.get(
-        `${process.env.BOT_SERVER_URL}/generate-invitelink?channelId=${channelId}&boughtById=${user.id}`
+        `${process.env.BOT_SERVER_URL}/channel/generate-invite?channelId=${channelId}&boughtById=${user.id}`
       );
+      await prisma.telegram.update({
+        where: {
+           id: telegramId
+        },
+        data: {
+          inviteLink: response.data.payload.inviteLink,
+        }
+      })
       return res.status(200).json({
         success: true,
         message: "Telegram purchased successfully.",
