@@ -16,6 +16,7 @@ import { webinarRouter } from "./routes/webinarRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 
+
 import { adminRouter } from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 import { productRouter } from "./routes/productRoutes.js";
@@ -70,6 +71,8 @@ app.listen(Port, async () => {
   console.log(await PhonePayClient.env);
   console.log("Server running on", Port);
 });
+
+
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack || err.message || err);

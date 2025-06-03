@@ -132,6 +132,7 @@ const TelegramsPages = () => {
   ]);
 
   const chatId = useSearchParams()[0].get("chatid");
+  console.log("chatId", chatId)
   const { userDetails } = useAuth();
   const [freeDays, setFreeDays] = useState("");
   const [uploadedImage, setUploadedImage] = useState(null);

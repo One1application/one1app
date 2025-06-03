@@ -43,7 +43,7 @@ router.get('/generate-invite', async (req, res) => {
       return res.status(400).json({ message: 'channelId (or group) and boughtById are required' });
     }
     // Ensure bot is member of the group
-    const meRes = await axios.get(`${TELEGRAM_API_URL}/getMe`);
+    const meRes = await axios.get(`${TELEGRAM_API}/getMe`);
     const botId = meRes.data.result.id;
     const memberRes = await axios.get(`${TELEGRAM_API}/getChatMember`, {
       params: { chat_id: chatId, user_id: botId },

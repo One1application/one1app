@@ -197,13 +197,15 @@ const LockedContentDisplayPage = () => {
       if (!showSigninModal) setShowSignupModal(true);
       return;
     }
-
+   
     navigate("/app/payment", {
       state: {
         id: contentId,
         title: lockedContentData.title,
         baseAmount: lockedContentData.unlockPrice,
         courseType: "premiumcontent",
+        createdBy: lockedContentData.createdBy.name,
+        
       },
     });
 
