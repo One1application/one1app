@@ -21,7 +21,7 @@ export default function PaymentInterface() {
   const [productTitle, setProductTitle] = useState(
     productData.title || "product"
   );
-  // const [createdBy, setCreatedBy]= useState(productData.createdBy.name || "")
+   const [createdBy, setCreatedBy]= useState(productData.createdBy || "sumit")
   const [productId, setProductId] = useState(productData.id || "");
 
   const [courseType, setCourseType] = useState(productData.courseType || "");
@@ -34,7 +34,7 @@ export default function PaymentInterface() {
       setProductTitle(location.state.title || "product");
       setProductId(location.state.id || "");
       setCourseType(location.state.courseType || "");
-      // setCreatedBy(location.state.createdBy.name || "N/A")
+      setCreatedBy(location.state.createdBy || "sumit")
     }
   }, [location.state]);
 
@@ -275,7 +275,7 @@ export default function PaymentInterface() {
                       <h3 className="text-gray-300 text-sm">
                         Created by
                       </h3>
-                      <p className="text-gray-100 text-md font-semibold pl-2">sumit</p>
+                      <p className="text-gray-100 text-md font-semibold pl-2">{createdBy || "sumit"}</p>
                     </div>
                   </div>
 

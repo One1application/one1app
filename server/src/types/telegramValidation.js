@@ -1,9 +1,8 @@
 import {z} from 'zod';
 
 export const telegramValidation = z.object({
+  chatId: z.string().min(1, "Chat ID is required"),
   coverImage: z.string().url().optional(),
-  channelLink: z.string().url().optional(),
-  chatId: z.string().min(1).optional(),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   genre: z.string().min(1, "Genre is required"),

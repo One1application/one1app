@@ -490,6 +490,11 @@ export const getCourseById = async (req, res) => {
       },
       include: {
         products: true,
+        creator: {
+          select: {
+            name: true,
+          }
+        },
         lessons: true,
         purchasedBy: user
           ? {
@@ -567,7 +572,8 @@ export const purchaseCourse = async (req, res) => {
         creator: true,
       },
     });
-
+  
+    
 
     if (!course) {
       return res.status(404).json({
@@ -628,7 +634,8 @@ export const purchaseCourse = async (req, res) => {
         payload: {
           totalAmount,
           discountPrice,
-          originalPrice: course.price
+          originalPrice: course.price,
+          
         },
       });
    }
@@ -659,6 +666,7 @@ export const purchaseCourse = async (req, res) => {
         redirectUrl: response.redirectUrl,
         totalAmount,
         discountPrice,
+         
       },
     });
 

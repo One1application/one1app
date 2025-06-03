@@ -57,6 +57,7 @@ const NewCourse = () => {
         title: courseDetails.title,
         baseAmount: courseDetails.price,
         courseType: "course",
+        createdBy: courseDetails.creator.name
       },
     });
   };
@@ -72,11 +73,13 @@ const NewCourse = () => {
           title: courseDetails.title,
           baseAmount: courseDetails.price,
           courseType: "course",
+           createdBy: courseDetails.creator.name
         },
       });
     }
   };
 
+  console.log("courseDetails", courseDetails)
   const handleSuccessfulSignIn = (data) => {
     if (data.token) {
       localStorage.setItem("AuthToken", data.token);
@@ -88,6 +91,7 @@ const NewCourse = () => {
           title: courseDetails.title,
           baseAmount: courseDetails.price,
           courseType: "course",
+           createdBy: courseDetails?.creator?.name
         },
       });
     }
@@ -363,6 +367,7 @@ const NewCourse = () => {
                       title: courseDetails.title,
                       baseAmount: courseDetails.price,
                       courseType: "course",
+                       createdBy: courseDetails.creator.name
                     },
                   });
                 }

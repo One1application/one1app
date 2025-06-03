@@ -118,6 +118,7 @@ const PayingUpPages = () => {
           title: payingUpDetails.title,
           baseAmount: payingUpDetails.paymentDetails.totalAmount,
           courseType: "payingUp",
+          createdBy: payingUpDetails.createdBy.name,
         },
       });
     }
@@ -134,6 +135,7 @@ const PayingUpPages = () => {
           title: payingUpDetails.title,
           baseAmount: payingUpDetails.paymentDetails.totalAmount,
           courseType: "payingUp",
+          createdBy: payingUpDetails.createdBy.name,
         },
       });
     }
@@ -643,6 +645,7 @@ const PayingUpPages = () => {
                       title: payingUpDetails.title,
                       baseAmount: payingUpDetails.paymentDetails.totalAmount,
                       courseType: "payingUp",
+                      createdBy: payingUpDetails.createdBy.name,
                     },
                   });
                 }

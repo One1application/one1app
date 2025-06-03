@@ -142,7 +142,8 @@ const WebinarPages = () => {
       id: webinarId,
       title: webinarData.title,
       baseAmount: webinarData.amount,
-      courseType: "webinar"
+      courseType: "webinar",
+      createdBy: webinarData.createdBy.name,
     })
   };
 
@@ -157,6 +158,7 @@ const WebinarPages = () => {
           title: webinarData.title,
           baseAmount: webinarData.amount,
           courseType: "webinar",
+          createdBy: webinarData.createdBy.name,
         },
       });
     }
@@ -173,6 +175,7 @@ const WebinarPages = () => {
           title: webinarData.title,
           baseAmount: webinarData.amount,
           courseType: "webinar",
+          createdBy: webinarData.createdBy.name,
         },
       });
     }
@@ -718,6 +721,7 @@ const WebinarPages = () => {
                   title: webinarData.title,
                   baseAmount: webinarData.amount,
                   courseType: "webinar",
+                  createdBy: webinarData.createdBy.name,
                 },
               });
             }

@@ -20,7 +20,6 @@ import { z } from "zod";
 //   })
 // ).optional();
 
-
 export async function createContent(req, res) {
   const { title, category, unlockPrice, discount, expiryDate, content } =
     req.body;
@@ -65,16 +64,16 @@ export async function createContent(req, res) {
         });
       }
 
-        // Validate discount code contains only uppercase letters and numbers
-    if (discount.code) {
-      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
-      if (!codeRegex.test(discount.code)) {
-        return res.status(400).json({
-          success: false,
-          message: `Discount code '${discount.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
-        });
+      // Validate discount code contains only uppercase letters and numbers
+      if (discount.code) {
+        const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+        if (!codeRegex.test(discount.code)) {
+          return res.status(400).json({
+            success: false,
+            message: `Discount code '${discount.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+          });
+        }
       }
-    }
       if (
         discount.percentage &&
         (isNaN(parseFloat(discount.percentage)) ||
@@ -93,14 +92,12 @@ export async function createContent(req, res) {
     if (discount.expiry) {
       const expDate = new Date(discount.expiry);
       const today = new Date();
-      console.log("expiry date:",expDate);
-      console.log("today date:",today);
-      
-      
+      console.log("expiry date:", expDate);
+      console.log("today date:", today);
 
       // Clear time portion for date comparison
       today.setHours(0, 0, 0, 0);
-       expDate.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
 
       if (isNaN(expDate.getTime())) {
         return res.status(400).json({
@@ -112,7 +109,8 @@ export async function createContent(req, res) {
       if (expDate < today) {
         return res.status(400).json({
           success: false,
-          message: "Expiry date of coupon date must be greater than or equal to today's date.",
+          message:
+            "Expiry date of coupon date must be greater than or equal to today's date.",
         });
       }
 
@@ -227,19 +225,19 @@ export async function editContent(req, res) {
       if (discount === null) {
         updateData.discount = null;
       } else if (typeof discount === "object") {
-          // Validate discount code contains only uppercase letters and numbers
-    if (d.code) {
-      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
-      if (!codeRegex.test(d.code)) {
-        return res.status(400).json({
-          success: false,
-          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
-        });
-      }
-    }
+        // Validate discount code contains only uppercase letters and numbers
+        if (d.code) {
+          const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+          if (!codeRegex.test(d.code)) {
+            return res.status(400).json({
+              success: false,
+              message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+            });
+          }
+        }
         if (
           d.percent !== undefined &&
-        d.percent !== null &&
+          d.percent !== null &&
           (isNaN(parseFloat(discount.percentage)) ||
             parseFloat(discount.percentage) < 1 ||
             parseFloat(discount.percentage) > 100)
@@ -450,8 +448,15 @@ export const getPremiumContentById = async (req, res) => {
       where: {
         id: contentId,
       },
+      include: {
+        createdBy: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
-    console.log("content", content)
+    
 
     if (!content) {
       return res.status(404).json({
@@ -472,7 +477,7 @@ export const getPremiumContentById = async (req, res) => {
     });
     console.log("access", access);
 
-    // 
+    //
 
     //  content if the user can access it
     if (content.createdById === userId || access) {
@@ -482,13 +487,18 @@ export const getPremiumContentById = async (req, res) => {
         content: content,
       });
     }
-    if  (!access) {
+    if (!access) {
       const content = await prisma.premiumContent.findFirst({
-       where: { id: contentId },
+        where: { id: contentId },
         select: {
-         title: true,
+          title: true,
           unlockPrice: true,
           createdById: true,
+          createdBy: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
       return res.status(200).json({
