@@ -10,6 +10,7 @@ import {
   Github
 } from "lucide-react";
 import { signInUser, verifyLoginUser } from "../../services/auth/api.services";
+import { useAuth } from "../../context/AuthContext";
 
 const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}) => {
    const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
@@ -23,6 +24,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const countryCodes = ["+1", "+91", "+44", "+61"];
+   const { verifyToken } = useAuth();
   
   useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,6 +73,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
       if (data.success) {
         toast.success("Signed in successfully!");
         localStorage.setItem("AuthToken", data.token);
+        await verifyToken();
         handleCloseModal();
         if (onSuccessfulLogin) onSuccessfulLogin(data);
       } else {
