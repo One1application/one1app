@@ -584,13 +584,24 @@ export const purchaseCourse = async (req, res) => {
 
     console.log("course", course);
 
+    const existingPurchase = await prisma.coursePurchasers.findFirst({
+         where: {
+             purchaserId: user.id,
+             courseId,
+             isActive: true,
+             expiryDate: {gt: new Date()}
+         }
+    });
+
+    console.log("existingPurchase courseController", existingPurchase);
+
    if(!validateOnly){
-     if (course.purchasedBy.length > 0) {
-      return res.status(403).json({
-        success: false,
-        message: "You have already purchased the course.",
-      });
-    }
+     if(existingPurchase){
+        return res.status(400).json({
+          success: false,
+          message: "You already have an active subscription for this course"
+        })
+     };
 
     if (course.createdBy === user.id) {
       return res.status(400).json({
@@ -646,8 +657,161 @@ export const purchaseCourse = async (req, res) => {
     //   payment_capture: 1,
     // };
     const orderId = randomUUID();
-    // const order = await razorpay.orders.create(options);
+    
+   console.log("orderId", orderId)
+    
+
+    const request = StandardCheckoutPayRequest.builder()
+      .merchantOrderId(orderId)
+      .amount(totalAmount * 100)
+      .redirectUrl(
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&courseId=${courseId}&discountedPrice=${totalAmount}`
+      )
+      .build();
+
+    const response = await PhonePayClient.pay(request);
    
+    return res.status(200).json({
+      success: true,
+      payload: {
+        redirectUrl: response.redirectUrl,
+        totalAmount,
+        discountPrice,
+         
+      },
+    });
+
+  } catch (error) {
+    console.error("Error in purchasing course.", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error in purchasing course.",
+    });
+  }
+};
+
+export const renewalCourse = async (req, res) => {
+  try {
+    const { courseId, couponCode, validateOnly } = req.body;
+    const {purchaseId} = req.params;
+    const user = req.user;
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Course Id is not given.",
+      });
+    }
+
+    if(!purchaseId){
+      return res.status(400).json({
+        success: false,
+        message: "No Purchase Found",
+      });
+    }
+
+    const course = await prisma.course.findUnique({
+      where: {
+        id: courseId,
+      },
+      
+      include: {
+        products: true,
+        lessons: true,
+        purchasedBy: user
+          ? {
+              where: {
+                purchaserId: user.id,
+              },
+            }
+          : false,
+        creator: true,
+      },
+    });
+  
+    
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "No course found",
+      });
+    }
+
+    console.log("course", course);
+
+    const existingPurchase = await prisma.coursePurchasers.findFirst({
+         where: {
+             purchaserId: user.id,
+             courseId,
+             id: purchaseId
+             
+         }
+    });
+
+    if(!existingPurchase){
+        return res.status(400).json({
+            success: false,
+            message: "No Previous Purchase Found"
+        })
+    }
+
+    console.log("existingPurchase courseController", existingPurchase);
+
+   if(!validateOnly){
+     
+    if (course.createdBy === user.id) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot purchase your own course.",
+      });
+    }
+   };
+   
+    let discountData=course?.discount || null
+    console.log("discountData", discountData);
+    let discountPrice=0;
+   if(couponCode && discountData && discountData.length > 0 ){
+       const matchingDiscount = discountData.find(
+          discount => discount.code === couponCode 
+       )
+       if(!matchingDiscount){
+        return res.status(400).json({
+          success: false,
+          message: "Invalid discount code.",
+        });
+       }
+       
+       const expiryDate = new Date(matchingDiscount.expiry);
+       const currentDate = new Date();
+       if(currentDate > expiryDate){
+           return res.status(400).json({
+               success: false,
+               message: "Coupon code has expired.",
+           })
+       }
+       discountPrice = parseInt(course.price*(Number(matchingDiscount.percent)/100).toFixed(2));
+   } 
+   let totalAmount = Math.round(course.price - discountPrice);
+   if(totalAmount < 0) totalAmount = 0;
+   console.log("totalAmount", totalAmount);
+   console.log("discountPrice", discountPrice);
+   if(validateOnly){
+     return res.status(200).json({
+        success: true,
+        payload: {
+          totalAmount,
+          discountPrice,
+          originalPrice: course.price,
+          
+        },
+      });
+   }
+
+    
+    const orderId = randomUUID();
+    
+   console.log("orderId", orderId)
     
 
     const request = StandardCheckoutPayRequest.builder()

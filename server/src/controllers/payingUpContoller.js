@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { StandardCheckoutPayRequest } from "pg-sdk-node";
 import { PhonePayClient } from "../config/phonepay.js";
 import prisma from "../db/dbClient.js";
+import { generateSignedUrl } from "../config/imagekit.js";
 dotenv.config();
 export async function createPayingUp(req, res) {
   try {
@@ -35,61 +36,64 @@ export async function createPayingUp(req, res) {
     //   : [];
 
     if (discount) {
-  if (!Array.isArray(discount)) {
-    return res.status(400).json({
-      success: false,
-      message: "Discount must be an array of objects.",
-    });
-  }
-
-  for (let d of discount) {
-      // Validate discount code contains only uppercase letters and numbers
-    if (d.code) {
-      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
-      if (!codeRegex.test(d.code)) {
+      if (!Array.isArray(discount)) {
         return res.status(400).json({
           success: false,
-          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
-        });
-      }
-    }
-    // Validate percentage
-    if (
-        d.percent !== undefined &&
-        d.percent !== null &&
-      (isNaN(parseFloat(d.percent)) ||
-        parseFloat(d.percent) < 1 ||
-        parseFloat(d.percent) > 100)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
-      });
-    }
-
-    // Validate expiry date
-    if (d.expiry) {
-      const expDate = new Date(d.expiry);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      expDate.setHours(0, 0, 0, 0);
-
-      if (isNaN(expDate.getTime())) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid expiry date format for discount code '${d.code}'.`,
+          message: "Discount must be an array of objects.",
         });
       }
 
-      if (expDate < today) {
-        return res.status(400).json({
-          success: false,
-          message: `Expiry date for discount code '${d.code}' must be today or later.`,
-        });
+      for (let d of discount) {
+        // Validate discount code contains only uppercase letters and numbers
+        if (d.code) {
+          const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+          if (!codeRegex.test(d.code)) {
+            return res.status(400).json({
+              success: false,
+              message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+            });
+          }
+        }
+        // Validate percentage
+        if (
+          d.percent !== undefined &&
+          d.percent !== null &&
+          (isNaN(parseFloat(d.percent)) ||
+            parseFloat(d.percent) < 1 ||
+            parseFloat(d.percent) > 100)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+          });
+        }
+
+        // Validate expiry date
+        if (d.expiry) {
+          const expDate = new Date(d.expiry);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          expDate.setHours(0, 0, 0, 0);
+
+          if (isNaN(expDate.getTime())) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid expiry date format for discount code '${d.code}'.`,
+            });
+          }
+
+          if (expDate < today) {
+            return res.status(400).json({
+              success: false,
+              message: `Expiry date for discount code '${d.code}' must be today or later.`,
+            });
+          }
+        }
       }
     }
-  }
-}
+
+   
+
     await prisma.payingUp.create({
       data: {
         title,
@@ -106,6 +110,8 @@ export async function createPayingUp(req, res) {
         createdById: user.id,
       },
     });
+
+    
 
     return res.status(200).json({
       success: true,
@@ -157,63 +163,63 @@ export async function editPayingUpDetails(req, res) {
         message: "You are not authorized to edit this payingUp.",
       });
     }
-    
+
     if (discount) {
-  if (!Array.isArray(discount)) {
-    return res.status(400).json({
-      success: false,
-      message: "Discount must be an array of objects.",
-    });
-  }
-
-  for (let d of discount) {
-      // Validate discount code contains only uppercase letters and numbers
-    if (d.code) {
-      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
-      if (!codeRegex.test(d.code)) {
+      if (!Array.isArray(discount)) {
         return res.status(400).json({
           success: false,
-          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
-        });
-      }
-    }
-    // Validate percentage
-    if (
-      d.percent !== undefined &&
-        d.percent !== null &&
-      (isNaN(parseFloat(d.percent)) ||
-        parseFloat(d.percent) < 1 ||
-        parseFloat(d.percent) > 100)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
-      });
-    }
-
-    // Validate expiry date
-    if (d.expiry) {
-      const expDate = new Date(d.expiry);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      expDate.setHours(0, 0, 0, 0);
-
-      if (isNaN(expDate.getTime())) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid expiry date format for discount code '${d.code}'.`,
+          message: "Discount must be an array of objects.",
         });
       }
 
-      if (expDate < today) {
-        return res.status(400).json({
-          success: false,
-          message: `Expiry date for discount code '${d.code}' must be today or later.`,
-        });
+      for (let d of discount) {
+        // Validate discount code contains only uppercase letters and numbers
+        if (d.code) {
+          const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+          if (!codeRegex.test(d.code)) {
+            return res.status(400).json({
+              success: false,
+              message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+            });
+          }
+        }
+        // Validate percentage
+        if (
+          d.percent !== undefined &&
+          d.percent !== null &&
+          (isNaN(parseFloat(d.percent)) ||
+            parseFloat(d.percent) < 1 ||
+            parseFloat(d.percent) > 100)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+          });
+        }
+
+        // Validate expiry date
+        if (d.expiry) {
+          const expDate = new Date(d.expiry);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          expDate.setHours(0, 0, 0, 0);
+
+          if (isNaN(expDate.getTime())) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid expiry date format for discount code '${d.code}'.`,
+            });
+          }
+
+          if (expDate < today) {
+            return res.status(400).json({
+              success: false,
+              message: `Expiry date for discount code '${d.code}' must be today or later.`,
+            });
+          }
+        }
       }
     }
-  }
-}
 
     await prisma.payingUp.update({
       where: {
@@ -470,18 +476,18 @@ export async function purchasePayingUp(req, res) {
     let totalAmount = Math.round(
       payingUp.paymentDetails.totalAmount - discountPrice
     );
-    if(totalAmount < 0) totalAmount = 0;
+    if (totalAmount < 0) totalAmount = 0;
     console.log("totalAmount", totalAmount);
-    if(validateOnly){
-         return res.status(200).json({
-            success: true,
-            payload: {
-              totalAmount,
-              discountPrice,
-              originalPrice: payingUp.paymentDetails.totalAmount
-            },
-          });
-       }
+    if (validateOnly) {
+      return res.status(200).json({
+        success: true,
+        payload: {
+          totalAmount,
+          discountPrice,
+          originalPrice: payingUp.paymentDetails.totalAmount,
+        },
+      });
+    }
     const orderId = randomUUID();
     console.log("orderId", orderId);
     const request = StandardCheckoutPayRequest.builder()
@@ -501,7 +507,6 @@ export async function purchasePayingUp(req, res) {
         payingUpId: payingUp.id,
         totalAmount,
         discountPrice,
-       
       },
     });
   } catch (error) {

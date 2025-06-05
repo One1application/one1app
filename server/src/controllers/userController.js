@@ -294,8 +294,8 @@ export const userCustomers = async (req, res) => {
 
     const customers = [];
 
-    userDetails.createdPayingUps.forEach((val) => {
-      val.payingUpTickets.forEach((ticket) => {
+    userDetails.createdPayingUps?.forEach((val) => {
+      val.payingUpTickets?.forEach((ticket) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Paying Up",
@@ -304,8 +304,8 @@ export const userCustomers = async (req, res) => {
         });
       });
     });
-    userDetails.premiumContent.forEach((val) => {
-      val.access.forEach((ticket) => {
+    userDetails.premiumContent?.forEach((val) => {
+      val.access?.forEach((ticket) => {
         customers.push({
           ...ticket.user,
           product: "Premium Content",
@@ -314,8 +314,8 @@ export const userCustomers = async (req, res) => {
         });
       });
     });
-    userDetails.createdWebinars.forEach((val) => {
-      val.tickets.forEach((ticket) => {
+    userDetails.createdWebinars?.forEach((val) => {
+      val.tickets?.forEach((ticket) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Webinar",
@@ -324,8 +324,8 @@ export const userCustomers = async (req, res) => {
         });
       });
     });
-    userDetails.createdCourses.forEach((val) => {
-      val.purchasedBy.forEach((ticket) => {
+    userDetails.createdCourses?.forEach((val) => {
+      val.purchasedBy?.forEach((ticket) => {
         customers.push({
           ...ticket.purchaser,
           product: "Course",
@@ -334,11 +334,14 @@ export const userCustomers = async (req, res) => {
         });
       });
     });
-    userDetails.createdTelegrams.forEach((val) => {
-      val.boughtBy.forEach((ticket) => {
+    userDetails?.createdTelegrams?.forEach((val) => {
+      console.log("telegram", userDetails.createdTelegrams , val)
+      val.boughtBy?.forEach((ticket) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Telegram",
+           amountSpent: ticket.telegram?.subscription.cost || 0,
+          activeSubscriptions: true
           //need to add amountspent and activeSubs
         });
       });

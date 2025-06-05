@@ -341,15 +341,7 @@ export async function sendOtpToTelegramUser(req, res) {
   }
 }
 
-export async function verifyTelegramUser(req, res) {
-  try {
-     //here call the bot server contact/get-user-by-id
-     // update user
-     // return res
-  } catch (error) {
-    console.error("Error while verifying telegram user", error);
-  }
-}
+
 
 
 // Notify user of subscriptions about to expire

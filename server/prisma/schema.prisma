@@ -46,8 +46,6 @@ enum ProductType {
   PREMIUMCONTENT
 }
 
-
-
 enum TransactionStatus {
   COMPLETED
   PENDING
@@ -125,7 +123,7 @@ model Wallet {
 model BankDetails {
   id                    String       @id @default(uuid())
   accountHolderName     String
-  accountNumber         String    @unique
+  accountNumber         String       @unique
   ifscCode              String
   bankDocument          String?
   upiId                 String[]
@@ -208,7 +206,7 @@ model Withdrawal {
   amount           Float
   modeOfWithdrawal String
   bankDetailsId    String?
-  bankDetails      BankDetails?     @relation(fields: [bankDetailsId], references: [id] )
+  bankDetails      BankDetails?     @relation(fields: [bankDetailsId], references: [id])
   upiId            String?
   upi              UPI?             @relation(fields: [upiId], references: [id])
   status           WithdrawalStatus @default(PENDING)
@@ -293,14 +291,30 @@ model Lessons {
 }
 
 model CoursePurchasers {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   courseId    String
   purchaserId String
   paymentId   String
   orderId     String
-  purchaser   User     @relation(fields: [purchaserId], references: [id], onDelete: Cascade)
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  isActive    Boolean         @default(false)
+  expiryDate  DateTime
+  purchaser   User            @relation(fields: [purchaserId], references: [id], onDelete: Cascade)
+  course      Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  renewals    CourseRenewal[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model CourseRenewal {
+  id            String           @id @default(uuid())
+  purchaseId    String
+  newExpiryDate DateTime
+  renewalDate   DateTime
+  orderId       String
+  paymentId     String
+  purchase      CoursePurchasers @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 }
 
 model PayingUp {
@@ -334,26 +348,25 @@ model PayingUpTicket {
   orderId    String?
 }
 
-
 // TODO: add chatID in schema
 // TODO: isGroupMoniterd schema
 // TODO: owner phone number
 // TODO: BotHaveAdmin
 model Telegram {
-  id           String  @id @unique @default(uuid())
-  coverImage   String
-  title        String
-  description  String
-  genre        String
-  chatId       String
-  isGroupMonitored Boolean @default(false)
-  ownerPhone   String?
-  botHaveAdmin Boolean @default(false)
-  discount     Json?
-  subscription Json
-  isVerified   Boolean @default(false)
-  createdById  String
-  createdBy    User    @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  id                    String                 @id @unique @default(uuid())
+  coverImage            String
+  title                 String
+  description           String
+  genre                 String
+  chatId                String
+  isGroupMonitored      Boolean                @default(false)
+  ownerPhone            String?
+  botHaveAdmin          Boolean                @default(false)
+  discount              Json?
+  subscription          Json
+  isVerified            Boolean                @default(false)
+  createdById           String
+  createdBy             User                   @relation(fields: [createdById], references: [id], onDelete: Cascade)
   telegramSubscriptions TelegramSubscription[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
