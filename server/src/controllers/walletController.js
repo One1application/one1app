@@ -10,6 +10,7 @@ import {
 import prisma from "../db/dbClient.js";
 import { sendOtp } from "../utils/sendOtp.js";
 import bcrypt from "bcrypt";
+import {  calculateExpiryDate } from "../utils/courseExpiryDate.js";
 
 dotenv.config();
 
@@ -73,9 +74,8 @@ export async function getWalletDetails(req, res) {
       0
     );
 
-    console.log(wallet);
+    console.log("totalWithdrawals", totalWithdrawals);
 
-    console.log(wallet);
     return res.status(200).json({
       success: true,
       message: "Fetched wallet details successfully.",
@@ -265,6 +265,8 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
+        console.log("creatorCOURSE", creator);
+
         let amountToBeAdded = discountedPrice
           ? parseFloat(discountedPrice)
           : creator.price;
@@ -291,20 +293,68 @@ export async function verifyPayment(req, res) {
           },
         });
 
+        const existingPurchase = await prisma.coursePurchasers.findFirst({
+          where: {
+            purchaserId: user.id,
+            courseId,
+
+          },
+         
+        });
+        console.log("existingPurchase", existingPurchase)
+        if(existingPurchase){
+          
+          let calculateExpiry = calculateExpiryDate(creator?.validity, existingPurchase.expiryDate);
+          if(existingPurchase.expiryDate < new Date()){
+              calculateExpiry = calculateExpiryDate(creator?.validity);
+          }
+          
+          const renewal = await prisma.courseRenewal.create({
+            data: {
+               purchaseId: existingPurchase.id,
+               newExpiryDate: calculateExpiry,
+               renewalDate: new Date(),
+               orderId: phonePayOrderId,
+               paymentId:PhonePayPaymentDetails.paymentDetails[0].transactionId,
+
+            }
+          });
+          console.log("renewalRecord", renewal)
+
+          const updateCoursePurchase = await prisma.coursePurchasers.update({
+            where: {
+              id: existingPurchase.id,
+            },
+            data: {
+               expiryDate: calculateExpiry,
+               isActive: true,
+               updatedAt: new Date()
+               
+            }
+          });
+          console.log("updateCourse", updateCoursePurchase);
+        }else {
+          const calculateExpiry = calculateExpiryDate(creator.validity);
         const course = await prisma.coursePurchasers.create({
           data: {
             courseId,
             purchaserId: existingUser.id,
             paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
             orderId: phonePayOrderId,
+            expiryDate: calculateExpiry,
+            isActive: true,
           },
         });
-
+        
         if (!course) {
           return res
             .status(400)
             .json({ success: false, message: "Failed to buy course." });
         }
+        }
+
+        
+
 
         const transaction = await prisma.transaction.create({
           data: {
@@ -638,21 +688,39 @@ export async function verifyPayment(req, res) {
         where: {
           id: payingUpId,
         },
+        select: {
+          files: true,
+        },
       });
 
-      const signedUrls = response.files.value.map((file) => {
+      const filesignedUrls = response.files.value.map((file, index) => {
         const filePath = new URL(file.url).pathname.replace(
           /^.*\/images/,
           "/images"
         );
-        return generateSignedUrl(filePath);
+        const signedUrl = generateSignedUrl(filePath);
+        return {
+          ...file,
+          signedUrl: signedUrl,
+        };
+      });
+
+      await prisma.payingUp.update({
+        where: {
+          id: payingUpId,
+        },
+        data: {
+          files: {
+            value: filesignedUrls,
+          },
+        },
       });
 
       return res.status(200).json({
         success: true,
         message: "Paying up purchased successfully.",
         payload: {
-          urls: signedUrls,
+          urls: filesignedUrls,
         },
       });
     }
@@ -663,12 +731,12 @@ export async function verifyPayment(req, res) {
       );
       await prisma.telegram.update({
         where: {
-           id: telegramId
+          id: telegramId,
         },
         data: {
           inviteLink: response.data.payload.inviteLink,
-        }
-      })
+        },
+      });
       return res.status(200).json({
         success: true,
         message: "Telegram purchased successfully.",
@@ -1378,21 +1446,20 @@ export async function updateBankDetails(req, res) {
         userId: user.id,
       },
     });
-   
-    
+
     if (!existingBankDetails) {
       return res
         .status(400)
         .json({ success: false, message: "Bank details not found." });
     }
 
-     const existingUpiRecords = await prisma.uPI.findMany({
+    const existingUpiRecords = await prisma.uPI.findMany({
       where: {
         bankDetailsId: bankDetailsId,
-        userId: user.id
-      }
+        userId: user.id,
+      },
     });
-    console.log("existingupi records", existingUpiRecords)
+    console.log("existingupi records", existingUpiRecords);
 
     //update bank details
     const updatedBankDetails = await prisma.bankDetails.update({
@@ -1410,11 +1477,11 @@ export async function updateBankDetails(req, res) {
 
     //update UPI if provided
     let updatedUpi = null;
-   if (upiId) {
-    
-
+    if (upiId) {
       if (existingUpiRecords && existingUpiRecords.length > 0) {
-         const matchingUpi = existingUpiRecords.find(upi => upi.upiId === upiId);
+        const matchingUpi = existingUpiRecords.find(
+          (upi) => upi.upiId === upiId
+        );
         if (matchingUpi) {
           updatedUpi = matchingUpi;
         }
@@ -1482,7 +1549,7 @@ export async function getBankDetails(req, res) {
         upiIds: true,
       },
     });
-    console.log("bankDetails", bankDetails)
+    console.log("bankDetails", bankDetails);
 
     const kycRecord = await prisma.kycRecords.findFirst({
       where: {
@@ -1657,7 +1724,14 @@ export async function withdrawAmount(req, res) {
 export async function getTransactions(req, res) {
   try {
     const user = req.user;
-    const { page = 1, status, buyerId, limit=10, sortBy="createdAt", sortOrder='desc' } = req.query;
+    const {
+      page = 1,
+      status,
+      buyerId,
+      limit = 10,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
 
     const pageNumber = parseInt(page);
     if (isNaN(pageNumber) || pageNumber < 1) {
@@ -1714,10 +1788,11 @@ export async function getTransactions(req, res) {
 
     const totalPages = Math.max(1, Math.ceil(totalTransactions / pageSize));
     const effectivePage = Math.min(pageNumber, totalPages);
-     const validSortFields = ['createdAt', 'amount', 'status', 'productType'];
-    const actualSortBy = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
-    const actualSortOrder = sortOrder.toLowerCase() === 'asc' ? 'asc' : 'desc';
-   
+    const validSortFields = ["createdAt", "amount", "status", "productType"];
+    const actualSortBy = validSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+    const actualSortOrder = sortOrder.toLowerCase() === "asc" ? "asc" : "desc";
 
     const transactions = await prisma.transaction.findMany({
       where: whereClause,
@@ -1729,11 +1804,11 @@ export async function getTransactions(req, res) {
           },
         },
       },
-       skip: (effectivePage - 1) * pageSize,
+      skip: (effectivePage - 1) * pageSize,
       take: pageSize,
       orderBy: {
-        [actualSortBy]: actualSortOrder
-      }
+        [actualSortBy]: actualSortOrder,
+      },
     });
 
     return res.status(200).json({
@@ -1742,7 +1817,7 @@ export async function getTransactions(req, res) {
         transactions: transactions.length === 0 ? [] : transactions,
         totalPages,
         currentPage: effectivePage,
-        totalItems: totalTransactions
+        totalItems: totalTransactions,
       },
       message: "Fetched transactions successfully.",
     });
@@ -1761,7 +1836,7 @@ export async function getWithdrawals(req, res) {
 
     const {
       page = 1,
-      limit=10,
+      limit = 10,
       upiId,
       bankDetailsId,
       status,
@@ -1906,10 +1981,10 @@ export async function getWithdrawals(req, res) {
             bankDetails: {
               select: {
                 accountHolderName: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
     });
 
@@ -2519,8 +2594,6 @@ export async function getBankAndUpis(req, res) {
   }
 }
 
-
-
 export async function setMPIN(req, res) {
   try {
     const user = req.user;
@@ -2762,7 +2835,9 @@ export async function getAllTimeEarnings(req, res) {
         productBreakdown[prodType] = JSON.parse(JSON.stringify(defaultEr));
       }
 
-      productBreakdown[prodType][month].earnings += Number(transaction.amountAfterFee);
+      productBreakdown[prodType][month].earnings += Number(
+        transaction.amountAfterFee
+      );
     });
 
     // Get available product types for filtering UI

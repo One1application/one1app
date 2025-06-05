@@ -21,6 +21,7 @@ import { adminRouter } from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 import { productRouter } from "./routes/productRoutes.js";
 
+
 dotenv.config();
 
 const app = express();
@@ -49,6 +50,8 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+
 
 app.use("/auth", authenticationRouter);
 app.use("/webinar", webinarRouter);
