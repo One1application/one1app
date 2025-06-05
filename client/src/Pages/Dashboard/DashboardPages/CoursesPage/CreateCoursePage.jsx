@@ -8,12 +8,15 @@ import {
   Edit2,
   X,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
 import toast from "react-hot-toast";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import ReactQuill from "react-quill";
+import { motion } from "framer-motion";
+import AIAssistantButton from "../../../../components/Buttons/AIAssistantButton.jsx";
 import {
   createNewCourseRequest,
   handelUplaodFile,
@@ -21,8 +24,10 @@ import {
   editCourse,
   handelUplaodFileS3,
   getSignedVideoUrl,
-} from "../../../../services/auth/api.services";
+  generativeDescription,
+} from "../../../../services/auth/api.services.js";
 import { BsPlusSquareDotted } from "react-icons/bs";
+import { use } from "react";
 const DiscountForm = ({
   isOpen,
   onClose,
@@ -35,14 +40,13 @@ const DiscountForm = ({
   );
   const [expiryDate, setExpiryDate] = useState(editingDiscount?.expiry || "");
 
-   useEffect(() => {
+  useEffect(() => {
     if (editingDiscount) {
       setDiscountCode(editingDiscount.code || "");
       setDiscountPercent(editingDiscount.percent || "");
       setExpiryDate(editingDiscount.expiry || "");
     }
   }, [editingDiscount]);
-  
 
   const handleSubmit = () => {
     onSubmit({
@@ -50,7 +54,6 @@ const DiscountForm = ({
       code: discountCode,
       percent: discountPercent,
       expiry: expiryDate,
-      
     });
     onClose();
   };
@@ -140,6 +143,8 @@ const NewCoursePage = () => {
   const validity = ["Monthly", "Half-Yearly", "Yearly", "Lifetime"];
   const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [wait, setWait] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     price: "",
@@ -241,6 +246,49 @@ const NewCoursePage = () => {
   // Add a new state to track filenames
   const [videoFileNames, setVideoFileNames] = useState({});
 
+  const generateDescription = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (!formData.title || !formData.title.trim()) {
+        toast.error("Please enter a title to generate description", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+        });
+        return;
+      }
+
+      setWait(true);
+
+      const data = {
+        prompt: formData.title.trim(),
+      };
+
+      const res = await generativeDescription(data);
+
+      if (res?.data?.success) {
+        setFormData((prev) => ({
+          ...prev,
+          aboutThisCourse: {
+            ...prev.aboutThisCourse,
+            description: res?.data?.description,
+          },
+        }));
+      } else {
+        throw new Error(res?.data?.message || "Failed to generate description");
+      }
+    } catch (error) {
+      console.error("Error generating description:", error);
+      toast.error(error.message || "Failed to generate description");
+    } finally {
+      setWait(false);
+    }
+  };
   const handleDiscountSubmit = (discountData) => {
     if (discountData.id) {
       // Editing existing discount
@@ -550,7 +598,7 @@ const NewCoursePage = () => {
   const handleVideoPreview = async (videoUrl) => {
     try {
       // If it's a local preview (blob URL), use it directly
-      if (videoUrl.startsWith('blob:')) {
+      if (videoUrl.startsWith("blob:")) {
         setModalVideo(videoUrl);
         return;
       }
@@ -601,14 +649,14 @@ const NewCoursePage = () => {
     if (!file) return;
 
     // Store filename
-    setVideoFileNames(prev => ({
+    setVideoFileNames((prev) => ({
       ...prev,
-      [`${lessonIndex}-${videoIndex}`]: file.name
+      [`${lessonIndex}-${videoIndex}`]: file.name,
     }));
 
     // Create local preview URL
     const localPreviewUrl = URL.createObjectURL(file);
-    
+
     // Update local video previews
     setLocalVideoPreviews((prev) => ({
       ...prev,
@@ -708,7 +756,7 @@ const NewCoursePage = () => {
 
   const handleRemoveVideo = (lessonIndex, videoIndex) => {
     const lessonVideos = formData.lessons.lessonData[lessonIndex].videos;
-    
+
     // Remove the video from formData
     setFormData((prevState) => {
       const updatedLessons = [...prevState.lessons.lessonData];
@@ -725,15 +773,15 @@ const NewCoursePage = () => {
     }
 
     // Reindex filenames
-    setVideoFileNames(prev => {
+    setVideoFileNames((prev) => {
       const updated = {};
       // Copy all filenames except for the current lesson
-      Object.keys(prev).forEach(key => {
+      Object.keys(prev).forEach((key) => {
         if (!key.startsWith(`${lessonIndex}-`)) {
           updated[key] = prev[key];
         }
       });
-      
+
       // Reindex the remaining filenames for this lesson
       lessonVideos.forEach((_, index) => {
         if (index >= videoIndex) {
@@ -749,7 +797,7 @@ const NewCoursePage = () => {
           }
         }
       });
-      
+
       return updated;
     });
 
@@ -757,12 +805,12 @@ const NewCoursePage = () => {
     setVideoPreviews((prev) => {
       const updated = {};
       // Copy all previews except for the current lesson
-      Object.keys(prev).forEach(key => {
+      Object.keys(prev).forEach((key) => {
         if (!key.startsWith(`${lessonIndex}-`)) {
           updated[key] = prev[key];
         }
       });
-      
+
       // Reindex the remaining previews for this lesson
       lessonVideos.forEach((_, index) => {
         if (index >= videoIndex) {
@@ -778,7 +826,7 @@ const NewCoursePage = () => {
           }
         }
       });
-      
+
       return updated;
     });
   };
@@ -902,7 +950,7 @@ const NewCoursePage = () => {
           const response = await fetchCourse(courseId);
           if (response.status === 200) {
             const courseData = response.data.payload.course;
-            
+
             // Update form data with existing course data
             setFormData({
               title: courseData.title || "",
@@ -973,19 +1021,20 @@ const NewCoursePage = () => {
             });
 
             // Set discounts if available
-           if(courseData.discount){
-             if(Array.isArray(courseData.discount)){
-              setDiscounts(courseData.discount)
-             }
-             else if(typeof courseData.discount === 'object'){
-               setDiscounts([{
-                  id: courseData.discount.id,
-                  code: courseData.discount.code || "",
-                  percent: courseData.discount.percent || "",
-                  expiry: courseData.discount.expiry || ""
-                }]);
-             }
-           }
+            if (courseData.discount) {
+              if (Array.isArray(courseData.discount)) {
+                setDiscounts(courseData.discount);
+              } else if (typeof courseData.discount === "object") {
+                setDiscounts([
+                  {
+                    id: courseData.discount.id,
+                    code: courseData.discount.code || "",
+                    percent: courseData.discount.percent || "",
+                    expiry: courseData.discount.expiry || "",
+                  },
+                ]);
+              }
+            }
 
             // Set image preview if available
             if (courseData.coverImage?.value) {
@@ -1164,9 +1213,7 @@ const NewCoursePage = () => {
       }
     } catch (err) {
       console.error(err);
-      toast.error(
-        err.response?.data?.message
-      );
+      toast.error(err.response?.data?.message);
     } finally {
       // Set loading state back to false
       setIsSubmitting(false);
@@ -1497,7 +1544,7 @@ const NewCoursePage = () => {
                     [&_.ql-container.ql-snow]:!h-[calc(100%-42px)]"
                 >
                   <ReactQuill
-                    value={formData.aboutThisCourse.description}
+                    value={formData.aboutThisCourse?.description}
                     onChange={handleOverviewChange}
                     theme="snow"
                     className="bg-black/50 text-white rounded-lg h-full"
@@ -1519,6 +1566,31 @@ const NewCoursePage = () => {
                       ],
                     }}
                   />
+                </div>
+                <div className="absolute bottom-8 right-10">
+                  {wait ? (
+                    <motion.div
+                      className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
+                      animate={{
+                        rotate: 360,
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      <Loader2 className="w-5 h-5 text-white" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      onClick={generateDescription}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <AIAssistantButton />
+                    </motion.div>
+                  )}
                 </div>
               </div>
 
@@ -1746,8 +1818,13 @@ const NewCoursePage = () => {
                                     <input
                                       type="file"
                                       accept="video/*"
-                                    
-                                      onChange={(e) => handleVideoUpload(lessonIndex, videoIndex, e)}
+                                      onChange={(e) =>
+                                        handleVideoUpload(
+                                          lessonIndex,
+                                          videoIndex,
+                                          e
+                                        )
+                                      }
                                       className="w-full px-4 py-2 bg-[#1a1b1e] text-gray-300 rounded-lg border border-orange-500/20 focus:outline-none focus:border-orange-500/50 text-sm"
                                     />
                                     {/* {videoFileNames[`${lessonIndex}-${videoIndex}`] && (
@@ -1758,16 +1835,20 @@ const NewCoursePage = () => {
                                   </div>
                                   {(localVideoPreviews[
                                     `${lessonIndex}-${videoIndex}`
-                                  ] || 
-                                  videoPreviews[`${lessonIndex}-${videoIndex}`]) && (
+                                  ] ||
+                                    videoPreviews[
+                                      `${lessonIndex}-${videoIndex}`
+                                    ]) && (
                                     <button
                                       type="button"
                                       onClick={() =>
                                         handleVideoPreview(
                                           localVideoPreviews[
                                             `${lessonIndex}-${videoIndex}`
-                                          ] || 
-                                          videoPreviews[`${lessonIndex}-${videoIndex}`]
+                                          ] ||
+                                            videoPreviews[
+                                              `${lessonIndex}-${videoIndex}`
+                                            ]
                                         )
                                       }
                                       className="ml-2 text-orange-500 hover:text-orange-400"

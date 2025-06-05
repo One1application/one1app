@@ -62,10 +62,36 @@ export const verifyEnteredOTP = async (data) => {
  *   .then(response => console.log(response))
  *   .catch(error => console.error(error));
  */
+
+
+ // Ai description generator for products
+  
+ export const generativeDescription = async (data) => {
+  try {
+    const response = await servicesAxiosInstance.post("AI/generate/description", data);
+   
+   return response;
+  } catch (error) {
+    console.log(error || error?.message || "Something went wrong !")
+    return error;
+  }
+   
+ }
+
+ // ends here 
+
+
 export const signInUser = async (data) => {
+  console.log(data)
   const response = await servicesAxiosInstance.post("auth/login", data);
+   
   return response;
 };
+
+export const userSignIn = async (data) => {
+  const response = await servicesAxiosInstance.post("auth/user/login", data);
+  return response;
+}
 /**
  *
  * @param {Object} data - The user Credentials
@@ -421,6 +447,7 @@ export const fetchPremiumDashboardData = async () => {
   );
   return response;
 };
+
 
 export const fetchPremiumContentById = async (contentId) => {
   const response = await servicesAxiosInstance.get(

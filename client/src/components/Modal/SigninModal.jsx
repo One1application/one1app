@@ -1,19 +1,19 @@
 /* eslint-disable react/prop-types */
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { Modal } from "@mui/material";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 
-import { 
-  Smartphone, 
-  Mail, 
-  X,
-  Github
-} from "lucide-react";
-import { signInUser, verifyLoginUser } from "../../services/auth/api.services";
+import { Smartphone, Mail, X, Github } from "lucide-react";
+import { userSignIn, verifyLoginUser } from "../../services/auth/api.services";
 import { useAuth } from "../../context/AuthContext";
 
-const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}) => {
-   const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
+const SigninModal = ({
+  open,
+  handleClose,
+  onSuccessfulLogin,
+  onSwitchToSignup,
+}) => {
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -24,8 +24,8 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const countryCodes = ["+1", "+91", "+44", "+61"];
-   const { verifyToken } = useAuth();
-  
+  const { verifyToken } = useAuth();
+
   useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     setIsEmailValid(emailRegex.test(email));
@@ -46,10 +46,13 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
 
   const handleSendOTP = async () => {
     setIsLoading(true);
-    const userData = isUsingEmail? { email } : { phoneNumber: selectedCountryCode + phoneNumber };
+    const userData = isUsingEmail
+      ? { email }
+      : { phoneNumber: selectedCountryCode + phoneNumber };
 
     try {
-      const { data } = await signInUser(userData);
+      console.log(userData);
+      const { data } = await userSignIn(userData);
       if (data.success) {
         toast.success(
           isUsingEmail ? "OTP Sent to Email!" : "OTP Sent to Phone Number!"
@@ -66,8 +69,13 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
 
   const handleOTPSubmit = async () => {
     setIsOtpLoading(true);
-    const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber:selectedCountryCode + phoneNumber }) };
-    
+    const otpData = {
+      otp,
+      ...(isUsingEmail
+        ? { email }
+        : { phoneNumber: selectedCountryCode + phoneNumber }),
+    };
+
     try {
       const { data } = await verifyLoginUser(otpData);
       if (data.success) {
@@ -101,7 +109,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
             </div>
           </div>
           <hr className="border-gray-300 mb-4" />
-          
+
           <div className="w-full flex flex-col items-center justify-center gap-4">
             <p className="text-base text-gray-600 mb-2">
               Sign in to your oneapp account
@@ -118,7 +126,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
                 />
               </div>
             ) : (
-               <div className="flex flex-col gap-1 w-full">
+              <div className="flex flex-col gap-1 w-full">
                 <div className="flex border border-gray-300 rounded-lg">
                   <select
                     className="p-3 border-r border-gray-300 rounded-l-lg focus:outline-none"
@@ -181,7 +189,11 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
                 }
                 onClick={handleSendOTP}
               >
-                {isLoading ? "Sending..." : isUsingEmail ? "Send OTP to Email" : "Send OTP to Phone"}
+                {isLoading
+                  ? "Sending..."
+                  : isUsingEmail
+                  ? "Send OTP to Email"
+                  : "Send OTP to Phone"}
               </button>
             )}
 
@@ -201,7 +213,7 @@ const SigninModal = ({ open, handleClose, onSuccessfulLogin  , onSwitchToSignup}
               {isUsingEmail ? <Smartphone size={20} /> : <Mail size={20} />}
               Continue with {isUsingEmail ? "Phone Number" : "Email"}
             </button>
-{/* 
+            {/* 
             <button className="w-full flex justify-center items-center gap-2 text-gray-700 py-3 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-300">
               <Github size={20} />
               Continue with Google
