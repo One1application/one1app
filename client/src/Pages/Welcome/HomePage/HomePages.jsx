@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 
 const HeroSection = ({ email, setEmail, submit, loading }) => (
-  <div className="flex flex-col md:flex-row items-center justify-between px-4 sm:px-8 md:px-16 pt-8 md:pt-16 w-full h-full relative">
+  <div className="flex flex-col md:flex-row items-center justify-between px-2 md:px-4 pt-8 md:pt-16 w-full h-full relative">
     <motion.div
       initial={{ opacity: 0, x: -50 }}
       animate={{ opacity: 1, x: 0 }}
@@ -182,7 +182,7 @@ const HeroSection = ({ email, setEmail, submit, loading }) => (
 
 // About Section Component
 const AboutSection = () => (
-  <div className="bg-black text-white py-16 px-8 md:px-16 flex flex-col md:flex-row items-center justify-between">
+  <div className="bg-black text-white py-16 px-2 md:px-4 flex flex-col md:flex-row items-center justify-between">
     <div className="w-full md:w-1/2 space-y-4 md:pl-16 lg:pl-32">
       <p className="text-orange-500 font-semibold tracking-wide uppercase text-sm">
         Discover
@@ -216,7 +216,7 @@ const AboutSection = () => (
 
 // What is One App Section
 const WhatIsOneAppSection = () => (
-  <section className="flex flex-col md:flex-row items-center justify-between px-8 md:px-16 py-12 md:py-16">
+  <section className="flex flex-col md:flex-row items-center justify-between px-2 md:px-4 py-12 md:py-16">
     <div className="w-full md:w-1/2 space-y-6 md:pl-20 lg:pl-32">
       <p className="text-orange-500 font-semibold tracking-wide uppercase text-sm">
         About
@@ -283,7 +283,7 @@ const TestimonialsSection = ({ review = [], navigate }) => {
   );
 
   return (
-    <section className="bg-black text-white px-8 md:px-16 py-16 relative overflow-hidden">
+    <section className="bg-black text-white px-2 md:px-4 py-16 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-orange-500/10 blur-3xl"></div>
         <div className="absolute bottom-10 right-20 w-40 h-40 rounded-full bg-orange-500/5 blur-3xl"></div>
@@ -449,8 +449,8 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <div className="bg-black text-white py-16 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="bg-black text-white py-16 px-2 md:px-4">
+      <div className="max-w-7xl mx-auto">
         <h2 className="text-4xl md:text-5xl font-bold text-center mb-12">
           The features you were looking for
         </h2>
