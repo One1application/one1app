@@ -85,7 +85,9 @@ const SignInPage = () => {
   // };
 
   const handleFormSubmit = async () => {
-    const userData = isUsingEmail ? { email } : { phoneNumber:selectedCountryCode + phoneNumber };
+    const userData = isUsingEmail
+      ? { email }
+      : { phoneNumber: selectedCountryCode + phoneNumber };
     setIsLoading(true);
 
     try {
@@ -98,7 +100,7 @@ const SignInPage = () => {
       }
     } catch (error) {
       console.error("API call error:", error);
-      toast.error("An error occurred. Please try again.");
+      toast.error("user does not exist.");
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +108,18 @@ const SignInPage = () => {
 
   const handleOTPSubmit = async () => {
     setIsOtpLoading(true);
-    const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber:selectedCountryCode + phoneNumber }) };
+
+    if (otp.length < 6) {
+      toast.error("Please enter a valid OTP.");
+      setIsOtpLoading(false);
+      return;
+    }
+    const otpData = {
+      otp,
+      ...(isUsingEmail
+        ? { email }
+        : { phoneNumber: selectedCountryCode + phoneNumber }),
+    };
 
     try {
       const { data } = await verifyLoginUser(otpData);
@@ -120,7 +133,7 @@ const SignInPage = () => {
       }
     } catch (error) {
       console.error("API call error:", error);
-      toast.error("An error occurred. Please try again.");
+      toast.error("Wrong OTP");
     } finally {
       setIsOtpLoading(false);
     }
@@ -159,8 +172,7 @@ const SignInPage = () => {
                   />
                 </div>
               ) : (
-               
-                     <div className="flex gap-2 w-[85%]">
+                <div className="flex gap-2 w-[85%]">
                   {/* Country Code Dropdown */}
                   <select
                     className="p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -176,10 +188,16 @@ const SignInPage = () => {
 
                   {/* Phone Number Input */}
                   <input
-                    type="text"
+                    type="tel"
                     placeholder="Phone Number"
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+
+                      setPhoneNumber(value);
+                    }}
                     className="w-full p-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -191,7 +209,12 @@ const SignInPage = () => {
                     type="text"
                     placeholder="Enter OTP"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
+                      setOtp(value);
+                    }}
                     className="w-full mt-2.5 text-sm p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button

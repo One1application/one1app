@@ -218,8 +218,8 @@ export const verifyOtpForRegister = async (req, res) => {
 export async function signIn(req, res) {
   try {
     const { email, phoneNumber } = req.body;
-    console.log(email , phoneNumber);
-
+    
+    console.log(email, phoneNumber);
     signInValidation.parse({
       email,
       phoneNumber,
@@ -228,8 +228,12 @@ export async function signIn(req, res) {
     const userExist = await prisma.User.findFirst({
       where: {
         OR: [{ email }, { phone: phoneNumber }],
+      role : "Creator"
+
       },
+
     });
+    
 
     if (!userExist) {
       return res.status(404).json({
@@ -257,7 +261,7 @@ export async function signIn(req, res) {
 export const userlogin = async(req,res) =>{
   try {
     const { email, phoneNumber } = req.body;
-    console.log(email , phoneNumber)
+     
 
      signInValidation.parse({
        email,
