@@ -226,6 +226,7 @@ model Webinar {
   isOnline       Boolean
   venue          String?
   link           Json
+  description    String?
   discount       Json?
   isPaid         Boolean
   quantity       Int
@@ -263,6 +264,7 @@ model Course {
   coverImage      Json
   lessons         Lessons[]
   language        Json
+  amount          Float?
   startDate       DateTime
   endDate         DateTime?
   isVerified      Boolean            @default(false)
@@ -295,6 +297,9 @@ model CoursePurchasers {
   courseId    String
   purchaserId String
   paymentId   String
+  gallery     Json?
+  language    Json?
+  lessons     Json?
   orderId     String
   isActive    Boolean         @default(false)
   expiryDate  DateTime
@@ -328,6 +333,7 @@ model PayingUp {
   faqs            Json
   refundPolicies  Json
   tacs            Json
+  amount          Float?
   coverImage      Json
   files           Json
   isVerified      Boolean          @default(false)
@@ -392,6 +398,7 @@ model PremiumContent {
   unlockPrice Float
   content     Json
   discount    Json?
+  amount      Float?
   isVerified  Boolean                @default(false)
   createdById String
   createdBy   User                   @relation(fields: [createdById], references: [id], onDelete: Cascade)

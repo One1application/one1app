@@ -14,6 +14,7 @@ export async function createWebinar(req, res) {
       venue,
       link,
       discount,
+      description,
       isPaid,
       quantity,
       amount,
@@ -22,7 +23,7 @@ export async function createWebinar(req, res) {
       coverImage,
       occurrence,
     } = req.body;
-    const user = req.user;
+    const user = req.user; 
     
     if (discount) {
   if (!Array.isArray(discount)) {
@@ -80,6 +81,7 @@ export async function createWebinar(req, res) {
     }
   }
 }
+ 
 
     await prisma.webinar.create({
       data: {
@@ -96,7 +98,7 @@ export async function createWebinar(req, res) {
         amount: parseFloat(amount),
         startDate: new Date(startDateTime),
         endDate: new Date(endDateTime),
-        createdById: user.id,
+        createdById:user?.id,
       },
     });
 
@@ -121,6 +123,7 @@ export async function editWebinar(req, res) {
       title,
       category,
       isOnline,
+      description,
       venue,
       link,
       isPaid,
@@ -212,6 +215,7 @@ export async function editWebinar(req, res) {
         title,
         category,
         coverImage,
+        description,
         isOnline: isOnline,
         venue,
         link,
@@ -295,6 +299,7 @@ export async function getWebinarById(req, res) {
   try {
     const { webinarId } = req.params;
     const user = req.user;
+    console.log(user, webinarId)
 
     if (!webinarId) {
       return res.status(403).json({

@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useRef, useState } from "react";
-import Navbar from "../../../components/NavBar/NavBar";
-import Footer from "../../../components/Footer/Footer";
+import Navbar from "../../../components/NavBar/NavBar.jsx";
+import Footer from "../../../components/Footer/Footer.jsx";
 import personImage from "../../../assets/Student.png";
 import AboutImg from "../../../assets/aboutImg.png";
 import TestimonialImg from "../../../assets/user.png";
@@ -19,7 +19,7 @@ import playstoreLogo from "../../../assets/playstore.png";
 import { motion } from "framer-motion";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
-import { testimonials, faqData } from "../HomePage/HomeConfig.js";
+import { testimonials, faqData } from "./HomeConfig.js";
 
 import Animation from "./Animation.jsx";
 import BackgroundImg from "../../../assets/letsstartbackground.webp";

@@ -1,10 +1,10 @@
 import { Toaster } from "react-hot-toast";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
-import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes";
+import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
-import SignInPage from "./Pages/Authentication/SigninPage/SignInPage";
-import SignUpPage from "./Pages/Authentication/SignupPage/SignUpPage";
-import DashboardPage from "./Pages/Dashboard/DashboardPage";
+import SignInPage from "./Pages/Authentication/SigninPage/SignInPage.jsx";
+import SignUpPage from "./Pages/Authentication/SignupPage/SignUpPage.jsx";
+import DashboardPage from "./Pages/Dashboard/DashboardPage.jsx";
 import AppointementPage from "./Pages/Dashboard/DashboardPages/AppointementPage/AppointementPage.jsx";
 import ChatPage from "./Pages/Dashboard/DashboardPages/ChatPage/ChatPage.jsx";
 import CoursesPage from "./Pages/Dashboard/DashboardPages/CoursesPage/CoursesPage.jsx";
@@ -22,16 +22,16 @@ import PayingUpPages from "./Pages/Dashboard/DashboardPages/PayingUpPage/PayingU
 import PluginPage from "./Pages/Dashboard/DashboardPages/PluginPage/PluginPage.jsx";
 import ProfilePage from "./Pages/Dashboard/DashboardPages/ProfilePage/ProfilePage.jsx";
 import SuperLinkPage from "./Pages/Dashboard/DashboardPages/SuperLinkPage/SuperLinkPage.jsx";
-import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramForm";
-import TelegramFormPrev from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramFormPrev";
+import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramForm.jsx";
+import TelegramFormPrev from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramFormPrev.jsx";
 import TelegramPage from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramPage.jsx";
-import AllTransactionsPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/AllTransactionsPage";
-import KYCpage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/KYCpage";
-import WithdrawalPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/WithdrawalPage";
+import AllTransactionsPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/AllTransactionsPage.jsx";
+import KYCpage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/KYCpage.jsx";
+import WithdrawalPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/WithdrawalPage.jsx";
 import WalletPage from "./Pages/Dashboard/DashboardPages/WalletPage/WalletPage.jsx";
 import CreateWebinarPage from "./Pages/Dashboard/DashboardPages/WebinarPage/CreateWebinarPage.jsx";
 import WebinarPage from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPage.jsx";
-import WebinarPages from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPages";
+import WebinarPages from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPages.jsx";
 import WhatsAppPage from "./Pages/Dashboard/DashboardPages/WhatsAppPage/WhatsAppPage.jsx";
 import AudiencePage from "./Pages/Dashboard/DashboardPages/YourCustomerPage/YourCustomerPage.jsx";
 import PaymentPage from "./Pages/payment/page.jsx";
@@ -47,10 +47,10 @@ import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
 import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
 import PaymentInterface from "./newPurchase/PaymentInterface.jsx";
-
+ 
 
 const App = () => {
-  const { userRole, authenticated, logout, loading } = useAuth();
+  const { userRole, authenticated, logout, loading  } = useAuth();
 
   return (
     <>
@@ -73,12 +73,12 @@ const App = () => {
         <Route path="/about-us" element={<AboutUsPage />} />
         <Route path="/hiring" element={<HiringPage />} />
         <Route path="/contactus" element={<ContactUsPage />} />
-        
+
         <Route path="/publicpolicy" element={<PrivacyPolicy />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
         {/* <Route path="/refund-cancellation" element={<RefundCancellation />} /> */}
         <Route path="/TermCondition" element={<TermCondition />} />
-        
+
         <Route path="/payment/verify" element={<PaymentPage />} />
         {/* Authentication Pages */}
         <Route path="/signin" element={<SignInPage />} />
@@ -88,7 +88,7 @@ const App = () => {
           {/* Dashboard Pages */}
           <Route path="dashboard" element={<DashboardPage />}>
             <Route path="" element={<HomePage />} />
-            
+
             <Route path="mystore" element={<MyStorePage />} />
             <Route path="your-customers" element={<AudiencePage />} />
             <Route path="wallets" element={<WalletPage />} />
@@ -107,6 +107,7 @@ const App = () => {
             <Route path="all-transactions" element={<AllTransactionsPage />} />
             <Route path="kyc-setting" element={<KYCpage />} />
             <Route path="premium-content" element={<LockedContentPage />} />
+        
           </Route>
 
           {/* Sub-Pages for App-Specific Routes */}
@@ -139,13 +140,12 @@ const App = () => {
             path="premium-content"
             element={<LockedContentDisplayPage />}
           />
-          <Route path = "payment" element={<PaymentInterface/>} />
+          <Route path="payment" element={<PaymentInterface />} />
 
           <Route path="course/lessons" element={<LessonsPage />} />
         </Route>
-        <Route path="/unsubscribe/:email" element={<Unsubscribe/>} />
+        <Route path="/unsubscribe/:email" element={<Unsubscribe />} />
       </Routes>
-    
     </>
   );
 };

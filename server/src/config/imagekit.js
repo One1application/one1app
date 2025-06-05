@@ -48,6 +48,7 @@ const generateSignedUrl = (url) => {
       signed: true,
       expireSeconds: 3600,
     });
+  
     return signedUrl;
   } catch (error) {
     throw error;

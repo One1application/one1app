@@ -25,8 +25,7 @@ export default function PaymentPage() {
           webinarId,
           telegramId,
           premiumContentId: contentId,
-          discountedPrice
-         
+          discountedPrice,
         });
 
         if (response?.data?.success) {
@@ -34,7 +33,7 @@ export default function PaymentPage() {
 
           // Redirect to dashboard page after successful payment
           setTimeout(() => {
-            navigate("/dashboard");
+            window.location.href = "http://localhost:5174/dashboard";
           }, 3000);
         } else {
           throw new Error(response?.message || "Payment verification failed");

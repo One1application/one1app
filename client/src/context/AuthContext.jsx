@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get(
         `${import.meta.env.VITE_SERVER_URL}/review/allreviews`
       );
-      console.log("Fetched Reviews:", response.data);
+  
       setReviews(response.data.reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
     getAllReviews();
   }, []);
 
-  console.log(reviews);
+ 
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

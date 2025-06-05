@@ -380,8 +380,10 @@ export const getWebinarPurchases = async (req, res) => {
             amount: true,
             coverImage: true,
             link: true,
+            description : true,
             isOnline: true,
             venue: true,
+            endDate:true,
             createdBy: {
               select: {
                 id: true,
@@ -423,6 +425,112 @@ export const getWebinarPurchases = async (req, res) => {
   }
 };
 
+// ye hai ekdum transaction milega bhayankar - wassup malik read kar rhe hoge i know :-)
+
+
+export const getAllTransactions = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found." });
+    }
+
+ 
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        buyerId: user.id,
+      },
+      include: {
+        wallet: true,
+        buyer: true,
+        creator: true,
+        
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+
+    // ek ek karke nhi ek saath karo yoo malik wassup
+ 
+    const detailedTransactions = await Promise.all(
+      transactions.map(async (txn) => {
+        let productDetails = null;
+
+        switch (txn.productType) {
+          case "WEBINAR":
+            productDetails = await prisma.webinar.findUnique({
+              where: { id: txn.productId },
+              select: { title: true, amount: true },
+            });
+            break;
+          case "COURSE":
+            productDetails = await prisma.course.findUnique({
+              where: { id: txn.productId },
+              select: { title: true, amount: true },
+            });
+            break;
+          case "PAYINGUP":
+            productDetails = await prisma.payingUp.findUnique({
+              where: { id: txn.productId },
+              select: { title: true, amount: true },
+            });
+
+            break;
+
+           case "PREMIUM-CONTENT":
+
+           productDetails = await prisma.premiumContent.findUnique({
+            where : {
+              id  : txn.productId
+            },
+
+            select : {
+              title : true,
+              amount : true,
+    
+            }
+           })
+
+           // agar aage bhi add krega toh kar diyo malik 
+            break;
+           
+          default:
+            productDetails = { title: "Unknown", price: 0 };
+        }
+
+        return {
+          transactionId: txn.id,
+          productType: txn.productType,
+          productTitle: productDetails?.title,
+          pricePaid: txn.amount,
+          amountAfterFee: txn.amountAfterFee,
+          paymentId: txn.phonePayTransId,
+          modeOfPayment: txn.modeOfPayment,
+          status: txn.status,
+          createdAt: txn.createdAt,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      transactions: detailedTransactions,
+    });
+
+  } catch (error) {
+    console.error(error?.message || "Something went wrong!");
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
+// end of the controller for me not for youh :-)
+
 export const getCoursePurchases = async (req, res) => {
   try {
     const user = req.user;
@@ -440,8 +548,17 @@ export const getCoursePurchases = async (req, res) => {
             price: true,
             startDate: true,
             coverImage: true,
+<<<<<<< Updated upstream
             endDate: true,
             creator: {
+=======
+            language: true,
+            gallery : true,
+            lessons : true,
+            aboutThisCourse: true,
+            validity : true,
+            creator: { 
+>>>>>>> Stashed changes
               select: {
                 id: true,
                 name: true,
@@ -484,6 +601,7 @@ export const getCoursePurchases = async (req, res) => {
     });
   }
 };
+
 
 export const getPremiumContentAccess = async (req, res) => {
   try {
@@ -565,6 +683,7 @@ export const getPayingUpPurchases = async (req, res) => {
             files: true,
             coverImage: true,
             createdAt: true,
+            files : true,
             createdBy: {
               select: {
                 id: true,

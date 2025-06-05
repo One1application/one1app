@@ -3,6 +3,8 @@ import {
   adminLogin,
   register,
   signIn,
+  userlogin,
+ 
   verifyAdminOtp,
   verifyOtpForLogin,
   verifyOtpForRegister,
@@ -27,6 +29,8 @@ authenticationRouter.get("/verify-token", authMiddleware, (req, res) => {
     },
   });
 });
+
+authenticationRouter.post("/user/login", userlogin);
 
 authenticationRouter.post("/admin/login", adminLogin);
 authenticationRouter.post("/admin/login/verify-otp", verifyAdminOtp);

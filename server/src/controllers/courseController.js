@@ -378,7 +378,7 @@ export const editCourseDetails = async (req, res) => {
       });
 
       console.log("saveCourseProducts", saveCourseProducts);
-       console.log("discount",course.discount.code);
+       console.log("discount",course.discount?.code);
 
       if (!saveCourseProducts)
         return res.status(400).json({
@@ -880,3 +880,6 @@ export const playVideo = async (req, res) => {
     });
   }
 };
+
+
+ 

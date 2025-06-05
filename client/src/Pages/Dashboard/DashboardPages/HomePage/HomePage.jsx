@@ -12,9 +12,9 @@ import {
 
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
-import { HomePageConfig } from "./homeConfig";
+import { HomePageConfig } from "./homeConfig.js";
 import "leaflet/dist/leaflet.css";
-import CustomThemes from "../../../../Zustand/CustomThemes";
+import CustomThemes from "../../../../Zustand/CustomThemes.jsx";
 import { useThemeSelectorStore } from "../../../../Zustand/ThemeStore.js";
 import ComingSoonSection from "../../../../ComingSoonSection/ComingSoonSection.jsx";
 import ReviewForm from "../../../../Review/ReviewForm.jsx";

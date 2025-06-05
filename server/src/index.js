@@ -20,6 +20,7 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import { adminRouter } from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 import { productRouter } from "./routes/productRoutes.js";
+ 
 
 
 dotenv.config();
@@ -29,13 +30,17 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "1gb" }));
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
-
+ 
 app.use(
   cors({
-    origin: "http://localhost:5173" || "*",
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174'
+    ],
     credentials: true,
   })
 );
+
 
 const postLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -67,6 +72,7 @@ app.use("/newsletter", newsletterRoutes);
 app.use("/review", reviewRoutes);
 app.use("/admin", adminRouter);
 app.use('/product', productRouter)
+ 
 
 const Port = process.env.SERVER_PORT || 5000;
 

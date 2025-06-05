@@ -348,7 +348,7 @@ export async function getPayingUpById(req, res) {
     });
 
     if (!payingUp) {
-      return res.status(401).json({
+      return res.status(404).json({
         success: false,
         message: "No paying found.",
       });
