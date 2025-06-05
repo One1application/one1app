@@ -693,17 +693,11 @@ export async function verifyPayment(req, res) {
         },
       });
 
-<<<<<<< Updated upstream
       const filesignedUrls = response.files.value.map((file, index) => {
-=======
-      const signedUrls = response.files?.value.map((file) => {
-        console.log(file)
->>>>>>> Stashed changes
         const filePath = new URL(file.url).pathname.replace(
           /^.*\/images/,
           "/images"
         );
-<<<<<<< Updated upstream
         const signedUrl = generateSignedUrl(filePath);
         return {
           ...file,
@@ -720,11 +714,6 @@ export async function verifyPayment(req, res) {
             value: filesignedUrls,
           },
         },
-=======
-
-        console.log(filePath)
-        return generateSignedUrl(filePath);
->>>>>>> Stashed changes
       });
        
       return res.status(200).json({

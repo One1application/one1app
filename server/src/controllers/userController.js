@@ -548,17 +548,8 @@ export const getCoursePurchases = async (req, res) => {
             price: true,
             startDate: true,
             coverImage: true,
-<<<<<<< Updated upstream
             endDate: true,
             creator: {
-=======
-            language: true,
-            gallery : true,
-            lessons : true,
-            aboutThisCourse: true,
-            validity : true,
-            creator: { 
->>>>>>> Stashed changes
               select: {
                 id: true,
                 name: true,
