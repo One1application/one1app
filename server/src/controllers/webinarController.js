@@ -91,6 +91,7 @@ export async function createWebinar(req, res) {
         isOnline,
         venue,
         link,
+        
         discount,
         occurrence,
         isPaid,
