@@ -14,7 +14,11 @@ import {
   IoIosWarning,
 } from "react-icons/io";
 import { MdKeyboardArrowRight, MdOutlinePin } from "react-icons/md";
-import { FaLongArrowAltDown, FaLongArrowAltUp, FaSpinner } from "react-icons/fa";
+import {
+  FaLongArrowAltDown,
+  FaLongArrowAltUp,
+  FaSpinner,
+} from "react-icons/fa";
 import EarningsChart from "../../../../components/Charts/EarningsChart";
 import WalletTableComponent from "../../../../components/Table/WalletTableComponent";
 import WithdrawModal from "../../../../components/Modal/WithdrawModal";
@@ -30,6 +34,7 @@ import {
   fetchTransactionsPage,
   fetchWithdrawalPage,
   sendWithdrawAmount,
+  fetchFilterEarningsAndWithdrawals,
 } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
@@ -56,18 +61,30 @@ const WalletPage = () => {
     totalWithdrawals: 0,
     lastModified: "",
     financeIds: [],
-    
   });
   const [withdrawalsLoading, setWithdrawalsLoading] = useState(true);
   const [transactionLoading, setTransactionLoading] = useState(true);
-  const [selectedDateRange, setSelectedDateRange] = useState("Last Year");
-  const [isCustomRange, setIsCustomRange] = useState(false);
-  const [dateRange, setDateRange] = useState([null, null]);
-  const [startDate, endDate] = dateRange;
-  const [appliedDateRange, setAppliedDateRange] = useState(null);
-  
-
-  const dateOptions = ["Last Week", "Last Month", "Last Year", "Custom Range"];
+  const [earningsFilter, setEarningsFilter] = useState("All Time");
+  const [earningsCustomRange, setEarningsCustomRange] = useState([null, null]);
+  const [earningsIsCustom, setEarningsIsCustom] = useState(false);
+  const [earningsLoading, setEarningsLoading] = useState(false);
+  const [earningsFiltered, setEarningsFiltered] = useState(null);
+  //total Withdrawals separate filter state
+  const [withdrawalsFilter, setWithdrawalsFilter] = useState("All Time");
+  const [withdrawalsCustomRange, setWithdrawalsCustomRange] = useState([
+    null,
+    null,
+  ]);
+  const [withdrawalsIsCustom, setWithdrawalsIsCustom] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [withdrawalsFiltered, setWithdrawalsFiltered] = useState(null);
+  const dateOptions = [
+    "Last Week",
+    "Last Month",
+    "Last Year",
+    "Custom Range",
+    "All Time",
+  ];
   const [modal, setOpenModal] = useState(false);
   const [openWithdrawal, setOpenWithdrawal] = useState(false);
   const [openUPI, setOpenUPI] = useState(false);
@@ -80,6 +97,54 @@ const WalletPage = () => {
   const [reson, setReson] = useState();
   const navigate = useNavigate();
 
+  //filteredData for totalWithdrawals and totalEarnings
+
+  const fetchEarningsFiltered = async (filterType, customDates = null) => {
+    setEarningsLoading(true);
+    try {
+      let fetchRange = "";
+      if (filterType === "Last Week") fetchRange = "LastWeek";
+      else if (filterType === "Last Month") fetchRange = "LastMonth";
+      else if (filterType === "Last Year") fetchRange = "LastYear";
+      else if (filterType === "All Time") fetchRange = "AllTime";
+      else if (filterType === "Custom Range" && customDates) {
+        fetchRange = `CustomRange=${
+          customDates[0].toISOString().split("T")[0]
+        },${customDates[1].toISOString().split("T")[0]}`;
+      }
+      const response = await fetchFilterEarningsAndWithdrawals({ fetchRange });
+      if (response?.data?.success)
+        setEarningsFiltered(response.data.payload.totalEarnings);
+    } catch (error) {
+      setEarningsFiltered(null);
+    } finally {
+      setEarningsLoading(false);
+    }
+  };
+
+  const fetchWithdrawalsFiltered = async (filterType, customDates = null) => {
+    setLoading(true);
+    try {
+      let fetchRange = "";
+      if (filterType === "Last Week") fetchRange = "LastWeek";
+      else if (filterType === "Last Month") fetchRange = "LastMonth";
+      else if (filterType === "Last Year") fetchRange = "LastYear";
+      else if (filterType === "All Time") fetchRange = "AllTime";
+      else if (filterType === "Custom Range" && customDates) {
+        fetchRange = `CustomRange=${
+          customDates[0].toISOString().split("T")[0]
+        },${customDates[1].toISOString().split("T")[0]}`;
+      }
+      const response = await fetchFilterEarningsAndWithdrawals({ fetchRange });
+      if (response?.data?.success)
+        setWithdrawalsFiltered(response.data.payload.totalWithdrawals);
+    } catch (error) {
+      setWithdrawalsFiltered(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleModal = () => {
     if (openWithdrawal || openUPI || openMPIN) {
       setOpenModal(false);
@@ -88,26 +153,37 @@ const WalletPage = () => {
     }
   };
 
-  const handleDateOptionChange = (e) => {
+  
+  
+  const handleEarningsFilterChange = (e) => {
     const selected = e.target.value;
-    setSelectedDateRange(selected);
-    setIsCustomRange(selected === "Custom Range");
+    setEarningsFilter(selected);
+    setEarningsIsCustom(selected === "Custom Range");
+    if (selected !== "Custom Range") fetchEarningsFiltered(selected);
+  };
+  const handleEarningsDateRangeChange = (update) =>
+    setEarningsCustomRange(update);
+  const handleEarningsApplyDateRange = () => {
+    const [start, end] = earningsCustomRange;
+    if (start && end) {
+      setEarningsIsCustom(false);
+      fetchEarningsFiltered("Custom Range", [start, end]);
+    }
   };
 
-  const handleDateRangeChange = (update) => {
-    setDateRange(update);
+  const handleWithdrawalsFilterChange = (e) => {
+    const selected = e.target.value;
+    setWithdrawalsFilter(selected);
+    setWithdrawalsIsCustom(selected === "Custom Range");
+    if (selected !== "Custom Range") fetchWithdrawalsFiltered(selected);
   };
-
-  const handleApplyDateRange = () => {
-    if (startDate && endDate) {
-      setAppliedDateRange([startDate, endDate]);
-      setSelectedDateRange(
-        `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
-      );
-      setIsCustomRange(false);
-      toast.success("Date range applied successfully!");
-    } else {
-      toast.error("Please select a valid date range");
+  const handleWithdrawalsDateRangeChange = (update) =>
+    setWithdrawalsCustomRange(update);
+  const handleWithdrawalsApplyDateRange = () => {
+    const [start, end] = withdrawalsCustomRange;
+    if (start && end) {
+      setWithdrawalsIsCustom(false);
+      fetchWithdrawalsFiltered("Custom Range", [start, end]);
     }
   };
 
@@ -188,45 +264,46 @@ const WalletPage = () => {
   };
 
   useEffect(() => {
-     if(AllWithdrawals.length > 0 && withdrawalsLoading){
+    if (AllWithdrawals.length > 0 && withdrawalsLoading) {
       setWithdrawalsLoading(false);
-     }
-     if(AllTransaction.length > 0 && transactionLoading){
+    }
+    if (AllTransaction.length > 0 && transactionLoading) {
       setTransactionLoading(false);
-     }
-  },[AllWithdrawals])
+    }
+  }, [AllWithdrawals]);
 
   // Updated onRefresh function that fetches fresh data
-const onRefresh = async () => {
-  try {
-    // Fetch latest wallet balance details
-    const response = await fetchBalanceDetails();
-    
-    if (response.data.success) {
-      const accountNumbers = response.data.payload.accountNumbers || [];
-      const upiIds = response.data.payload.upiIds || [];
-      
-      
-      // Update all related state variables
-      setUpi(upiIds);
-      setAccount(accountNumbers);
-      setBalanceDetails({
-        balance: response.data.payload.balance,
-        totalEarnings: response.data.payload.totalEarnings,
-        totalWithdrawals: response.data.payload.totalWithdrawals,
-        lastModified: response.data.payload.lastModified,
-        financeIds: [...accountNumbers, ...upiIds],
-        
-      });
-      console.log("refreshing wallet data")
+  const onRefresh = async () => {
+    try {
+      // Fetch latest wallet balance details
+      const response = await fetchBalanceDetails();
+
+      if (response.data.success) {
+        const accountNumbers = response.data.payload.accountNumbers || [];
+        const upiIds = response.data.payload.upiIds || [];
+
+        // Update all related state variables
+        setUpi(upiIds);
+        setAccount(accountNumbers);
+        setBalanceDetails({
+          balance: response.data.payload.balance,
+          totalEarnings: response.data.payload.totalEarnings,
+          totalWithdrawals: response.data.payload.totalWithdrawals,
+          lastModified: response.data.payload.lastModified,
+          financeIds: [...accountNumbers, ...upiIds],
+        });
+        console.log("refreshing wallet data");
+      }
+    } catch (error) {
+      console.error("Error refreshing wallet data:", error);
+      toast.error("Failed to refresh account data");
     }
-  } catch (error) {
-    console.error("Error refreshing wallet data:", error);
-    toast.error("Failed to refresh account data");
-  }
-};
+  };
 
   useEffect(() => {
+  
+    fetchEarningsFiltered("All Time");
+    fetchWithdrawalsFiltered("All Time")
     getPrimaryPaymentInformation();
     getWalletInformation();
     getWalletBalanceDetails();
@@ -234,11 +311,7 @@ const onRefresh = async () => {
     getNextTransactionPage(1);
     setWithdrawalsLoading(true);
     setTransactionLoading(true);
-    
-    
   }, []);
-
- 
 
   //pagination
   const handleTransactionPageChange = (page) => {
@@ -343,7 +416,14 @@ const onRefresh = async () => {
             <h2 className="font-bold text-3xl text-white tracking-tight flex gap-1">
               ₹
               <div className="text-3xl font-bold">
-                {BalanceDetails?.totalEarnings.toFixed(2)}
+                {earningsLoading ? (
+                  <FaSpinner className="animate-spin" />
+                ) : (
+                  (earningsFiltered !== null
+                    ? earningsFiltered
+                    : BalanceDetails?.totalEarnings
+                  ).toFixed(2)
+                )}
               </div>
             </h2>
           </div>
@@ -355,8 +435,8 @@ const onRefresh = async () => {
               <div className="bg-[#1A1D21] rounded-md border border-gray-700 py-2 px-3 flex items-center gap-2 cursor-pointer shadow-sm">
                 <select
                   className="bg-transparent text-sm font-poppins cursor-pointer outline-none text-gray-300 w-full"
-                  value={selectedDateRange}
-                  onChange={handleDateOptionChange}
+                  value={earningsFilter}
+                  onChange={handleEarningsFilterChange}
                 >
                   {dateOptions.map((option) => (
                     <option key={option} value={option} className="bg-dark">
@@ -367,19 +447,19 @@ const onRefresh = async () => {
                 <Calendar className="text-gray-300 w-5 h-5" />
               </div>
 
-              {isCustomRange && (
+              {earningsIsCustom && (
                 <div className="absolute top-14 right-0 z-50 bg-white p-4 rounded-lg shadow-lg">
                   <DatePicker
                     selectsRange
-                    startDate={startDate}
-                    endDate={endDate}
-                    onChange={handleDateRangeChange}
+                    startDate={earningsCustomRange[0]}
+                    endDate={earningsCustomRange[1]}
+                    onChange={handleEarningsDateRangeChange}
                     inline
                     className="custom-datepicker"
                   />
                   <div className="flex justify-end mt-2">
                     <button
-                      onClick={handleApplyDateRange}
+                      onClick={handleEarningsApplyDateRange}
                       className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                     >
                       Apply
@@ -398,7 +478,18 @@ const onRefresh = async () => {
               Total Withdrawal
             </p>
             <h2 className="font-bold text-3xl text-white tracking-tight flex gap-2">
-              ₹<div>{BalanceDetails.totalWithdrawals?.toFixed(2)}</div>
+              ₹
+              <div>
+                {" "}
+                {loading ? (
+                  <FaSpinner className="animate-spin" />
+                ) : (
+                  (withdrawalsFiltered !== null
+                    ? withdrawalsFiltered
+                    : BalanceDetails.totalWithdrawals
+                  )?.toFixed(2)
+                )}
+              </div>
             </h2>
           </div>
           <img src={Cash} alt="" className="absolute bottom-0 right-0" />
@@ -408,8 +499,8 @@ const onRefresh = async () => {
             <div className="relative bg-[#1A1D21] rounded-md border border-gray-700 py-2 px-3 flex items-center gap-2 cursor-pointer shadow-sm">
               <select
                 className="bg-transparent text-sm font-poppins cursor-pointer outline-none text-gray-300"
-                value={selectedDateRange}
-                onChange={(e) => setSelectedDateRange(e.target.value)}
+                value={withdrawalsFilter}
+                onChange={handleWithdrawalsFilterChange}
               >
                 {dateOptions.map((option) => (
                   <option key={option} value={option}>
@@ -417,7 +508,28 @@ const onRefresh = async () => {
                   </option>
                 ))}
               </select>
+              <Calendar className="text-gray-300 w-5 h-5" />
             </div>
+            {withdrawalsIsCustom && (
+              <div className="absolute top-14 right-0 z-50 bg-white p-4 rounded-lg shadow-lg">
+                <DatePicker
+                  selectsRange
+                  startDate={withdrawalsCustomRange[0]}
+                  endDate={withdrawalsCustomRange[1]}
+                  onChange={handleWithdrawalsDateRangeChange}
+                  inline
+                  className="custom-datepicker"
+                />
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={handleWithdrawalsApplyDateRange}
+                    className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -453,21 +565,38 @@ const onRefresh = async () => {
                     : null}
                 </p>
               </div>
-              <Link
-                to="/dashboard/kyc-setting"
-                className={`${
-                  status === "NULL"
-                    ? "bg-orange-600 hover:bg-orange-700"
-                    : status === "PENDING"
-                    ? "bg-yellow-500 hover:bg-yellow-700"
-                    : status === "REJECTED"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-green-600 hover:bg-green-700"
-                }
+              {status === "PENDING" || status === "REJECTED" ? (
+                <Link
+                  to="/dashboard/kyc-setting"
+                  className={`${
+                    status === "NULL"
+                      ? "bg-orange-600 hover:bg-orange-700"
+                      : status === "PENDING"
+                      ? "bg-yellow-500 hover:bg-yellow-700"
+                      : status === "REJECTED"
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-green-600 hover:bg-green-700"
+                  }
                    py-2 px-3 text-sm rounded-md text-white font-poppins`}
-              >
-                {status === "NULL" ? "Update KYC" : status}
-              </Link>
+                >
+                  {status === "NULL" ? "Update KYC" : status}
+                </Link>
+              ) : (
+                <div
+                  className={`${
+                    status === "NULL"
+                      ? "bg-orange-600 hover:bg-orange-700"
+                      : status === "PENDING"
+                      ? "bg-yellow-500 hover:bg-yellow-700"
+                      : status === "REJECTED"
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-green-600 hover:bg-green-700"
+                  }
+                   py-2 px-3 text-sm rounded-md text-white font-poppins`}
+                >
+                  {status === "NULL" ? "Update KYC" : status}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -475,67 +604,67 @@ const onRefresh = async () => {
 
       {/* Chart and graphs */}
       <div className="flex md:flex-row flex-col gap-4 w-full">
-        { /* Recent Withdrawal */ }
-          <div className="md:w-1/3 w-full bg-[#1A1D21] py-3 px-3 mt-5 rounded-xl order-2">
-            <div className="flex justify-between">
-              <div className="flex items-center gap-1 text-white">
-                <Link to={"../withdrawal"} className="flex">
-            <p className="font-poppins tracking-tight">Recent Withdrawal</p>
-            <MdKeyboardArrowRight className="size-5" />
-                </Link>
-              </div>
-              <p className="font-poppins tracking-tight text-white">Amount</p>
+        {/* Recent Withdrawal */}
+        <div className="md:w-1/3 w-full bg-[#1A1D21] py-3 px-3 mt-5 rounded-xl order-2">
+          <div className="flex justify-between">
+            <div className="flex items-center gap-1 text-white">
+              <Link to={"../withdrawal"} className="flex">
+                <p className="font-poppins tracking-tight">Recent Withdrawal</p>
+                <MdKeyboardArrowRight className="size-5" />
+              </Link>
             </div>
-            <div
-              className={`flex flex-col gap-6 mt-3 ${
-                AllWithdrawals.length === 0 && "h-[90%]"
-              }`}
-            >
-              {withdrawalsLoading ? (
-                <div className="flex justify-center items-center h-full">
-                <Loader2 className="animate-spin text-orange-500 text-3xl" />
-                </div>
-              ) : AllWithdrawals.length === 0 ? (
-                <div className="flex justify-center h-full items-center">
-                  No Withdrawal
-                </div>
-              ) : (
-                AllWithdrawals.slice(0, 7).map((withdrawal, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center cursor-pointer"
-            >
-              <a className="flex gap-3 items-center">
-                {withdrawal.status === "SUCCESS" ? (
-                  <span className="w-7 h-7 bg-green-900 rounded flex items-center justify-center">
-              <FaLongArrowAltUp className="text-green-400" />
-                  </span>
-                ) : (
-                  <span className="w-7 h-7 bg-red-900 rounded flex items-center justify-center">
-              <FaLongArrowAltDown className="text-red-400" />
-                  </span>
-                )}
-                <p className="text-gray-300">
-                  {new Date(withdrawal.createdAt).toLocaleString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-                  })}
-                </p>
-              </a>
-              <p className="font-semibold font-poppins tracking-tight text-white">
-                ₹ {withdrawal.amount}
-              </p>
-            </div>
-                ))
-              )}
-            </div>
+            <p className="font-poppins tracking-tight text-white">Amount</p>
           </div>
+          <div
+            className={`flex flex-col gap-6 mt-3 ${
+              AllWithdrawals.length === 0 && "h-[90%]"
+            }`}
+          >
+            {AllWithdrawals.length == 0 ? (
+              <div className="flex justify-center h-full items-center">
+                No Withdrawal
+              </div>
+            ) : withdrawalsLoading ? (
+              <div className="flex justify-center items-center h-full">
+                <Loader2 className="animate-spin text-orange-500 text-3xl" />
+              </div>
+            ) : (
+              AllWithdrawals.slice(0, 7).map((withdrawal, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center cursor-pointer"
+                >
+                  <a className="flex gap-3 items-center">
+                    {withdrawal.status === "SUCCESS" ? (
+                      <span className="w-7 h-7 bg-green-900 rounded flex items-center justify-center">
+                        <FaLongArrowAltUp className="text-green-400" />
+                      </span>
+                    ) : (
+                      <span className="w-7 h-7 bg-red-900 rounded flex items-center justify-center">
+                        <FaLongArrowAltDown className="text-red-400" />
+                      </span>
+                    )}
+                    <p className="text-gray-300">
+                      {new Date(withdrawal.createdAt).toLocaleString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </p>
+                  </a>
+                  <p className="font-semibold font-poppins tracking-tight text-white">
+                    ₹ {withdrawal.amount}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
 
-          {/* Charts */}
+        {/* Charts */}
         <div className="md:w-2/3 w-full bg-[#1A1D21] py-3 px-3 mt-5 rounded-xl order-2">
           <EarningsChart />
         </div>

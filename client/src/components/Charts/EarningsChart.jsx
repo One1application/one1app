@@ -32,9 +32,9 @@ const defaultEarningsData = [
 const ProductType  = {
   WEBINAR: 'WEBINAR',
   COURSE: 'COURSE',
-  PAYING_UP: 'PAYING_UP',
+  PAYINGUP: 'PAYINGUP',
   TELEGRAM: 'TELEGRAM',
-  PREMIUM_CONTENT: 'PREMIUM_CONTENT'
+  PREMIUMCONTENT: 'PREMIUMCONTENT'
 };
 
 const defaultEr = [
@@ -65,7 +65,7 @@ const EarningsChart = () => {
     switch (category) {
       case 'PayingUp':
         console.log(1);
-        setFetchCat(ProductType.PREMIUM_CONTENT)
+        setFetchCat(ProductType.PAYINGUP)
         break;
       case 'Webinar':
         console.log(2);
@@ -79,9 +79,9 @@ const EarningsChart = () => {
         console.log(4);
         setFetchCat(ProductType.TELEGRAM)
         break;
-      case 'PrimeContent':
+      case 'PremiumContent':
         console.log(5);
-        setFetchCat(ProductType.PREMIUM_CONTENT)
+        setFetchCat(ProductType.PREMIUMCONTENT)
         break;
       default:
         setFetchCat('')
@@ -94,10 +94,10 @@ const EarningsChart = () => {
     setIsLoading(true)
     const response = await fetchWalletChartData({ fetchCat });
     if (response?.data) {
-      setTotalEarning(response.data.payload.totalEarnings)
+      setTotalEarning(response.data.payload.totalEarnings || 0)
       toast.success(response.data.message);
       if(!fetchCat) {
-        setChartData(response.data.payload.monthlyEarnings);
+        setChartData(response.data.payload.monthlyEarnings || 0);
       } else {
         setChartData(response.data.payload.productBreakdown[fetchCat]);
       }
@@ -147,7 +147,7 @@ const EarningsChart = () => {
               <option value="Webinar">Webinar</option>
               <option value="Courses">Courses</option>
               <option value="Telegram">Telegram</option>
-              <option value="PrimeContent">Premium Content</option>
+              <option value="PremiumContent">Premium Content</option>
             </select>
             <select className="px-3 py-2 text-sm border font-poppins bg-white tracking-tight rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
               <option value="Last Year">Last Year</option>
