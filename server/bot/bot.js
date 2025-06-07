@@ -16,6 +16,7 @@ import channelRouter from './routes/channelRoutes.js';
 import notifyRouter from './routes/notifyRoutes.js';
 import contactRouter from './routes/contactRoutes.js';
 import otpRouter from './routes/otpRoutes.js';
+import ChannelUser from './channelUserMap.js';
 
 dotenv.config();
 
@@ -29,8 +30,6 @@ const TELEGRAM_API = `https://api.telegram.org/bot${token}`;
 const SERVER_URL = process.env.BOT_SERVER_URL;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const ChannelUser = new Map();
 
 const mtproto = new MTProto({
   api_id: process.env.API_ID,
@@ -90,13 +89,16 @@ const login = async () => {
   }
 };
 
-const createInviteLink = async (chatId) => {
+// Generate invite link with optional name for unique links per user
+const createInviteLink = async (chatId, inviteName) => {
   try {
-    const response = await axios.post(`${TELEGRAM_API}/createChatInviteLink`, {
+    const payload = {
       chat_id: chatId,
       expire_date: Math.floor(Date.now() / 1000) + 600,
-      member_limit: 1,
-    });
+      member_limit: 1
+    };
+    if (inviteName) payload.name = inviteName;
+    const response = await axios.post(`${TELEGRAM_API}/createChatInviteLink`, payload);
     return response.data.result.invite_link;
   } catch (error) {
     console.error(
@@ -384,7 +386,7 @@ requiredEnv.forEach(name => {
 import TelegramBotLib from 'node-telegram-bot-api';
 // Start polling if in non-production
 if (process.env.NODE_ENV !== 'production') {
-  const pollingBot = new TelegramBotLib(token, { polling: true });
+  const pollingBot = new TelegramBotLib(token, { polling: { allowed_updates: ['message','chat_member','my_chat_member'] } });
   pollingBot.onText(/\/ping$/, (msg) => {
     pollingBot.sendMessage(msg.chat.id, 'pong');
   });
@@ -418,18 +420,64 @@ if (process.env.NODE_ENV !== 'production') {
       await pollingBot.sendMessage(msg.chat.id, 'Failed to fetch user ID.');
     }
   });
-  // Handle bot being added to a group via service message
   pollingBot.on('message', async (msg) => {
+    console.log(`[DEBUG] Polling message received in chat ${msg.chat.id} from ${msg.from.id}: ${msg.text}`);
     if (msg.new_chat_members && msg.new_chat_members.some(m => m.is_bot)) {
       const chat = msg.chat;
       const adminId = msg.from.id;
-      const details = `Bot was added to group:\nName: ${chat.title || 'N/A'}\nID: ${chat.id}\nType: ${chat.type}\nI don't have admin permissions yet, please grant them.\nThis group is not registered on one1app yet. Please register here: https://example.com/form.html?chatid=${chat.id}`;
+      const details = `hey ${msg.from.first_name}, setup your premium group click on the link fill all the necessary data
+\nLink :- https://one1app.com/app/create-telegram?chatid=${chat.id}`;
       try {
         await pollingBot.sendMessage(adminId, details);
         console.log(`Sent polling service-message DM to user ${adminId} for group ${chat.id}`);
       } catch (err) {
         console.error(`Failed to send polling DM to ${adminId}:`, err.response?.data || err.message);
       }
+    }
+    if (msg.text) {
+      const cmd = msg.text.split(' ')[0].split('@')[0];
+      if (cmd === '/setup') {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+        // Check bot admin privileges
+        try {
+          console.log(`[DEBUG] polling /setup received in chat ${chatId} by user ${userId}`);
+          await axios.post(`${TELEGRAM_API}/setChatPermissions`, { chat_id: chatId, permissions: { can_invite_users: false } });
+          console.log(`[DEBUG] Revoked invite permissions in chat ${chatId}`);
+        } catch (err) {
+          console.error('Error during polling setup admin check:', err.response?.data || err.message);
+          const errMsg = 'Bot isn\'t admin. Please provide admin rights.';
+          try {
+            await pollingBot.sendMessage(chatId, errMsg);
+          } catch (sendErr) {
+            console.error('Failed sending admin-error to group, falling back to DM:', sendErr);
+            try {
+              await pollingBot.sendMessage(userId, errMsg);
+            } catch (dmErr) {
+              console.error('Failed sending admin-error DM:', dmErr.response?.data || dmErr.message);
+            }
+          }
+          return;
+        }
+        // Perform setup actions
+        try {
+          const exportRes = await axios.post(`${TELEGRAM_API}/exportChatInviteLink`, { chat_id: chatId });
+          console.log(`[DEBUG] ExportChatInviteLink response: ${JSON.stringify(exportRes.data)}`);
+          const setupMsg = "Hey welcome to one1app one stop solution platform to manage and monetised your content at one place https://one1app.com/";
+          await pollingBot.sendMessage(chatId, setupMsg);
+          console.log(`[DEBUG] Setup completion message sent to chat ${chatId}`);
+        } catch (err) {
+          console.error('Error during polling /setup exec:', err.response?.data || err.message);
+        }
+        return;
+      }
+    }
+  });
+  pollingBot.on('chat_member', (update) => {
+    // console.log('Polling chat_member payload:', JSON.stringify(update, null, 2));
+    const { chat, invite_link, new_chat_member } = update;
+    if (invite_link && new_chat_member.status === 'member') {
+      console.log(`${new_chat_member.user.id} | ${chat.id} | ${invite_link.invite_link}`);
     }
   });
   console.log('Polling bot started.');
