@@ -37,6 +37,15 @@ services:
     networks:
       - app-network
 
+  user:
+    build:
+      context: ./oneappUser
+      dockerfile: docker/production/Dockerfile
+    ports:
+      - "9000:80"
+    networks:
+      - app-network
+
   client:
     build:
       context: ./client
