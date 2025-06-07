@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp } from 'lucide-react';
+import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp, Copy } from 'lucide-react';
 import toast from "react-hot-toast";
 
 import Pagination from '@mui/material/Pagination';
@@ -173,14 +173,10 @@ const Table = ({ data }) => {
     setPage(value);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+ const formatDate = (dateString) => {
+    return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   };
+
 
   // Create dropdown component for sorting
   const renderSortButton = () => (
@@ -277,6 +273,7 @@ const Table = ({ data }) => {
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sale</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Revenue</th>
+               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Coupon</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created At</th>
@@ -302,6 +299,39 @@ const Table = ({ data }) => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {"variable"}
                 </td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                 {
+    event.discount && event.discount.length > 0 ? (
+    // Find the coupon with the highest discount percentage
+    (() => {
+      const highestDiscountCoupon = event.discount.reduce((max, current) => {
+        // Compare the discount percentage to find the maximum
+        return (current.percent > max.percent) ? current : max;
+      });
+
+      // Return the JSX for the highest discount coupon
+      return (
+        <div className="flex gap-2">
+          <span>{highestDiscountCoupon.code}</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(highestDiscountCoupon.code);
+              toast.success('Coupon copied to clipboard');
+            }}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            <Copy className="h-4 w-4 ml-1" />
+          </button>
+        </div>
+      );
+    })()
+  ) : (
+    <span>N/A</span>
+  )
+}
+                </td>
+
                 <td className="px-6 py-4 text-sm">
                   {event.paymentDetails?.paymentEnabled || event.paymentEnabled ? (
                     <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -324,13 +354,13 @@ const Table = ({ data }) => {
                       }}
                       className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
                     >
-                      Share
+                     <Copy className="h-4 w-4 ml-1"/>
                     </button>
                     <button
                       onClick={(e) => handleEdit(e, event)}
                       className="inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium transition-colors duration-200"
                     >
-                      Edit
+                      
                       <Edit2 className="h-4 w-4 ml-1" />
                     </button>
                   </div>
@@ -372,6 +402,10 @@ const Table = ({ data }) => {
               <div className="space-y-1">
                 <span className="text-gray-500 block">Revenue</span>
                 <span className="font-medium text-gray-900">{event.revenue}</span>
+              </div>
+               <div className="space-y-1">
+                <span className="text-gray-500 block">Coupon</span>
+                <span className="font-medium text-gray-900"> {event.discount?.map(d => d.code).join(", ") || "No"}</span>
               </div>
               <div className="space-y-1">
                 <span className="text-gray-500 block">Payment</span>
@@ -420,32 +454,31 @@ const Table = ({ data }) => {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center mt-6">
-        <Pagination
-          count={Math.ceil(filteredData.length / itemsPerPage)}
-          page={page}
-          onChange={handleChangePage}
-          size="medium"
-          sx={{
-            '& .MuiPaginationItem-root': {
-              backgroundColor: 'rgb(249, 250, 251)',
-              border: '1px solid rgb(229, 231, 235)',
-              color: 'rgb(107, 114, 128)',
-              '&:hover': {
-                backgroundColor: 'rgb(234, 88, 12)',
-                color: 'white',
-              },
-              '&.Mui-selected': {
-                backgroundColor: 'rgb(234, 88, 12)',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'rgb(194, 65, 12)',
-                },
-              },
-            },
-          }}
-        />
-      </div>
+            {sortedData.length > itemsPerPage && (
+              <div className="flex justify-center mt-6">
+                <Pagination 
+                  count={Math.ceil(sortedData.length / itemsPerPage)} 
+                  page={page} 
+                  onChange={(_, value) => setPage(value)}
+                  size="medium"
+                  sx={{
+                    '& .MuiPaginationItem-root': {
+                      backgroundColor: 'rgb(249, 250, 251)',
+                      border: '1px solid rgb(229, 231, 235)',
+                      color: 'rgb(107, 114, 128)',
+                      '&:hover': {
+                        backgroundColor: 'rgb(234, 88, 12)',
+                        color: 'white',
+                      },
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgb(234, 88, 12)',
+                        color: 'white',
+                      },
+                    },
+                  }}
+                />
+              </div>
+            )}
     </div>
   );
 };

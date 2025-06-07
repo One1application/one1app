@@ -16,7 +16,15 @@ import { webinarRouter } from "./routes/webinarRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 
+
 import { adminRouter } from "./routes/adminRoutes.js";
+import globalErrorHandler from "./middlewares/globalErrorHandler.js";
+import { productRouter } from "./routes/productRoutes.js";
+
+
+import airouter from "./routes/routes.ai.js"
+ 
+
 
 dotenv.config();
 
@@ -25,13 +33,17 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "1gb" }));
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
-
+ 
 app.use(
   cors({
-    origin: "http://localhost:5173" || "*",
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174'
+    ],
     credentials: true,
   })
 );
+
 
 const postLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -47,6 +59,8 @@ app.use((req, res, next) => {
   next();
 });
 
+
+
 app.use("/auth", authenticationRouter);
 app.use("/webinar", webinarRouter);
 app.use("/course", courseRouter);
@@ -60,6 +74,9 @@ app.use("/payment", paymentRouter);
 app.use("/newsletter", newsletterRoutes);
 app.use("/review", reviewRoutes);
 app.use("/admin", adminRouter);
+app.use('/product', productRouter)
+app.use("/AI" , airouter)
+ 
 
 const Port = process.env.SERVER_PORT || 5000;
 
@@ -67,6 +84,8 @@ app.listen(Port, async () => {
   console.log(await PhonePayClient.env);
   console.log("Server running on", Port);
 });
+
+
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack || err.message || err);
@@ -79,3 +98,5 @@ app.use((err, req, res, next) => {
     error: message,
   });
 });
+
+app.use(globalErrorHandler)

@@ -14,6 +14,7 @@ export async function createWebinar(req, res) {
       venue,
       link,
       discount,
+      description,
       isPaid,
       quantity,
       amount,
@@ -22,7 +23,65 @@ export async function createWebinar(req, res) {
       coverImage,
       occurrence,
     } = req.body;
-    const user = req.user;
+    const user = req.user; 
+    
+    if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+      // Validate discount code contains only uppercase letters and numbers
+    if (d.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(d.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
+    // Validate percentage
+    if (
+      d.percent !== undefined &&
+        d.percent !== null &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
+ 
 
     await prisma.webinar.create({
       data: {
@@ -32,6 +91,7 @@ export async function createWebinar(req, res) {
         isOnline,
         venue,
         link,
+        
         discount,
         occurrence,
         isPaid,
@@ -39,7 +99,7 @@ export async function createWebinar(req, res) {
         amount: parseFloat(amount),
         startDate: new Date(startDateTime),
         endDate: new Date(endDateTime),
-        createdById: user.id,
+        createdById:user?.id,
       },
     });
 
@@ -64,6 +124,7 @@ export async function editWebinar(req, res) {
       title,
       category,
       isOnline,
+      description,
       venue,
       link,
       isPaid,
@@ -73,6 +134,7 @@ export async function editWebinar(req, res) {
       endDateTime,
       coverImage,
       occurrence,
+      discount
     } = req.body;
 
     const user = req.user;
@@ -88,6 +150,64 @@ export async function editWebinar(req, res) {
         .status(404)
         .json({ success: false, message: "Webinar not found." });
 
+        if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+     // Validate discount code contains only uppercase letters and numbers
+    if (d.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(d.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
+
+    // Validate percentage
+    if (
+      d.percent !== undefined &&
+        d.percent !== null &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
+
     const updatedWebinar = await prisma.webinar.update({
       where: {
         id: webinarId,
@@ -96,9 +216,11 @@ export async function editWebinar(req, res) {
         title,
         category,
         coverImage,
+        description,
         isOnline: isOnline,
         venue,
         link,
+        discount,
         occurrence,
         isPaid: isPaid,
         quantity: parseInt(quantity, 10),
@@ -108,6 +230,7 @@ export async function editWebinar(req, res) {
         createdById: user.id,
       },
     });
+    console.log("webinar.discount", discount);
 
     return res.status(200).json({
       success: true,
@@ -177,6 +300,7 @@ export async function getWebinarById(req, res) {
   try {
     const { webinarId } = req.params;
     const user = req.user;
+    console.log(user, webinarId)
 
     if (!webinarId) {
       return res.status(403).json({
@@ -190,13 +314,18 @@ export async function getWebinarById(req, res) {
         id: webinarId,
       },
       include: {
-        tickets: user
-          ? {
-              where: {
-                boughtById: user.id,
-              },
-            }
-          : false,
+        createdBy: {
+          select: {
+            name: true, // Select the username field from the related User model
+          },
+        },
+        ...(user && {
+          tickets: {
+            where: {
+              boughtById: user.id,
+            },
+          },
+        }),
       },
     });
 
@@ -231,7 +360,7 @@ export async function getWebinarById(req, res) {
 
 export async function purchaseWebinar(req, res) {
   try {
-    const { webinarId } = req.body;
+    const { webinarId, couponCode, validateOnly } = req.body;
     const user = req.user;
 
     if (!webinarId) {
@@ -250,6 +379,7 @@ export async function purchaseWebinar(req, res) {
         isPaid: true,
         amount: true,
         quantity: true,
+        discount: true,
         amount: true,
         _count: {
           select: {
@@ -265,13 +395,6 @@ export async function purchaseWebinar(req, res) {
       },
     });
 
-    if (webinar.createdBy.id === user.id) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot purchase your own webinar.",
-      });
-    }
-
     if (!webinar) {
       return res.status(400).json({
         success: false,
@@ -279,18 +402,27 @@ export async function purchaseWebinar(req, res) {
       });
     }
 
-    if (webinar.tickets?.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already purchased the tickets.",
-      });
-    }
+    if (!validateOnly) {
+      if (webinar.createdBy.id === user.id) {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot purchase your own webinar.",
+        });
+      }
 
-    if (webinar._count.tickets.length >= webinar.quantity) {
-      return res.status(400).json({
-        success: false,
-        message: "No tickets available for this webinar.",
-      });
+      if (webinar.tickets?.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "You have already purchased the tickets.",
+        });
+      }
+
+      if (webinar._count.tickets.length >= webinar.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: "No tickets available for this webinar.",
+        });
+      }
     }
 
     if (!webinar.isPaid) {
@@ -307,24 +439,59 @@ export async function purchaseWebinar(req, res) {
       });
     }
 
-    // const option = {
-    //     amount: webinar.amount * 100,
-    //     currency: "INR",
-    //     payment_capture: 1
-    // }
+    const discountData = webinar?.discount || null;
+    console.log("discountData", discountData);
+    let discountPrice = 0;
+    if (couponCode && discountData && discountData.length > 0) {
+      const matchingDiscount = discountData.find(
+        (discount) => discount.code === couponCode
+      );
+      if (!matchingDiscount) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid coupon code.",
+        });
+      }
+
+      const expiryDate = new Date(matchingDiscount.expiry);
+      const currentDate = new Date();
+
+      if (expiryDate < currentDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Coupon code has expired.",
+        });
+      }
+
+      discountPrice = parseInt(webinar.amount*(Number(matchingDiscount.percent)/100).toFixed(2));
+    }
 
     // const order = await razorpay.orders.create(option);
-    let totalAmount = webinar.amount;
+    let totalAmount = Math.round(webinar.amount - discountPrice);
+    if(totalAmount < 0) totalAmount = 0;
+    if(validateOnly){
+       return res.status(200).json({
+          success: true,
+          payload: {
+            totalAmount,
+            discountPrice,
+            originalPrice: webinar.amount
+          }
+       });
+    }
 
     const orderId = randomUUID();
+    console.log("orderId", orderId);
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
       .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&webinarId=${webinar.id}`
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&webinarId=${webinar.id}&discountedPrice=${totalAmount}`
       )
       .build();
+
+      console.log("request", request)
 
     const response = await PhonePayClient.pay(request);
     return res.status(200).json({
@@ -332,6 +499,8 @@ export async function purchaseWebinar(req, res) {
       payload: {
         redirectUrl: response.redirectUrl,
         webinarId: webinar.id,
+        totalAmount,
+        discountPrice,
       },
     });
   } catch (error) {

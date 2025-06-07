@@ -5,7 +5,9 @@ import {
   fetchVerificationInformation,
   handelUplaodFile,
   savePrimaryPaymentInformation,
+  updatePrimaryPaymentInformation,
 } from "../../../../../services/auth/api.services";
+import { Loader2 } from "lucide-react";
 
 const BankDetailsTab = ({ setVal }) => {
   const [loading, setLoading] = useState(false);
@@ -16,6 +18,8 @@ const BankDetailsTab = ({ setVal }) => {
     bankDocument: null,
     upiId: "",
   });
+  const [update, setUpdate] = useState(false);
+  const [bankDetailsId, setBankDetailsId] = useState(null);
 
   const handleBankingInfoChange = (e) => {
     const { name, value } = e.target;
@@ -50,9 +54,11 @@ const BankDetailsTab = ({ setVal }) => {
     }
 
     // UPI ID
-    if (!BankingInfo.upiId) {
+    if(!update){
+      if (!BankingInfo.upiId) {
       toast.error("UPI ID is required.");
       return false;
+    }
     }
     return true;
   };
@@ -76,7 +82,43 @@ const BankDetailsTab = ({ setVal }) => {
     }
   };
 
-  const handleBankDetails = async () => {
+ 
+
+  const getPrimaryPaymentInformation = async () => {
+    try {
+      const response = await fetchPrimaryPaymentInformation();
+
+      if (response?.status === 200) {
+        setUpdate(true);
+        setBankDetailsId(response?.data?.payload?.bankDetails.id);
+        console.log("bankDetailsdawg", response.data.payload.bankDetails);
+        const upiData = response.data.payload.bankDetails.upiIds;
+        let upiIdValue = upiData[0].upiId;
+        console.log("upiIdValue", upiIdValue);
+        const {
+          accountHolderName,
+          accountNumber,
+          ifscCode,
+          bankDocument,
+          
+          } = response.data.payload.bankDetails;
+
+          
+
+        setBankingInfo({
+          accountHolderName: accountHolderName || "",
+          accountNumber: accountNumber || "",
+          ifscCode: ifscCode || "",
+          bankDocument: bankDocument || null,
+          upiId: upiIdValue || [],
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching payment information:", error);
+    }
+  };
+
+   const handleBankDetails = async () => {
     if (!validateInputs()) return;
     const bankingInfo = {
       bankingInfo: {
@@ -85,7 +127,12 @@ const BankDetailsTab = ({ setVal }) => {
     };
     try {
       setLoading(true);
-      const response = await savePrimaryPaymentInformation(bankingInfo);
+      let response;
+      if(update){
+        response = await updatePrimaryPaymentInformation(bankDetailsId,bankingInfo);
+      }else{
+        response = await savePrimaryPaymentInformation(bankingInfo);
+      }
       console.log(response);
       if (response.status === 200) {
         toast.success("Banking Information saved successfully!");
@@ -103,31 +150,7 @@ const BankDetailsTab = ({ setVal }) => {
     }
   };
 
-  const getPrimaryPaymentInformation = async () => {
-    try {
-      const response = await fetchPrimaryPaymentInformation();
 
-      if (response.status === 200) {
-        const {
-          accountHolderName,
-          accountNumber,
-          ifscCode,
-          bankDocument,
-          upiId,
-        } = response.data.payload.bankDetails;
-
-        setBankingInfo({
-          accountHolderName: accountHolderName || "",
-          accountNumber: accountNumber || "",
-          ifscCode: ifscCode || "",
-          bankDocument: bankDocument || null,
-          upiId: upiId || [],
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching payment information:", error);
-    }
-  };
 
   const getVerificationInformation = async () => {
     try {
@@ -259,7 +282,16 @@ const BankDetailsTab = ({ setVal }) => {
             loading ? "bg-gray-400" : "bg-orange-500 hover:bg-orange-600"
           } text-white py-2 px-6 rounded-lg focus:ring focus:ring-orange-500 focus:ring-opacity-50`}
         >
-        {loading ? "Saving..." : "Save"}
+        {loading ? (
+            <span className="flex items-center justify-center">
+              <Loader2 className="animate-spin mr-2" />
+              {update ? "Updating..." : "Saving..."}
+            </span>
+          ) : update ? (
+            "Update"
+          ) : (
+            "Save"
+          )}
         </button>
       </div>
     </div>

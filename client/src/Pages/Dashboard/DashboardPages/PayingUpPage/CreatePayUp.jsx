@@ -1,20 +1,23 @@
-import { MinusCircle } from "lucide-react";
+import { Loader2, MinusCircle } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css"; // Import Quill styles
 import { BsPlusSquareDotted } from "react-icons/bs";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   createPayUpContent,
   handelUplaodFile,
   fetchPayingUp,
-  editPayingUp
-} from "../../../../services/auth/api.services";
+  editPayingUp,
+  generativeDescription,
+} from "../../../../services/auth/api.services.js";
 import axios from "axios";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import { PlusCircle, Upload, ChevronDown } from "lucide-react";
 import { X, Edit, Trash } from "lucide-react";
+import AIAssistantButton from "../../../../components/Buttons/AIAssistantButton";
 
 const DiscountForm = ({
   isOpen,
@@ -111,7 +114,6 @@ const DiscountForm = ({
                 code: discountCode,
                 percent: discountPercent,
                 expiry: expiryDate,
-                
               };
               onSubmit(discountPayload);
               onClose();
@@ -185,12 +187,51 @@ const CreatePayUp = () => {
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [wait, setWait] = useState(false);
+
+  let cooldowntime = 30; // maan lete hai suppoose malik
+
+  const [cooldown, setCooldown] = useState(0);
+  const [isCooldownActive, setIsCooldownActive] = useState(false);
+
+  // chalak user hote soopose refresh karde fir ? that's what i want
+  useEffect(() => {
+    const savedCooldown = localStorage.getItem("aiCooldown");
+    if (savedCooldown) {
+      const remaining = Math.max(
+        0,
+        cooldowntime - Math.floor((Date.now() - parseInt(savedCooldown)) / 1000)
+      );
+      if (remaining > 0) {
+        setIsCooldownActive(true);
+        setCooldown(remaining);
+        startCountdown(remaining);
+      }
+    }
+  }, []);
+
+  const startCountdown = (seconds) => {
+    let remaining = seconds;
+
+    const timer = setInterval(() => {
+      remaining -= 1;
+      setCooldown(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(timer);
+        setIsCooldownActive(false);
+        localStorage.removeItem("aiCooldown");
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  };
 
   // Check if we're in edit mode by looking for id in URL
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    const id = queryParams.get('id');
-    
+    const id = queryParams.get("id");
+
     if (id) {
       setIsEditMode(true);
       setPayUpId(id);
@@ -198,28 +239,95 @@ const CreatePayUp = () => {
     }
   }, []);
 
+  const generateDescription = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (!formData.title || !formData.title.trim()) {
+        toast.error("Please enter a title to generate description", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+        });
+        return;
+      }
+
+      setWait(true);
+      setIsCooldownActive(true);
+      setCooldown(cooldowntime);
+      localStorage.setItem("aiCooldown", Date.now().toString());
+
+      toast.success("Generating AI description...", {
+        toastId: "generating-description",
+        position: "top-right",
+        autoClose: false,
+        hideProgressBar: true,
+        closeOnClick: false,
+        draggable: false,
+      });
+
+      const data = {
+        prompt: formData.title.trim(),
+      };
+
+      const res = await generativeDescription(data);
+
+      if (res?.data?.success) {
+        setFormData({
+          ...formData,
+          description: res.data.description,
+        });
+      } else {
+        throw new Error(res?.data?.message || "Failed to generate description");
+      }
+    } catch (error) {
+      console.error("Error generating description:", error);
+
+      toast.error(error.message || "Failed to generate description");
+    } finally {
+      setWait(false);
+    }
+  };
   // Function to fetch existing PayUp data
   const fetchPayUpData = async (id) => {
     try {
       // Show loading toast
       const loadingToast = toast.loading("Loading PayUp data...");
-      
+
       // Fetch the data from API
       const response = await fetchPayingUp(id);
-      
+
       if (response.status === 200) {
         const payUpData = response.data.payload.payingUp;
-        
+
+        let discountData = [];
+        if (payUpData.discount) {
+          if (Array.isArray(payUpData.discount)) {
+            discountData = payUpData.discount;
+          }
+          // If it's an object, make it an array with one element
+          else if (typeof payUpData.discount === "object") {
+            discountData = [payUpData.discount];
+          }
+        }
+
+        setDiscounts(discountData);
         // Update form data with fetched data
         setFormData({
           title: payUpData.title || " ",
           description: payUpData.description || "",
           paymentDetails: {
-            currencySymbol: payUpData.paymentDetails?.currencySymbol || "IndianRupee",
+            currencySymbol:
+              payUpData.paymentDetails?.currencySymbol || "IndianRupee",
             totalAmount: payUpData.paymentDetails?.totalAmount || 0,
             paymentLink: payUpData.paymentDetails?.paymentLink || "",
-            paymentEnabled: payUpData.paymentDetails?.paymentEnabled ,
-            paymentButtonTitle: payUpData.paymentDetails?.paymentButtonTitle || "",
+            paymentEnabled: payUpData.paymentDetails?.paymentEnabled,
+            paymentButtonTitle:
+              payUpData.paymentDetails?.paymentButtonTitle || "",
             ownerEmail: payUpData.paymentDetails?.ownerEmail || "",
             ownerPhone: payUpData.paymentDetails?.ownerPhone || "",
           },
@@ -231,7 +339,8 @@ const CreatePayUp = () => {
           testimonials: {
             title: payUpData.testimonials?.title || "Testimonials",
             isActive: payUpData.testimonials?.isActive || false,
-            testimonialsMetaData: payUpData.testimonials?.testimonialsMetaData || [],
+            testimonialsMetaData:
+              payUpData.testimonials?.testimonialsMetaData || [],
           },
           faQ: {
             title: payUpData.faqs?.title || "Frequently Asked Questions",
@@ -241,12 +350,14 @@ const CreatePayUp = () => {
           refundPolicies: {
             title: payUpData.refundPolicies?.title || "Refund Policies",
             isActive: payUpData.refundPolicies?.isActive || true,
-            refundPoliciesMetaData: payUpData.refundPolicies?.refundPoliciesMetaData || [],
+            refundPoliciesMetaData:
+              payUpData.refundPolicies?.refundPoliciesMetaData || [],
           },
           termAndConditions: {
             title: payUpData.tacs?.title || "Terms & Conditions",
             isActive: payUpData.tacs?.isActive || true,
-            termAndConditionsMetaData: payUpData.tacs?.termAndConditionsMetaData || [],
+            termAndConditionsMetaData:
+              payUpData.tacs?.termAndConditionsMetaData || [],
           },
           coverImage: {
             title: payUpData.coverImage?.title || "Cover Image",
@@ -259,22 +370,22 @@ const CreatePayUp = () => {
             value: payUpData.files?.value || "",
           },
         });
-        
+
         // Set discounts if available
         if (payUpData.discounts && Array.isArray(payUpData.discounts)) {
           setDiscounts(payUpData.discounts);
         }
-        
+
         // Set price type based on totalAmount format
         if (payUpData.paymentDetails?.totalAmount) {
           const amount = payUpData.paymentDetails.totalAmount.toString();
-          if (amount.includes('+')) {
+          if (amount.includes("+")) {
             setPriceType("variable");
           } else {
             setPriceType("fixed");
           }
         }
-        
+
         toast.dismiss(loadingToast);
         toast.success("PayUp data loaded successfully");
       } else {
@@ -374,14 +485,14 @@ const CreatePayUp = () => {
 
   const handleProfilePicUpload = async (e, id) => {
     const testimonialPic = e.target.files[0];
-    let profilePicUrl = '';
-    
+    let profilePicUrl = "";
+
     // Store reference to the current input element
     const currentInput = e.target;
-    
+
     // Set loading state to true
     setIsProfilePicUploading(true);
-    
+
     try {
       const testimonialProfilePic = new FormData();
       testimonialProfilePic.append("file", testimonialPic);
@@ -397,16 +508,16 @@ const CreatePayUp = () => {
       toast.error("Profile Picture Upload Failed");
       console.error(error);
       profilePicUrl = "";
-      
+
       // Reset the file input so the same file can be selected again
       if (currentInput) {
-        currentInput.value = '';
+        currentInput.value = "";
       }
     } finally {
       // Set loading state to false when done
       setIsProfilePicUploading(false);
     }
-    
+
     console.log(formData);
     setFormData((prevData) => {
       const updatedTestimonials =
@@ -428,14 +539,14 @@ const CreatePayUp = () => {
   const handelCoverImageupload = async (e) => {
     const coverImage = e.target.files[0];
     let coverImageUrl = null;
-    
+
     // Set loading state to true
     setIsCoverImageUploading(true);
-    
+
     try {
       const coverImageFile = new FormData();
       coverImageFile.append("file", coverImage);
-      coverImageFile.append("isPrivateFile", false)
+      coverImageFile.append("isPrivateFile", false);
       const response = await handelUplaodFile(coverImageFile);
       // console.log(response.data);
       if (response.status === 200) {
@@ -447,11 +558,11 @@ const CreatePayUp = () => {
     } catch (error) {
       toast.error("Cover Image Upload Failed");
       console.error(error);
-      coverImageUrl = '';
-      
+      coverImageUrl = "";
+
       // Reset the file input so the same file can be selected again
       if (coverImageInputRef.current) {
-        coverImageInputRef.current.value = '';
+        coverImageInputRef.current.value = "";
       }
     } finally {
       // Set loading state to false when done
@@ -679,13 +790,13 @@ const CreatePayUp = () => {
 
   const uploadDigitalFile = async (file) => {
     let fileUrl = "";
-    
+
     // We don't need to set loading state here as it will be set in handelFileChanges
-    
+
     try {
       const fileData = new FormData();
       fileData.append("file", file);
-      fileData.append("isPrivateFile", true)
+      fileData.append("isPrivateFile", true);
       const response = await handelUplaodFile(fileData);
       console.log(response.data);
       if (response.status === 200) {
@@ -699,7 +810,7 @@ const CreatePayUp = () => {
       console.error(error);
       fileUrl = "";
     }
-    
+
     return fileUrl;
   };
 
@@ -708,11 +819,11 @@ const CreatePayUp = () => {
     if (files && files.length > 0) {
       // Set loading state to true
       setIsFileUploading(true);
-      
+
       const newFiles = Array.from(files);
       const addFiles = [];
       let hasFailure = false;
-      
+
       try {
         for (const newFilesr of newFiles) {
           const url = await uploadDigitalFile(newFilesr);
@@ -721,12 +832,10 @@ const CreatePayUp = () => {
               name: newFilesr.name,
               id: Date.now().toString(36).substr(2, 9), // Unique ID for each file
               url: url,
-             
             });
-          else 
-            hasFailure = true;
+          else hasFailure = true;
         }
-      
+
         setFormData((prevData) => ({
           ...prevData,
           file: {
@@ -739,9 +848,9 @@ const CreatePayUp = () => {
       } finally {
         // Reset the file input if there was an upload failure
         if (hasFailure && fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
-        
+
         // Set loading state to false when done
         setIsFileUploading(false);
       }
@@ -750,31 +859,33 @@ const CreatePayUp = () => {
 
   const isQuillContentEmpty = (html) => {
     if (!html) return true;
-    
-    const text = html.replace(/<[^>]*>/g, '').trim();
-    
-    if (text === '') return true;
-    
-    const emptyPatterns = [
-      '<p><br></p>',
-      '<p></p>',
-      '<br>',
-      '<p>&nbsp;</p>'
-    ];
-    
+
+    const text = html.replace(/<[^>]*>/g, "").trim();
+
+    if (text === "") return true;
+
+    const emptyPatterns = ["<p><br></p>", "<p></p>", "<br>", "<p>&nbsp;</p>"];
+
     return emptyPatterns.includes(html.trim());
   };
 
   const validateForm = () => {
     // Check if all required fields are filled
     return (
-      formData.title.trim() !== "" && 
+      formData.title.trim() !== "" &&
       !isQuillContentEmpty(formData.description) &&
-      formData.Category.categoryMetaData.some((category) => category.trim() !== "") &&
-      formData.refundPolicies.refundPoliciesMetaData.some((policy) => policy.trim() !== "") &&
-      formData.termAndConditions.termAndConditionsMetaData.some((term) => term.trim() !== "") &&
+      formData.Category.categoryMetaData.some(
+        (category) => category.trim() !== ""
+      ) &&
+      formData.refundPolicies.refundPoliciesMetaData.some(
+        (policy) => policy.trim() !== ""
+      ) &&
+      formData.termAndConditions.termAndConditionsMetaData.some(
+        (term) => term.trim() !== ""
+      ) &&
       formData.coverImage.value !== "" &&
-      Array.isArray(formData.file.value) && formData.file.value.length > 0 &&
+      Array.isArray(formData.file.value) &&
+      formData.file.value.length > 0 &&
       // Add validation for payment details
       formData.paymentDetails.totalAmount > 0 &&
       formData.paymentDetails.paymentButtonTitle.trim() !== "" &&
@@ -789,10 +900,10 @@ const CreatePayUp = () => {
       toast.error("Please fill in all required fields before submitting");
       return; // Stop execution if validation fails
     }
-    
+
     // Set loading state to true
     setIsSubmitting(true);
-    
+
     const data = {
       title: formData.title,
       description: formData.description,
@@ -806,10 +917,10 @@ const CreatePayUp = () => {
       files: formData.file,
       discount: discounts,
     };
-    
+
     try {
       let response;
-      
+
       if (isEditMode) {
         // Update existing PayUp
         response = await editPayingUp(payUpId, data);
@@ -827,12 +938,12 @@ const CreatePayUp = () => {
           formRef.current.reset();
           navigate("/dashboard/payingup");
         } else {
-          throw new Error("PayUp Page Creation Failed");
+          throw new Error(error.response?.data?.message);
         }
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error(isEditMode ? "PayUp Page Update Failed" : "PayUp Page Creation Failed");
+      toast.error(error.response?.data?.message);
     } finally {
       // Set loading state back to false
       setIsSubmitting(false);
@@ -881,26 +992,24 @@ const CreatePayUp = () => {
             <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
               <div className="flex justify-between items-center">
                 <label className="text-orange-500 font-semibold">
-                   Payment <span className="text-red-500">*</span>
+                  Payment <span className="text-red-500">*</span>
                 </label>
-               
               </div>
 
-              
-                <div className="space-y-6 mt-4">
-                  <div className="flex gap-4">
-                    <button
-                      type="button"
-                      className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                        priceType === "fixed"
-                          ? "bg-orange-500 text-white"
-                          : "bg-black/50 text-orange-500 border-2 border-orange-500/30 hover:border-orange-500"
-                      }`}
-                      onClick={() => setPriceType("fixed")}
-                    >
-                      Fixed Price
-                    </button>
-                    {/* <button
+              <div className="space-y-6 mt-4">
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                      priceType === "fixed"
+                        ? "bg-orange-500 text-white"
+                        : "bg-black/50 text-orange-500 border-2 border-orange-500/30 hover:border-orange-500"
+                    }`}
+                    onClick={() => setPriceType("fixed")}
+                  >
+                    Fixed Price
+                  </button>
+                  {/* <button
                       type="button"
                       className={`px-6 py-3 rounded-lg font-medium transition-all ${
                         priceType === "variable"
@@ -911,157 +1020,160 @@ const CreatePayUp = () => {
                     >
                       Variable Price
                     </button> */}
+                </div>
+
+                <div>
+                  <div className="mb-4">
+                    <label className="block text-m font-medium text-orange-500 mt-4">
+                      Discounts
+                    </label>
                   </div>
 
-                  <div>
-                    <div className="mb-4">
-                      <label className="block text-m font-medium text-orange-500 mt-4">
-                        Discounts
-                      </label>
-                    </div>
-
-                    {discounts.map((discount) => (
-                      <div
-                        key={discount.id}
-                        className="flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-orange-600"
-                      >
-                        <div>
-                          <span className="text-white font-medium">
-                            {discount.code}
-                          </span>
+                  {discounts.map((discount) => (
+                    <div
+                      key={discount.id}
+                      className="flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-orange-600"
+                    >
+                      <div>
+                        <span className="text-white font-medium">
+                          {discount.code}
+                        </span>
+                        <span className="text-gray-400 ml-2">
+                          ({discount.percent}% off)
+                        </span>
+                        {discount.plan && (
                           <span className="text-gray-400 ml-2">
-                            ({discount.percent}% off)
+                            - {discount.plan}
                           </span>
-                          {discount.plan && (
-                            <span className="text-gray-400 ml-2">
-                              - {discount.plan}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-gray-400 text-sm">
-                            Expires:{" "}
-                            {new Date(discount.expiry).toLocaleDateString()}
-                          </div>
-                          <button
-                            type="button" // Add this
-                            onClick={(e) => {
-                              e.preventDefault(); // Add this
-                              handleEdit(discount);
-                            }}
-                            className="text-orange-500 hover:text-orange-400 transition-colors"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            type="button" // Add this
-                            onClick={(e) => {
-                              e.preventDefault(); // Add this
-                              handleDelete(discount.id);
-                            }}
-                            className="text-red-500 hover:text-red-400 transition-colors"
-                          >
-                            <Trash size={18} />
-                          </button>
-                        </div>
+                        )}
                       </div>
-                    ))}
-
-                    <div className="flex justify-start">
-                      <button
-                        onClick={() => {
-                          setEditingDiscount(null);
-                          setIsDiscountModalOpen(true);
-                        }}
-                        type="button" // Add this
-                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition duration-200 w-50"
-                      >
-                        Create Discount
-                      </button>
+                      <div className="flex items-center gap-4">
+                        <div className="text-gray-400 text-sm">
+                          Expires:{" "}
+                          {new Date(discount.expiry).toLocaleDateString()}
+                        </div>
+                        <button
+                          type="button" // Add this
+                          onClick={(e) => {
+                            e.preventDefault(); // Add this
+                            handleEdit(discount);
+                          }}
+                          className="text-orange-500 hover:text-orange-400 transition-colors"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          type="button" // Add this
+                          onClick={(e) => {
+                            e.preventDefault(); // Add this
+                            handleDelete(discount.id);
+                          }}
+                          className="text-red-500 hover:text-red-400 transition-colors"
+                        >
+                          <Trash size={18} />
+                        </button>
+                      </div>
                     </div>
+                  ))}
 
-                    <DiscountForm
-                      isOpen={isDiscountModalOpen}
-                      onClose={() => {
-                        setIsDiscountModalOpen(false);
+                  <div className="flex justify-start">
+                    <button
+                      onClick={() => {
                         setEditingDiscount(null);
+                        setIsDiscountModalOpen(true);
                       }}
-                      onSubmit={handleDiscountSubmit}
-                      editingDiscount={editingDiscount}
+                      type="button" // Add this
+                      className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition duration-200 w-50"
+                    >
+                      Create Discount
+                    </button>
+                  </div>
+
+                  <DiscountForm
+                    isOpen={isDiscountModalOpen}
+                    onClose={() => {
+                      setIsDiscountModalOpen(false);
+                      setEditingDiscount(null);
+                    }}
+                    onSubmit={handleDiscountSubmit}
+                    editingDiscount={editingDiscount}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-orange-500">
+                      Payment Button Title
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.paymentDetails.paymentButtonTitle}
+                      onChange={(e) =>
+                        handleInputChange(
+                          e,
+                          "paymentDetails",
+                          "paymentButtonTitle"
+                        )
+                      }
+                      className="w-full h-12 rounded-lg bg-black/50 border-2 border-orange-500/30 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                      placeholder="Pay Now"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-orange-500">
-                        Payment Button Title
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.paymentDetails.paymentButtonTitle}
-                        onChange={(e) =>
-                          handleInputChange(
-                            e,
-                            "paymentDetails",
-                            "paymentButtonTitle"
-                          )
-                        }
-                        className="w-full h-12 rounded-lg bg-black/50 border-2 border-orange-500/30 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                        placeholder="Pay Now"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-orange-500">Amount</label>
+                    <input
+                      type="number"
+                      value={
+                        priceType === "variable"
+                          ? formData.paymentDetails.totalAmount
+                              .toString()
+                              .replace("+", "")
+                          : formData.paymentDetails.totalAmount
+                      }
+                      onChange={(e) =>
+                        handleInputChange(e, "paymentDetails", "totalAmount")
+                      }
+                      className="w-full h-12 rounded-lg bg-black/50 border-2 border-orange-500/30 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                      placeholder="200"
+                    />
+                  </div>
 
-                    <div className="space-y-2">
-                      <label className="text-orange-500">Amount</label>
-                      <input
-                        type="number"
-                        value={priceType === "variable" 
-                          ? formData.paymentDetails.totalAmount.toString().replace('+', '') 
-                          : formData.paymentDetails.totalAmount}
-                        onChange={(e) =>
-                          handleInputChange(e, "paymentDetails", "totalAmount")
-                        }
-                        className="w-full h-12 rounded-lg bg-black/50 border-2 border-orange-500/30 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                        placeholder="200"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-orange-500">Support Email</label>
+                    <input
+                      type="email"
+                      value={formData.paymentDetails.ownerEmail}
+                      onChange={(e) =>
+                        handleInputChange(e, "paymentDetails", "ownerEmail")
+                      }
+                      className="w-full h-12 rounded-lg bg-black/50 border-2 border-orange-500/30 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                      placeholder="support@example.com"
+                    />
+                  </div>
 
-                    <div className="space-y-2">
-                      <label className="text-orange-500">Support Email</label>
-                      <input
-                        type="email"
-                        value={formData.paymentDetails.ownerEmail}
-                        onChange={(e) =>
-                          handleInputChange(e, "paymentDetails", "ownerEmail")
-                        }
-                        className="w-full h-12 rounded-lg bg-black/50 border-2 border-orange-500/30 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                        placeholder="support@example.com"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-orange-500">Support Phone</label>
-                      <input
-                        type="text"
-                        value={formData.paymentDetails.ownerPhone}
-                        onChange={(e) =>
-                          handleInputChange(e, "paymentDetails", "ownerPhone")
-                        }
-                        className="w-full h-12 rounded-lg bg-black/50 border-2 border-orange-500/30 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                        placeholder="+91 1234567898"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-orange-500">Support Phone</label>
+                    <input
+                      type="text"
+                      value={formData.paymentDetails.ownerPhone}
+                      onChange={(e) =>
+                        handleInputChange(e, "paymentDetails", "ownerPhone")
+                      }
+                      className="w-full h-12 rounded-lg bg-black/50 border-2 border-orange-500/30 px-4 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                      placeholder="+91 1234567898"
+                    />
                   </div>
                 </div>
-            
+              </div>
             </div>
 
             {/* Category Section */}
             <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
               <div className="flex justify-between items-center">
                 <label className="text-orange-500 font-semibold">
-                   Category <span className="text-red-500">*</span>
-                 </label>
+                  Category <span className="text-red-500">*</span>
+                </label>
                 {/* <input
                   type="checkbox"
                   checked={formData.Category.isActive}
@@ -1110,23 +1222,25 @@ const CreatePayUp = () => {
 
             {/* Overview Section */}
 
-            <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
-              <label className="text-orange-500 font-semibold">Overview <span className="text-red-500">*</span></label>
+            <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20 relative">
+              <label className="text-orange-500 font-semibold">
+                Overview <span className="text-red-500">*</span>
+              </label>
               <div
                 className="quill-wrapper h-64 [&_.ql-toolbar.ql-snow]:border-orange-500 
-                  [&_.ql-container.ql-snow]:border-orange-500
-                  [&_.ql-snow_.ql-stroke]:!stroke-orange-500
-                  [&_.ql-snow_.ql-fill]:!fill-orange-500
-                  [&_.ql-snow_.ql-picker]:!text-orange-500
-                  [&_.ql-snow_.ql-picker-options]:!bg-gray-900
-                  [&_.ql-snow_.ql-picker-options]:!border-orange-500
-                  [&_.ql-snow_.ql-picker-item]:!text-orange-500
-                  [&_.ql-snow_.ql-picker-label]:!text-orange-500
-                  [&_.ql-snow.ql-toolbar_button:hover]:!text-orange-500
-                  [&_.ql-snow.ql-toolbar_button.ql-active]:!text-orange-500
-                  [&_.ql-toolbar.ql-snow]:rounded-t-lg
-                  [&_.ql-container.ql-snow]:rounded-b-lg
-                  [&_.ql-container.ql-snow]:!h-[calc(100%-42px)]"
+      [&_.ql-container.ql-snow]:border-orange-500
+      [&_.ql-snow_.ql-stroke]:!stroke-orange-500
+      [&_.ql-snow_.ql-fill]:!fill-orange-500
+      [&_.ql-snow_.ql-picker]:!text-orange-500
+      [&_.ql-snow_.ql-picker-options]:!bg-gray-900
+      [&_.ql-snow_.ql-picker-options]:!border-orange-500
+      [&_.ql-snow_.ql-picker-item]:!text-orange-500
+      [&_.ql-snow_.ql-picker-label]:!text-orange-500
+      [&_.ql-snow.ql-toolbar_button:hover]:!text-orange-500
+      [&_.ql-snow.ql-toolbar_button.ql-active]:!text-orange-500
+      [&_.ql-toolbar.ql-snow]:rounded-t-lg
+      [&_.ql-container.ql-snow]:rounded-b-lg
+      [&_.ql-container.ql-snow]:!h-[calc(100%-42px)]"
               >
                 <ReactQuill
                   value={formData.description}
@@ -1142,8 +1256,7 @@ const CreatePayUp = () => {
                         { list: "bullet" },
                         { list: "check" },
                       ],
-                      // ["link", "image"],
-                      ["link",],
+                      ["link"],
                       [{ size: ["small", false, "large", "huge"] }],
                       [{ color: [] }, { background: [] }],
                       [{ font: [] }],
@@ -1152,13 +1265,44 @@ const CreatePayUp = () => {
                   }}
                 />
               </div>
+
+              {/* AI Assistant Button with Loading State */}
+              <div className="absolute bottom-8 right-10">
+                {wait ? (
+                  <motion.div
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
+                    animate={{
+                      rotate: 360,
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="w-5 h-5 text-white" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    onClick={generateDescription}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    
+                  >
+                    <AIAssistantButton
+                      cooldown={isCooldownActive}
+                      time={cooldown}
+                    />
+                  </motion.div>
+                )}
+              </div>
             </div>
 
             {/* Testimonials Section */}
             <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
               <div className="flex justify-between items-center">
                 <label className="text-orange-500 font-semibold">
-                   Testimonials
+                  Testimonials
                 </label>
                 <input
                   type="checkbox"
@@ -1226,12 +1370,14 @@ const CreatePayUp = () => {
                                 <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
                                 <span>Uploading profile picture...</span>
                               </div>
-                            ) : testimonial.profilePic && (
-                              <img
-                                src={testimonial.profilePic}
-                                alt="Profile"
-                                className="w-16 h-16 rounded-full object-cover border-2 border-orange-500/30"
-                              />
+                            ) : (
+                              testimonial.profilePic && (
+                                <img
+                                  src={testimonial.profilePic}
+                                  alt="Profile"
+                                  className="w-16 h-16 rounded-full object-cover border-2 border-orange-500/30"
+                                />
+                              )
                             )}
                           </div>
 
@@ -1270,9 +1416,7 @@ const CreatePayUp = () => {
             {/* FAQ Section */}
             <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
               <div className="flex justify-between items-center">
-                <label className="text-orange-500 font-semibold">
-                   FAQs
-                </label>
+                <label className="text-orange-500 font-semibold">FAQs</label>
                 <input
                   type="checkbox"
                   checked={formData.faQ.isActive}
@@ -1328,9 +1472,8 @@ const CreatePayUp = () => {
             <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
               <div className="flex justify-between items-center">
                 <label className="text-orange-500 font-semibold">
-                   Refund Policies <span className="text-red-500">*</span>
+                  Refund Policies <span className="text-red-500">*</span>
                 </label>
-               
               </div>
 
               {formData.refundPolicies.isActive && (
@@ -1378,9 +1521,8 @@ const CreatePayUp = () => {
             <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
               <div className="flex justify-between items-center">
                 <label className="text-orange-500 font-semibold">
-                   Terms & Conditions <span className="text-red-500">*</span>
+                  Terms & Conditions <span className="text-red-500">*</span>
                 </label>
-               
               </div>
 
               {formData.termAndConditions.isActive && (
@@ -1428,9 +1570,8 @@ const CreatePayUp = () => {
             <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
               <div className="flex justify-between items-center">
                 <label className="text-orange-500 font-semibold">
-                   Cover Image <span className="text-red-500">*</span>
+                  Cover Image <span className="text-red-500">*</span>
                 </label>
-               
               </div>
 
               {formData.coverImage.isActive && (
@@ -1449,44 +1590,46 @@ const CreatePayUp = () => {
                       <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
                       <span>Uploading cover image...</span>
                     </div>
-                  ) : formData.coverImage.value && (
-                    <div className="relative w-full max-w-md">
-                      {/* Image Preview */}
-                      <img
-                        src={formData.coverImage.value}
-                        alt="Cover"
-                        className="w-full rounded-lg border-2 border-orange-500/30 shadow-lg shadow-orange-500/10"
-                      />
-                      {/* Delete Button */}
-                      <button
-                        onClick={() => {
-                          handleInputChange(
-                            { target: { value: "" } },
-                            "coverImage",
-                            "value"
-                          );
-                          document.querySelector('input[type="file"]').value =
-                            ""; // Clear file input
-                        }}
-                        className="absolute top-2 right-2 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
-                      >
-                        {/* Cross Icon */}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="2"
-                          stroke="currentColor"
-                          className="w-5 h-5 text-red-500"
+                  ) : (
+                    formData.coverImage.value && (
+                      <div className="relative w-full max-w-md">
+                        {/* Image Preview */}
+                        <img
+                          src={formData.coverImage.value}
+                          alt="Cover"
+                          className="w-full rounded-lg border-2 border-orange-500/30 shadow-lg shadow-orange-500/10"
+                        />
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => {
+                            handleInputChange(
+                              { target: { value: "" } },
+                              "coverImage",
+                              "value"
+                            );
+                            document.querySelector('input[type="file"]').value =
+                              ""; // Clear file input
+                          }}
+                          className="absolute top-2 right-2 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                          {/* Cross Icon */}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2"
+                            stroke="currentColor"
+                            className="w-5 h-5 text-red-500"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    )
                   )}
                 </div>
               )}
@@ -1495,7 +1638,8 @@ const CreatePayUp = () => {
             {/* File Upload Section */}
             <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20">
               <h3 className="text-lg font-semibold text-orange-500">
-                Upload your Digital Files <span className="text-red-500">*</span>
+                Upload your Digital Files{" "}
+                <span className="text-red-500">*</span>
               </h3>
               <div className="p-8 border-2 border-dashed border-orange-500/30 rounded-lg bg-black/20 relative group hover:border-orange-500/50 transition-all">
                 <div className="flex flex-col items-center gap-4">
@@ -1577,16 +1721,14 @@ const CreatePayUp = () => {
                   </ul>
                 </div>
               )}
-             
             </div>
 
-            
             {!validateForm() && (
               <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="text-red-500 text-sm">
-                  Please fill in all required fields marked with * before submitting:
+                  Please fill in all required fields marked with * before
+                  submitting:
                 </p>
-                
               </div>
             )}
             {/* Submit Button */}
@@ -1607,7 +1749,9 @@ const CreatePayUp = () => {
                     <span>{isEditMode ? "Updating..." : "Creating..."}</span>
                   </>
                 ) : (
-                  <span>{isEditMode ? "Update PayUp Page" : "Create PayUp Page"}</span>
+                  <span>
+                    {isEditMode ? "Update PayUp Page" : "Create PayUp Page"}
+                  </span>
                 )}
               </button>
             </div>

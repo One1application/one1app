@@ -10,11 +10,14 @@ import {
   signupValidation,
 } from "../types/signupValidation.js";
 import { sendOtp } from "../utils/sendOtp.js";
+import { sendWelcome_Email } from "../utils/EmailTemplates/sendemail.js";
+import { Role } from "@prisma/client";
 
 export const register = async (req, res) => {
   try {
     let { email, phoneNumber, name, goals, heardAboutUs, socialMedia, role } =
       req.body;
+      console.log("req.body", req.body);
     if (role === "User") {
       if (!heardAboutUs) heardAboutUs = "";
       if (!goals) goals = [];
@@ -37,13 +40,43 @@ export const register = async (req, res) => {
         verified: true,
       },
     });
+
+    const unverifieduserbyEmail = await prisma.User.findFirst({
+      where: {
+        email: email,
+        verified: false,
+      },
+    })
+
+
+    if(unverifieduserbyEmail){
+      return res.status(400).json({
+        success : false,
+        message: "A user with this email already exists" });
+    }
+
+    const unverifieduserbyPhone = await prisma.User.findFirst({
+      where: {
+        phone: phoneNumber,
+        verified: false,
+      },
+    })
+
+    if(unverifieduserbyPhone){
+      return res.status(400).json({
+        success : false,
+        message: "A user with this phone number already exists" });
+    }
+
     console.log("existingUserByEmail", existingUserByEmail);
     if (existingUserByEmail) {
       return res
         .status(400)
-        .json({ message: "A user with this email already exists." });
+        .json({success : false , message: "A user with this email already exists." });
     }
     console.log("existingUserByEmail", existingUserByEmail);
+
+    
     const existingUserByPhone = await prisma.User.findFirst({
       where: {
         phone: phoneNumber,
@@ -54,7 +87,9 @@ export const register = async (req, res) => {
     if (existingUserByPhone) {
       return res
         .status(400)
-        .json({ message: "A user with this phone number already exists." });
+        .json({ 
+          success : false,
+          message: "A user with this phone number already exists." });
     }
 
     const newUser = await prisma.User.upsert({
@@ -88,7 +123,7 @@ export const register = async (req, res) => {
     });
 
     if (!newUser) {
-      return res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({success  : false , message: "Internal server error" });
     }
 
     await sendOtp(phoneNumber);
@@ -98,13 +133,14 @@ export const register = async (req, res) => {
     // })
   } catch (error) {
     console.error("Error registering user", error);
-    res.status(500).json({ message: "Internal server Error." });
+    res.status(500).json({success : false, message: "Internal server Error." });
   }
 };
 
 export const verifyOtpForRegister = async (req, res) => {
   try {
     const { phoneNumber, otp } = req.body;
+    console.log("req.body", req.body);
     signUpOtpValidation.parse({
       phone: phoneNumber,
       otp,
@@ -134,6 +170,15 @@ export const verifyOtpForRegister = async (req, res) => {
       data: {
         verified: true,
       },
+
+      select : {
+        
+    id: true,
+    role: true,
+    email: true,
+    name: true,
+  },
+    
     });
 
     if (!updatedUser) {
@@ -148,7 +193,8 @@ export const verifyOtpForRegister = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "13d" }
     );
-
+  
+    sendWelcome_Email(updatedUser?.email,updatedUser?.name);
     res.status(200).json({
       message: "User verified successfully",
       success: true,
@@ -172,7 +218,8 @@ export const verifyOtpForRegister = async (req, res) => {
 export async function signIn(req, res) {
   try {
     const { email, phoneNumber } = req.body;
-
+    
+    console.log(email, phoneNumber);
     signInValidation.parse({
       email,
       phoneNumber,
@@ -181,8 +228,12 @@ export async function signIn(req, res) {
     const userExist = await prisma.User.findFirst({
       where: {
         OR: [{ email }, { phone: phoneNumber }],
+      role : "Creator"
+
       },
+
     });
+    
 
     if (!userExist) {
       return res.status(404).json({
@@ -202,6 +253,43 @@ export async function signIn(req, res) {
       success: false,
       message: "Internal Server Error.",
     });
+  }
+}
+
+// new for only user
+
+export const userlogin = async(req,res) =>{
+  try {
+    const { email, phoneNumber } = req.body;
+     
+
+     signInValidation.parse({
+       email,
+       phoneNumber
+     })
+  
+    const userExist = await prisma.User.findFirst({
+       where : {
+        OR : [
+          {email : email},
+          {phone : phoneNumber}
+        ],
+
+        role : "User"
+       }
+    })
+
+    if(!userExist){
+      return res.status(404).json({success : false, message: "User not found." });
+    }
+
+    await sendOtp(phoneNumber);
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent to phone number",
+    });
+  } catch (error) {
+     res.status(500).json({success  : false, message: "Internal Server Error." });
   }
 }
 

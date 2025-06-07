@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { StandardCheckoutPayRequest } from "pg-sdk-node";
 import { PhonePayClient } from "../config/phonepay.js";
 import prisma from "../db/dbClient.js";
+import { generateSignedUrl } from "../config/imagekit.js";
 dotenv.config();
 export async function createPayingUp(req, res) {
   try {
@@ -22,12 +23,82 @@ export async function createPayingUp(req, res) {
     console.log("req body", req.body);
 
     const user = req.user;
+    if (!req.user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+    // const discountData = Array.isArray(discount)
+    //   ? discount
+    //   : discount
+    //   ? [discount]
+    //   : [];
+
+    if (discount) {
+      if (!Array.isArray(discount)) {
+        return res.status(400).json({
+          success: false,
+          message: "Discount must be an array of objects.",
+        });
+      }
+
+      for (let d of discount) {
+        // Validate discount code contains only uppercase letters and numbers
+        if (d.code) {
+          const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+          if (!codeRegex.test(d.code)) {
+            return res.status(400).json({
+              success: false,
+              message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+            });
+          }
+        }
+        // Validate percentage
+        if (
+          d.percent !== undefined &&
+          d.percent !== null &&
+          (isNaN(parseFloat(d.percent)) ||
+            parseFloat(d.percent) < 1 ||
+            parseFloat(d.percent) > 100)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+          });
+        }
+
+        // Validate expiry date
+        if (d.expiry) {
+          const expDate = new Date(d.expiry);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          expDate.setHours(0, 0, 0, 0);
+
+          if (isNaN(expDate.getTime())) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid expiry date format for discount code '${d.code}'.`,
+            });
+          }
+
+          if (expDate < today) {
+            return res.status(400).json({
+              success: false,
+              message: `Expiry date for discount code '${d.code}' must be today or later.`,
+            });
+          }
+        }
+      }
+    }
+
+   
 
     await prisma.payingUp.create({
       data: {
         title,
         description,
-        discount,
+        discount: discount,
         paymentDetails,
         category,
         testimonials,
@@ -39,6 +110,8 @@ export async function createPayingUp(req, res) {
         createdById: user.id,
       },
     });
+
+    
 
     return res.status(200).json({
       success: true,
@@ -67,9 +140,16 @@ export async function editPayingUpDetails(req, res) {
       tacs,
       coverImage,
       files,
+      discount,
     } = req.body;
 
     const user = req.user;
+
+    const discountData = Array.isArray(discount)
+      ? discount
+      : discount
+      ? [discount]
+      : [];
 
     const payingUp = await prisma.payingUp.findUnique({
       where: {
@@ -82,6 +162,63 @@ export async function editPayingUpDetails(req, res) {
         success: false,
         message: "You are not authorized to edit this payingUp.",
       });
+    }
+
+    if (discount) {
+      if (!Array.isArray(discount)) {
+        return res.status(400).json({
+          success: false,
+          message: "Discount must be an array of objects.",
+        });
+      }
+
+      for (let d of discount) {
+        // Validate discount code contains only uppercase letters and numbers
+        if (d.code) {
+          const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+          if (!codeRegex.test(d.code)) {
+            return res.status(400).json({
+              success: false,
+              message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+            });
+          }
+        }
+        // Validate percentage
+        if (
+          d.percent !== undefined &&
+          d.percent !== null &&
+          (isNaN(parseFloat(d.percent)) ||
+            parseFloat(d.percent) < 1 ||
+            parseFloat(d.percent) > 100)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+          });
+        }
+
+        // Validate expiry date
+        if (d.expiry) {
+          const expDate = new Date(d.expiry);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          expDate.setHours(0, 0, 0, 0);
+
+          if (isNaN(expDate.getTime())) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid expiry date format for discount code '${d.code}'.`,
+            });
+          }
+
+          if (expDate < today) {
+            return res.status(400).json({
+              success: false,
+              message: `Expiry date for discount code '${d.code}' must be today or later.`,
+            });
+          }
+        }
+      }
     }
 
     await prisma.payingUp.update({
@@ -99,6 +236,7 @@ export async function editPayingUpDetails(req, res) {
         coverImage,
         tacs,
         files,
+        discount: discountData,
       },
     });
 
@@ -127,6 +265,12 @@ export async function editPayingUpDetails(req, res) {
 export async function getCreatorPayingUps(req, res) {
   try {
     const user = req.user;
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
 
     const payingUps = await prisma.user.findUnique({
       where: {
@@ -148,9 +292,16 @@ export async function getCreatorPayingUps(req, res) {
       },
     });
 
+    if (!payingUps) {
+      return res.status(400).json({
+        success: false,
+        message: "No Paying Ups found.",
+      });
+    }
+
     return res.status(200).json({
       success: true,
-      message: "Fetched webinars successfully.",
+      message: "Fetched paying Ups successfully.",
       payload: {
         payingUps: payingUps?.createdPayingUps || [],
       },
@@ -181,6 +332,11 @@ export async function getPayingUpById(req, res) {
         id: payingUpId,
       },
       include: {
+        createdBy: {
+          select: {
+            name: true, // Select the username field from the related User model
+          },
+        },
         payingUpTickets: user
           ? {
               where: {
@@ -192,7 +348,7 @@ export async function getPayingUpById(req, res) {
     });
 
     if (!payingUp) {
-      return res.status(401).json({
+      return res.status(404).json({
         success: false,
         message: "No paying found.",
       });
@@ -202,15 +358,17 @@ export async function getPayingUpById(req, res) {
       user &&
       (payingUp.createdById === user.id || payingUp.payingUpTickets.length > 0);
 
+    const payload = {
+      payingUp: {
+        ...payingUp,
+        ...(sendFiles ? { files: payingUp.files } : { files: null }),
+      },
+    };
+
     return res.status(200).json({
       success: true,
       message: "Fetched payingUp successfully.",
-      payload: {
-        payingUp: {
-          ...payingUp,
-          ...(sendFiles ? { files: payingUp.files } : { files: null }),
-        },
-      },
+      payload,
     });
   } catch (error) {
     console.error("Error in fetching paying up.", error);
@@ -223,7 +381,7 @@ export async function getPayingUpById(req, res) {
 
 export async function purchasePayingUp(req, res) {
   try {
-    const { payingUpId } = req.body;
+    const { payingUpId, couponCode, validateOnly } = req.body;
     const user = req.user;
 
     if (!payingUpId) {
@@ -237,7 +395,9 @@ export async function purchasePayingUp(req, res) {
       where: {
         id: payingUpId,
       },
-      include: {
+      select: {
+        paymentDetails: true,
+        discount: true,
         payingUpTickets: {
           where: {
             boughtById: user.id,
@@ -246,7 +406,8 @@ export async function purchasePayingUp(req, res) {
         createdBy: true,
       },
     });
-
+    console.log("payingUp", payingUp);
+    console.log("discountData", payingUp.discount);
     if (!payingUp) {
       return res.status(400).json({
         success: false,
@@ -254,18 +415,20 @@ export async function purchasePayingUp(req, res) {
       });
     }
 
-    if (payingUp.createdById === user.id) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot purchase your own paying up.",
-      });
-    }
+    if (!validateOnly) {
+      if (payingUp.createdById === user.id) {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot purchase your own paying up.",
+        });
+      }
 
-    if (payingUp.payingUpTickets?.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already purchased the tickets.",
-      });
+      if (payingUp.payingUpTickets?.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "You have already purchased the tickets.",
+        });
+      }
     }
 
     if (!payingUp.paymentDetails.paymentEnabled) {
@@ -281,22 +444,57 @@ export async function purchasePayingUp(req, res) {
       });
     }
 
-    // const option = {
-    //   amount: payingUp.paymentDetails.totalAmount * 100,
-    //   currency: "INR",
-    //   payment_capture: 1,
-    // };
+    let discountData = payingUp.discount || null;
+    let discountPrice = 0;
+    if (couponCode && discountData && discountData.length > 0) {
+      const matchingDiscount = discountData.find(
+        (discount) => discount.code === couponCode
+      );
 
+      if (!matchingDiscount) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid coupon code.",
+        });
+      }
+
+      const expiryDate = new Date(matchingDiscount.expiry);
+      const currentDate = new Date();
+      if (currentDate > expiryDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Coupon code has expired.",
+        });
+      }
+
+      discountPrice = parseInt(
+        payingUp.paymentDetails.totalAmount *
+          (Number(matchingDiscount.percent) / 100).toFixed(2)
+      );
+    }
+
+    let totalAmount = Math.round(
+      payingUp.paymentDetails.totalAmount - discountPrice
+    );
+    if (totalAmount < 0) totalAmount = 0;
+    console.log("totalAmount", totalAmount);
+    if (validateOnly) {
+      return res.status(200).json({
+        success: true,
+        payload: {
+          totalAmount,
+          discountPrice,
+          originalPrice: payingUp.paymentDetails.totalAmount,
+        },
+      });
+    }
     const orderId = randomUUID();
-    
-
-    let totalAmount = payingUp.paymentDetails.totalAmount;
-
+    console.log("orderId", orderId);
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
       .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&payingUpId=${payingUp.id}`
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&payingUpId=${payingUpId}&discountedPrice=${totalAmount}`
       )
       .build();
 
@@ -307,6 +505,8 @@ export async function purchasePayingUp(req, res) {
       payload: {
         redirectUrl: response.redirectUrl,
         payingUpId: payingUp.id,
+        totalAmount,
+        discountPrice,
       },
     });
   } catch (error) {

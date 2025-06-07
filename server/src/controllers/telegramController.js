@@ -5,6 +5,9 @@ import { PhonePayClient } from "../config/phonepay.js";
 import prisma from "../db/dbClient.js";
 import { telegramValidation } from "../types/telegramValidation.js";
 import { SchemaValidator } from "../utils/validator.js";
+import axios from "axios";
+import { sendOtp } from "../utils/sendOtp.js";
+
 dotenv.config();
 export async function createTelegram(req, res) {
   try {
@@ -14,35 +17,123 @@ export async function createTelegram(req, res) {
     }
     const {
       coverImage,
-      channelLink: cl,
-      chatId,
       title,
       description,
       discount,
       subscriptions,
       genre,
+      ownerPhoneNumber,
     } = req.body;
     const user = req.user;
-
+    const { chatId } = req.body || req.params;
     console.log(req.body);
 
-    // Provide a default discount if none supplied
+    if (discount) {
+      if (!Array.isArray(discount)) {
+        return res.status(400).json({
+          success: false,
+          message: "Discount must be an array of objects.",
+        });
+      }
+
+      for (let d of discount) {
+        // Validate discount code contains only uppercase letters and numbers
+        if (d.code) {
+          const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+          if (!codeRegex.test(d.code)) {
+            return res.status(400).json({
+              success: false,
+              message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+            });
+          }
+        }
+        // Validate percentage
+        if (
+          d.percent &&
+          (isNaN(parseFloat(d.percent)) ||
+            parseFloat(d.percent) < 1 ||
+            parseFloat(d.percent) > 100)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid discount percentage '${d.percent}'. Should be between 0 and 100.`,
+          });
+        }
+
+        // Validate expiry date
+        if (d.expiry) {
+          const expDate = new Date(d.expiry);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          expDate.setHours(0, 0, 0, 0);
+
+          if (isNaN(expDate.getTime())) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid expiry date format for discount code '${d.code}'.`,
+            });
+          }
+
+          if (expDate < today) {
+            return res.status(400).json({
+              success: false,
+              message: `Expiry date for discount code '${d.code}' must be today or later.`,
+            });
+          }
+        }
+      }
+    }
+
+    let botHaveAdmin = false;
+    let isGroupMonitored = false;
+    if (chatId) {
+      try {
+        const adminCheckResponse = await axios.post(
+          `${process.env.BOT_SERVER_URL}/check-admin-status`,
+          {
+            chatId,
+          }
+        );
+        console.log("admin", adminCheckResponse.data);
+        if (adminCheckResponse.data.success) {
+          botHaveAdmin = adminCheckResponse.data.isAdmin;
+          isGroupMonitored = botHaveAdmin;
+        }
+      } catch (error) {
+        console.error("Error checking bot admin status:", error);
+        return res.status(500).json({
+          success: false,
+           warning: !botHaveAdmin
+          ? "Bot doesn't have admin permissions. Group will not be monitored until bot is made admin"
+          : null,
+        });
+      }
+    }
+
     await prisma.telegram.create({
       data: {
         coverImage: coverImage || "https://localhost.com",
-        channelLink: cl || chatId,
         title,
         description,
         genre,
+        chatId,
         discount: discount ?? {},
         subscription: subscriptions,
         createdById: user.id,
+        isGroupMonitored,
+        botHaveAdmin,
+        ownerPhone: ownerPhoneNumber,
       },
     });
 
     res.status(200).json({
       success: true,
       message: "Telegram created successfully.",
+      payload: {
+        isGroupMonitored,
+        botHaveAdmin,
+       
+      },
     });
   } catch (error) {
     console.error("Error in creating telegram.", error);
@@ -108,6 +199,13 @@ export async function getTelegramById(req, res) {
       where: {
         id: telegramId,
       },
+      include: {
+        createdBy: {
+          select: {
+            name: true, // Select the username field from the related User model
+          },
+        },
+      },
     });
 
     return res.status(200).json({
@@ -130,6 +228,14 @@ export async function purchaseTelegram(req, res) {
   try {
     const { telegramId, days } = req.body;
     const user = req.user;
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
     if (!telegramId) {
       return res.status(400).json({
         success: false,
@@ -141,10 +247,16 @@ export async function purchaseTelegram(req, res) {
       where: {
         id: telegramId,
       },
-      include: {
+      select: {
         createdBy: true,
+        subscription: true,
+        discount: true,
+        isGroupMonitored: true,
+        botHaveAdmin: true,
       },
     });
+
+    console.log("telegram", telegram);
 
     if (!telegram) {
       return res.status(400).json({
@@ -160,9 +272,18 @@ export async function purchaseTelegram(req, res) {
     //     })
     // }
 
+    if (!telegram.isGroupMonitored || !telegram.botHaveAdmin) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This channel is not available for subscription. Bot doesn't have admin permissions.",
+      });
+    }
+
     const subscriptionDetails = telegram.subscription.find(
-      (sub) => sub.days === days
+      (sub) => sub.days == days
     );
+    console.log(subscriptionDetails);
 
     if (!subscriptionDetails) {
       return res.status(400).json({
@@ -170,9 +291,12 @@ export async function purchaseTelegram(req, res) {
         message: "No subscription found.",
       });
     }
+    // let discountData = telegram?.discount || null;
+    // console.log("discountData", discountData);
     let totalAmount = subscriptionDetails.cost;
 
     const orderId = randomUUID();
+    console.log("orderId", orderId);
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
@@ -199,6 +323,27 @@ export async function purchaseTelegram(req, res) {
   }
 }
 
+//subscription record and invitekink  created at walletController 
+
+export async function sendOtpToTelegramUser(req, res) {
+  try {
+    const { phoneNumber } = req.body;
+    const user = req.user;
+    await sendOtp(phoneNumber);
+    
+    return res.status(200).json({
+      success: true,
+      message:
+        "Otp sent successfully, please DM the otp to @TelegramBotSupport",
+    });
+  } catch (err) {
+    console.log("erorr in sending otp", err);
+  }
+}
+
+
+
+
 // Notify user of subscriptions about to expire
 export async function getExpiringSubscriptions(req, res) {
   try {
@@ -218,6 +363,8 @@ export async function getExpiringSubscriptions(req, res) {
     return res.status(200).json({ success: true, payload: expiring });
   } catch (error) {
     console.error("Error fetching expiring subscriptions", error);
-    return res.status(500).json({ success: false, message: "Internal server error." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error." });
   }
 }

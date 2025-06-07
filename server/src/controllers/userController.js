@@ -1,4 +1,6 @@
 import prisma from "../db/dbClient.js";
+import { verification_otp_Email } from "../utils/EmailTemplates/sendemail.js";
+import { otpforemailchange } from "../utils/otpforemailchange.js";
 
 export const selfIdentification = async (req, res) => {
   try {
@@ -38,12 +40,122 @@ export const selfIdentification = async (req, res) => {
   }
 };
 
+// sumen sir
+
+export const updateUserProfile = async (req, res) => {
+  try {
+    const user = req?.user;
+    const { email, name, otp } = req.body;
+    console.log(email);
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: user?.id },
+      include: { otpStore: true },
+    });
+
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    if (!email && !name) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide at least one field to update (email or name).",
+      });
+    }
+
+    if (email && email !== existingUser.email) {
+      const emailTaken = await prisma.user.findUnique({ where: { email } });
+      if (emailTaken) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is already in use.",
+        });
+      }
+
+      if (!otp) {
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        const verification_otp = otpforemailchange();
+
+        await prisma.oTPStore.upsert({
+          where: { userId: existingUser.id },
+          update: { otp: verification_otp, expiresAt },
+          create: { otp: verification_otp, expiresAt, userId: existingUser.id },
+        });
+
+        verification_otp_Email(existingUser?.email, verification_otp);
+
+        return res.status(200).json({
+          success: true,
+          message: "Email verification OTP sent successfully.",
+          requiresOtp: true,
+        });
+      }
+
+      if (otp) {
+        if (!existingUser.otpStore || existingUser.otpStore.otp !== otp) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid OTP." });
+        }
+
+        if (existingUser.otpStore.expiresAt < new Date()) {
+          return res
+            .status(400)
+            .json({ success: false, message: "OTP expired." });
+        }
+
+        await prisma.oTPStore.delete({ where: { userId: existingUser.id } });
+
+        const updatedUser = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            ...(email && { email }),
+            ...(name && { name }),
+          },
+          select: { id: true, name: true, email: true },
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: "Email updated successfully.",
+          user: updatedUser,
+        });
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        ...(email && { email }),
+        ...(name && { name }),
+      },
+      select: { id: true, name: true, email: true, verified: true, role: true },
+    });
+
+    console.log(updatedUser);
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error." });
+  }
+};
+
 export const userCustomers = async (req, res) => {
   try {
     const user = req.user;
-   const page = parseInt(req.query.page) || 1;
+    const page = parseInt(req.query.page) || 1;
     const pageSize = 20;
-    const skip = page > 1 ? (page - 1) * pageSize : undefined;
+    const skip = page > 1 ? (page - 1) * pageSize : 0;
 
     const userDetails = await prisma.user.findFirst({
       where: { id: user.id },
@@ -182,8 +294,8 @@ export const userCustomers = async (req, res) => {
 
     const customers = [];
 
-    userDetails.createdPayingUps.forEach((val) => {
-      val.payingUpTickets.forEach((ticket) => {
+    userDetails.createdPayingUps?.forEach((val) => {
+      val.payingUpTickets?.forEach((ticket) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Paying Up",
@@ -192,8 +304,8 @@ export const userCustomers = async (req, res) => {
         });
       });
     });
-    userDetails.premiumContent.forEach((val) => {
-      val.access.forEach((ticket) => {
+    userDetails.premiumContent?.forEach((val) => {
+      val.access?.forEach((ticket) => {
         customers.push({
           ...ticket.user,
           product: "Premium Content",
@@ -202,8 +314,8 @@ export const userCustomers = async (req, res) => {
         });
       });
     });
-    userDetails.createdWebinars.forEach((val) => {
-      val.tickets.forEach((ticket) => {
+    userDetails.createdWebinars?.forEach((val) => {
+      val.tickets?.forEach((ticket) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Webinar",
@@ -212,8 +324,8 @@ export const userCustomers = async (req, res) => {
         });
       });
     });
-    userDetails.createdCourses.forEach((val) => {
-      val.purchasedBy.forEach((ticket) => {
+    userDetails.createdCourses?.forEach((val) => {
+      val.purchasedBy?.forEach((ticket) => {
         customers.push({
           ...ticket.purchaser,
           product: "Course",
@@ -222,11 +334,14 @@ export const userCustomers = async (req, res) => {
         });
       });
     });
-    userDetails.createdTelegrams.forEach((val) => {
-      val.boughtBy.forEach((ticket) => {
+    userDetails?.createdTelegrams?.forEach((val) => {
+      console.log("telegram", userDetails.createdTelegrams , val)
+      val.boughtBy?.forEach((ticket) => {
         customers.push({
           ...ticket.boughtBy,
           product: "Telegram",
+           amountSpent: ticket.telegram?.subscription.cost || 0,
+          activeSubscriptions: true
           //need to add amountspent and activeSubs
         });
       });
@@ -265,8 +380,10 @@ export const getWebinarPurchases = async (req, res) => {
             amount: true,
             coverImage: true,
             link: true,
+            description : true,
             isOnline: true,
             venue: true,
+            endDate:true,
             createdBy: {
               select: {
                 id: true,
@@ -308,6 +425,112 @@ export const getWebinarPurchases = async (req, res) => {
   }
 };
 
+// ye hai ekdum transaction milega bhayankar - wassup malik read kar rhe hoge i know :-)
+
+
+export const getAllTransactions = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found." });
+    }
+
+ 
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        buyerId: user.id,
+      },
+      include: {
+        wallet: true,
+        buyer: true,
+        creator: true,
+        
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+
+    // ek ek karke nhi ek saath karo yoo malik wassup
+ 
+    const detailedTransactions = await Promise.all(
+      transactions.map(async (txn) => {
+        let productDetails = null;
+
+        switch (txn.productType) {
+          case "WEBINAR":
+            productDetails = await prisma.webinar.findUnique({
+              where: { id: txn.productId },
+              select: { title: true, amount: true },
+            });
+            break;
+          case "COURSE":
+            productDetails = await prisma.course.findUnique({
+              where: { id: txn.productId },
+              select: { title: true, amount: true },
+            });
+            break;
+          case "PAYINGUP":
+            productDetails = await prisma.payingUp.findUnique({
+              where: { id: txn.productId },
+              select: { title: true, amount: true },
+            });
+
+            break;
+
+           case "PREMIUM-CONTENT":
+
+           productDetails = await prisma.premiumContent.findUnique({
+            where : {
+              id  : txn.productId
+            },
+
+            select : {
+              title : true,
+              amount : true,
+    
+            }
+           })
+
+           // agar aage bhi add krega toh kar diyo malik 
+            break;
+           
+          default:
+            productDetails = { title: "Unknown", price: 0 };
+        }
+
+        return {
+          transactionId: txn.id,
+          productType: txn.productType,
+          productTitle: productDetails?.title,
+          pricePaid: txn.amount,
+          amountAfterFee: txn.amountAfterFee,
+          paymentId: txn.phonePayTransId,
+          modeOfPayment: txn.modeOfPayment,
+          status: txn.status,
+          createdAt: txn.createdAt,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      transactions: detailedTransactions,
+    });
+
+  } catch (error) {
+    console.error(error?.message || "Something went wrong!");
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
+// end of the controller for me not for youh :-)
+
 export const getCoursePurchases = async (req, res) => {
   try {
     const user = req.user;
@@ -325,9 +548,8 @@ export const getCoursePurchases = async (req, res) => {
             price: true,
             startDate: true,
             coverImage: true,
-            language: true,
-            aboutThisCourse: true,
-            createdBy: {
+            endDate: true,
+            creator: {
               select: {
                 id: true,
                 name: true,
@@ -370,6 +592,7 @@ export const getCoursePurchases = async (req, res) => {
     });
   }
 };
+
 
 export const getPremiumContentAccess = async (req, res) => {
   try {
@@ -448,8 +671,10 @@ export const getPayingUpPurchases = async (req, res) => {
             title: true,
             description: true,
             category: true,
+            files: true,
             coverImage: true,
             createdAt: true,
+            files : true,
             createdBy: {
               select: {
                 id: true,

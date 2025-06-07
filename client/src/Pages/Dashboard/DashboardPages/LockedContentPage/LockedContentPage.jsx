@@ -20,7 +20,9 @@ const LockedContentPage = () => {
     setIsLoading(true);
     try {
       const response = await fetchPremiumDashboardData();
-      setPremiumContentData(response.data || []);
+      console.log(response.data.payload.premiumContent);
+      
+      setPremiumContentData(response.data.payload.premiumContent || []);
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
@@ -67,7 +69,7 @@ const LockedContentPage = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
           </div>
         ) : premiumContentData && premiumContentData.length > 0 ? (
-          <LockedContentTable data={premiumContentData} />
+          <LockedContentTable data={premiumContentData} refreshData={getPremiumData} />
         ) : (
           <NoContentComponent
             title={noContent[0].title}

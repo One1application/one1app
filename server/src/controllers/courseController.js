@@ -58,6 +58,63 @@ export const createCourse = async (req, res) => {
 
     const { startDate, endDate } = getCourseDuration(validity);
 
+      if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+      // Validate discount code contains only uppercase letters and numbers
+    if (d.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(d.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
+    // Validate percentage
+    if (
+       d.percent !== undefined &&
+        d.percent !== null &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
+
     const transactionResult = await prisma.$transaction(async (prisma) => {
       const course = await prisma.course.create({
         data: {
@@ -102,6 +159,8 @@ export const createCourse = async (req, res) => {
           courseId: course.id,
         },
       });
+       
+      console.log("discount",course.discount);
 
       if (!saveCourseLessons) {
         throw new Error("Failed to save course lessons.");
@@ -119,7 +178,7 @@ export const createCourse = async (req, res) => {
     console.error("Error in creating course.", error);
     return res.status(500).json({
       success: false,
-      message: "Error in creating course.",
+      message: error.message,
     });
   }
 };
@@ -153,6 +212,7 @@ export const editCourseDetails = async (req, res) => {
       language,
       coverImage,
       lessons,
+      discount
     } = req.body;
 
     const { courseId } = req.params;
@@ -196,6 +256,64 @@ export const editCourseDetails = async (req, res) => {
     if (coverImage) updatedData.coverImage = coverImage;
     if (lessons) updatedData.lessons = lessons;
     if (validity) updatedData.validity = validity;
+    if (discount) updatedData.discount = discount;
+
+     if (discount) {
+  if (!Array.isArray(discount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Discount must be an array of objects.",
+    });
+  }
+
+  for (let d of discount) {
+      // Validate discount code contains only uppercase letters and numbers
+    if (d.code) {
+      const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
+      if (!codeRegex.test(d.code)) {
+        return res.status(400).json({
+          success: false,
+          message: `Discount code '${d.code}' must contain only uppercase letters and numbers, with no lowercase letters or special characters.`,
+        });
+      }
+    }
+    // Validate percentage
+    if (
+       d.percent !== undefined &&
+        d.percent !== null &&
+      (isNaN(parseFloat(d.percent)) ||
+        parseFloat(d.percent) < 1 ||
+        parseFloat(d.percent) > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid discount percentage '${d.percent}'. Should be between 1 and 100.`,
+      });
+    }
+
+    // Validate expiry date
+    if (d.expiry) {
+      const expDate = new Date(d.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(expDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid expiry date format for discount code '${d.code}'.`,
+        });
+      }
+
+      if (expDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: `Expiry date for discount code '${d.code}' must be today or later.`,
+        });
+      }
+    }
+  }
+}
 
     const course = await prisma.course.update({
       where: {
@@ -232,6 +350,7 @@ export const editCourseDetails = async (req, res) => {
           ? updatedData.validity
           : courseExists.validity,
         faqs: updatedData.faqs ? updatedData.faqs : courseExists.faqs,
+        discount: updatedData.discount ? updatedData.discount : courseExists.discount
       },
     });
 
@@ -259,6 +378,7 @@ export const editCourseDetails = async (req, res) => {
       });
 
       console.log("saveCourseProducts", saveCourseProducts);
+       console.log("discount",course.discount?.code);
 
       if (!saveCourseProducts)
         return res.status(400).json({
@@ -310,7 +430,7 @@ export const editCourseDetails = async (req, res) => {
     console.error("Error in editing course details.", error);
     return res.status(500).json({
       success: false,
-      message: "Error in editing course details.",
+      message: error.message,
     });
   }
 };
@@ -318,7 +438,7 @@ export const editCourseDetails = async (req, res) => {
 export const getCreatorCourses = async (req, res) => {
   try {
     const user = req.user;
-
+    
     if (user.role !== "Creator") {
       return res.status(400).json({
         success: false,
@@ -370,6 +490,11 @@ export const getCourseById = async (req, res) => {
       },
       include: {
         products: true,
+        creator: {
+          select: {
+            name: true,
+          }
+        },
         lessons: true,
         purchasedBy: user
           ? {
@@ -408,7 +533,7 @@ export const getCourseById = async (req, res) => {
         },
       },
     });
-  } catch {
+  } catch(error) {
     console.error("Error in getting course by id.", error);
     return res.status(500).json({
       success: false,
@@ -419,7 +544,7 @@ export const getCourseById = async (req, res) => {
 
 export const purchaseCourse = async (req, res) => {
   try {
-    const { courseId } = req.body;
+    const { courseId, couponCode, validateOnly } = req.body;
     const user = req.user;
 
     if (!courseId) {
@@ -433,6 +558,7 @@ export const purchaseCourse = async (req, res) => {
       where: {
         id: courseId,
       },
+      
       include: {
         products: true,
         lessons: true,
@@ -446,6 +572,8 @@ export const purchaseCourse = async (req, res) => {
         creator: true,
       },
     });
+  
+    
 
     if (!course) {
       return res.status(404).json({
@@ -454,12 +582,26 @@ export const purchaseCourse = async (req, res) => {
       });
     }
 
-    if (course.purchasedBy.length > 0) {
-      return res.status(403).json({
-        success: false,
-        message: "You have already purchased the course.",
-      });
-    }
+    console.log("course", course);
+
+    const existingPurchase = await prisma.coursePurchasers.findFirst({
+         where: {
+             purchaserId: user.id,
+             courseId,
+             isActive: true,
+             expiryDate: {gt: new Date()}
+         }
+    });
+
+    console.log("existingPurchase courseController", existingPurchase);
+
+   if(!validateOnly){
+     if(existingPurchase){
+        return res.status(400).json({
+          success: false,
+          message: "You already have an active subscription for this course"
+        })
+     };
 
     if (course.createdBy === user.id) {
       return res.status(400).json({
@@ -467,6 +609,47 @@ export const purchaseCourse = async (req, res) => {
         message: "You cannot purchase your own course.",
       });
     }
+   };
+   
+    let discountData=course?.discount || null
+    console.log("discountData", discountData);
+    let discountPrice=0;
+   if(couponCode && discountData && discountData.length > 0 ){
+       const matchingDiscount = discountData.find(
+          discount => discount.code === couponCode 
+       )
+       if(!matchingDiscount){
+        return res.status(400).json({
+          success: false,
+          message: "Invalid discount code.",
+        });
+       }
+       
+       const expiryDate = new Date(matchingDiscount.expiry);
+       const currentDate = new Date();
+       if(currentDate > expiryDate){
+           return res.status(400).json({
+               success: false,
+               message: "Coupon code has expired.",
+           })
+       }
+       discountPrice = parseInt(course.price*(Number(matchingDiscount.percent)/100).toFixed(2));
+   } 
+   let totalAmount = Math.round(course.price - discountPrice);
+   if(totalAmount < 0) totalAmount = 0;
+   console.log("totalAmount", totalAmount);
+   console.log("discountPrice", discountPrice);
+   if(validateOnly){
+     return res.status(200).json({
+        success: true,
+        payload: {
+          totalAmount,
+          discountPrice,
+          originalPrice: course.price,
+          
+        },
+      });
+   }
 
     // const options = {
     //   amount: course.price * 100,
@@ -474,25 +657,30 @@ export const purchaseCourse = async (req, res) => {
     //   payment_capture: 1,
     // };
     const orderId = randomUUID();
-    // const order = await razorpay.orders.create(options);
-   
-    let totalAmount = course.price;
+    
+   console.log("orderId", orderId)
+    
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
       .amount(totalAmount * 100)
       .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&courseId=${courseId}`
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&courseId=${courseId}&discountedPrice=${totalAmount}`
       )
       .build();
 
     const response = await PhonePayClient.pay(request);
+   
     return res.status(200).json({
       success: true,
       payload: {
         redirectUrl: response.redirectUrl,
+        totalAmount,
+        discountPrice,
+         
       },
     });
+
   } catch (error) {
     console.error("Error in purchasing course.", error);
     return res.status(500).json({
@@ -501,6 +689,162 @@ export const purchaseCourse = async (req, res) => {
     });
   }
 };
+
+//TODO:inActive course or expired subscription of coursePurchasers need to track and monitor by cronjob or something.
+export const renewalCourse = async (req, res) => {
+  try {
+    const { courseId, couponCode, validateOnly } = req.body;
+    const {purchaseId} = req.params;
+    const user = req.user;
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Course Id is not given.",
+      });
+    }
+
+    if(!purchaseId){
+      return res.status(400).json({
+        success: false,
+        message: "No Purchase Found",
+      });
+    }
+
+    const course = await prisma.course.findUnique({
+      where: {
+        id: courseId,
+      },
+      
+      include: {
+        products: true,
+        lessons: true,
+        purchasedBy: user
+          ? {
+              where: {
+                purchaserId: user.id,
+              },
+            }
+          : false,
+        creator: true,
+      },
+    });
+  
+    
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "No course found",
+      });
+    }
+
+    console.log("course", course);
+
+    const existingPurchase = await prisma.coursePurchasers.findFirst({
+         where: {
+             purchaserId: user.id,
+             courseId,
+             id: purchaseId
+             
+         }
+    });
+
+    if(!existingPurchase){
+        return res.status(400).json({
+            success: false,
+            message: "No Previous Purchase Found"
+        })
+    }
+
+    console.log("existingPurchase courseController", existingPurchase);
+
+   if(!validateOnly){
+     
+    if (course.createdBy === user.id) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot purchase your own course.",
+      });
+    }
+   };
+   
+    let discountData=course?.discount || null
+    console.log("discountData", discountData);
+    let discountPrice=0;
+   if(couponCode && discountData && discountData.length > 0 ){
+       const matchingDiscount = discountData.find(
+          discount => discount.code === couponCode 
+       )
+       if(!matchingDiscount){
+        return res.status(400).json({
+          success: false,
+          message: "Invalid discount code.",
+        });
+       }
+       
+       const expiryDate = new Date(matchingDiscount.expiry);
+       const currentDate = new Date();
+       if(currentDate > expiryDate){
+           return res.status(400).json({
+               success: false,
+               message: "Coupon code has expired.",
+           })
+       }
+       discountPrice = parseInt(course.price*(Number(matchingDiscount.percent)/100).toFixed(2));
+   } 
+   let totalAmount = Math.round(course.price - discountPrice);
+   if(totalAmount < 0) totalAmount = 0;
+   console.log("totalAmount", totalAmount);
+   console.log("discountPrice", discountPrice);
+   if(validateOnly){
+     return res.status(200).json({
+        success: true,
+        payload: {
+          totalAmount,
+          discountPrice,
+          originalPrice: course.price,
+          
+        },
+      });
+   }
+
+    
+    const orderId = randomUUID();
+    
+   console.log("orderId", orderId)
+    
+
+    const request = StandardCheckoutPayRequest.builder()
+      .merchantOrderId(orderId)
+      .amount(totalAmount * 100)
+      .redirectUrl(
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&courseId=${courseId}&discountedPrice=${totalAmount}`
+      )
+      .build();
+
+    const response = await PhonePayClient.pay(request);
+   
+    return res.status(200).json({
+      success: true,
+      payload: {
+        redirectUrl: response.redirectUrl,
+        totalAmount,
+        discountPrice,
+         
+      },
+    });
+
+  } catch (error) {
+    console.error("Error in purchasing course.", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error in purchasing course.",
+    });
+  }
+};
+
+
 
 export const playVideo = async (req, res) => {
   try {
@@ -539,3 +883,6 @@ export const playVideo = async (req, res) => {
     });
   }
 };
+
+
+ 

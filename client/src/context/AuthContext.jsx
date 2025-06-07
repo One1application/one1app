@@ -1,8 +1,7 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
-import  toast  from "react-hot-toast";
-import { fetchUserDetails } from '../services/auth/api.services';
-
+import React, { createContext, useState, useContext, useEffect } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { fetchUserDetails } from "../services/auth/api.services";
 
 const AuthContext = createContext();
 
@@ -18,6 +17,19 @@ export const AuthProvider = ({ children }) => {
   const [customers, setCustomers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [reviews, setReviews] = useState([]);
+
+  const getAllReviews = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_URL}/review/allreviews`
+      );
+  
+      setReviews(response.data.reviews);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem("AuthToken");
@@ -35,10 +47,13 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const response = await axios.get(`${import.meta.env.VITE_SERVER_URL}/auth/verify-token`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_URL}/auth/verify-token`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       if (response.data.success) {
         setCurrentUserId(response.data.user.id);
         setUserRole(response.data.user.role);
@@ -52,12 +67,12 @@ export const AuthProvider = ({ children }) => {
       logout();
       toast.error("Authentication failed. Please sign in again.");
     }
-    
+
     setLoading(false);
     return false;
   };
 
-   const getUserDetails = async () => {
+  const getUserDetails = async () => {
     try {
       userdetailsetLoading(true);
       const response = await fetchUserDetails();
@@ -71,7 +86,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateCustomers = (newCustomers) => {
-    setCustomers(prev => [...prev, ...newCustomers]);
+    setCustomers((prev) => [...prev, ...newCustomers]);
   };
 
   useEffect(() => {
@@ -93,9 +108,15 @@ export const AuthProvider = ({ children }) => {
     currentPage,
     setCurrentPage,
     hasMore,
-    setHasMore
+    setHasMore,
+    reviews,
   };
 
+  useEffect(() => {
+    getAllReviews();
+  }, []);
+
+ 
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

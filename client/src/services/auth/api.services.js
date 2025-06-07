@@ -62,10 +62,36 @@ export const verifyEnteredOTP = async (data) => {
  *   .then(response => console.log(response))
  *   .catch(error => console.error(error));
  */
+
+
+ // Ai description generator for products
+  
+ export const generativeDescription = async (data) => {
+  try {
+    const response = await servicesAxiosInstance.post("AI/generate/description", data);
+   
+   return response;
+  } catch (error) {
+    console.log(error || error?.message || "Something went wrong !")
+    return error;
+  }
+   
+ }
+
+ // ends here 
+
+
 export const signInUser = async (data) => {
+  console.log(data)
   const response = await servicesAxiosInstance.post("auth/login", data);
+   
   return response;
 };
+
+export const userSignIn = async (data) => {
+  const response = await servicesAxiosInstance.post("auth/user/login", data);
+  return response;
+}
 /**
  *
  * @param {Object} data - The user Credentials
@@ -158,6 +184,14 @@ export const saveBusinessInformation = async (data) => {
   return response;
 };
 
+export const updateBusinessInfo = async (data) => {
+   const response  = await servicesAxiosInstance.post(
+    "/wallet/update-business-info",
+    data
+   );
+  return response;
+}
+
 export const fetchBusinessInformation = async () => {
   const response = await servicesAxiosInstance.get("/wallet/get-business-info");
   return response;
@@ -166,6 +200,14 @@ export const fetchBusinessInformation = async () => {
 export const saveVerificationInformation = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/wallet/add-verfication-details",
+    data
+  );
+  return response;
+};
+
+export const updateVerificationInformation = async (data) => {
+  const response = await servicesAxiosInstance.post(
+    "/wallet/update-verfication-details",
     data
   );
   return response;
@@ -183,18 +225,49 @@ export const savePrimaryPaymentInformation = async (data) => {
   );
   return response;
 };
+export const updatePrimaryPaymentInformation = async (bankDetailsId,data) => {
+  const response = await servicesAxiosInstance.post(
+    `/wallet/update-bank-details/${bankDetailsId}`,
+    data
+  );
+  return response;
+};
 export const fetchPrimaryPaymentInformation = async () => {
   const response = await servicesAxiosInstance.get("/wallet/get-bank-details");
   return response;
 };
 
 export const fetchTransactionsPage = async (data) => {
-  const response = await servicesAxiosInstance.get(`/wallet/get-transactions?page=${data}`);
+  const response = await servicesAxiosInstance.get(
+    `/wallet/get-transactions`, {
+       params: {
+        page: data?.page || 1,
+        limit: data?.limit || 10,
+        sortBy: data?.sortBy || 'createdAt',
+        sortOrder: data?.sortOrder || 'desc',
+        status: data?.status,
+        buyerId: data?.buyerId
+      }
+    }
+  );
   return response;
 };
 export const fetchWithdrawalPage = async (data) => {
   const response = await servicesAxiosInstance.get("/wallet/get-withdrawals", {
-    params: data,
+    params: {
+       page: data?.page || 1,
+      limit: data?.limit || 10,
+      upiId: data?.upiId,
+      bankDetailsId: data?.bankDetailsId,
+      status: data?.status,
+      modeOfWithdrawal: data?.modeOfWithdrawal,
+      startDate: data?.startDate,
+      endDate: data?.endDate,
+      minAmount: data?.minAmount,
+      maxAmount: data?.maxAmount,
+      sortBy: data.sortBy || "createdAt",
+      sortOrder: data.sortOrder || "desc",
+    }
   });
   return response;
 };
@@ -202,6 +275,14 @@ export const saveSecondaryBankorUpiAccount = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/wallet/add-bank-or-upi",
     data
+  );
+  return response;
+};
+
+export const deleteSecondaryBankorUpiAccount = async (data) => {
+  const response = await servicesAxiosInstance.delete(
+    "/wallet/delete-bank-or-upi",
+    {data}
   );
   return response;
 };
@@ -219,12 +300,10 @@ export const fetchWebinar = async (id) => {
   return response;
 };
 
-export const purchaseWebinar = async (id) => {
+export const purchaseWebinar = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/webinar/purchase-webinar",
-    {
-      webinarId: id,
-    }
+    data
   );
   return response;
 };
@@ -247,10 +326,11 @@ export const fetchCourse = async (id) => {
   );
   return response;
 };
-export const purchaseCourse = async (id) => {
-  const response = await servicesAxiosInstance.post("/course/purchase-course", {
-    courseId: id,
-  });
+export const purchaseCourse = async (data) => {
+  const response = await servicesAxiosInstance.post(
+    "/course/purchase-course",
+    data
+  );
   return response;
 };
 
@@ -269,12 +349,10 @@ export const fetchPayingUp = async (id) => {
   return response;
 };
 
-export const purchasePayingUp = async (id) => {
+export const purchasePayingUp = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/payingup/purchase-payingup",
-    {
-      payingUpId: id,
-    }
+     data
   );
   return response;
 };
@@ -351,8 +429,8 @@ export const fetchUserDetails = async () => {
   return response;
 };
 
-export const fetchCustomers = async (page = 1) => {
-  const response = await servicesAxiosInstance.get(`/self/customers/${page}`);
+export const fetchCustomers = async (page=1) => {
+  const response = await servicesAxiosInstance.get(`/self/customers/`, page);
   return response;
 };
 
@@ -370,69 +448,129 @@ export const fetchPremiumDashboardData = async () => {
   return response;
 };
 
+
 export const fetchPremiumContentById = async (contentId) => {
   const response = await servicesAxiosInstance.get(
     `/premium/premium-content/${contentId}` // Matches the route in premiumRoutes.js
   );
   return response;
 };
-export const purchasePremiumContent = async (id, userId) => {
-  const response = await servicesAxiosInstance.post(
-    "/premium/create-premium-access", // Matches the route in premiumRoutes.js
-    { contentId: id, userId: userId } // Send the ID and userId in the request body
+
+export const deletePremiumContentById = async (contentId) => {
+  const response = await servicesAxiosInstance.delete(
+    `/premium/delete-premium-content/${contentId}` // Matches the route in premiumRoutes.js
+  );
+  return response;
+};
+
+export const editPremiumContentById = async (contentId, updatedContent) => {
+  // Assuming `updatedContent` is the data you want to update (e.g., title, description, etc.)
+  const response = await servicesAxiosInstance.put(
+    `/premium/edit-premium-content/${contentId}`, // This matches the edit route you would define on the server
+    updatedContent // Sending the data that you want to update
+  );
+  return response;
+};
+
+export const purchasePremiumContent = async (data) => {
+const response = await servicesAxiosInstance.post(
+    "/premium/purchase-premium-content", 
+    data
   );
   return response;
 };
 
 export const saveMpin = async (data) => {
-  const response = await servicesAxiosInstance.post(
-    "wallet/set-mpin",
-    data
-  );
+  const response = await servicesAxiosInstance.post("wallet/set-mpin", data);
   return response;
-}
+};
 
 export const verifyMpin = async (data) => {
-  const response = await servicesAxiosInstance.post(
-    "wallet/verify-mpin",
-    data
-  );
+  const response = await servicesAxiosInstance.post("wallet/verify-mpin", data);
   return response;
-}
+};
 
 export const sendWithdrawAmount = async (data) => {
-  const response = await servicesAxiosInstance.post(
-    "wallet/withdraw",
-    data
-  );
+  const response = await servicesAxiosInstance.post("wallet/withdraw", data);
   return response;
-}
+};
 
-export const subscribeNewsLetter = async(email) =>{
-  
+export const subscribeNewsLetter = async (email) => {
   try {
-  const response = await servicesAxiosInstance.post("/newsletter/subscribe" , {email})
-    if(response?.data?.subscription?.isSubscribed){
-      toast.success("You have successfully subscribed to our newsletter")
-    }else{
-      toast.success("Already Subscribed !")
+    const response = await servicesAxiosInstance.post("/newsletter/subscribe", {
+      email,
+    });
+    if (response?.data?.subscription?.isSubscribed) {
+      toast.success("You have successfully subscribed to our newsletter");
+    } else {
+      toast.success("Already Subscribed !");
     }
   } catch (error) {
-     toast.error(error?.response?.data?.message || "Something went wrong")
+    toast.error(error?.response?.data?.message || "Something went wrong");
   }
- 
-}
+};
 
-export const writeReview = async (data) =>{
-  return await servicesAxiosInstance.post("/review/write" , data)
-}
+export const unSubscribeNewsLetter = async (email) => {
+  console.log(email);
+  try {
+    const response = await servicesAxiosInstance.put(
+      "/newsletter/unsubscribe",
+      { email }
+    );
+  } catch (error) {
+    console.log(error.message || error);
+  }
+};
+
+export const updateUserProfile = async (data) => {
+  try {
+    const response = await servicesAxiosInstance.put(
+      "/self/update/profile",
+      data
+    );
+    return response;
+  } catch (error) {
+    toast.error(error?.response?.data?.message || "Something went wrong");
+    return error;
+  }
+};
+
+export const writeReview = async (data) => {
+  return await servicesAxiosInstance.post("/review/write", data);
+};
 
 export const deleteReview = async (id) => {
-  const response = await servicesAxiosInstance.delete(`/review/delete/${id}`)
-  return response
-}
+  const response = await servicesAxiosInstance.delete(`/review/delete/${id}`);
+  return response;
+};
 
-export const getAllReviews = async() =>{
-  const response = await servicesAxiosInstance.get("/review/allreviews")
-  return response
-}
+export const getAllReviews = async () => {
+  const response = await servicesAxiosInstance.get("/review/allreviews");
+  return response;
+};
+
+export const fetchWalletChartData = async ({ fetchCat }) => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const response = await servicesAxiosInstance.get(
+    `/wallet/earnings?year=${year}&productType=${fetchCat}`
+  );
+  return response;
+};
+
+export const fetchFilterEarningsAndWithdrawals = async ({ fetchRange }) => {
+   if (fetchRange.startsWith('CustomRange=')) {
+    // For custom Range remove true in path
+    const response = await servicesAxiosInstance.get(
+      `/wallet/withdrawal-earnings?${fetchRange}`
+    );
+    return response;
+  } else {
+    
+    const response = await servicesAxiosInstance.get(
+      `/wallet/withdrawal-earnings?${fetchRange}=true`
+    );
+    return response;
+  }
+};
+

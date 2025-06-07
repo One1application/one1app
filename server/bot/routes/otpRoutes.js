@@ -1,9 +1,12 @@
 import express from 'express';
 import { mtprotoCall } from '../../src/config/mtproto.js';
 import axios from 'axios';
+import prisma from "../../src/db/dbClient.js";
 
 const router = express.Router();
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}`;
+
+
 
 
 router.post('/send', async (req, res) => {

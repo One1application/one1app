@@ -25,87 +25,8 @@ const initialState = {
   links: [],
 };
 
-const transactions =  [
-    { 
-        "id": "2a184d90-5c40-4b0b-8aec-32627d3120bd",
-        "walletId": "b8e52ce1-d03d-4d5a-b0b8-d2cde31cd58a",
-        "amount": 100,
-        "productId": "cd65735d-7ba5-49a3-9fef-9c497aada583",
-        "productType": "WEBINAR",
-        "buyerId": "26aa0689-21bc-4959-ac3d-747282944184",
-        "creatorId": "19fa9770-322f-424e-bd53-c0e909e76e0d",
-        "modeOfPayment": "CARD",
-        "status": "COMPLETED",
-        "createdAt": "2025-05-12T06:29:17.189Z",
-        "updatedAt": "2025-05-12T06:29:17.189Z"
-    },
-    {
-        "id": "49f26d7f-15bc-46e3-8b7a-758d42e7fdad",
-        "walletId": "b8e52ce1-d03d-4d5a-b0b8-d2cde31cd58a",
-        "amount": 100,
-        "productId": "cd65735d-7ba5-49a3-9fef-9c497aada583",
-        "productType": "WEBINAR",
-        "buyerId": "26aa0689-21bc-4959-ac3d-747282944184",
-        "creatorId": "19fa9770-322f-424e-bd53-c0e909e76e0d",
-        "modeOfPayment": "upi",
-        "status": "success",
-        "createdAt": "2025-05-12T04:46:08.705Z",
-        "updatedAt": "2025-05-12T04:46:08.705Z"
-    },
-    {
-        "id": "65d645eb-387e-4fe0-925f-8038926cf457",
-        "walletId": "b8e52ce1-d03d-4d5a-b0b8-d2cde31cd58a",
-        "amount": 100,
-        "productId": "9d59ce5a-3b22-40ec-ab79-88fcfb02f027",
-        "productType": "PAYING_UP",
-        "buyerId": "19fa9770-322f-424e-bd53-c0e909e76e0d",
-        "creatorId": "19fa9770-322f-424e-bd53-c0e909e76e0d",
-        "modeOfPayment": "NET_BANKING",
-        "status": "COMPLETED",
-        "createdAt": "2025-05-12T17:32:45.224Z",
-        "updatedAt": "2025-05-12T17:32:45.224Z"
-    },
-    {
-        "id": "9cc02694-8a92-401d-8892-31c28792a9c9",
-        "walletId": "b8e52ce1-d03d-4d5a-b0b8-d2cde31cd58a",
-        "amount": 100,
-        "productId": "cd65735d-7ba5-49a3-9fef-9c497aada583",
-        "productType": "WEBINAR",
-        "buyerId": "19fa9770-322f-424e-bd53-c0e909e76e0d",
-        "creatorId": "19fa9770-322f-424e-bd53-c0e909e76e0d",
-        "modeOfPayment": "CARD",
-        "status": "COMPLETED",
-        "createdAt": "2025-05-12T15:04:21.366Z",
-        "updatedAt": "2025-05-12T15:04:21.366Z"
-    },
-    {
-        "id": "a946fa50-8589-4aaf-a44f-ed7f9c62d701",
-        "walletId": "b8e52ce1-d03d-4d5a-b0b8-d2cde31cd58a",
-        "amount": 100,
-        "productId": "cd65735d-7ba5-49a3-9fef-9c497aada583",
-        "productType": "WEBINAR",
-        "buyerId": "26aa0689-21bc-4959-ac3d-747282944184",
-        "creatorId": "19fa9770-322f-424e-bd53-c0e909e76e0d",
-        "modeOfPayment": "upi",
-        "status": "success",
-        "createdAt": "2025-05-11T16:06:41.954Z",
-        "updatedAt": "2025-05-11T16:06:41.954Z"
-    }
-]
-const withdrawals = [
-  {
-    date: "2022-01-01 10:00 AM",
-    amount: "500",
-    account: "0000@ylb",
-    status: "Success",
-  },
-  {
-    date: "2022-01-02 11:30 AM",
-    amount: "1000",
-    account: "0000@jkl",
-    status: "Pending",
-  },
-];
+const transactions =  []
+const withdrawals = [];
 
 export const StoreProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -114,35 +35,35 @@ export const StoreProvider = ({ children }) => {
     dispatch({ type, payload });
   }, []);
 
-  const [AllTransaction, setAllTransaction] = useState([...transactions]); // for experimental purpose only remove this line for production
+  const [AllTransaction, setAllTransaction] = useState([]); // for experimental purpose only remove this line for production
   const [TotalTransactionPages, setTotalTransactionPages] = useState(1);
   const [CurrentTransactionPage, setCurrentTransactionPage] = useState(1);
 
-  const [AllWithdrawals, setAllWithdrawals] = useState([...withdrawals]); // for experimental purpose only remove this line for production
+  const [AllWithdrawals, setAllWithdrawals] = useState([]); // for experimental purpose only remove this line for production
   const [TotalWithdrawalPages, setTotalWithdrawalPages] = useState(1);
   const [CurrentWithdrawalPage, setCurrentWithdrawalPage] = useState(1);
 
-  const getNextTransactionPage = async () => {
-    const data = {
-      page: CurrentTransactionPage + 1,
-    };
+  const getNextTransactionPage = async (page) => {
+       
+      const requestPage = page || CurrentTransactionPage;
+      console.log("Fetching transaction page:", requestPage);
+
     try {
-      const response = await fetchTransactionsPage(data);
-      console.log(response);
-      if (response.status == 200) {
-        setAllTransaction(response.data.payload.transactions);
-        if (response.data.payload.transactions.length == 0) {
-          toast.warning("No more data to show");
-          return;
-        }
-        setCurrentTransactionPage(CurrentTransactionPage + 1);
-        setTotalTransactionPages(response.data.payload.totalPages || 1);
+      const response = await fetchTransactionsPage({ page: requestPage });
+      console.log("Transaction",response);
+      if (response?.status == 200) {
+        setAllTransaction(response?.data?.payload.transactions|| []);
+        setTotalTransactionPages(response?.data?.payload.totalPages || 1);
+        setCurrentTransactionPage(page);
+        return response.data.payload;
+        
       } else {
-        console.log("No more data to show");
-        toast.warning(response.data.message);
+        console.log("No more data to show", response.data.message);
+        return null;
       }
     } catch (error) {
       console.error(error);
+      return null;
     }
   };
   const getPreviousTransactionPage = async () => {
@@ -151,45 +72,43 @@ export const StoreProvider = ({ children }) => {
     };
     try {
       const response = await fetchTransactionsPage(data);
-      console.log(response);
-      if (response.status == 200) {
-        setAllTransaction(response.data.payload.transactions);
+      if (response?.status == 200) {
+        setAllTransaction(response?.data?.payload?.transactions);
+         setCurrentTransactionPage(CurrentTransactionPage - 1 || 1);
+        setTotalTransactionPages(response.data.payload.totalPages || 1);
         if (response.data.payload.transactions.length == 0) {
-          toast.warning("No more data to show");
+          toast.error("NO TRANSACTION FOUND");
           return;
         }
-        setCurrentTransactionPage(CurrentTransactionPage - 1 || 1);
-        setTotalTransactionPages(response.data.payload.totalPages || 1);
+       
       } else {
         console.log("No more data to show");
-        toast.warning(response.data.message);
+        toast.error(response.data.message);
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const getNextWithdrawalPage = async () => {
-    const data = {
-      page: CurrentWithdrawalPage + 1,
-    };
+  const getNextWithdrawalPage = async (page) => {
+    const requestPage = page || CurrentWithdrawalPage;
+    
     try {
-      const response = await fetchWithdrawalPage(data);
-      console.log(response);
+      const response = await fetchWithdrawalPage({page: requestPage});
+      
       if (response.status == 200) {
-        setAllWithdrawals(response.data.payload.withdrawals);
-        if (response.data.payload.withdrawals.length == 0) {
-          toast.warning("No more data to show");
-          return;
-        }
-        setCurrentWithdrawalPage(CurrentWithdrawalPage + 1);
+        setAllWithdrawals(response.data.payload.withdrawals|| []);
+        setCurrentWithdrawalPage(requestPage);
         setTotalWithdrawalPages(response.data.payload.totalPages || 1);
+        return response.data.payload;
       } else {
-        console.log("No more data to show");
-        toast.warning(response.data.message);
+        
+        return null;
+       
       }
     } catch (error) {
       console.error(error);
+      return null;
     }
   };
   const getPreviousWithdrawalPage = async () => {
@@ -202,14 +121,14 @@ export const StoreProvider = ({ children }) => {
       if (response.status == 200) {
         setAllWithdrawals(response.data.payload.withdrawals);
         if (response.data.payload.withdrawals.length == 0) {
-          toast.warning("No more data to show");
+          
           return;
         }
         setCurrentWithdrawalPage(CurrentWithdrawalPage - 1 || 1);
         setTotalWithdrawalPages(response.data.payload.totalPages || 1);
       } else {
-        console.log("No more data to show");
-        toast.warning(response.data.message);
+         toast.error(response.data.message);
+        
       }
     } catch (error) {
       console.error(error);
@@ -228,12 +147,14 @@ export const StoreProvider = ({ children }) => {
         setHeader: (data) => updateState(SET_HEADER, data),
         setLinks: (data) => updateState(SET_LINKS, data),
         AllTransaction,
+        setAllTransaction,
         CurrentTransactionPage,
         TotalTransactionPages,
         getNextTransactionPage,
         getPreviousTransactionPage,
         AllWithdrawals,
         CurrentWithdrawalPage,
+        setAllWithdrawals,
         TotalWithdrawalPages,
         getNextWithdrawalPage,
         getPreviousWithdrawalPage,

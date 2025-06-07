@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 
 const AuthenticatedRoutes = () => {
-  const { authenticated, loading ,userRole } = useAuth();
+  const { authenticated, loading, userRole } = useAuth();
 
   if (loading) {
     return (
@@ -17,7 +17,11 @@ const AuthenticatedRoutes = () => {
     toast.error("Please sign up as a creator to access this dashboard pages");
     return <Navigate to="/signup" />;
   }
-  return authenticated && userRole === "Creator" ? <Outlet /> : <Navigate to="/signin" />;
+  return authenticated && userRole === "Creator" ? (
+    <Outlet />
+  ) : (
+    <Navigate to="/signin" />
+  );
 };
 
 export default AuthenticatedRoutes;

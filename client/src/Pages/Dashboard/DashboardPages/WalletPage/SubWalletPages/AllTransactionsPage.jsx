@@ -3,27 +3,48 @@ import { walletConfig } from "../WalletConfig";
 import { fetchTransactionsPage} from "../../../../../services/auth/api.services"
 // import { FaCog } from "react-icons/fa";
 import WalletTableComponent from "../../../../../components/Table/WalletTableComponent";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { StoreContext } from "../../../../../context/StoreContext/StoreContext";
 
 const AllTransactionsPage = () => {
-  const { AllTransaction, CurrentTransactionPage, TotalTransactionPages, setAllTransaction } = useContext(StoreContext);
+  const { AllTransaction, CurrentTransactionPage, TotalTransactionPages, setAllTransaction, getNextTransactionPage } = useContext(StoreContext);
 
-  const { title, tableHeader, tableData } = walletConfig.allTransactionsPage;
 
+  const [isLoading, setIsLoading] = useState(true);
+ 
+  const { title, tableHeader} = walletConfig.allTransactionsPage;
 
   useEffect(() => {
     const fetchTransactions = async () => {
+      setIsLoading(true);
+      const data = {
+         page: CurrentTransactionPage
+      }
       try {
-        const res = await fetchTransactionsPage({ page: CurrentTransactionPage });
-        setAllTransaction(res.data.payload.transactions);  
+        const res = await fetchTransactionsPage(data);
+        setAllTransaction(res.data.payload.transactions);
+
+          
       } catch (error) {
         console.error("Error fetching transactions:", error);
-      }
+      } finally {
+        setIsLoading(false);
+      } 
     };
 
     fetchTransactions();
   }, [CurrentTransactionPage]);
+
+  
+  useEffect(() => {
+    getNextTransactionPage(1)
+    
+  }, [])
+
+  const handlePageChange = (page) => {
+    console.log("fetching page cat", page)
+      getNextTransactionPage(page);
+  }
  
 
   return (
@@ -41,8 +62,11 @@ const AllTransactionsPage = () => {
           title={<h1 className="text-lg font-semibold text-white">{title}</h1>}
           headers={tableHeader}
           data={AllTransaction}
+          type={"transactions"}
           CurrentPage={CurrentTransactionPage}
           TotalPages={TotalTransactionPages}
+          onPageChange={handlePageChange}
+          isLoading={isLoading}
           // data={tableData}
         />
       </section>

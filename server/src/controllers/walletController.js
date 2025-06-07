@@ -10,6 +10,7 @@ import {
 import prisma from "../db/dbClient.js";
 import { sendOtp } from "../utils/sendOtp.js";
 import bcrypt from "bcrypt";
+import { calculateExpiryDate } from "../utils/courseExpiryDate.js";
 
 dotenv.config();
 
@@ -73,9 +74,8 @@ export async function getWalletDetails(req, res) {
       0
     );
 
-    console.log(wallet);
+    console.log("totalWithdrawals", totalWithdrawals);
 
-    console.log(wallet);
     return res.status(200).json({
       success: true,
       message: "Fetched wallet details successfully.",
@@ -110,6 +110,7 @@ export async function verifyPayment(req, res) {
       days,
       channelId,
       phonePayOrderId,
+      discountedPrice,
     } = req.body;
 
     const user = req.user;
@@ -182,11 +183,13 @@ export async function verifyPayment(req, res) {
             .json({ success: false, message: "Creator not found." });
         }
 
-        let amountToBeAdded = creator.amount;
+        let amountToBeAdded = discountedPrice
+          ? parseFloat(discountedPrice)
+          : creator.amount;
         if (creator.createdBy.creatorComission) {
           const commissionAmount =
             Math.round(
-              ((creator.createdBy.creatorComission * creator.amount) / 100) *
+              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
                 100
             ) / 100;
           const gstOnCommission =
@@ -225,17 +228,20 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(creator.amount),
+            amount: parseFloat(discountedPrice || creator.amount),
+            amountAfterFee: parseFloat(amountToBeAdded),
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: webinarId,
             buyerId: existingUser.id,
             creatorId: creator.createdById,
             productType: "WEBINAR",
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
-
+        console.log("transaction", transaction);
         if (!transaction) {
           return res.status(400).json({
             success: false,
@@ -259,7 +265,11 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amountToBeAdded = creator.price;
+        console.log("creatorCOURSE", creator);
+
+        let amountToBeAdded = discountedPrice
+          ? parseFloat(discountedPrice)
+          : creator.price;
         console.log("amount", amountToBeAdded);
         if (creator.creator.creatorComission) {
           const commissionAmount =
@@ -283,30 +293,76 @@ export async function verifyPayment(req, res) {
           },
         });
 
-        const course = await prisma.coursePurchasers.create({
-          data: {
+        const existingPurchase = await prisma.coursePurchasers.findFirst({
+          where: {
+            purchaserId: user.id,
             courseId,
-            purchaserId: existingUser.id,
-            paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
-            orderId: phonePayOrderId,
           },
         });
+        console.log("existingPurchase", existingPurchase);
+        if (existingPurchase) {
+          let calculateExpiry = calculateExpiryDate(
+            creator?.validity,
+            existingPurchase.expiryDate
+          );
+          if (existingPurchase.expiryDate < new Date()) {
+            calculateExpiry = calculateExpiryDate(creator?.validity);
+          }
 
-        if (!course) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Failed to buy course." });
+          const renewal = await prisma.courseRenewal.create({
+            data: {
+              purchaseId: existingPurchase.id,
+              newExpiryDate: calculateExpiry,
+              renewalDate: new Date(),
+              orderId: phonePayOrderId,
+              paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
+            },
+          });
+          console.log("renewalRecord", renewal);
+
+          const updateCoursePurchase = await prisma.coursePurchasers.update({
+            where: {
+              id: existingPurchase.id,
+            },
+            data: {
+              expiryDate: calculateExpiry,
+              isActive: true,
+              updatedAt: new Date(),
+            },
+          });
+          console.log("updateCourse", updateCoursePurchase);
+        } else {
+          const calculateExpiry = calculateExpiryDate(creator.validity);
+          const course = await prisma.coursePurchasers.create({
+            data: {
+              courseId,
+              purchaserId: existingUser.id,
+              paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
+              orderId: phonePayOrderId,
+              expiryDate: calculateExpiry,
+              isActive: true,
+            },
+          });
+
+          if (!course) {
+            return res
+              .status(400)
+              .json({ success: false, message: "Failed to buy course." });
+          }
         }
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(creator.price),
+            amount: parseFloat(discountedPrice || creator.price),
+            amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: courseId,
             productType: "COURSE",
             creatorId: creator.createdBy,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -339,14 +395,17 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amount = creator.paymentDetails.totalAmount;
+        let amount = discountedPrice
+          ? parseFloat(discountedPrice)
+          : creator.paymentDetails.totalAmount;
 
         let amountToBeAdded = parseFloat(amount);
 
         if (creator.createdBy.creatorComission) {
           const commissionAmount =
             Math.round(
-              ((creator.createdBy.creatorComission * amount) / 100) * 100
+              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
+                100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -387,13 +446,18 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(creator.paymentDetails.totalAmount),
+            amount: parseFloat(
+              discountedPrice || creator.paymentDetails.totalAmount
+            ),
+            amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: payingUpId,
-            productType: "PAYING_UP",
+            productType: "PAYINGUP",
             creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -421,7 +485,9 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        let amountToBeAdded = creator.unlockPrice;
+        let amountToBeAdded = discountedPrice
+          ? parseFloat(discountedPrice)
+          : creator.unlockPrice;
         if (creator.createdBy.creatorComission) {
           const commissionAmount =
             Math.round(
@@ -454,6 +520,8 @@ export async function verifyPayment(req, res) {
           data: {
             userId: user.id,
             contentId: premiumContentId,
+            paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
+            orderId: phonePayOrderId,
             expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), //currently for 30 days
           },
         });
@@ -467,13 +535,16 @@ export async function verifyPayment(req, res) {
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(creator.unlockPrice),
+            amount: parseFloat(discountedPrice || creator.unlockPrice),
+            amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: premiumContentId,
-            productType: "PREMIUM_CONTENT",
+            productType: "PREMIUMCONTENT",
             creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -489,7 +560,7 @@ export async function verifyPayment(req, res) {
       if (telegramId && days) {
         const creator = await prisma.telegram.findFirst({
           where: {
-            id: payingUpId,
+            id: telegramId,
           },
           select: {
             createdById: true,
@@ -505,7 +576,7 @@ export async function verifyPayment(req, res) {
         }
 
         const subscriptionDetails = creator.subscription.find(
-          (sub) => sub.days === days
+          (sub) => sub.days == days
         );
         let amountToBeAdded = subscriptionDetails.cost;
         if (creator.createdBy.creatorComission) {
@@ -537,7 +608,7 @@ export async function verifyPayment(req, res) {
           data: {
             telegramId,
             boughtById: existingUser.id,
-            validDays: days,
+            validDays: parseInt(days),
             paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
             orderId: phonePayOrderId,
           },
@@ -552,12 +623,15 @@ export async function verifyPayment(req, res) {
         const transaction = await prisma.transaction.create({
           data: {
             amount: parseFloat(subscriptionDetails.cost),
+            amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
             modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
             productId: telegramId,
             productType: "TELEGRAM",
             creatorId: creator.createdById,
             status: PhonePayPaymentDetails.paymentDetails[0].state,
+            phonePayTransId:
+              PhonePayPaymentDetails.paymentDetails[0].transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -609,29 +683,55 @@ export async function verifyPayment(req, res) {
         where: {
           id: payingUpId,
         },
+        select: {
+          files: true,
+        },
       });
 
-      const signedUrls = response.files.value.map((file) => {
+      const filesignedUrls = response.files.value.map((file, index) => {
         const filePath = new URL(file.url).pathname.replace(
           /^.*\/images/,
           "/images"
         );
-        return generateSignedUrl(filePath);
+        const signedUrl = generateSignedUrl(filePath);
+        return {
+          ...file,
+          signedUrl: signedUrl,
+        };
       });
 
+      await prisma.payingUp.update({
+        where: {
+          id: payingUpId,
+        },
+        data: {
+          files: {
+            value: filesignedUrls,
+          },
+        },
+      });
+       
       return res.status(200).json({
         success: true,
         message: "Paying up purchased successfully.",
         payload: {
-          urls: signedUrls,
+          urls: filesignedUrls,
         },
       });
     }
 
     if (telegramId && days) {
       const response = await axios.get(
-        `${process.env.BOT_SERVER_URL}/generate-invitelink?channelId=${channelId}&boughtById=${user.id}`
+        `${process.env.BOT_SERVER_URL}/channel/generate-invite?channelId=${channelId}&boughtById=${user.id}`
       );
+      await prisma.telegram.update({
+        where: {
+          id: telegramId,
+        },
+        data: {
+          inviteLink: response.data.payload.inviteLink,
+        },
+      });
       return res.status(200).json({
         success: true,
         message: "Telegram purchased successfully.",
@@ -791,6 +891,20 @@ export async function updateBusinessInfo(req, res) {
         success: false,
         message: "Business information not found. Please create it first.",
       });
+    }
+
+    const isKycVerified = await prisma.wallet.findFirst({
+      where: {userId: user.id,},
+      select: {
+        isKycVerified: true,
+      }
+    });
+    
+    if(isKycVerified.isKycVerified){
+       return res.status(400).json({
+        success: false,
+        message: "You have already verified your Kyc!"
+       });
     }
 
     const updatedBusinessInfo = await prisma.businessInfo.update({
@@ -1013,6 +1127,20 @@ export async function updateKycDetails(req, res) {
         success: false,
         message: "KYC details not found. Please create KYC details first.",
       });
+    }
+
+    const isKycVerified = await prisma.wallet.findFirst({
+      where: {userId: user.id,},
+      select: {
+        isKycVerified: true,
+      }
+    })
+    
+    if(isKycVerified.isKycVerified){
+       return res.status(400).json({
+        success: false,
+        message: "You have already verified your Kyc!"
+       })
     }
 
     // Extract only the fields that are provided
@@ -1341,13 +1469,34 @@ export async function updateBankDetails(req, res) {
         userId: user.id,
       },
     });
-    console.log("existingBankDetails", existingBankDetails);
 
     if (!existingBankDetails) {
       return res
         .status(400)
         .json({ success: false, message: "Bank details not found." });
     }
+
+    const isKycVerified = await prisma.wallet.findFirst({
+      where: {userId: user.id,},
+      select: {
+        isKycVerified: true,
+      }
+    })
+
+    if(isKycVerified.isKycVerified){
+       return res.status(400).json({
+        success: false,
+        message: "You have already verified your Kyc!"
+       })
+    }
+
+    const existingUpiRecords = await prisma.uPI.findMany({
+      where: {
+        bankDetailsId: bankDetailsId,
+        userId: user.id,
+      },
+    });
+    console.log("existingupi records", existingUpiRecords);
 
     //update bank details
     const updatedBankDetails = await prisma.bankDetails.update({
@@ -1366,16 +1515,24 @@ export async function updateBankDetails(req, res) {
     //update UPI if provided
     let updatedUpi = null;
     if (upiId) {
-      if (existingBankDetails.upiId && existingBankDetails.upiId.length > 0) {
+      if (existingUpiRecords && existingUpiRecords.length > 0) {
+        const matchingUpi = existingUpiRecords.find(
+          (upi) => upi.upiId === upiId
+        );
+        if (matchingUpi) {
+          updatedUpi = matchingUpi;
+        }
+        // Update existing UPI record
         updatedUpi = await prisma.uPI.update({
           where: {
-            id: existingBankDetails.upiId[0].id,
+            id: existingUpiRecords[0].id,
           },
           data: {
             upiId,
           },
         });
       } else {
+        // Create new UPI record if none exists
         updatedUpi = await prisma.uPI.create({
           data: {
             upiId: upiId,
@@ -1425,7 +1582,11 @@ export async function getBankDetails(req, res) {
         userId: userExists.id,
         primary: true,
       },
+      include: {
+        upiIds: true,
+      },
     });
+    console.log("bankDetails", bankDetails);
 
     const kycRecord = await prisma.kycRecords.findFirst({
       where: {
@@ -1600,15 +1761,24 @@ export async function withdrawAmount(req, res) {
 export async function getTransactions(req, res) {
   try {
     const user = req.user;
-    const { page } = req.query;
+    const {
+      page = 1,
+      status,
+      buyerId,
+      limit = 10,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
 
-    const pageSize = 10;
-
-    if (!page) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Page number is needed" });
+    const pageNumber = parseInt(page);
+    if (isNaN(pageNumber) || pageNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid page Number",
+      });
     }
+
+    const pageSize = parseInt(limit);
 
     const userExists = await prisma.user.findUnique({
       where: {
@@ -1634,25 +1804,48 @@ export async function getTransactions(req, res) {
         .json({ success: false, message: "Wallet not found." });
     }
 
-    const totalTransactions = await prisma.transaction.count({
-      where: {
-        walletId: wallet.id,
-      },
-    });
-    const totalPages = Math.ceil(totalTransactions / pageSize);
+    // Build the where clause with filters
+    const whereClause = {
+      walletId: wallet.id,
+    };
 
-    if (page > totalPages && totalPages !== 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid page number" });
+    // Add status filter if provided
+    if (status) {
+      whereClause.status = status;
     }
 
+    // Add buyerId filter if provided
+    if (buyerId) {
+      whereClause.buyerId = buyerId;
+    }
+
+    const totalTransactions = await prisma.transaction.count({
+      where: whereClause,
+    });
+
+    const totalPages = Math.max(1, Math.ceil(totalTransactions / pageSize));
+    const effectivePage = Math.min(pageNumber, totalPages);
+    const validSortFields = ["createdAt", "amount", "status", "productType"];
+    const actualSortBy = validSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+    const actualSortOrder = sortOrder.toLowerCase() === "asc" ? "asc" : "desc";
+
     const transactions = await prisma.transaction.findMany({
-      where: {
-        walletId: wallet.id,
+      where: whereClause,
+      include: {
+        buyer: {
+          select: {
+            phone: true,
+            email: true,
+          },
+        },
       },
-      skip: (page - 1) * pageSize,
+      skip: (effectivePage - 1) * pageSize,
       take: pageSize,
+      orderBy: {
+        [actualSortBy]: actualSortOrder,
+      },
     });
 
     return res.status(200).json({
@@ -1660,6 +1853,8 @@ export async function getTransactions(req, res) {
       payload: {
         transactions: transactions.length === 0 ? [] : transactions,
         totalPages,
+        currentPage: effectivePage,
+        totalItems: totalTransactions,
       },
       message: "Fetched transactions successfully.",
     });
@@ -1676,14 +1871,29 @@ export async function getWithdrawals(req, res) {
   try {
     const user = req.user;
 
-    const { page } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      upiId,
+      bankDetailsId,
+      status,
+      modeOfWithdrawal,
+      startDate,
+      endDate,
+      minAmount,
+      maxAmount,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
 
-    const pageSize = 10;
+    const pageSize = parseInt(limit);
+    const pageNumber = parseInt(page);
 
-    if (!page) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Page number is needed" });
+    if (isNaN(pageNumber) || pageNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid page Number",
+      });
     }
 
     const userExist = await prisma.user.findUnique({
@@ -1710,39 +1920,121 @@ export async function getWithdrawals(req, res) {
         .json({ success: false, message: "Wallet not found." });
     }
 
+    //build whereClause for filters
+    const whereClause = {
+      walletId: wallet.id,
+    };
+
+    if (upiId) {
+      whereClause.upiId = upiId;
+    }
+    if (bankDetailsId) {
+      whereClause.bankDetailsId = bankDetailsId;
+    }
+    if (status) {
+      if (Array.isArray(status)) {
+        whereClause.status = {
+          in: status,
+        };
+      } else {
+        whereClause.status = status;
+      }
+    }
+
+    if (modeOfWithdrawal) {
+      if (Array.isArray(modeOfWithdrawal)) {
+        whereClause.modeOfWithdrawal = {
+          in: modeOfWithdrawal,
+        };
+      } else {
+        whereClause.modeOfWithdrawal = modeOfWithdrawal;
+      }
+    }
+
+    //Date range filter
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) {
+        whereClause.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        const endDateObj = new Date(endDate);
+        endDateObj.setHours(23, 59, 59, 999);
+        whereClause.createdAt.lte = endDateObj;
+      }
+    }
+
+    //Amount range filters
+    if (minAmount || maxAmount) {
+      whereClause.amount = {};
+
+      if (minAmount) {
+        whereClause.amount.gte = parseFloat(minAmount);
+      }
+      if (maxAmount) {
+        whereClause.amount.lte = parseFloat(maxAmount);
+      }
+    }
+
     const totalWithdrawals = await prisma.withdrawal.count({
-      where: {
-        walletId: wallet.id,
-        status: "SUCCESS",
-      },
+      where: whereClause,
     });
 
-    // const totalWithdrawalAmount = await prisma.withdrawal.aggregate({
-    //   where: {
-    //     walletId: wallet.id,
-    //     status: "SUCCESS"
-    //   },
-    //   _sum: {
-    //     amount: true
-    //   }
-    // });
+    const totalPages = Math.max(1, Math.ceil(totalWithdrawals / pageSize));
+    const effectivePage = Math.min(pageNumber, totalPages);
 
-    const totalPages = Math.ceil(totalWithdrawals / pageSize);
-
-    if (page > totalPages && totalPages !== 0) {
+    if (pageNumber > totalPages && totalPages !== 0) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid page number" });
     }
 
+    //validate sorting parameters
+    const allowedSortFields = ["createdAt", "amount", "status"];
+    const actualSortBy = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+    const actualSortOrder = sortOrder === "asc" ? "asc" : "desc";
+
+    //Get withdrawals with applied filters, pagination and sorting
+
     const withdrawals = await prisma.withdrawal.findMany({
-      where: {
-        walletId: wallet.id,
-        status: "SUCCESS",
-      },
-      skip: (page - 1) * pageSize,
+      where: whereClause,
+      skip: (pageNumber - 1) * pageSize,
       take: pageSize,
+      orderBy: {
+        [actualSortBy]: actualSortOrder,
+      },
+      include: {
+        bankDetails: {
+          select: {
+            accountNumber: true,
+            accountHolderName: true,
+          },
+        },
+        upi: {
+          select: {
+            upiId: true,
+            bankDetails: {
+              select: {
+                accountHolderName: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    //calculate total withdrawal amount for the filtered result
+    const totalWithdrawalAmount = await prisma.withdrawal.aggregate({
+      where: whereClause,
+      _sum: {
+        amount: true,
+      },
+    });
+
+    // Get available filter options for dropdowns
+    const filterOptions = await getFilterOptions(wallet.id);
 
     if (!withdrawals) {
       return res
@@ -1755,7 +2047,10 @@ export async function getWithdrawals(req, res) {
       payload: {
         withdrawals: withdrawals.length === 0 ? [] : withdrawals,
         totalPages,
-        // totalWithdrawalAmount: totalWithdrawalAmount._sum.amount
+        currentPage: effectivePage,
+        totalWithdrawals,
+        totalWithdrawalAmount: totalWithdrawalAmount._sum.amount || 0,
+        filterOptions,
       },
       message: "Fetched withdrawals successfully.",
     });
@@ -1765,6 +2060,69 @@ export async function getWithdrawals(req, res) {
       success: false,
       message: "Internal server error.",
     });
+  }
+}
+
+// Helper function to get available filter options
+async function getFilterOptions(walletId) {
+  try {
+    // Get unique UPIs
+    const upis = await prisma.withdrawal.findMany({
+      where: { walletId },
+      select: {
+        upiId: true,
+        upi: {
+          select: {
+            upiId: true,
+          },
+        },
+      },
+      distinct: ["upiId"],
+    });
+
+    // Get unique bank details
+    const bankDetails = await prisma.withdrawal.findMany({
+      where: { walletId },
+      select: {
+        bankDetailsId: true,
+        bankDetails: {
+          select: {
+            accountNumber: true,
+            accountHolderName: true,
+          },
+        },
+      },
+      distinct: ["bankDetailsId"],
+    });
+
+    // Get unique withdrawal modes
+    const modesOfWithdrawal = await prisma.withdrawal.findMany({
+      where: { walletId },
+      select: { modeOfWithdrawal: true },
+      distinct: ["modeOfWithdrawal"],
+    });
+
+    // Get unique statuses
+    const statuses = await prisma.withdrawal.findMany({
+      where: { walletId },
+      select: { status: true },
+      distinct: ["status"],
+    });
+
+    return {
+      upis: upis.filter((item) => item.upiId), // Filter out null values
+      bankDetails: bankDetails.filter((item) => item.bankDetailsId), // Filter out null values
+      modesOfWithdrawal: modesOfWithdrawal.map((item) => item.modeOfWithdrawal),
+      statuses: statuses.map((item) => item.status),
+    };
+  } catch (error) {
+    console.error("Error getting filter options:", error);
+    return {
+      upis: [],
+      bankDetails: [],
+      modesOfWithdrawal: [],
+      statuses: [],
+    };
   }
 }
 
@@ -1925,12 +2283,12 @@ export async function updateBankOrUpi(req, res) {
 
     const user = req.user;
 
-    if(!id){
-       return res.status(400).json({
-         success: false,
-         message: "id is required",
-       })
-    };
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "id is required",
+      });
+    }
 
     const userExists = await prisma.user.findUnique({
       where: {
@@ -2061,7 +2419,6 @@ export async function updateBankOrUpi(req, res) {
         },
         data: {
           upiId: upiId || upiAccount.upiId,
-          
         },
       });
 
@@ -2112,7 +2469,7 @@ export async function deleteBankOrUpi(req, res) {
       // Find the bank account
       const bankAccount = await prisma.bankDetails.findFirst({
         where: {
-          id: id,
+          accountNumber: id,
           userId: user.id,
         },
       });
@@ -2132,42 +2489,39 @@ export async function deleteBankOrUpi(req, res) {
           },
         });
 
-        if (bankAccountsCount <= 1) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              message: "Cannot delete the primary bank account.",
-            });
-        }
-
-        
-        // Find another bank account to set as primary
-        const anotherBank = await prisma.bankDetails.findFirst({
-          where: {
-            userId: user.id,
-            NOT: {
-              id: id,
-            },
-          },
-        });
-
-        if (anotherBank) {
-          await prisma.bankDetails.update({
-            where: {
-              id: anotherBank.id,
-            },
-            data: {
-              primary: true,
-            },
+        if (bankAccountsCount <= 1 || bankAccount.primary) {
+          return res.status(400).json({
+            success: false,
+            message: "Cannot delete the primary bank account.",
           });
         }
+
+        // Find another bank account to set as primary
+        // const anotherBank = await prisma.bankDetails.findFirst({
+        //   where: {
+        //     userId: user.id,
+        //     NOT: {
+        //       accountNumber: id,
+        //     },
+        //   },
+        // });
+
+        // if (anotherBank) {
+        //   await prisma.bankDetails.update({
+        //     where: {
+        //       accountNumber: anotherBank.id,
+        //     },
+        //     data: {
+        //       primary: true,
+        //     },
+        //   });
+        // }
       }
 
       // Delete the bank account
       await prisma.bankDetails.delete({
         where: {
-          id: id,
+          accountNumber: id,
         },
       });
 
@@ -2178,7 +2532,7 @@ export async function deleteBankOrUpi(req, res) {
     } else if (type === "upi") {
       const upiAccount = await prisma.uPI.findFirst({
         where: {
-          id: id,
+          upiId: id,
           userId: user.id,
         },
       });
@@ -2192,7 +2546,7 @@ export async function deleteBankOrUpi(req, res) {
       // Delete the UPI
       await prisma.uPI.delete({
         where: {
-          id: id,
+          upiId: id,
         },
       });
 
@@ -2201,12 +2555,10 @@ export async function deleteBankOrUpi(req, res) {
         message: "UPI ID deleted successfully.",
       });
     } else {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Invalid type. Use 'bank' or 'upi'.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid type. Use 'bank' or 'upi'.",
+      });
     }
   } catch (error) {
     console.error("Error in deleting bank or upi details.", error);
@@ -2278,8 +2630,6 @@ export async function getBankAndUpis(req, res) {
     });
   }
 }
-
-//const mpinOtpMap = {};
 
 export async function setMPIN(req, res) {
   try {
@@ -2422,6 +2772,231 @@ export async function verifyMpinOtp(req, res) {
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
+    });
+  }
+}
+
+// Get monthly earnings with filtering by product type
+export async function getAllTimeEarnings(req, res) {
+  const user = req.user;
+  const { year = new Date().getFullYear(), productType } = req.query;
+
+  try {
+    const userExists = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+    });
+
+    if (!userExists) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const wallet = await prisma.wallet.findFirst({
+      where: {
+        userId: userExists.id,
+      },
+    });
+
+    if (!wallet) {
+      return res.status(400).json({
+        success: false,
+        message: "Wallet not found.",
+      });
+    }
+
+    // Create date range for the specified year
+    const startDate = new Date(year, 0, 1); // January 1st
+    const endDate = new Date(year, 11, 31, 23, 59, 59); // December 31st
+
+    // Base query conditions
+    const whereConditions = {
+      creatorId: user.id,
+      walletId: wallet.id,
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+      status: "COMPLETED",
+    };
+
+    if (productType) {
+      whereConditions.productType = productType;
+    }
+
+    // Query transactions
+    const transactions = await prisma.transaction.findMany({
+      where: whereConditions,
+      select: {
+        amountAfterFee: true,
+        createdAt: true,
+        productType: true,
+      },
+    });
+
+    const defaultEr = [
+      { month: "Jan", earnings: 0 },
+      { month: "Feb", earnings: 0 },
+      { month: "Mar", earnings: 0 },
+      { month: "Apr", earnings: 0 },
+      { month: "May", earnings: 0 },
+      { month: "Jun", earnings: 0 },
+      { month: "Jul", earnings: 0 },
+      { month: "Aug", earnings: 0 },
+      { month: "Sep", earnings: 0 },
+      { month: "Oct", earnings: 0 },
+      { month: "Nov", earnings: 0 },
+      { month: "Dec", earnings: 0 },
+    ];
+
+    // Create a copy to avoid modifying the original
+    const monthlyEarnings = JSON.parse(JSON.stringify(defaultEr));
+
+    // Process transactions to calculate monthly earnings
+    transactions.forEach((transaction) => {
+      const month = transaction.createdAt.getMonth(); // 0-11 for Jan-Dec
+      monthlyEarnings[month].earnings += Number(transaction.amountAfterFee);
+    });
+
+    // Get product type breakdown
+    const productBreakdown = {};
+
+    transactions.forEach((transaction) => {
+      const prodType = transaction.productType;
+      const month = transaction.createdAt.getMonth();
+
+      if (!productBreakdown[prodType]) {
+        productBreakdown[prodType] = JSON.parse(JSON.stringify(defaultEr));
+      }
+
+      productBreakdown[prodType][month].earnings += Number(
+        transaction.amountAfterFee
+      );
+    });
+
+    // Get available product types for filtering UI
+    const availableProductTypes = await prisma.transaction.findMany({
+      where: {
+        creatorId: user.id,
+      },
+      select: {
+        productType: true,
+      },
+      distinct: ["productType"],
+    });
+
+    // Calculate total earnings for the year
+    const totalEarnings = monthlyEarnings.reduce(
+      (total, month) => total + month.earnings,
+      0
+    );
+
+    return res.status(200).json({
+      success: true,
+      payload: {
+        monthlyEarnings,
+        productBreakdown,
+        totalEarnings,
+        year: Number(year),
+        filter: productType || "All",
+        availableFilters: availableProductTypes.map((item) => item.productType),
+      },
+      message: "Monthly earnings fetched successfully.",
+    });
+  } catch (error) {
+    console.error("Error in getting all time earnings:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+}
+
+export async function getFilterEarningsAndWithdrawal(req, res) {
+  const { LastWeek, LastMonth, LastYear, CustomRange, AllTime } = req.query;
+  const user = req.user;
+  try {
+    const wallet = await prisma.wallet.findFirst({
+      where: {
+        userId: user.id,
+      },
+    });
+    const today = new Date();
+    let startDate, endDate;
+
+    if (LastWeek) {
+      const start = new Date(today);
+      start.setDate(start.getDate() - start.getDay() - 7);
+      const end = new Date(today);
+      end.setDate(end.getDate() - end.getDay());
+      startDate = start;
+      endDate = end;
+    } else if (LastMonth) {
+      startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+    } else if (LastYear) {
+      startDate = new Date(today.getFullYear() - 1, 0, 1);
+      endDate = new Date(today.getFullYear() - 1, 11, 31);
+    } else if (CustomRange) {
+      const [start, end] = CustomRange.split(",");
+      startDate = new Date(start);
+      endDate = new Date(end);
+    }else if (AllTime){
+      startDate = null
+      endDate = null
+    }
+
+    const whereClause = {
+      creatorId: user.id,
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    };
+
+    const totalEarningsData = await prisma.transaction.aggregate({
+      where: whereClause,
+
+      _sum: {
+        amountAfterFee: true,
+      },
+    });
+
+    const totalWithdrawalsData = await prisma.withdrawal.aggregate({
+      where: {
+        walletId: wallet.id,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        status: "SUCCESS",
+      },
+
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const totalEarnings = totalEarningsData._sum.amountAfterFee || 0;
+    const totalWithdrawals = totalWithdrawalsData._sum.amount || 0;
+    console.log("totalEarnings", totalEarnings);
+    console.log(totalWithdrawals);
+    return res.status(200).json({
+      success: true,
+      payload: {
+        totalEarnings,
+        totalWithdrawals,
+      },
+    });
+  } catch (error) {
+    console.error(error.meessage);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
     });
   }
 }

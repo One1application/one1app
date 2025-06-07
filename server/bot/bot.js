@@ -18,6 +18,7 @@ import contactRouter from './routes/contactRoutes.js';
 import otpRouter from './routes/otpRoutes.js';
 import ChannelUser from './channelUserMap.js';
 
+
 dotenv.config();
 
 const app = express();
@@ -172,7 +173,9 @@ const getChannelId = async (inviteLink) => {
       let urlObj;
       try {
         urlObj = new URL(
-          inviteLink.startsWith("http") ? inviteLink : `https://t.me/${inviteLink}`
+          inviteLink.startsWith("http")
+            ? inviteLink
+            : `https://t.me/${inviteLink}`
         );
       } catch {
         throw new Error("Invalid public invite link format.");
@@ -209,53 +212,57 @@ const setupWebhook = async () => {
     const webhookUrl = `${SERVER_URL}/webhook`;
     const response = await axios.post(`${TELEGRAM_API}/setWebhook`, {
       url: webhookUrl,
-      allowed_updates: ['message', 'my_chat_member', 'chat_member']
+      allowed_updates: ["message", "my_chat_member", "chat_member"],
     });
     console.log("Webhook setup response:", response.data);
   } catch (error) {
-    console.error("Error setting up webhook:", error.response?.data || error.message);
+    console.error(
+      "Error setting up webhook:",
+      error.response?.data || error.message
+    );
   }
   // Register slash commands for preview in Telegram clients
   try {
     // Default scope (all chats)
     await axios.post(`${TELEGRAM_API}/setMyCommands`, {
       commands: [
-        { command: 'getgroupid', description: 'Get the current group ID' },
-        { command: 'ping', description: 'Ping the bot' },
-        { command: 'setup', description: 'Revoke invite perms' },
-        { command: 'myid', description: 'Get your Telegram user ID' }
-      ]
+        { command: "getgroupid", description: "Get the current group ID" },
+        { command: "ping", description: "Ping the bot" },
+        { command: "setup", description: "Revoke invite perms" },
+        { command: "myid", description: "Get your Telegram user ID" },
+      ],
     });
     // Group chats scope
     await axios.post(`${TELEGRAM_API}/setMyCommands`, {
       commands: [
-        { command: 'getgroupid', description: 'Get the current group ID' },
-        { command: 'ping', description: 'Ping the bot' },
-        { command: 'setup', description: 'Revoke invite perms' },
-        { command: 'myid', description: 'Get your Telegram user ID' }
+        { command: "getgroupid", description: "Get the current group ID" },
+        { command: "ping", description: "Ping the bot" },
+        { command: "setup", description: "Revoke invite perms" },
+        { command: "myid", description: "Get your Telegram user ID" },
       ],
-      scope: { type: 'all_group_chats' }
+      scope: { type: "all_group_chats" },
     });
-    console.log('Registered bot commands.');
+    console.log("Registered bot commands.");
   } catch (error) {
-    console.error('Error registering bot commands:', error.response?.data || error.message);
+    console.error(
+      "Error registering bot commands:",
+      error.response?.data || error.message
+    );
   }
 };
 
-app.use(
-  cors({ origin: process.env.CLIENT_ORIGIN || '*' })
-);
+app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*" }));
 // Mount moved routes
 app.use(rootRouter);
 app.use(kickRouter);
-app.use('/webhook', webhookRouter);
-app.use('/health', healthRouter);
-app.use('/channel', channelRouter);
+app.use("/webhook", webhookRouter);
+app.use("/health", healthRouter);
+app.use("/channel", channelRouter);
 // Notification endpoints for sending DMs
-app.use('/notify', notifyRouter);
-app.use('/contact', contactRouter);
-app.use('/otp', otpRouter);
-app.use('/notify', notifyRouter); // Mount root POST /notify
+app.use("/notify", notifyRouter);
+app.use("/contact", contactRouter);
+app.use("/otp", otpRouter);
+app.use("/notify", notifyRouter); // Mount root POST /notify
 
 app.post("/verify-channel", async (req, res) => {
   try {
@@ -276,7 +283,9 @@ app.get("/generate-invite", async (req, res) => {
     const { channelId, boughtById } = req.query;
     console.log(channelId, boughtById);
     if (!channelId || !boughtById) {
-      return res.status(400).json({ message: "channelId and boughtById are required" });
+      return res
+        .status(400)
+        .json({ message: "channelId and boughtById are required" });
     }
 
     const response = await createInviteLink(channelId);
@@ -311,18 +320,65 @@ app.get("/health-check", async (req, res) => {
   });
 });
 
-app.post('/invite-link', async (req, res) => {
+//routes to check if bot has admin permission
+app.post("/check-admin-status", async (req, res) => {
+  try {
+    const { chatId } = req.body;
+
+    if (!chatId) {
+      return res.status(400).json({
+        success: false,
+        message: "chatId is required",
+      });
+    }
+
+    const botInfo = await axios.get(`${TELEGRAM_API}/getMe`);
+    
+
+    const botId = botInfo.data.result.id;
+
+    const chatMember = await axios.get(`${TELEGRAM_API}/getChatMember`, {
+      params: {
+        chat_id: chatId,
+        user_id: botId,
+      },
+    });
+
+    const isAdmin = chatMember.data.result.status === "administrator";
+
+    res.json({
+      success: true,
+      isAdmin,
+      botId,
+      status: chatMember.data.result.status,
+    });
+  } catch (error) {
+    console.error(
+      "Error checking admin status:",
+      error.response?.data || error.message
+    );
+    res.status(500).json({
+      success: false,
+      message: "error checking admin status",
+    });
+  }
+});
+
+app.post("/invite-link", async (req, res) => {
   const { chat_id } = req.body;
   if (!chat_id) {
-    return res.status(400).json({ message: 'chat_id is required' });
+    return res.status(400).json({ message: "chat_id is required" });
   }
   try {
-    const response = await axios.post(`${TELEGRAM_API}/createChatInviteLink`, { chat_id, member_limit: 1 });
+    const response = await axios.post(`${TELEGRAM_API}/createChatInviteLink`, {
+      chat_id,
+      member_limit: 1,
+    });
     const link = response.data.result.invite_link;
     return res.status(200).json({ invite_link: link });
   } catch (err) {
-    console.error('Invite link error:', err.response?.data || err.message);
-    return res.status(500).json({ message: 'Failed to create invite link' });
+    console.error("Invite link error:", err.response?.data || err.message);
+    return res.status(500).json({ message: "Failed to create invite link" });
   }
 });
 
@@ -344,11 +400,11 @@ const checkExpiredSubscriptions = async () => {
 
     for (const sub of expiredSubscriptions) {
       console.log(
-        `Removing user ${sub.boughtById} from channel ${sub.telegram.channelName}`
+        `Removing user ${sub.boughtById} from channel ${sub.telegram.title}`
       );
 
       await axios.post(`${TELEGRAM_API}/kickChatMember`, {
-        chat_id: sub.telegram.channelId,
+        chat_id: sub.telegram.chatId,
         user_id: sub.telegramId,
       });
       await prisma.telegramSubscription.delete({
@@ -372,10 +428,10 @@ const requiredEnv = [
   "API_ID",
   "API_HASH",
   "BOT_PHONE_NUMBER",
-  "CLIENT_ORIGIN"
+  "CLIENT_ORIGIN",
 ];
 const PORT = process.env.PORT || 3000;
-requiredEnv.forEach(name => {
+requiredEnv.forEach((name) => {
   if (!process.env[name]) {
     console.error(`Missing ENV var ${name}`);
     process.exit(1);
@@ -383,12 +439,13 @@ requiredEnv.forEach(name => {
 });
 
 // Polling fallback for local dev (no webhook)
-import TelegramBotLib from 'node-telegram-bot-api';
+import TelegramBotLib from "node-telegram-bot-api";
 // Start polling if in non-production
 if (process.env.NODE_ENV !== 'production') {
   const pollingBot = new TelegramBotLib(token, { polling: { allowed_updates: ['message','chat_member','my_chat_member'] } });
+
   pollingBot.onText(/\/ping$/, (msg) => {
-    pollingBot.sendMessage(msg.chat.id, 'pong');
+    pollingBot.sendMessage(msg.chat.id, "pong");
   });
   pollingBot.onText(/\/getgroupid$/, (msg) => {
     pollingBot.sendMessage(msg.chat.id, `This group ID is: ${msg.chat.id}`);
@@ -396,28 +453,42 @@ if (process.env.NODE_ENV !== 'production') {
   pollingBot.onText(/\/start$/, async (msg) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
-    if (chatType !== 'private') {
+    if (chatType !== "private") {
       // Group chat: prompt to register and setup
-      await pollingBot.sendMessage(chatId, `Please register this group on https://example.com/form.html?chatid=${chatId} and run the /setup command`);
+      await pollingBot.sendMessage(
+        chatId,
+        `Please register this group on https://example.com/form.html?chatid=${chatId} and run the /setup command`
+      );
     } else {
       // Private chat: welcome user
-      await pollingBot.sendMessage(chatId, 'Hey, welcome to one1app bot! Please register an account on https://one1app.com/app/create-telegram and add the bot.');
+      await pollingBot.sendMessage(
+        chatId,
+        "Hey, welcome to one1app bot! Please register an account on http://localhost:5173/app/create-telegram and add the bot."
+      );
     }
   });
   pollingBot.onText(/\/myid(?:\s+@\w+)?/, async (msg) => {
-    const parts = msg.text.split(' ').filter(Boolean);
+    const parts = msg.text.split(" ").filter(Boolean);
     try {
       if (parts.length > 1) {
         const identifier = parts[1];
-        const chatInfo = await axios.get(`${TELEGRAM_API}/getChat`, { params: { chat_id: identifier } });
+        const chatInfo = await axios.get(`${TELEGRAM_API}/getChat`, {
+          params: { chat_id: identifier },
+        });
         const targetId = chatInfo.data.result.id;
-        await pollingBot.sendMessage(msg.chat.id, `User ID for ${identifier} is: ${targetId}`);
+        await pollingBot.sendMessage(
+          msg.chat.id,
+          `User ID for ${identifier} is: ${targetId}`
+        );
       } else {
-        await pollingBot.sendMessage(msg.chat.id, `Your Telegram ID is: ${msg.from.id}`);
+        await pollingBot.sendMessage(
+          msg.chat.id,
+          `Your Telegram ID is: ${msg.from.id}`
+        );
       }
     } catch (err) {
-      console.error('Polling /myid error:', err.response?.data || err.message);
-      await pollingBot.sendMessage(msg.chat.id, 'Failed to fetch user ID.');
+      console.error("Polling /myid error:", err.response?.data || err.message);
+      await pollingBot.sendMessage(msg.chat.id, "Failed to fetch user ID.");
     }
   });
   pollingBot.on('message', async (msg) => {
@@ -427,11 +498,17 @@ if (process.env.NODE_ENV !== 'production') {
       const adminId = msg.from.id;
       const details = `hey ${msg.from.first_name}, setup your premium group click on the link fill all the necessary data
 \nLink :- https://one1app.com/app/create-telegram?chatid=${chat.id}`;
+
       try {
         await pollingBot.sendMessage(adminId, details);
-        console.log(`Sent polling service-message DM to user ${adminId} for group ${chat.id}`);
+        console.log(
+          `Sent polling service-message DM to user ${adminId} for group ${chat.id}`
+        );
       } catch (err) {
-        console.error(`Failed to send polling DM to ${adminId}:`, err.response?.data || err.message);
+        console.error(
+          `Failed to send polling DM to ${adminId}:`,
+          err.response?.data || err.message
+        );
       }
     }
     if (msg.text) {
@@ -480,10 +557,10 @@ if (process.env.NODE_ENV !== 'production') {
       console.log(`${new_chat_member.user.id} | ${chat.id} | ${invite_link.invite_link}`);
     }
   });
-  console.log('Polling bot started.');
+  console.log("Polling bot started.");
 }
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     // Skipping MTProto login in development to avoid blocking on invalid phone

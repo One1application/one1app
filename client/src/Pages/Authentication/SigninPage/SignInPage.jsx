@@ -8,7 +8,7 @@ import {
   faMobileScreenButton,
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 // import Photo1 from "../../../assets/1.png";
 // import Photo2 from "../../../assets/2.png";
 // import Photo3 from "../../../assets/3.png";
@@ -21,7 +21,7 @@ import {
 } from "../../../services/auth/api.services";
 import Lottie from "lottie-react";
 import animation from "../../../assets/Animation - 4.json";
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from "../../../context/AuthContext";
 
 const SignInPage = () => {
   const [email, setEmail] = useState("");
@@ -37,6 +37,8 @@ const SignInPage = () => {
   const { verifyToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpLoading, setIsOtpLoading] = useState(false);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
+  const countryCodes = ["+1", "+91", "+44", "+61"];
 
   // const images = [
   //   "https://d3qp9zvlyuxos1.cloudfront.net/Group+46944GlobalSignin4.png",
@@ -52,6 +54,12 @@ const SignInPage = () => {
     setIsEmailValid(emailRegex.test(email));
   }, [email]);
 
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, []);
   useEffect(() => {
     setIsPhoneNumberValid(phoneNumber.length >= 10);
   }, [phoneNumber]);
@@ -77,9 +85,11 @@ const SignInPage = () => {
   // };
 
   const handleFormSubmit = async () => {
-    const userData = isUsingEmail ? { email } : { phoneNumber };
+    const userData = isUsingEmail
+      ? { email }
+      : { phoneNumber: selectedCountryCode + phoneNumber };
     setIsLoading(true);
-    
+
     try {
       const { data } = await signInUser(userData);
       if (data.success) {
@@ -90,7 +100,7 @@ const SignInPage = () => {
       }
     } catch (error) {
       console.error("API call error:", error);
-      toast.error("An error occurred. Please try again.");
+      toast.error("user does not exist.");
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +108,18 @@ const SignInPage = () => {
 
   const handleOTPSubmit = async () => {
     setIsOtpLoading(true);
-    const otpData = { otp, ...(isUsingEmail ? { email } : { phoneNumber }) };
+
+    if (otp.length < 6) {
+      toast.error("Please enter a valid OTP.");
+      setIsOtpLoading(false);
+      return;
+    }
+    const otpData = {
+      otp,
+      ...(isUsingEmail
+        ? { email }
+        : { phoneNumber: selectedCountryCode + phoneNumber }),
+    };
 
     try {
       const { data } = await verifyLoginUser(otpData);
@@ -112,7 +133,7 @@ const SignInPage = () => {
       }
     } catch (error) {
       console.error("API call error:", error);
-      toast.error("An error occurred. Please try again.");
+      toast.error("Wrong OTP");
     } finally {
       setIsOtpLoading(false);
     }
@@ -127,7 +148,8 @@ const SignInPage = () => {
       }}
     >
       <div className="flex justify-center items-start min-h-screen pt-8 mt-16">
-        <div className="shadow-xl flex flex-col lg:flex-row bg-white rounded-[24px] w-full max-w-[1000px] relative"
+        <div
+          className="shadow-xl flex flex-col lg:flex-row bg-white rounded-[24px] w-full max-w-[1000px] relative"
           style={{ height: "auto" }}
         >
           <div className="relative flex flex-col flex-1 p-6 md:p-12 pb-6 rounded-l-[24px] lg:rounded-l-[24px] w-full">
@@ -150,13 +172,33 @@ const SignInPage = () => {
                   />
                 </div>
               ) : (
-                <div className="flex flex-col gap-1 w-[85%]">
+                <div className="flex gap-2 w-[85%]">
+                  {/* Country Code Dropdown */}
+                  <select
+                    className="p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={selectedCountryCode}
+                    onChange={(e) => setSelectedCountryCode(e.target.value)}
+                  >
+                    {countryCodes.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Phone Number Input */}
                   <input
-                    type="text"
-                    placeholder="Phone Number With Country Code"
+                    type="tel"
+                    placeholder="Phone Number"
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full mt-2.5 text-sm p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => {
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+
+                      setPhoneNumber(value);
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               )}
@@ -167,7 +209,12 @@ const SignInPage = () => {
                     type="text"
                     placeholder="Enter OTP"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
+                      setOtp(value);
+                    }}
                     className="w-full mt-2.5 text-sm p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
@@ -195,7 +242,11 @@ const SignInPage = () => {
                   }
                   onClick={handleFormSubmit}
                 >
-                  {isLoading ? "Sending..." : isUsingEmail ? "Send OTP to Email" : "Send OTP to Phone"}
+                  {isLoading
+                    ? "Sending..."
+                    : isUsingEmail
+                    ? "Send OTP to Email"
+                    : "Send OTP to Phone"}
                 </button>
               )}
 

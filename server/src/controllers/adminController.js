@@ -211,7 +211,7 @@ export const createUser = async (req, res) => {
         .json({ message: "Invalid role. Only User or Creator allowed." });
     }
 
-    const goalsData = goals ? goals.split(",").map((goal) => goal.trim()) : [];
+   const goalsData = Array.isArray(goals) ? goals.map((goal) => goal.trim()) : (goals ? [goals.trim()] : []);
 
     const existingUserByEmail = await prisma.user.findFirst({
       where: { email },

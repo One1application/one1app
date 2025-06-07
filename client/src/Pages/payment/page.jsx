@@ -15,20 +15,25 @@ export default function PaymentPage() {
         const courseId = searchParams.get("courseId");
         const payingUpId = searchParams.get("payingUpId");
         const webinarId = searchParams.get("webinarId");
+        const contentId = searchParams.get("contentId");
         const telegramId = searchParams.get("telegramId");
+        const discountedPrice = searchParams.get("discountedPrice");
         const response = await verifyPayment({
           phonePayOrderId: merchantOrderId,
           courseId,
           payingUpId,
           webinarId,
           telegramId,
+          premiumContentId: contentId,
+          discountedPrice,
         });
 
-        if (response?.data.success) {
+        if (response?.data?.success) {
           setStatus("success");
-          // Redirect to course page after successful payment
+
+          // Redirect to dashboard page after successful payment
           setTimeout(() => {
-            navigate(`/dashboard`);
+            window.location.href = "http://localhost:5174/dashboard";
           }, 3000);
         } else {
           throw new Error(response?.message || "Payment verification failed");

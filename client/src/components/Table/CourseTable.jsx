@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, ArrowUpDown, Pencil, ChevronRight, Mail, SortAsc, ArrowDown, ArrowUp } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Pencil, ChevronRight, Mail, SortAsc, ArrowDown, ArrowUp, Copy } from 'lucide-react';
 import { Pagination } from '@mui/material';
 import  toast  from "react-hot-toast";
 
@@ -167,13 +167,9 @@ const CourseTable = ({ data }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   };
+
 
   const renderSortButton = () => (
     <div className="relative" ref={dropdownRef}>
@@ -270,6 +266,7 @@ const CourseTable = ({ data }) => {
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Price</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Sale</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Revenue</th>
+                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Coupon</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Payment</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Created At</th>
@@ -287,6 +284,38 @@ const CourseTable = ({ data }) => {
                   <td className="px-6 py-4 text-sm text-gray-500">₹{course.price || 0}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{course.purchasedBy?.length || 0}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">₹{calculateRevenue(course)}</td>
+                   <td className="px-6 py-4 text-sm text-gray-500">
+                       {
+    course.discount && course.discount.length > 0 ? (
+    // Find the coupon with the highest discount percentage
+    (() => {
+      const highestDiscountCoupon = course.discount.reduce((max, current) => {
+        // Compare the discount percentage to find the maximum
+        return (current.percent > max.percent) ? current : max;
+      });
+
+      // Return the JSX for the highest discount coupon
+      return (
+        <div className="flex gap-2">
+          <span>{highestDiscountCoupon.code}</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(highestDiscountCoupon.code);
+              toast.success('Coupon copied to clipboard');
+            }}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            <Copy className="h-4 w-4 ml-1" />
+          </button>
+        </div>
+      );
+    })()
+  ) : (
+    <span>N/A</span>
+  )
+}
+                  </td>
                   <td className="px-6 py-4">
                     <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800">
                       Enabled
@@ -302,13 +331,13 @@ const CourseTable = ({ data }) => {
                         }}
                         className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                       >
-                        Share
+                        <Copy className="h-4 w-4 ml-1"/>
                       </button>
                       <button 
                         onClick={(e) => handleEdit(e, course)}
                         className="inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium"
                       >
-                        Edit
+                        
                         <Pencil className="h-4 w-4 ml-1" />
                       </button>
                     </div>
@@ -350,6 +379,10 @@ const CourseTable = ({ data }) => {
                 <span>₹{calculateRevenue(course)}</span>
               </div>
               <div>
+                <span className="text-gray-500">Coupon: </span>
+                <span>{course.discount?.map(d => d.code).join(", ") || "No"}</span>
+              </div>
+              <div>
                 <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
                   Payment Enabled
                 </span>
@@ -386,33 +419,32 @@ const CourseTable = ({ data }) => {
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center mt-6">
-        <Pagination 
-          count={Math.ceil(sortedData.length / itemsPerPage)} 
-          page={page} 
-          onChange={handleChangePage} 
-          size="medium"
-          sx={{
-            '& .MuiPaginationItem-root': {
-              backgroundColor: 'rgb(249, 250, 251)',
-              border: '1px solid rgb(229, 231, 235)',
-              color: 'rgb(107, 114, 128)',
-              '&:hover': {
-                backgroundColor: 'rgb(234, 88, 12)',
-                color: 'white',
-              },
-              '&.Mui-selected': {
-                backgroundColor: 'rgb(234, 88, 12)',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'rgb(194, 65, 12)',
-                },
-              },
-            },
-          }}
-        />
-      </div>
+       {/* pagination */}
+    {sortedData.length > itemsPerPage && (
+             <div className="flex justify-center mt-6">
+               <Pagination 
+                 count={Math.ceil(sortedData.length / itemsPerPage)} 
+                 page={page} 
+                 onChange={(_, value) => setPage(value)}
+                 size="medium"
+                 sx={{
+                   '& .MuiPaginationItem-root': {
+                     backgroundColor: 'rgb(249, 250, 251)',
+                     border: '1px solid rgb(229, 231, 235)',
+                     color: 'rgb(107, 114, 128)',
+                     '&:hover': {
+                       backgroundColor: 'rgb(234, 88, 12)',
+                       color: 'white',
+                     },
+                     '&.Mui-selected': {
+                       backgroundColor: 'rgb(234, 88, 12)',
+                       color: 'white',
+                     },
+                   },
+                 }}
+               />
+             </div>
+           )}
     </div>
   );
 };
