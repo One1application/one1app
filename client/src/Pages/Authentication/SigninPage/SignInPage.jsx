@@ -141,11 +141,8 @@ const SignInPage = () => {
 
   return (
     <div
-      className="bg-cover bg-center min-h-screen flex flex-col justify-start"
-      style={{
-        backgroundImage:
-          "url(https://d3qp9zvlyuxos1.cloudfront.net/Gradient+background.svg)",
-      }}
+      className=" min-h-screen flex flex-col justify-start bg-gradient-to-br from-orange-400 via-red-400 to-pink-500"
+      
     >
       <div className="flex justify-center items-start min-h-screen pt-8 mt-16">
         <div

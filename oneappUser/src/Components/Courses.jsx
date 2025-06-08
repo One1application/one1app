@@ -47,7 +47,7 @@ const Courses = () => {
     fetchCourses();
   }, []);
 
-  console.log(selectedVideo);
+   
   const checkSubscriptionStatus = (validity, startingDate) => {
     if (!validity || !startingDate) return "Unknown";
 
