@@ -1,16 +1,15 @@
 import { useState } from "react";
-import { Settings } from "lucide-react"; // Ensure lucide-react is installed for icons
+import { HelpCircle, Settings } from "lucide-react"; // Ensure lucide-react is installed for icons
 import { useNavigate, Outlet } from "react-router-dom";
 import { dashboardConfig } from "./dashboardConfig";
-import { useAuth } from "../../context/AuthContext"
-
+import { useAuth } from "../../context/AuthContext";
 
 const DashboardPage = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({}); // Tracks open submenus
   const navigate = useNavigate();
-  const { logout   } = useAuth();
+  const { logout } = useAuth();
 
   const toggleSettings = () => {
     setIsSettingsOpen((prev) => !prev);
@@ -67,7 +66,7 @@ const DashboardPage = () => {
                 <div key={index}>
                   <div
                     className="flex items-center text-sm py-3 px-4 cursor-pointer hover:bg-orange-600 hover:rounded-xl transition-all"
-                    onClick={() => navigate(`/dashboard${item.path}`)} 
+                    onClick={() => navigate(`/dashboard${item.path}`)}
                   >
                     <item.icon className="w-5 h-5 mr-3" />
                     <span>{item.label}</span>
@@ -85,21 +84,20 @@ const DashboardPage = () => {
                   </div>
 
                   {/* Sublabels */}
-                  {openSubmenus[index] &&
-                    item.sublabels?.length > 0 && (
-                      <div className="ml-6 mt-2 space-y-1">
-                        {item.sublabels.map((sublabel, subIndex) => (
-                          <div
-                            key={subIndex}
-                            className="flex items-center text-sm py-2 px-4 cursor-pointer hover:bg-orange-500 hover:rounded-lg transition-all"
-                            onClick={() => navigate(`/dashboard${sublabel.path}`)} // Navigate on sublabel click
-                          >
-                            <sublabel.icon className="w-4 h-4 mr-2" />
-                            <span>{sublabel.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  {openSubmenus[index] && item.sublabels?.length > 0 && (
+                    <div className="ml-6 mt-2 space-y-1">
+                      {item.sublabels.map((sublabel, subIndex) => (
+                        <div
+                          key={subIndex}
+                          className="flex items-center text-sm py-2 px-4 cursor-pointer hover:bg-orange-500 hover:rounded-lg transition-all"
+                          onClick={() => navigate(`/dashboard${sublabel.path}`)} // Navigate on sublabel click
+                        >
+                          <sublabel.icon className="w-4 h-4 mr-2" />
+                          <span>{sublabel.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -149,6 +147,8 @@ const DashboardPage = () => {
             </div>
           )}
         </div>
+
+        
       </aside>
 
       <main className="flex-1 overflow-y-auto h-screen scrollbar-hide">
