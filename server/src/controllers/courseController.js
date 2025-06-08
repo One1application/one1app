@@ -690,6 +690,7 @@ export const purchaseCourse = async (req, res) => {
   }
 };
 
+//TODO:inActive course or expired subscription of coursePurchasers need to track and monitor by cronjob or something.
 export const renewalCourse = async (req, res) => {
   try {
     const { courseId, couponCode, validateOnly } = req.body;
@@ -842,6 +843,8 @@ export const renewalCourse = async (req, res) => {
     });
   }
 };
+
+
 
 export const playVideo = async (req, res) => {
   try {

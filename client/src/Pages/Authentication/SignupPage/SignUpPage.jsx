@@ -9,7 +9,7 @@ import {
   faTelegram,
   faLinkedin,
 } from "@fortawesome/free-brands-svg-icons";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import SubscriptionPage from "./SubscriptionsPage";
 
 // import Photo1 from "../../../assets/1.png";
@@ -156,8 +156,6 @@ const SignUpPage = () => {
     return true;
   };
 
-
-
   const handleGetStarted = async () => {
     const isNameValid = validateName();
     const isPhoneValid = validatePhoneNumber();
@@ -264,13 +262,7 @@ const SignUpPage = () => {
   };
 
   return (
-    <div
-      className="bg-cover bg-center min-h-screen flex flex-col justify-start"
-      style={{
-        backgroundImage:
-          "url(https://d3qp9zvlyuxos1.cloudfront.net/Gradient+background.svg)",
-      }}
-    >
+    <div className="bg-cover bg-center min-h-screen flex flex-col justify-start bg-gradient-to-br from-orange-500 via-red-600 to-pink-600">
       {subscriptionPage ? (
         <SubscriptionPage />
       ) : (
@@ -507,6 +499,24 @@ const SignUpPage = () => {
                         className="w-full mt-2.5 text-sm p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     )}
+                  </div>
+
+                  <div className="text-xs text-gray-400 text-center">
+                    By signing up, you agree to our{" "}
+                    <a
+                      href="/TermCondition"
+                      className="text-blue-500 hover:underline"
+                    >
+                      Terms of Service
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="/publicpolicy"
+                      className="text-blue-500 hover:underline"
+                    >
+                      Privacy Policy
+                    </a>
+                    .
                   </div>
 
                   <button

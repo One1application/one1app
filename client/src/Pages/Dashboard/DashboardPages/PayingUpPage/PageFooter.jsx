@@ -4,7 +4,7 @@ import Logo from "../../../../assets/oneapp.png";
 
 const PageFooter = () => {
   return (
-    <section className="py-12 px-16 max-md:px-10 max-sm:px-4 ">
+    <section className="py-12 px-16 bg-gray-900 max-md:px-10 max-sm:px-4 ">
         <div className='w-full flex flex-col gap-2 justify-center items-center '>
         <Link to="/" className="flex items-center">
           <img src={Logo} alt="Logo" className="w-32" />

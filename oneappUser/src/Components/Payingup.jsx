@@ -46,7 +46,7 @@ const Payingup = () => {
       </div>
     );
 
-    console.log(purchasedPayingUp)
+  console.log(purchasedPayingUp);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -121,7 +121,7 @@ const Payingup = () => {
 
             {/* Files Section */}
             <div className="space-y-2">
-              {files.map((file, fileIndex) => (
+              {files?.map((file, fileIndex) => (
                 <div
                   key={fileIndex}
                   className="flex items-center justify-between bg-gray-700/30 px-4 py-2 rounded-md border border-gray-600/30"
@@ -130,8 +130,10 @@ const Payingup = () => {
                     <FileText size={16} />
                     {file.name || `File ${fileIndex + 1}`}
                   </div>
+
+                
                   <a
-                    href={file.url}
+                    href={file.signedUrl}
                     download
                     className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-sm"
                   >

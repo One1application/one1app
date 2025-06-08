@@ -5,10 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import oneApp from "../../../../assets/oneapp.jpeg";
 import SigninModal from "../../../../components/Modal/SigninModal";
 import { useAuth } from "../../../../context/AuthContext";
-import {
-  fetchCourse,
-
-} from "../../../../services/auth/api.services";
+import { fetchCourse } from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
 import { courseConfig } from "./courseConfig";
 import HeaderImage from "../../../../components/SellingPageShare/HeaderImage";
@@ -18,8 +15,12 @@ import OverViewExploreData from "../../../../components/SellingPageShare/OverVie
 import TestiMonials from "../../../../components/SellingPageShare/TestiMonials";
 import TextBox from "../../../../components/SellingPageShare/TextBox";
 import PaymentSignUpModel from "../../../../components/Modal/PaymentSignUpModel";
+import { getInitials } from "../../../../utils/constants/nameCutter.js";
+import InfoSections from "../../../../components/InfoSections.jsx";
+import ThreeinOne from "./ThreeinOne.jsx";
 
 const NewCourse = () => {
+  const { userDetails } = useAuth();
   const [openFaq, setOpenFaq] = useState(-1);
   const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,6 +36,41 @@ const NewCourse = () => {
   const [isPurchased, setIsPurchased] = useState(false);
   const navigate = useNavigate();
   const { currentUserId } = useAuth();
+
+  const getValidityDetails = (validity) => {
+    switch (validity) {
+      case "Weekly":
+        return {
+          icon: <Icons.RefreshCw size={20} className="text-blue-500" />,
+          text: "7-day access",
+          style: "bg-blue-50 text-blue-600 border-blue-200",
+        };
+      case "Monthly":
+        return {
+          icon: <Icons.Calendar size={20} className="text-green-500" />,
+          text: "30-day access",
+          style: "bg-green-50 text-green-600 border-green-200",
+        };
+      case "Yearly":
+        return {
+          icon: <Icons.Star size={20} className="text-amber-500" />,
+          text: "1-year access",
+          style: "bg-amber-50 text-amber-600 border-amber-200",
+        };
+      case "Lifetime":
+        return {
+          icon: <Icons.Crown size={20} className="text-purple-500" />,
+          text: "Forever access",
+          style: "bg-purple-50 text-purple-600 border-purple-200",
+        };
+      default:
+        return {
+          icon: <Icons.HelpCircle size={20} className="text-gray-500" />, // Fallback icon
+          text: "Unknown plan",
+          style: "bg-gray-50 text-gray-600 border-gray-200",
+        };
+    }
+  };
 
   const handleAuthError = (error) => {
     if (
@@ -57,7 +93,7 @@ const NewCourse = () => {
         title: courseDetails.title,
         baseAmount: courseDetails.price,
         courseType: "course",
-        createdBy: courseDetails.creator.name
+        createdBy: courseDetails.creator.name,
       },
     });
   };
@@ -73,13 +109,13 @@ const NewCourse = () => {
           title: courseDetails.title,
           baseAmount: courseDetails.price,
           courseType: "course",
-           createdBy: courseDetails.creator.name
+          createdBy: courseDetails.creator.name,
         },
       });
     }
   };
 
-  console.log("courseDetails", courseDetails)
+  console.log("courseDetails", courseDetails);
   const handleSuccessfulSignIn = (data) => {
     if (data.token) {
       localStorage.setItem("AuthToken", data.token);
@@ -91,7 +127,7 @@ const NewCourse = () => {
           title: courseDetails.title,
           baseAmount: courseDetails.price,
           courseType: "course",
-           createdBy: courseDetails?.creator?.name
+          createdBy: courseDetails?.creator?.name,
         },
       });
     }
@@ -223,32 +259,32 @@ const NewCourse = () => {
       <div className="min-h-screen bg-black text-white">
         <div className="px-5">
           <div className="bg-gray-700">
-            <HeaderImage imageurl={'payingUpDetails.coverImage.value'} />
+            <HeaderImage imageurl={"payingUpDetails.coverImage.value"} />
           </div>
           <CreatorInfo />
         </div>
-
         <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
           About the Course
         </div>
-
         <div className="px-10">
-          <BackGroundCard childrenCom={<div className="mt-4 flex flex-col gap-8">
-            <OverViewExploreData />
-            <OverViewExploreData />
-            <OverViewExploreData />
-          </div>} />
+          <BackGroundCard
+            childrenCom={
+              <div className="mt-4 flex flex-col gap-8">
+                <OverViewExploreData />
+                <OverViewExploreData />
+                <OverViewExploreData />
+              </div>
+            }
+          />
         </div>
-
         <div className="flex justify-between">
-
           <div className="flex flex-col w-full justify-center items-center">
             <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
               Features
             </div>
 
             <div>
-              <BackGroundCard childrenCom={'data'} />
+              <BackGroundCard childrenCom={"data"} />
             </div>
           </div>
           <div className="flex flex-col w-full justify-center items-center">
@@ -256,11 +292,10 @@ const NewCourse = () => {
               Course Linked
             </div>
             <div>
-              <BackGroundCard childrenCom={'data'} />
+              <BackGroundCard childrenCom={"data"} />
             </div>
           </div>
         </div>
-
         <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
           Course Benefits
         </div>
@@ -275,7 +310,6 @@ const NewCourse = () => {
             <BackGroundCard childrenCom={<div>Data</div>} />
           </div>
         </div>
-
         <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
           Products
         </div>
@@ -290,7 +324,6 @@ const NewCourse = () => {
             <BackGroundCard childrenCom={<div>Data</div>} />
           </div>
         </div>
-
         <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
           TestiMonials
         </div>
@@ -304,14 +337,17 @@ const NewCourse = () => {
             <TestiMonials />
           </div>
         </div>
-
         <div className="flex justify-center items-center w-full text-[#EC5D0E] text-xl font-semibold pb-4">
           Frequently Asked Questions
         </div>
         <div className="flex justify-center items-center">
           <div className=" grid grid-cols-2  justify-center items-center gap-4">
-            <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
-            <BackGroundCard childrenCom={<TextBox dtype={''} color='orange' />} />
+            <BackGroundCard
+              childrenCom={<TextBox dtype={""} color="orange" />}
+            />
+            <BackGroundCard
+              childrenCom={<TextBox dtype={""} color="orange" />}
+            />
           </div>
         </div>
         No course data available
@@ -320,7 +356,7 @@ const NewCourse = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black scrollbar-hide overflow-y-scroll">
+    <div className="min-h-screen bg-gray-950 scrollbar-hide overflow-y-scroll">
       <PaymentSignUpModel
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
@@ -349,51 +385,131 @@ const NewCourse = () => {
       )}
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-orange-600 to-orange-500 text-white py-12 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl font-bold mb-8 text-white">
-            {courseDetails.title}
-          </h1>
-          {!isPurchased ? (
-            <button
-              onClick={() => {
-                //first check if user is authenticated
-                if (!currentUserId) {
-                  setShowSignupModal(true);
-                } else {
-                  navigate("/app/payment", {
-                    state: {
-                      id: courseId,
-                      title: courseDetails.title,
-                      baseAmount: courseDetails.price,
-                      courseType: "course",
-                       createdBy: courseDetails.creator.name
-                    },
-                  });
-                }
-              }}
-              className="bg-black text-orange-500 py-4 px-10 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
-            >
-              <span>Enroll for</span>
-              {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
-              <span>{courseDetails.price}</span>
-            </button>
-          ) : courseDetails.createdBy === currentUserId ? (
-            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
-              <Icons.CheckCircle className="w-5 h-5 mr-2" />
-              <span>You Created This</span>
+
+      {courseDetails?.coverImage?.isActive && (
+        <section className="">
+          <div className="w-full mx-auto">
+            <div className="relative overflow-hidden rounded-lg shadow-[0_8px_30px_rgba(0,0,0,0.3)] border border-orange-500/30 group transition-all duration-300 hover:shadow-[0_10px_40px_rgba(255,90,0,0.2)]">
+              <img
+                src={courseDetails?.coverImage?.value}
+                alt="Course Cover"
+                className="w-full h-[180px] sm:h-[220px] md:h-[280px] object-cover transition-transform duration-500 group-hover:scale-102"
+              />
             </div>
-          ) : (
-            <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
-              <Icons.CheckCircle className="w-5 h-5 mr-2" />
-              <span>Already Purchased</span>
+            <div className="bg-gradient-to-br from-gray-900 to-orange-900/70 mt-1 p-4 shadow-lg border border-white/10 backdrop-blur-sm">
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between gap-4 px-5">
+                  {/* Avatar or Initials */}
+                  <div className="flex items-center gap-4">
+                    {userDetails?.avatar ? (
+                      <img
+                        className="w-12 h-12 rounded-full border-2 border-white/80 shadow-sm"
+                        src={userDetails.avatar}
+                        alt="Creator Avatar"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-indigo-600/90 flex items-center justify-center border-2 border-white/80">
+                        <span className="text-lg font-bold text-white">
+                          {getInitials(courseDetails?.creator?.name)}
+                        </span>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-xs text-gray-300 uppercase tracking-wider">
+                        Created by
+                      </p>
+                      <h2 className="text-base font-semibold text-white">
+                        {courseDetails.creator.name}
+                      </h2>
+                    </div>
+                  </div>
+
+                  {/* Title & Badge */}
+
+                  <div className="text-right flex flex-col  items-center gap-1">
+                    <div className="flex">
+                      <div className="flex items-center  gap-3 group">
+                        <span
+                          className="
+    inline-block px-2.5 py-1 text-xs font-bold 
+    bg-orange-500/90 text-white rounded-full 
+    transition-all duration-200
+    group-hover:bg-orange-400/90 group-hover:scale-105
+    shadow-[0_2px_5px_rgba(249,115,22,0.3)]
+  "
+                        >
+                          COURSE
+                        </span>
+
+                        <h1
+                          className="
+    text-xl font-bold text-white 
+    max-w-[200px] truncate
+    transition-all duration-200
+    group-hover:text-orange-100
+    relative after:content-[''] after:absolute after:bottom-0 after:left-0 
+    after:w-0 after:h-[2px] after:bg-orange-400
+    after:transition-all after:duration-300
+    group-hover:after:w-full
+  "
+                        >
+                          {courseDetails?.title}
+                        </h1>
+                      </div>
+
+                      <div>
+                        {(() => {
+                          const validity = getValidityDetails(
+                            courseDetails?.validity
+                          );
+                          return (
+                            <div className="p-3 rounded-lg  flex items-center gap-2">
+                              {validity.icon}
+                              <span className="text-sm font-medium">
+                                {validity.text}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-end justify-end w-full gap-2">
+                      {courseDetails?.language?.value.map((lang, index) => {
+                        const colors = [
+                          "bg-blue-500/90",
+                          "bg-purple-500/90",
+                          "bg-emerald-500/90",
+                          "bg-amber-500/90",
+                          "bg-rose-500/90",
+                          "bg-indigo-500/90",
+                          "bg-teal-500/90",
+                          "bg-orange-500/90",
+                        ];
+                        const colorIndex = lang.charCodeAt(0) % colors.length;
+                        const bgColor = colors[colorIndex];
+
+                        return (
+                          <span
+                            key={index}
+                            className={`px-3 py-1 text-xs font-semibold text-white ${bgColor} rounded-full hover:scale-105 transition-transform`}
+                          >
+                            {lang}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* Lessons Section - Moved to top and modified */}
-
+      {/* 
       <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
@@ -423,124 +539,38 @@ const NewCourse = () => {
             )}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* About Section */}
-      <section className="py-10 px-4">
+      <section className="py-16 px-4 sm:px-6 relative">
         <div className="max-w-6xl mx-auto">
-          <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500/20">
-            <h2 className="text-4xl font-bold mb-6 text-orange-500">
-              About the Course
-            </h2>
+          <div className="relative p-8 sm:p-12 rounded-3xl border border-orange-500/30 bg-gray-900/60 backdrop-blur-xl shadow-xl transition-all duration-300 hover:shadow-orange-600/10">
+            {/* Gradient border accent ring */}
+            <div className="absolute -inset-0.5 bg-gradient-to-br from-orange-500/10 to-orange-700/10 rounded-3xl blur-md opacity-25"></div>
+
+            {/* Header */}
+            <div className="relative z-10 mb-8">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600 mb-3">
+                About the Course
+              </h2>
+              <div className="h-1.5 w-24 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full"></div>
+            </div>
+
+            {/* Description */}
             <div
-              className="text-gray-300 mb-6 leading-relaxed text-lg"
+              className="relative z-10 text-gray-300 leading-relaxed text-[17px] sm:text-lg space-y-6 prose prose-invert max-w-none"
               dangerouslySetInnerHTML={{
                 __html: courseDetails.aboutThisCourse.description,
               }}
             />
-            {courseDetails.validity && (
-              <div className="mb-6">
-                <h3 className="text-2xl font-semibold mb-3 text-orange-500">
-                  Course Validity :{" "}
-                  <span className="text-white text-xl">
-                    {" "}
-                    {courseDetails.validity}{" "}
-                  </span>{" "}
-                </h3>
-              </div>
-            )}
-            <h3 className="text-2xl font-semibold mb-3 text-orange-500">
-              {" "}
-              Features :{" "}
-            </h3>
-
-            <ul className="space-y-4">
-              {courseDetails.aboutThisCourse.features.map(
-                (feature, index) =>
-                  feature && (
-                    <li
-                      key={index}
-                      className="flex items-center space-x-4 text-gray-200"
-                    >
-                      <Icons.CheckCircle className="w-6 h-6 text-orange-500 flex-shrink-0" />
-                      <span className="text-lg">{feature}</span>
-                    </li>
-                  )
-              )}
-            </ul>
           </div>
         </div>
       </section>
 
-      {/* Cover Image Section */}
-      {courseDetails.coverImage.isActive && (
-        <section className="py-10 px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="rounded-2xl overflow-hidden shadow-2xl border border-orange-500/20">
-              <img
-                src={courseDetails.coverImage.value}
-                alt={courseDetails.coverImage.altText}
-                className="w-full h-[400px] object-cover"
-              />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Language Section */}
-      {courseDetails.language.isActive && (
-        <section className="py-10 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-              {courseDetails.language.title}
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {courseDetails.language.value.map((language, index) => (
-                <div
-                  key={index}
-                  className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
-                >
-                  <span className="text-xl font-semibold text-white">
-                    {language}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Course Benefits */}
-      {courseDetails.courseBenefits.benefitsActive && (
-        <section className="py-10 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-              {courseDetails.courseBenefits.title}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {courseDetails.courseBenefits.benefitsMetaData.map(
-                (benefit, index) =>
-                  benefit.title && (
-                    <div
-                      key={index}
-                      className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
-                    >
-                      <div className="text-xl font-semibold text-white">
-                        <span className="mr-2">{benefit.emoji}</span>
-                        {benefit.title}
-                      </div>
-                    </div>
-                  )
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Testimonials */}
       {courseDetails.testimonials.isActive && (
         <section className="py-10 px-4">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-6xl  mx-auto">
             <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
               {courseDetails.testimonials.title}
             </h2>
@@ -559,7 +589,7 @@ const NewCourse = () => {
                 disabled={
                   currentTestimonialIndex >=
                   courseDetails.testimonials.testimonialsMetaData.length -
-                  itemsPerView
+                    itemsPerView
                 }
                 className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-orange-500 p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -567,7 +597,7 @@ const NewCourse = () => {
               </button>
 
               {/* Testimonials Container */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 px-8 md:grid-cols-3 gap-6">
                 {courseDetails.testimonials.testimonialsMetaData
                   .slice(
                     currentTestimonialIndex,
@@ -609,24 +639,36 @@ const NewCourse = () => {
 
       {/* Gallery Section */}
       {courseDetails.gallery.isActive && (
-        <section className="py-10 px-4">
+        <section className="py-16 px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-              {courseDetails.gallery.title}
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {/* Header */}
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
+                {courseDetails.gallery.title || "Course Gallery"}
+              </h2>
+              <div className="h-1.5 w-20 mx-auto mt-3 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full"></div>
+            </div>
+
+            {/* Image Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {courseDetails.gallery.imageMetaData.map(
                 (image, index) =>
                   image.name && (
                     <div
                       key={index}
-                      className="rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                      className="relative group rounded-2xl overflow-hidden shadow-lg border border-orange-500/20 hover:border-orange-400/40 transition-all duration-300"
                     >
                       <img
                         src={image.image || oneApp}
                         alt={image.name}
-                        className="w-full h-48 object-cover"
+                        className="w-full h-52 object-cover transition-transform duration-300 group-hover:scale-105"
                       />
+                      {/* Optional caption */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                        <p className="text-sm text-white font-medium truncate">
+                          {image.name}
+                        </p>
+                      </div>
                     </div>
                   )
               )}
@@ -636,75 +678,49 @@ const NewCourse = () => {
       )}
 
       {/* Products Section */}
-      {courseDetails.products?.[0]?.isActive && (
+      {courseDetails?.products?.[0]?.isActive &&
+      courseDetails.products[0].productMetaData?.length > 0 ? (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-              {courseDetails.products[0].title}
+            <h2 className="text-4xl font-bold mb-10 text-center text-orange-500">
+              {courseDetails.products[0].title || "Our Products"}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {courseDetails.products[0].productMetaData.map(
-                (product, index) =>
-                  product.name && (
-                    <a
-                      key={index}
-                      href={product.productLink}
-                      className="block p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 relative group border border-orange-500/20"
-                    >
-                      <h3 className="text-xl font-semibold mb-3 text-white">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {courseDetails.products[0].productMetaData.map((product, index) =>
+                product?.name ? (
+                  <a
+                    key={index}
+                    href={product.productLink || "#"}
+                    className="group bg-gray-900 rounded-2xl p-5 border border-orange-500/20 hover:border-orange-400 transition-all duration-300 shadow-lg hover:shadow-xl relative"
+                  >
+                    {/* Top Row: Name and Price */}
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-white truncate max-w-[70%]">
                         {product.name}
                       </h3>
-                      <div className="flex items-center text-orange-500 font-semibold">
+                      <div className="flex items-center text-green-400 text-base font-medium">
                         {CurrencyIcon && (
-                          <CurrencyIcon className="w-5 h-5 mr-1" />
+                          <CurrencyIcon className="w-4 h-4 mr-1" />
                         )}
-                        <span>{product.price}</span>
-                      </div>
-                      <Icons.ArrowRight className="w-6 h-6 text-orange-500 absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </a>
-                  )
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* FAQ Section */}
-      {courseDetails.faqs.isActive && (
-        <section className="py-10 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-              {courseDetails.faqs.title}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {courseDetails.faqs.faQMetaData.map(
-                (faq, index) =>
-                  faq.question && (
-                    <div
-                      key={index}
-                      className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
-                      onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
-                    >
-                      <h3 className="text-xl font-semibold mb-3 text-white flex justify-between items-center cursor-pointer">
-                        {faq.question}
-                        <Icons.ChevronDown
-                          className={`w-5 h-5 transition-transform ${openFaq === index ? "rotate-180" : ""
-                            }`}
-                        />
-                      </h3>
-                      <div
-                        className={`overflow-hidden transition-all ${openFaq === index ? "block" : "hidden"
-                          }`}
-                      >
-                        <p className="text-gray-300">{faq.answer}</p>
+                        {product.price || "N/A"}
                       </div>
                     </div>
-                  )
+
+                    {/* Bottom Icon (optional) */}
+                    <Icons.ArrowRight className="w-5 h-5 text-orange-400 absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </a>
+                ) : null
               )}
             </div>
           </div>
         </section>
+      ) : (
+        <div className="py-10 text-center text-gray-500">
+          No products available
+        </div>
       )}
+
+      <ThreeinOne courseDetails={courseDetails} />
 
       {/* Call to Action */}
       {/* <section className="py-12 px-4 bg-gradient-to-r from-orange-600 to-orange-500">
@@ -724,6 +740,47 @@ const NewCourse = () => {
       </section> */}
 
       {/* page footer */}
+
+      <div className="flex justify-center mb-5 mt-8">
+        {!isPurchased ? (
+          <button
+            onClick={() => {
+              if (!currentUserId) {
+                setShowSignupModal(true);
+              } else {
+                navigate("/app/payment", {
+                  state: {
+                    id: courseId,
+                    title: courseDetails.title,
+                    baseAmount: courseDetails.price,
+                    courseType: "course",
+                    createdBy: courseDetails.creator.name,
+                  },
+                });
+              }
+            }}
+            className="bg-orange-600 text-white py-4 px-6 rounded-lg font-bold hover:bg-gray-900 transition-colors duration-300 shadow-xl inline-flex items-center justify-center space-x-3 text-lg"
+          >
+            <span>Enroll for</span>
+            {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
+            <span>{courseDetails.price}</span>
+          </button>
+        ) : courseDetails.createdBy === currentUserId ? (
+          <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
+            <Icons.CheckCircle className="w-5 h-5 mr-2" />
+            <span>You Created This</span>
+          </div>
+        ) : (
+          <a
+            href="http://localhost:5174/dashboard"
+            className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center font-medium hover:bg-green-700 transition-colors duration-300"
+          >
+            <Icons.LayoutDashboard className="w-5 h-5 mr-2" />
+            <span>Go to Dashboard</span>
+          </a>
+        )}
+      </div>
+
       <PageFooter />
     </div>
   );

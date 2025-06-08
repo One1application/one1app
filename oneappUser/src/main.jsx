@@ -7,7 +7,7 @@ import { AuthenticationProvider } from "./Context/AuthenticationContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/user">
       <AuthenticationProvider>
         <App />
       </AuthenticationProvider>

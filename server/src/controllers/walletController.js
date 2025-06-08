@@ -10,7 +10,7 @@ import {
 import prisma from "../db/dbClient.js";
 import { sendOtp } from "../utils/sendOtp.js";
 import bcrypt from "bcrypt";
-import {  calculateExpiryDate } from "../utils/courseExpiryDate.js";
+import { calculateExpiryDate } from "../utils/courseExpiryDate.js";
 
 dotenv.config();
 
@@ -297,64 +297,59 @@ export async function verifyPayment(req, res) {
           where: {
             purchaserId: user.id,
             courseId,
-
           },
-         
         });
-        console.log("existingPurchase", existingPurchase)
-        if(existingPurchase){
-          
-          let calculateExpiry = calculateExpiryDate(creator?.validity, existingPurchase.expiryDate);
-          if(existingPurchase.expiryDate < new Date()){
-              calculateExpiry = calculateExpiryDate(creator?.validity);
+        console.log("existingPurchase", existingPurchase);
+        if (existingPurchase) {
+          let calculateExpiry = calculateExpiryDate(
+            creator?.validity,
+            existingPurchase.expiryDate
+          );
+          if (existingPurchase.expiryDate < new Date()) {
+            calculateExpiry = calculateExpiryDate(creator?.validity);
           }
-          
+
           const renewal = await prisma.courseRenewal.create({
             data: {
-               purchaseId: existingPurchase.id,
-               newExpiryDate: calculateExpiry,
-               renewalDate: new Date(),
-               orderId: phonePayOrderId,
-               paymentId:PhonePayPaymentDetails.paymentDetails[0].transactionId,
-
-            }
+              purchaseId: existingPurchase.id,
+              newExpiryDate: calculateExpiry,
+              renewalDate: new Date(),
+              orderId: phonePayOrderId,
+              paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
+            },
           });
-          console.log("renewalRecord", renewal)
+          console.log("renewalRecord", renewal);
 
           const updateCoursePurchase = await prisma.coursePurchasers.update({
             where: {
               id: existingPurchase.id,
             },
             data: {
-               expiryDate: calculateExpiry,
-               isActive: true,
-               updatedAt: new Date()
-               
-            }
+              expiryDate: calculateExpiry,
+              isActive: true,
+              updatedAt: new Date(),
+            },
           });
           console.log("updateCourse", updateCoursePurchase);
-        }else {
+        } else {
           const calculateExpiry = calculateExpiryDate(creator.validity);
-        const course = await prisma.coursePurchasers.create({
-          data: {
-            courseId,
-            purchaserId: existingUser.id,
-            paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
-            orderId: phonePayOrderId,
-            expiryDate: calculateExpiry,
-            isActive: true,
-          },
-        });
-        
-        if (!course) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Failed to buy course." });
-        }
-        }
+          const course = await prisma.coursePurchasers.create({
+            data: {
+              courseId,
+              purchaserId: existingUser.id,
+              paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
+              orderId: phonePayOrderId,
+              expiryDate: calculateExpiry,
+              isActive: true,
+            },
+          });
 
-        
-
+          if (!course) {
+            return res
+              .status(400)
+              .json({ success: false, message: "Failed to buy course." });
+          }
+        }
 
         const transaction = await prisma.transaction.create({
           data: {
@@ -898,6 +893,20 @@ export async function updateBusinessInfo(req, res) {
       });
     }
 
+    const isKycVerified = await prisma.wallet.findFirst({
+      where: {userId: user.id,},
+      select: {
+        isKycVerified: true,
+      }
+    });
+    
+    if(isKycVerified.isKycVerified){
+       return res.status(400).json({
+        success: false,
+        message: "You have already verified your Kyc!"
+       });
+    }
+
     const updatedBusinessInfo = await prisma.businessInfo.update({
       where: {
         id: businessExists.id,
@@ -1118,6 +1127,20 @@ export async function updateKycDetails(req, res) {
         success: false,
         message: "KYC details not found. Please create KYC details first.",
       });
+    }
+
+    const isKycVerified = await prisma.wallet.findFirst({
+      where: {userId: user.id,},
+      select: {
+        isKycVerified: true,
+      }
+    })
+    
+    if(isKycVerified.isKycVerified){
+       return res.status(400).json({
+        success: false,
+        message: "You have already verified your Kyc!"
+       })
     }
 
     // Extract only the fields that are provided
@@ -1451,6 +1474,20 @@ export async function updateBankDetails(req, res) {
       return res
         .status(400)
         .json({ success: false, message: "Bank details not found." });
+    }
+
+    const isKycVerified = await prisma.wallet.findFirst({
+      where: {userId: user.id,},
+      select: {
+        isKycVerified: true,
+      }
+    })
+
+    if(isKycVerified.isKycVerified){
+       return res.status(400).json({
+        success: false,
+        message: "You have already verified your Kyc!"
+       })
     }
 
     const existingUpiRecords = await prisma.uPI.findMany({
@@ -2874,6 +2911,92 @@ export async function getAllTimeEarnings(req, res) {
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
+    });
+  }
+}
+
+export async function getFilterEarningsAndWithdrawal(req, res) {
+  const { LastWeek, LastMonth, LastYear, CustomRange, AllTime } = req.query;
+  const user = req.user;
+  try {
+    const wallet = await prisma.wallet.findFirst({
+      where: {
+        userId: user.id,
+      },
+    });
+    const today = new Date();
+    let startDate, endDate;
+
+    if (LastWeek) {
+      const start = new Date(today);
+      start.setDate(start.getDate() - start.getDay() - 7);
+      const end = new Date(today);
+      end.setDate(end.getDate() - end.getDay());
+      startDate = start;
+      endDate = end;
+    } else if (LastMonth) {
+      startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+    } else if (LastYear) {
+      startDate = new Date(today.getFullYear() - 1, 0, 1);
+      endDate = new Date(today.getFullYear() - 1, 11, 31);
+    } else if (CustomRange) {
+      const [start, end] = CustomRange.split(",");
+      startDate = new Date(start);
+      endDate = new Date(end);
+    }else if (AllTime){
+      startDate = null
+      endDate = null
+    }
+
+    const whereClause = {
+      creatorId: user.id,
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+    };
+
+    const totalEarningsData = await prisma.transaction.aggregate({
+      where: whereClause,
+
+      _sum: {
+        amountAfterFee: true,
+      },
+    });
+
+    const totalWithdrawalsData = await prisma.withdrawal.aggregate({
+      where: {
+        walletId: wallet.id,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        status: "SUCCESS",
+      },
+
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const totalEarnings = totalEarningsData._sum.amountAfterFee || 0;
+    const totalWithdrawals = totalWithdrawalsData._sum.amount || 0;
+    console.log("totalEarnings", totalEarnings);
+    console.log(totalWithdrawals);
+    return res.status(200).json({
+      success: true,
+      payload: {
+        totalEarnings,
+        totalWithdrawals,
+      },
+    });
+  } catch (error) {
+    console.error(error.meessage);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
     });
   }
 }

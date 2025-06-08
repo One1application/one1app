@@ -557,3 +557,20 @@ export const fetchWalletChartData = async ({ fetchCat }) => {
   );
   return response;
 };
+
+export const fetchFilterEarningsAndWithdrawals = async ({ fetchRange }) => {
+   if (fetchRange.startsWith('CustomRange=')) {
+    // For custom Range remove true in path
+    const response = await servicesAxiosInstance.get(
+      `/wallet/withdrawal-earnings?${fetchRange}`
+    );
+    return response;
+  } else {
+    
+    const response = await servicesAxiosInstance.get(
+      `/wallet/withdrawal-earnings?${fetchRange}=true`
+    );
+    return response;
+  }
+};
+
