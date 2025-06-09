@@ -54,11 +54,7 @@ enum TransactionStatus {
 
 // TODO: userID schema
 model User {
-<<<<<<< Updated upstream
   chatId                      String?                 @unique
-=======
-  chatId                      String?                @unique
->>>>>>> Stashed changes
   id                          String                 @id @default(uuid())
   email                       String                 @unique
   phone                       String                 @unique

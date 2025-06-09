@@ -82,11 +82,12 @@ const Login = () => {
         return;
       }
 
-      localStorage.setItem("AuthToken", response.data.token);
+      console.log(response);
+      localStorage.setItem("UserToken", response.data.token);
 
-      window.location.href = "/dashboard";
-      
+      window.location.href = "/user/dashboard";
     } catch (error) {
+      console.log(error?.message);
       toast.error("An error occurred during login.");
     } finally {
       setIsLoading(false);
