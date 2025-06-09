@@ -54,7 +54,11 @@ enum TransactionStatus {
 
 // TODO: userID schema
 model User {
+<<<<<<< Updated upstream
   chatId                      String?                 @unique
+=======
+  chatId                      String?                @unique
+>>>>>>> Stashed changes
   id                          String                 @id @default(uuid())
   email                       String                 @unique
   phone                       String                 @unique
@@ -360,7 +364,7 @@ model PayingUpTicket {
 model Telegram {
   id           String  @id @unique @default(uuid())
   coverImage   String
-  channelLink  String
+  // channelLink  String
   title        String
   description  String
   chatId       String  @unique
