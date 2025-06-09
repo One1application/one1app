@@ -47,10 +47,10 @@ import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
 import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
 import PaymentInterface from "./newPurchase/PaymentInterface.jsx";
- 
+import HelpCenterBanner from "./Pages/HelpCenter/HelpCenterComingSoon.jsx";
 
 const App = () => {
-  const { userRole, authenticated, logout, loading  } = useAuth();
+  const { userRole, authenticated, logout, loading } = useAuth();
 
   return (
     <>
@@ -99,6 +99,7 @@ const App = () => {
             <Route path="telegram" element={<TelegramPage />} />
             <Route path="discord" element={<DiscordPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="help-center" element={<HelpCenterBanner />} />
             <Route path="superlinks" element={<SuperLinkPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="whatsapp" element={<WhatsAppPage />} />
@@ -107,7 +108,6 @@ const App = () => {
             <Route path="all-transactions" element={<AllTransactionsPage />} />
             <Route path="kyc-setting" element={<KYCpage />} />
             <Route path="premium-content" element={<LockedContentPage />} />
-        
           </Route>
 
           {/* Sub-Pages for App-Specific Routes */}
@@ -125,8 +125,10 @@ const App = () => {
             <Route path="edit-course" element={<CreateCoursePage />} />
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
-            <Route path="edit-premium-content" element={< CreateLockedContentPage/>} />
-
+            <Route
+              path="edit-premium-content"
+              element={<CreateLockedContentPage />}
+            />
           </Route>
         </Route>
 

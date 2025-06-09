@@ -46,6 +46,17 @@ export const updateUserProfile = async (req, res) => {
   try {
     const user = req?.user;
     const { email, name, otp } = req.body;
+
+    const userImage = req?.path;
+
+    if(!userImage){
+      return res.status(404).json({
+        success : false,
+        message : "Image not found!"
+      })
+    }
+
+    // todo - create route for image update for creator like profile image
     console.log(email);
 
     const existingUser = await prisma.user.findUnique({

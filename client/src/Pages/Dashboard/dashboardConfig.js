@@ -6,6 +6,7 @@ import { RiPresentationFill } from "react-icons/ri";
 import { HiOutlineCash } from "react-icons/hi";
 import { PiHandWithdraw } from "react-icons/pi";
 import { LiaIdCardSolid } from "react-icons/lia";
+import { HelpCircle } from "lucide-react";
 
 export const dashboardConfig = {
   logo: {
@@ -40,6 +41,7 @@ export const dashboardConfig = {
   ],
   settingItems: [
     { label: "Account Setting", icon: FaCog, path: "/profile" },
+    { label: "Help Center" , icon : HelpCircle , path: "/help-center" },
     // commented out for now, as we don't have a superlinks dashboard yet
     // { label: "Feature Requests", icon: FaChartBar, path: "https://www.google.com" },
     // { label: "Help Center", icon: FaUsers, path: "https://www.google.com" },
