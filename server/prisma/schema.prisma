@@ -54,7 +54,7 @@ enum TransactionStatus {
 
 // TODO: userID schema
 model User {
-  chatId                      String                 @unique
+  chatId                      String?                 @unique
   id                          String                 @id @default(uuid())
   email                       String                 @unique
   phone                       String                 @unique
