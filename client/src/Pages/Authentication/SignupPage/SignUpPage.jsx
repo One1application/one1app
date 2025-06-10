@@ -262,7 +262,7 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="bg-cover bg-center min-h-screen flex flex-col justify-start bg-gradient-to-br from-orange-500 via-red-600 to-pink-600">
+    <div className="bg-cover bg-center min-h-screen flex flex-col justify-start bg-gradient-to-br from-orange-500 via-red-600 to-pink-600" data-theme="light">
       {subscriptionPage ? (
         <SubscriptionPage />
       ) : (
