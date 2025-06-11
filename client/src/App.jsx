@@ -124,9 +124,9 @@ const App = () => {
               path="create-premium-content"
               element={<CreateLockedContentPage />}
             />
-            <Route path="telegram-page1" element={<ConnectPage/>}/>
-            <Route path="telegram-page2" element={<TelegramsPages2/>}/>
-            <Route path="telegram-page3" element={<WelcomePage/>}/>
+            <Route path="telegram-page1" element={<ConnectPage />} />
+            <Route path="telegram-page2" element={<TelegramsPages2 />} />
+            <Route path="telegram-page3" element={<WelcomePage />} />
             <Route path="edit-course" element={<CreateCoursePage />} />
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />

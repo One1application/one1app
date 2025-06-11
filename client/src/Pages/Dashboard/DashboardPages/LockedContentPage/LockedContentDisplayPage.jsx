@@ -163,7 +163,7 @@ const LockedContentDisplayPage = () => {
       setShowSigninModal(false);
       setAuthActionCompleted(true);
       window.location.reload();
-       toast.success("Signin successful! Welcome back.");
+      toast.success("Signin successful! Welcome back.");
     } else {
       toast.error(
         "Signin process completed, but no token received. Please try again."
@@ -197,7 +197,7 @@ const LockedContentDisplayPage = () => {
       if (!showSigninModal) setShowSignupModal(true);
       return;
     }
-   
+
     navigate("/app/payment", {
       state: {
         id: contentId,
@@ -205,7 +205,6 @@ const LockedContentDisplayPage = () => {
         baseAmount: lockedContentData.unlockPrice,
         courseType: "premiumcontent",
         createdBy: lockedContentData.createdBy.name,
-        
       },
     });
 
@@ -487,60 +486,72 @@ const LockedContentDisplayPage = () => {
 
             {hasFullAccess ? (
               <div className="space-y-6">
-                {lockedContentData.text && (
+                {/* Title */}
+                <div>
+                  <h2 className="text-2xl font-bold text-orange-500 mb-2">
+                    {lockedContentData.title}
+                  </h2>
+                  <p className="text-gray-400 mb-4">
+                    Category: {lockedContentData.category}
+                  </p>
+                </div>
+
+                {/* Text Content */}
+                {lockedContentData.content?.text && (
                   <div>
                     <h3 className="text-xl font-semibold text-gray-300 mb-3 flex items-center gap-2">
                       <Icons.FileText className="w-5 h-5 text-orange-400" />
-                      Message:
+                      Content:
                     </h3>
                     <p className="text-gray-300 bg-gray-800 p-4 rounded-lg whitespace-pre-wrap border border-gray-700">
-                      {lockedContentData.text}
+                      {lockedContentData.content.text}
                     </p>
                   </div>
                 )}
-                {lockedContentData.images &&
-                  lockedContentData.images.length > 0 && (
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                        <Icons.Image className="w-5 h-5 text-orange-400" />
-                        Image:
-                      </h3>
-                      <img
-                        src={lockedContentData.images[0].url}
-                        alt={lockedContentData.title || "Locked Content Image"}
-                        className="max-w-full h-auto rounded-lg shadow-lg border border-gray-700"
-                      />
-                    </div>
-                  )}
-                {lockedContentData.files &&
-                  lockedContentData.files.length > 0 && (
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                        <Icons.File className="w-5 h-5 text-orange-400" />
-                        File:
-                      </h3>
-                      <a
-                        href={lockedContentData.files[0].url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium transition-colors shadow"
-                      >
-                        <Icons.Download className="w-5 h-5" />
-                        Download File
-                      </a>
-                    </div>
-                  )}
-                {!lockedContentData.text &&
-                  (!lockedContentData.images ||
-                    lockedContentData.images.length === 0) &&
-                  (!lockedContentData.files ||
-                    lockedContentData.files.length === 0) && (
+
+                {/* Image Content */}
+                {lockedContentData.content?.image && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                      <Icons.Image className="w-5 h-5 text-orange-400" />
+                      Image:
+                    </h3>
+                    <img
+                      src={lockedContentData.content.image}
+                      alt={lockedContentData.title || "Locked Content Image"}
+                      className="max-w-full h-auto rounded-lg shadow-lg border border-gray-700"
+                    />
+                  </div>
+                )}
+
+                {/* File Content */}
+                {lockedContentData.content?.file && (
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                      <Icons.File className="w-5 h-5 text-orange-400" />
+                      File:
+                    </h3>
+                    <a
+                      href={lockedContentData.content.file}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium transition-colors shadow"
+                    >
+                      <Icons.Download className="w-5 h-5" />
+                      Download File
+                    </a>
+                  </div>
+                )}
+
+                {/* No content case */}
+                {!lockedContentData.content?.text &&
+                  !lockedContentData.content?.image &&
+                  !lockedContentData.content?.file && (
                     <div className="text-center py-6 px-4 bg-gray-800 rounded-lg border border-dashed border-gray-600">
                       <Icons.Info className="w-10 h-10 text-blue-400 mx-auto mb-3" />
                       <p className="text-gray-400">
-                        Access granted, but no displayable content (text, image,
-                        or file) was provided for this item.
+                        Access granted, but no displayable content was provided.
                       </p>
                     </div>
                   )}

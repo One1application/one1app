@@ -327,6 +327,7 @@ const PayingUpPages = () => {
                 {Array.isArray(paymentUrl) ? (
                   paymentUrl.map((file, index) => (
                     <div key={index} className="text-center">
+                      {console.log(file)}
                       <a
                         href={file}
                         target="_blank"
@@ -414,11 +415,19 @@ const PayingUpPages = () => {
                 {CurrencyIcon && <CurrencyIcon className="w-6 h-6" />}
                 <span>{payingUpDetails.paymentDetails.totalAmount}</span>
               </button>
-            ) : (
+            ) : payingUpDetails.createdById === currentUserId ? (
               <div className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center">
                 <Icons.CheckCircle className="w-5 h-5 mr-2" />
-                <span>Already Purchased</span>
+                <span>You Created This</span>
               </div>
+            ) : (
+              <a
+                href="http://localhost:5174/dashboard"
+                className="bg-green-600 text-white py-3 px-6 rounded-lg inline-flex items-center font-medium hover:bg-green-700 transition-colors duration-300"
+              >
+                <Icons.LayoutDashboard className="w-5 h-5 mr-2" />
+                <span>Go to Dashboard</span>
+              </a>
             )}
           </section>
         </div>

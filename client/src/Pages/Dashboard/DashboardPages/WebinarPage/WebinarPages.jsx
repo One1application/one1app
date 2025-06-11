@@ -138,13 +138,13 @@ const WebinarPages = () => {
   const handleSaveEmail = (email) => {
     setUserEmail(email);
     toast.success("Email updated successfully!");
-    navigate('/app/payment', {
+    navigate("/app/payment", {
       id: webinarId,
       title: webinarData.title,
       baseAmount: webinarData.amount,
       courseType: "webinar",
       createdBy: webinarData.createdBy.name,
-    })
+    });
   };
 
   const handleSuccessfulSignup = (data) => {
@@ -492,13 +492,14 @@ const WebinarPages = () => {
           <h3 className="text-3xl font-semibold text-orange-600 mb-4">
             Description
           </h3>
-          <div className="bg-gray-900 p-6 rounded-3xl">
-            <p className="text-lg leading-8">
-              {webinarData.description
+          <div
+            className="text-lg leading-8"
+            dangerouslySetInnerHTML={{
+              __html: webinarData.description
                 ? webinarData.description
-                : "At OneApp, we are focused on elevating creators by offering a platform that makes the path from passion to profit effortless... "}
-            </p>
-          </div>
+                : "At OneApp, we are focused on elevating creators by offering a platform that makes the path from passion to profit effortless... ",
+            }}
+          ></div>
         </div>
       </div>
 
@@ -727,7 +728,7 @@ const WebinarPages = () => {
             }
           }}
           disabled={!webinarData.paymentEnabled}
-          className="bg-orange-600 px-8 py-4 rounded-2xl text-white text-2xl font-semibold shadow-lg"
+          className="bg-orange-600 px-8  mb-4 py-4 rounded-2xl text-white text-2xl font-semibold shadow-lg"
         >
           ENROLL FOR ₹{webinarData.amount}
         </button>

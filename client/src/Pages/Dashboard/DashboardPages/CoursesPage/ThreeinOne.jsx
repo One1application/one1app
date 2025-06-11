@@ -93,8 +93,8 @@ function ThreeinOne({ courseDetails }) {
                     </motion.div>
                   ))
                 ) : (
-                  <div className="text-center py-12 text-gray-400">
-                    No FAQs available at the moment
+                  <div className="text-center py-12 text-gray-400 bg-gray-900 rounded-xl border border-gray-800">
+                    No FAQs available for this course
                   </div>
                 )}
               </motion.div>
@@ -108,52 +108,66 @@ function ThreeinOne({ courseDetails }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="grid md:grid-cols-2 gap-6"
               >
-                {benefits.map(
-                  (benefit, index) =>
-                    benefit.title && (
-                      <motion.div
-                        key={index}
-                        className="p-6 bg-gray-900 rounded-xl shadow-lg border border-orange-500/20"
-                        whileHover={{ y: -3 }}
-                        transition={{ type: "spring" }}
-                      >
-                        <div className="text-lg font-semibold text-white">
-                          <span className="mr-2">{benefit.emoji}</span>
-                          {benefit.title}
-                        </div>
-                      </motion.div>
-                    )
+                {benefits.length > 0 ? (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {benefits.map(
+                      (benefit, index) =>
+                        benefit.title && (
+                          <motion.div
+                            key={index}
+                            className="p-6 bg-gray-900 rounded-xl shadow-lg border border-orange-500/20"
+                            whileHover={{ y: -3 }}
+                            transition={{ type: "spring" }}
+                          >
+                            <div className="text-lg font-semibold text-white">
+                              <span className="mr-2">{benefit.emoji}</span>
+                              {benefit.title}
+                            </div>
+                          </motion.div>
+                        )
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-400 bg-gray-900 rounded-xl border border-gray-800">
+                    No benefits information available for this course
+                  </div>
                 )}
               </motion.div>
             )}
 
             {/* Key Features Section */}
             {activeTab === "features" && (
-              <motion.ul
+              <motion.div
                 key="features"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-4"
               >
-                {features.map(
-                  (feature, index) =>
-                    feature && (
-                      <li
-                        key={index}
-                        className="flex items-start gap-4 p-4 bg-gray-800/40 rounded-lg hover:bg-gray-800/60 transition-all duration-200 group"
-                      >
-                        <Sparkles className="w-6 h-6 text-orange-400 flex-shrink-0 mt-1 group-hover:scale-110 transition-transform" />
-                        <span className="text-lg text-gray-200 group-hover:text-white">
-                          {feature}
-                        </span>
-                      </li>
-                    )
+                {features.length > 0 ? (
+                  <ul className="space-y-4">
+                    {features.map(
+                      (feature, index) =>
+                        feature && (
+                          <li
+                            key={index}
+                            className="flex items-start gap-4 p-4 bg-gray-800/40 rounded-lg hover:bg-gray-800/60 transition-all duration-200 group"
+                          >
+                            <Sparkles className="w-6 h-6 text-orange-400 flex-shrink-0 mt-1 group-hover:scale-110 transition-transform" />
+                            <span className="text-lg text-gray-200 group-hover:text-white">
+                              {feature}
+                            </span>
+                          </li>
+                        )
+                    )}
+                  </ul>
+                ) : (
+                  <div className="text-center py-12 text-gray-400 bg-gray-900 rounded-xl border border-gray-800">
+                    No key features available for this course
+                  </div>
                 )}
-              </motion.ul>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>

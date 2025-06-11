@@ -1,16 +1,29 @@
-import { ChevronLeft, Video, Upload, Calendar, Clock, IndianRupee, ChevronDown } from "lucide-react";
+import {
+  ChevronLeft,
+  Video,
+  Upload,
+  Calendar,
+  Clock,
+  IndianRupee,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
-import { Pencil, Trash2, Plus } from 'lucide-react';
-import  toast  from "react-hot-toast";
+import { Pencil, Trash2, Plus } from "lucide-react";
+import toast from "react-hot-toast";
+import ReactQuill from "react-quill";
+import { motion } from "framer-motion";
 import {
   createNewWebinarRequest,
   handelUplaodFile,
   fetchWebinar,
-  editWebinar
-} from "../../../../services/auth/api.services";
+  editWebinar,
+  generativeDescription,
+} from "../../../../services/auth/api.services.js";
+import AIAssistantButton from "../../../../components/Buttons/AIAssistantButton";
 
 const CreateWebinarPage = () => {
   const location = useLocation();
@@ -22,6 +35,7 @@ const CreateWebinarPage = () => {
   const [EventDetails, setEventDetails] = useState({
     title: "",
     category: "Finance",
+    description: "",
     isOnline: true,
     venue: "",
     link: "",
@@ -44,12 +58,13 @@ const CreateWebinarPage = () => {
   const [showDiscount, setShowDiscount] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingCouponId, setEditingCouponId] = useState(null);
-  
+  const [wait, setWait] = useState(false);
+
   const [coupons, setCoupons] = useState([]);
   const [formData, setFormData] = useState({
-    code: '',
-    percent: '',
-    expiry: ''
+    code: "",
+    percent: "",
+    expiry: "",
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -68,54 +83,67 @@ const CreateWebinarPage = () => {
       const response = await fetchWebinar(id);
       if (response.status === 200) {
         const webinarData = response.data.payload.webinar;
-                
+
         // Set all the fields from the fetched data
         setEventDetails({
           title: webinarData.title || "",
           category: webinarData.category || "Finance",
           isOnline: webinarData.isOnline,
+          description: webinarData.description || "",
           venue: webinarData.venue || "",
           link: webinarData.link || "",
           isPaid: webinarData.isPaid,
           quantity: webinarData.quantity || 0,
           amount: webinarData.amount || 0,
-          startDateTime: webinarData.startDate ? new Date(webinarData.startDate).toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          }).replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+)/, '$3-$1-$2T$4:$5') : "",
+          startDateTime: webinarData.startDate
+            ? new Date(webinarData.startDate)
+                .toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })
+                .replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+)/, "$3-$1-$2T$4:$5")
+            : "",
           occurrence: webinarData.occurrence || "",
-          endDateTime: webinarData.endDate ? new Date(webinarData.endDate).toLocaleString('en-US', {
-            year: 'numeric', 
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          }).replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+)/, '$3-$1-$2T$4:$5') : "",
+          endDateTime: webinarData.endDate
+            ? new Date(webinarData.endDate)
+                .toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })
+                .replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+)/, "$3-$1-$2T$4:$5")
+            : "",
           coverImage: webinarData.coverImage || null,
         });
 
         // Set other state based on fetched data
         setSelectedOption(webinarData.category || "Finance");
-        setActiveTab(webinarData.isOnline ? (webinarData.link.platformLink ? 1 : 0) : 2);
+        setActiveTab(
+          webinarData.isOnline ? (webinarData.link.platformLink ? 1 : 0) : 2
+        );
         setActiveTabPay(webinarData.isPaid ? 1 : 0);
         setEventTab(webinarData.occurrence ? 1 : 0);
         setSelectedOccurrence(webinarData.occurrence || "");
-        
+
         // Load coupons if available
         if (webinarData.discount && webinarData.discount.length > 0) {
-          setCoupons(webinarData.discount.map(coupon => ({
-            id: coupon.id,
-            code: coupon.code,
-            percent: coupon.percent,
-            expiry: coupon.expiry
-          })));
+          setCoupons(
+            webinarData.discount.map((coupon) => ({
+              id: coupon.id,
+              code: coupon.code,
+              percent: coupon.percent,
+              expiry: coupon.expiry,
+            }))
+          );
         }
-        
+
         toast.success("Webinar data loaded successfully");
       } else {
         toast.error("Failed to load webinar data");
@@ -126,23 +154,84 @@ const CreateWebinarPage = () => {
     }
   };
 
+  const handleOverviewChange = (htmlContent) => {
+    setEventDetails((prevData) => ({
+      ...prevData,
+      description: htmlContent,
+    }));
+  };
+
+  const generateDescription = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (!EventDetails.title || !EventDetails.title.trim()) {
+        toast.error("Please enter a title to generate description", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+        });
+        return;
+      }
+
+      setWait(true);
+
+      toast.success("Generating AI description...", {
+        toastId: "generating-description",
+        position: "top-right",
+        autoClose: false,
+        hideProgressBar: true,
+        closeOnClick: false,
+        draggable: false,
+      });
+
+      const data = {
+        prompt: EventDetails?.title.trim(),
+      };
+
+      const res = await generativeDescription(data);
+      console.log(res);
+
+      if (res?.data?.success) {
+        setEventDetails((prev) => ({
+          ...prev,
+          description: res?.data?.description,
+        }));
+      } else {
+        throw new Error(res?.data?.message || "Failed to generate description");
+      }
+    } catch (error) {
+      console.error("Error generating description:", error);
+
+      toast.error(error.message || "Failed to generate description");
+    } finally {
+      setWait(false);
+    }
+  };
+
   const handleSubmit = () => {
     if (isEditing) {
-      setCoupons(coupons.map(coupon => 
-        coupon.id === editingCouponId 
-          ? { ...formData, id: editingCouponId }
-          : coupon
-      ));
+      setCoupons(
+        coupons.map((coupon) =>
+          coupon.id === editingCouponId
+            ? { ...formData, id: editingCouponId }
+            : coupon
+        )
+      );
       setIsEditing(false);
       setEditingCouponId(null);
     } else {
       setCoupons([...coupons, { ...formData, id: Date.now() }]);
     }
-    
+
     setFormData({
-       code: '',
-      percent: '',
-      expiry: ''
+      code: "",
+      percent: "",
+      expiry: "",
     });
     setShowDiscount(false);
   };
@@ -155,7 +244,7 @@ const CreateWebinarPage = () => {
   };
 
   const handleDelete = (id) => {
-    setCoupons(coupons.filter(coupon => coupon.id !== id));
+    setCoupons(coupons.filter((coupon) => coupon.id !== id));
   };
 
   // Create refs for datetime inputs
@@ -189,7 +278,7 @@ const CreateWebinarPage = () => {
     const file = e.target.files[0];
     const filedata = new FormData();
     filedata.append("file", file);
-    
+
     setIsUploading(true); // Start loading
     try {
       const response = await handelUplaodFile(filedata);
@@ -215,15 +304,14 @@ const CreateWebinarPage = () => {
 
   // Update handelCreateNewWebinar to handle both create and edit
   const handelCreateNewWebinar = async () => {
-    try { 
-           
+    try {
       let response;
       // Prepare the payload
-    const payload = {
-      ...EventDetails,
-      discount: coupons // Include the coupons array in the payload
-    };
-      
+      const payload = {
+        ...EventDetails,
+        discount: coupons, // Include the coupons array in the payload
+      };
+
       if (isEditMode) {
         // Edit existing webinar
         response = await editWebinar(webinarId, payload);
@@ -334,7 +422,10 @@ const CreateWebinarPage = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-white font-medium">
-                      {isUploading ? "Uploading..." : `Upload a cover image or video `}<span className="text-red-500">*</span>
+                      {isUploading
+                        ? "Uploading..."
+                        : `Upload a cover image or video `}
+                      <span className="text-red-500">*</span>
                     </p>
                     <p className="text-sm text-gray-400">
                       16:9 ratio recommended for best results
@@ -400,6 +491,83 @@ const CreateWebinarPage = () => {
                     </ul>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Description Section  */}
+
+          <div className="space-y-4 p-6 rounded-xl bg-gray-900 border border-orange-500/20 mt-4 mb-4">
+            <div className="bg-black/50 rounded-lg p-4 shadow-lg space-y-6">
+              <label className="text-orange-500 font-semibold">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <hr className="border-orange-500/20" />
+
+              <div
+                className="quill-wrapper h-64 [&_.ql-toolbar.ql-snow]:border-orange-500 
+                   [&_.ql-container.ql-snow]:border-orange-500
+                   [&_.ql-snow_.ql-stroke]:!stroke-orange-500
+                   [&_.ql-snow_.ql-fill]:!fill-orange-500
+                   [&_.ql-snow_.ql-picker]:!text-orange-500
+                   [&_.ql-snow_.ql-picker-options]:!bg-gray-900
+                   [&_.ql-snow_.ql-picker-options]:!border-orange-500
+                   [&_.ql-snow_.ql-picker-item]:!text-orange-500
+                   [&_.ql-snow_.ql-picker-label]:!text-orange-500
+                   [&_.ql-snow.ql-toolbar_button:hover]:!text-orange-500
+                   [&_.ql-snow.ql-toolbar_button.ql-active]:!text-orange-500
+                   [&_.ql-toolbar.ql-snow]:rounded-t-lg
+                   [&_.ql-container.ql-snow]:rounded-b-lg
+                   [&_.ql-container.ql-snow]:!h-[calc(100%-42px)]"
+              >
+                <ReactQuill
+                  value={EventDetails?.description}
+                  onChange={handleOverviewChange}
+                  theme="snow"
+                  className="bg-black/50 text-white rounded-lg h-full"
+                  modules={{
+                    toolbar: [
+                      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                      ["bold", "italic", "underline", "strike"],
+                      [
+                        { list: "ordered" },
+                        { list: "bullet" },
+                        { list: "check" },
+                      ],
+                      ["link"],
+                      [{ size: ["small", false, "large", "huge"] }],
+                      [{ color: [] }, { background: [] }],
+                      [{ font: [] }],
+                      [{ align: [] }],
+                    ],
+                  }}
+                />
+              </div>
+
+              <div className="flex justify-end">
+                {wait ? (
+                  <motion.div
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
+                    animate={{
+                      rotate: 360,
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    <Loader2 className="w-5 h-5 text-white" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    onClick={generateDescription}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <AIAssistantButton />
+                  </motion.div>
+                )}
               </div>
             </div>
           </div>
@@ -633,7 +801,7 @@ const CreateWebinarPage = () => {
                               onClick={() => handleOccurOptionSelect(option)}
                               className="px-4 py-2 hover:bg-orange-500/10 cursor-pointer text-sm text-white transition-colors"
                             >
-                              {option}  
+                              {option}
                             </li>
                           ))}
                         </ul>
@@ -747,8 +915,7 @@ const CreateWebinarPage = () => {
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-3 text-orange-400">
-                       <IndianRupee className="w-4 h-4" />
-                        
+                        <IndianRupee className="w-4 h-4" />
                       </span>
                       <input
                         onChange={(e) => {
@@ -766,27 +933,27 @@ const CreateWebinarPage = () => {
                       />
                     </div>
                   </div>
-                  
+
                   {/* Discount Section */}
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
                       <button
                         onClick={() => {
-                          setShowDiscount(prev => !prev);
+                          setShowDiscount((prev) => !prev);
                           if (!showDiscount) {
                             setIsEditing(false);
                             setEditingCouponId(null);
                             setFormData({
-                              couponCode: '',
-                              discountPercent: '',
-                              discountExpiry: ''
+                              couponCode: "",
+                              discountPercent: "",
+                              discountExpiry: "",
                             });
                           }
                         }}
                         className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors duration-200 flex items-center gap-2"
                       >
                         <Plus size={16} />
-                        {showDiscount ? 'Cancel' : 'Add Coupon'}
+                        {showDiscount ? "Cancel" : "Add Coupon"}
                       </button>
                     </div>
 
@@ -856,21 +1023,29 @@ const CreateWebinarPage = () => {
                           onClick={handleSubmit}
                           className="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-colors duration-200"
                         >
-                          {isEditing ? 'Update Coupon' : 'Create Coupon'}
+                          {isEditing ? "Update Coupon" : "Create Coupon"}
                         </button>
                       </div>
                     )}
 
                     {coupons.length > 0 && (
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-orange-500">Active Coupons</h3>
+                        <h3 className="text-lg font-semibold text-orange-500">
+                          Active Coupons
+                        </h3>
                         <div className="space-y-2">
-                          {coupons.map(coupon => (
-                            <div key={coupon.id} className="flex items-center justify-between p-4 border border-orange-500/20 rounded-lg bg-black/40">
+                          {coupons.map((coupon) => (
+                            <div
+                              key={coupon.id}
+                              className="flex items-center justify-between p-4 border border-orange-500/20 rounded-lg bg-black/40"
+                            >
                               <div className="space-y-1">
-                                <div className="font-semibold text-orange-400">{coupon.code}</div>
+                                <div className="font-semibold text-orange-400">
+                                  {coupon.code}
+                                </div>
                                 <div className="text-sm text-orange-400/80">
-                                  {coupon.percent}% off • Expires: {coupon.expiry}
+                                  {coupon.percent}% off • Expires:{" "}
+                                  {coupon.expiry}
                                 </div>
                               </div>
                               <div className="flex gap-2">
@@ -878,13 +1053,19 @@ const CreateWebinarPage = () => {
                                   onClick={() => handleEdit(coupon)}
                                   className="p-2 hover:bg-orange-500/10 rounded-lg transition-colors duration-200"
                                 >
-                                  <Pencil size={16} className="text-orange-400" />
+                                  <Pencil
+                                    size={16}
+                                    className="text-orange-400"
+                                  />
                                 </button>
                                 <button
                                   onClick={() => handleDelete(coupon.id)}
                                   className="p-2 hover:bg-orange-500/10 rounded-lg transition-colors duration-200"
                                 >
-                                  <Trash2 size={16} className="text-orange-400" />
+                                  <Trash2
+                                    size={16}
+                                    className="text-orange-400"
+                                  />
                                 </button>
                               </div>
                             </div>

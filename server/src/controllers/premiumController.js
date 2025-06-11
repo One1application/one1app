@@ -366,6 +366,7 @@ export async function getCreatorContents(req, res) {
 
 export async function deleteContent(req, res) {
   const { contentId } = req.params;
+   
   const user = req.user;
 
   try {
@@ -381,6 +382,8 @@ export async function deleteContent(req, res) {
         id: contentId,
       },
     });
+
+    console.log(existingContent)
 
     if (!existingContent) {
       return res.status(404).json({

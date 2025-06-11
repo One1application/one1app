@@ -466,7 +466,7 @@ const NewCourse = () => {
                           return (
                             <div className="p-3 rounded-lg  flex items-center gap-2">
                               {validity.icon}
-                              <span className="text-sm font-medium">
+                              <span className="text-sm font-medium text-green-500">
                                 {validity.text}
                               </span>
                             </div>

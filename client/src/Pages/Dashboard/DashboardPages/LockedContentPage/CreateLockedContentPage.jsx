@@ -348,6 +348,20 @@ const CreateLockedContentPage = () => {
               </motion.div>
             </div>
 
+            <input
+  type="file"
+  id="image-upload-input"
+  accept="image/*"
+  onChange={(e) => handleFileUpload("image", e)}
+  style={{ display: "none" }}
+/>
+<input
+  type="file"
+  id="file-upload-input"
+  onChange={(e) => handleFileUpload("file", e)}
+  style={{ display: "none" }}
+/>
+
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
               <div className="flex-1 text-center">
                 <button
