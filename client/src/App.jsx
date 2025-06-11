@@ -48,6 +48,9 @@ import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedCon
 import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
 import PaymentInterface from "./newPurchase/PaymentInterface.jsx";
 import HelpCenterBanner from "./Pages/HelpCenter/HelpCenterComingSoon.jsx";
+import ConnectPage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram1.jsx";
+import TelegramsPages2 from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramCreate2.jsx";
+import WelcomePage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram3.jsx";
 
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
@@ -121,7 +124,9 @@ const App = () => {
               path="create-premium-content"
               element={<CreateLockedContentPage />}
             />
-
+            <Route path="telegram-page1" element={<ConnectPage/>}/>
+            <Route path="telegram-page2" element={<TelegramsPages2/>}/>
+            <Route path="telegram-page3" element={<WelcomePage/>}/>
             <Route path="edit-course" element={<CreateCoursePage />} />
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
