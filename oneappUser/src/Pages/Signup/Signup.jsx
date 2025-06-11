@@ -97,10 +97,10 @@ const Signup = () => {
     setIsLoading(true);
 
     toast.success(response?.data?.message);
-    localStorage.setItem("AuthToken", response?.data?.token);
+    localStorage.setItem("UserToken", response?.data?.token);
 
     setIsLoading(false);
-    navigate("/dashboard");
+    navigate("/user/dashboard");
   };
 
   return (

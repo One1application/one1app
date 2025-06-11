@@ -20,7 +20,7 @@ export const AuthenticationProvider = ({ children }) => {
   const [userdetailsLoading, setUserdetailsLoading] = useState(true);
 
   const logoutUser = () => {
-    localStorage.removeItem("AuthToken");
+    localStorage.removeItem("UserToken");
     setUserDetails(null);
     setAuthenticated(false);
     setUserdetailsLoading(false);
@@ -48,7 +48,7 @@ export const AuthenticationProvider = ({ children }) => {
   }, []);
 
   const verifyToken = useCallback(async () => {
-    const token = localStorage.getItem("AuthToken");
+    const token = localStorage.getItem("UserToken");
     if (!token) {
       setLoading(false);
       setAuthenticated(false);

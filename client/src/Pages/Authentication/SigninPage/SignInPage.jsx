@@ -141,8 +141,8 @@ const SignInPage = () => {
 
   return (
     <div
-      className=" min-h-screen flex flex-col justify-start bg-gradient-to-br from-orange-400 via-red-400 to-pink-500"
-      
+      className=" min-h-screen flex flex-col justify-start bg-gradient-to-br from-orange-500 via-red-500 to-pink-500"
+       data-theme="light"
     >
       <div className="flex justify-center items-start min-h-screen pt-8 mt-16">
         <div
