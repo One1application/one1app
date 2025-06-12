@@ -47,7 +47,8 @@ export const updateUserProfile = async (req, res) => {
     const user = req?.user;
     const { email, name, otp } = req.body;
 
-    const userImage = req?.path;
+    const userImage = req.file;
+    console.log(userImage)
 
     if(!userImage){
       return res.status(404).json({
@@ -560,6 +561,8 @@ export const getCoursePurchases = async (req, res) => {
             startDate: true,
             coverImage: true,
             endDate: true,
+            lessons :true,
+            validity : true,
             creator: {
               select: {
                 id: true,

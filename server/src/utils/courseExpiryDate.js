@@ -1,4 +1,5 @@
 import moment from "moment";
+
 export const calculateExpiryDate = (validityType, startDate = new Date()) => {
     const date = moment(startDate);
 
@@ -15,7 +16,6 @@ export const calculateExpiryDate = (validityType, startDate = new Date()) => {
             return null;            
 
         default:
-            throw new error("Invalid course validityType");
-          
+            throw new Error("Invalid course validityType");
     }
 }

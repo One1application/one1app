@@ -59,6 +59,7 @@ model User {
   email                       String                 @unique
   phone                       String                 @unique
   name                        String
+  creatorImage                String?
   socialMedia                 String
   goals                       String[]
   heardAboutUs                String
@@ -218,9 +219,9 @@ model Withdrawal {
 }
 
 model Webinar {
-  id          String @id @default(uuid())
-  title       String
-  description String
+  id             String          @id @default(uuid())
+  title          String
+  description    String
   category       String
   coverImage     String
   occurrence     String
