@@ -24,6 +24,8 @@ export async function createWebinar(req, res) {
       occurrence,
     } = req.body;
     const user = req.user; 
+
+    console.log(description)
     
     if (discount) {
   if (!Array.isArray(discount)) {
@@ -86,12 +88,12 @@ export async function createWebinar(req, res) {
     await prisma.webinar.create({
       data: {
         title,
+        description,
         category,
         coverImage,
         isOnline,
         venue,
         link,
-        
         discount,
         occurrence,
         isPaid,

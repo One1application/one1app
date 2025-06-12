@@ -54,11 +54,12 @@ enum TransactionStatus {
 
 // TODO: userID schema
 model User {
-  chatId                      String?                 @unique
+  chatId                      String?                @unique
   id                          String                 @id @default(uuid())
   email                       String                 @unique
   phone                       String                 @unique
   name                        String
+  creatorImage                String?
   socialMedia                 String
   goals                       String[]
   heardAboutUs                String
@@ -108,8 +109,8 @@ model Otp {
 }
 
 model Wallet {
-  id               String        @id @default(uuid())
-  userId           String        @unique
+  id     String @id @default(uuid())
+  userId String @unique
 
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance          Float         @default(0.0)
@@ -220,6 +221,7 @@ model Withdrawal {
 model Webinar {
   id             String          @id @default(uuid())
   title          String
+  description    String
   category       String
   coverImage     String
   occurrence     String
@@ -229,7 +231,6 @@ model Webinar {
   isOnline       Boolean
   venue          String?
   link           Json
-  description    String?
   discount       Json?
   isPaid         Boolean
   quantity       Int
@@ -358,19 +359,19 @@ model PayingUpTicket {
 }
 
 model Telegram {
-  id           String  @id @unique @default(uuid())
-  coverImage   String
+  id                    String                 @id @unique @default(uuid())
+  coverImage            String
   // channelLink  String
-  title        String
-  description  String
-  chatId       String  @unique
-  isGroupMonitored Boolean @default(false)
-  genre        String
-  discount     Json
-  subscription Json
-  isVerified   Boolean @default(false)
-  createdById  String
-  createdBy    User    @relation(fields: [createdById], references: [id])
+  title                 String
+  description           String
+  chatId                String                 @unique
+  isGroupMonitored      Boolean                @default(false)
+  genre                 String
+  discount              Json
+  subscription          Json
+  isVerified            Boolean                @default(false)
+  createdById           String
+  createdBy             User                   @relation(fields: [createdById], references: [id])
   telegramSubscriptions TelegramSubscription[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
