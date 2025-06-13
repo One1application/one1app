@@ -220,7 +220,7 @@ model Withdrawal {
 model Webinar {
   id             String          @id @default(uuid())
   title          String
-  description    String
+  description    String?
   category       String
   coverImage     String
   occurrence     String
