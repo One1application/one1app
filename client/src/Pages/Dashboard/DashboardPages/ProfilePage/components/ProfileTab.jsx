@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { updateUserProfile } from "../../../../../services/auth/api.services.js";
 import Emailchange from "../../../../../components/Modal/Emailchange.jsx";
+import { Loader2 } from "lucide-react";
 
 const ProfileTab = () => {
   const { userDetails, userdetailloading } = useAuth();
@@ -19,6 +20,7 @@ const ProfileTab = () => {
   const [modalValue, setModalValue] = useState("");
   const [currentField, setCurrentField] = useState("");
   const [otpModel, setOtpModel] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [edit, setEdit] = useState({
     username: false,
@@ -63,6 +65,38 @@ const ProfileTab = () => {
           : userDetails?.phone,
     });
     setEdit({ ...edit, [field]: false });
+  };
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [showImageConfirm, setShowImageConfirm] = useState(false);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      setShowImageConfirm(true);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedImage) return;
+
+    const formData = new FormData();
+    formData.append("file", selectedImage);
+
+    try {
+      setLoading(true);
+      const res = await updateUserProfile(formData);
+     
+      toast.success("Profile picture updated!");
+      setShowImageConfirm(false);
+    } catch (err) {
+      toast.error("Image upload failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field, value) => {
@@ -120,22 +154,61 @@ const ProfileTab = () => {
       >
         <div className="relative">
           <motion.div
-            className="w-20 h-20 rounded-full bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+            className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
-            {getInitials(userDetails?.name || tempValues.username)}
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+            ) : userDetails?.userImage ? (
+              <img
+                src={userDetails.userImage}
+                alt="User"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              getInitials(userDetails?.name || tempValues.username)
+            )}
           </motion.div>
-          <motion.button
+
+          {/* Hidden file input for image selection */}
+          <input
+            type="file"
+            id="imageUpload"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+
+          {/* Edit (pencil) icon to trigger file input */}
+          <motion.label
+            htmlFor="imageUpload"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="absolute -bottom-1 -right-1 bg-gray-800 rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-700 shadow-md"
-            onClick={() => {
-              toast("Avatar change feature coming soon!", { icon: "🔄" });
-            }}
+            className="absolute -bottom-1 -right-1 bg-gray-800 rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-700 shadow-md cursor-pointer"
           >
             <EditIcon className="text-orange-400" fontSize="small" />
-          </motion.button>
+          </motion.label>
+
+          {/* ✅ Confirm icon to upload image */}
+          {showImageConfirm && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="absolute -bottom-1 -left-1 bg-green-700 rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-700 shadow-md"
+              onClick={handleImageUpload}
+            >
+              {loading ? (
+                <Loader2  className="animate-spin"/>
+              ) : (
+                <CheckIcon className="text-white" fontSize="small" />
+              )}
+            </motion.button>
+          )}
         </div>
       </motion.div>
 

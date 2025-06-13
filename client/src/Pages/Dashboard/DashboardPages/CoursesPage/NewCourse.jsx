@@ -404,10 +404,10 @@ const NewCourse = () => {
                 <div className="flex items-center justify-between gap-4 px-5">
                   {/* Avatar or Initials */}
                   <div className="flex items-center gap-4">
-                    {userDetails?.avatar ? (
+                    {userDetails?.userImage ? (
                       <img
                         className="w-12 h-12 rounded-full border-2 border-white/80 shadow-sm"
-                        src={userDetails.avatar}
+                        src={userDetails?.userImage}
                         alt="Creator Avatar"
                       />
                     ) : (

@@ -8,6 +8,7 @@ import SigninModal from "../../../../components/Modal/SigninModal";
 import { useAuth } from "../../../../context/AuthContext";
 import { fetchWebinar } from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
+import { getInitials } from "../../../../utils/constants/nameCutter.js";
 
 const WebinarPages = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const WebinarPages = () => {
   const [userEmail, setUserEmail] = useState("");
   const [isCreator, setIsCreator] = useState(false);
 
-  const { currentUserId } = useAuth();
+  const { currentUserId, userDetails } = useAuth();
 
   const handleAuthError = (error) => {
     if (
@@ -456,11 +457,18 @@ const WebinarPages = () => {
       {/* Header Section */}
       <div className="bg-gradient-to-br from-orange-600/80 to-gray-900/60 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-6">
-          <img
-            className="w-28 h-28 rounded-full border-4 border-white"
-            src="https://placehold.co/120x120"
-            alt="Creator Avatar"
-          />
+          {userDetails?.userImage ? (
+            <img
+              className="w-28 h-28 rounded-full border-4 border-white"
+              src={userDetails?.userImage}
+              alt="Creator Avatar"
+            />
+          ) : (
+            <div className="w-28 h-28 rounded-full border-4 border-white">
+              {getInitials(userDetails?.name)}
+            </div>
+          )}
+
           <div>
             <p className="text-xl">Created by</p>
             <h2 className="text-3xl font-semibold">

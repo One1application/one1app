@@ -541,7 +541,11 @@ export const updateUserProfile = async (data) => {
   try {
     const response = await servicesAxiosInstance.put(
       "/self/update/profile",
-      data
+      data , {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
     return response;
   } catch (error) {
