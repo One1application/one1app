@@ -12,12 +12,16 @@ import {
 import { sendOtp } from "../utils/sendOtp.js";
 import { sendWelcome_Email } from "../utils/EmailTemplates/sendemail.js";
 import { Role } from "@prisma/client";
+import { uploadOnImageKit } from "../config/imagekit.js";
 
 export const register = async (req, res) => {
   try {
     let { email, phoneNumber, name, goals, heardAboutUs, socialMedia, role } =
       req.body;
       console.log("req.body", req.body);
+   
+      let userImage = null;
+  
     if (role === "User") {
       if (!heardAboutUs) heardAboutUs = "";
       if (!goals) goals = [];
@@ -32,6 +36,8 @@ export const register = async (req, res) => {
       goals,
       heardAboutUs,
       socialMedia,
+
+     
     });
 
     const existingUserByEmail = await prisma.User.findFirst({
@@ -97,16 +103,18 @@ export const register = async (req, res) => {
         email: email,
         phone: phoneNumber,
       },
-      update: {
-        email,
-        phone: phoneNumber,
-        name,
-        role: role,
-        verified: false,
-        goals,
-        heardAboutUs,
-        socialMedia,
-      },
+    update: {
+  email,
+  phone: phoneNumber,
+  name,
+  role,
+  verified: false,
+  goals,
+  heardAboutUs,
+  socialMedia,
+  userImage,
+},
+
       create: {
         email,
         phone: phoneNumber,
@@ -116,6 +124,8 @@ export const register = async (req, res) => {
         goals,
         heardAboutUs,
         socialMedia,
+      userImage,
+
         wallet: {
           create: {},
         },

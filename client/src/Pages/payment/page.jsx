@@ -35,7 +35,7 @@ export default function PaymentPage() {
             setTimeout(() => {
               window.location.href = "http://localhost:5174/user/dashboard";
             }, 3000);
-          }
+          } 
         } else {
           throw new Error(response?.message || "Payment verification failed");
         }

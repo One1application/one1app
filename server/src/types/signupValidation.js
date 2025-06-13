@@ -9,7 +9,9 @@ export const signupValidation = z.object({
     verified: z.boolean().default(false),
     goals: z.array(z.string()),
     socialMedia: z.string().optional(),
-    heardAboutUs: z.string().optional()
+    heardAboutUs: z.string().optional(),
+  
+    
 
 });
 

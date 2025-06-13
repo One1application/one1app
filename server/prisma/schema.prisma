@@ -59,7 +59,6 @@ model User {
   email                       String                 @unique
   phone                       String                 @unique
   name                        String
-  creatorImage                String?
   socialMedia                 String
   goals                       String[]
   heardAboutUs                String

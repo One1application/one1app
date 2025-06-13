@@ -1,6 +1,7 @@
 import prisma from "../db/dbClient.js";
 import { verification_otp_Email } from "../utils/EmailTemplates/sendemail.js";
 import { otpforemailchange } from "../utils/otpforemailchange.js";
+import { uploadOnImageKit } from "../config/imagekit.js"; // adjust the path as needed
 
 export const selfIdentification = async (req, res) => {
   try {
@@ -17,6 +18,7 @@ export const selfIdentification = async (req, res) => {
         verified: true,
         role: true,
         id: true,
+        userImage : true,
       },
     });
 
@@ -42,23 +44,18 @@ export const selfIdentification = async (req, res) => {
 
 // sumen sir
 
+
 export const updateUserProfile = async (req, res) => {
   try {
     const user = req?.user;
     const { email, name, otp } = req.body;
 
-    const userImage = req.file;
-    console.log(userImage)
+    let userImageUrl = null;
 
-    if(!userImage){
-      return res.status(404).json({
-        success : false,
-        message : "Image not found!"
-      })
+    if (req.file) {
+      const imageResponse = await uploadOnImageKit(req.file.path, "user-profiles", false);
+      userImageUrl = imageResponse.url;
     }
-
-    // todo - create route for image update for creator like profile image
-    console.log(email);
 
     const existingUser = await prisma.user.findUnique({
       where: { id: user?.id },
@@ -66,18 +63,28 @@ export const updateUserProfile = async (req, res) => {
     });
 
     if (!existingUser) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    if (!email && !name) {
-      return res.status(400).json({
-        success: false,
-        message: "Provide at least one field to update (email or name).",
+     
+    if ((!email || email === existingUser.email) && (name || userImageUrl)) {
+      const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          ...(name && { name }),
+          ...(userImageUrl && { userImage: userImageUrl }),
+        },
+        select: { id: true, name: true, email: true, verified: true, role: true, userImage: true },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Profile updated successfully.",
+        user: updatedUser,
       });
     }
 
+    // If email is changing, trigger OTP flow
     if (email && email !== existingUser.email) {
       const emailTaken = await prisma.user.findUnique({ where: { email } });
       if (emailTaken) {
@@ -89,7 +96,6 @@ export const updateUserProfile = async (req, res) => {
 
       if (!otp) {
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
         const verification_otp = otpforemailchange();
 
         await prisma.oTPStore.upsert({
@@ -107,17 +113,14 @@ export const updateUserProfile = async (req, res) => {
         });
       }
 
+      // Validate OTP and update email
       if (otp) {
         if (!existingUser.otpStore || existingUser.otpStore.otp !== otp) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Invalid OTP." });
+          return res.status(400).json({ success: false, message: "Invalid OTP." });
         }
 
         if (existingUser.otpStore.expiresAt < new Date()) {
-          return res
-            .status(400)
-            .json({ success: false, message: "OTP expired." });
+          return res.status(400).json({ success: false, message: "OTP expired." });
         }
 
         await prisma.oTPStore.delete({ where: { userId: existingUser.id } });
@@ -125,10 +128,11 @@ export const updateUserProfile = async (req, res) => {
         const updatedUser = await prisma.user.update({
           where: { id: user.id },
           data: {
-            ...(email && { email }),
+            email,
             ...(name && { name }),
+            ...(userImageUrl && { userImage: userImageUrl }),
           },
-          select: { id: true, name: true, email: true },
+          select: { id: true, name: true, email: true, userImage: true },
         });
 
         return res.status(200).json({
@@ -139,28 +143,16 @@ export const updateUserProfile = async (req, res) => {
       }
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        ...(email && { email }),
-        ...(name && { name }),
-      },
-      select: { id: true, name: true, email: true, verified: true, role: true },
-    });
-
-    console.log(updatedUser);
-    return res.status(200).json({
-      success: true,
-      message: "Profile updated successfully.",
-      user: updatedUser,
+    return res.status(400).json({
+      success: false,
+      message: "No valid fields provided for update.",
     });
   } catch (error) {
     console.error("Error updating profile:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error." });
+    return res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
+
 
 export const userCustomers = async (req, res) => {
   try {
