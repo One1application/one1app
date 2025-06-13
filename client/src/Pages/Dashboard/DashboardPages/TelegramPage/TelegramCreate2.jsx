@@ -131,8 +131,8 @@ const TelegramsPages2 = () => {
     },
   ]);
 
-  const chatId = useSearchParams()[0].get("chatid");
-  console.log("chatId", chatId)
+  // const chatId = useSearchParams()[0].get("chatid");
+  // console.log("chatId", chatId)
   const { userDetails } = useAuth();
   const [freeDays, setFreeDays] = useState("");
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -146,6 +146,7 @@ const TelegramsPages2 = () => {
   const [inviteLink, setInviteLink] = useState("");
   const [inviteLinkData, setInviteLinkData] = useState(null);
   const [isFetchingInviteLink, setIsFetchingInviteLink] = useState(false);
+  const [telegramChatId, setTelegramChatId] = useState("")
   const [telegramTitle, setTelegramTitle] = useState("");
   const [telegramDescription, setTelegramDescription] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -330,22 +331,18 @@ const TelegramsPages2 = () => {
         subscriptions: subscriptions,
         coverImage: response?.data?.url || "",
         genre,
-        channelId: inviteLinkData?.chatId || "",
-        channelName: inviteLinkData?.title || "",
-        channelLink: inviteLink,
+        chatId: telegramChatId ,
         discount: discounts,
       };
- 
+      console.log(body);
+      
       await createTelegram(body);
       window.location.href = "/dashboard/telegram";
-      toast.success("Telegram Is in the Development Phase")
- 
-      // await createTelegram(body);
-      // window.location.href = "/dashboard/telegram";
-      toast.success("Telegram Is in the Development Phase");
+      toast.success("Telegram created successfully")
  
     } catch (error) {
       console.log("Error in creating telegram.", error);
+      toast.error("failed")
     } finally {
       setIsSubmitting(false);
     }
@@ -426,6 +423,20 @@ const TelegramsPages2 = () => {
 
           {/* Form Fields */}
           <div className="space-y-1">
+           {/* chatId */}
+            <div>
+              <label className="block text-sm font-medium text-orange-500 mb-2">
+                Chat Id <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                maxLength={75}
+                value={telegramChatId}
+                onChange={(e) => setTelegramChatId(e.target.value)}
+                className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
+                placeholder="Enter page title"
+              />
+            </div>
            
             {/* Page Title */}
             <div>
