@@ -33,9 +33,9 @@ export default function PaymentPage() {
 
           if (courseId || webinarId || payingUpId) {
             setTimeout(() => {
-              window.location.href = "http://localhost:5174/user/dashboard";
+              window.location.href = `${import.meta.env.VITE_FRONTEND_URL || "https://one1app.com"}/user/dashboard`
             }, 3000);
-          } 
+          }
         } else {
           throw new Error(response?.message || "Payment verification failed");
         }
