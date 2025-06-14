@@ -276,16 +276,16 @@ const PayingUpPages = () => {
               <div className="flex items-center justify-between gap-4 px-5">
                 {/* Avatar or Initials */}
                 <div className="flex items-center gap-4">
-                  {userDetails?.userImage ? (
+                  {payingUpDetails?.createdBy?.userImage ? (
                     <img
                       className="w-12 h-12 rounded-full border-2 border-white/80 shadow-sm"
-                      src={userDetails.userImage}
+                      src={payingUpDetails?.createdBy?.userImage}
                       alt="Creator Avatar"
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-indigo-600/90 flex items-center justify-center border-2 border-white/80">
                       <span className="text-lg font-bold text-white">
-                        {getInitials(payingUpDetails.createdBy.name)}
+                        {getInitials(payingUpDetails?.createdBy?.name)}
                       </span>
                     </div>
                   )}

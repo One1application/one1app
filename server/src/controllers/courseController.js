@@ -493,6 +493,7 @@ export const getCourseById = async (req, res) => {
         creator: {
           select: {
             name: true,
+            userImage : true,
           }
         },
         lessons: true,

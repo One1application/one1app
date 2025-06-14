@@ -319,6 +319,7 @@ export async function getWebinarById(req, res) {
         createdBy: {
           select: {
             name: true, // Select the username field from the related User model
+            userImage : true,
           },
         },
         ...(user && {

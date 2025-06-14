@@ -9,6 +9,9 @@ import {
   X,
   Trash2,
   Loader2,
+  Upload,
+  Star,
+  User,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
@@ -1982,101 +1985,157 @@ const NewCoursePage = () => {
 
               {/* Testimonials*/}
               <div className="flex justify-center w-full">
-                <div className="sticky top-[80px] z-[5] bg-[#111827]/90 backdrop-blur-sm p-4 rounded-xl border border-orange-500/20 w-[900px] mb-6">
-                  <div className="flex justify-between items-center">
-                    <label className="block text-orange-500 text-[15px]">
+                <div className="sticky top-[80px] z-[5] bg-[#111827]/90 backdrop-blur-sm p-6 rounded-xl border border-orange-500/20 w-[900px] mb-6 shadow-lg">
+                  <div className="flex justify-between items-center mb-6">
+                    <label className="block text-orange-500 text-lg font-medium">
                       Enable Testimonials
                     </label>
-                    <input
-                      type="checkbox"
-                      checked={formData.testimonials.isActive}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          testimonials: {
-                            ...formData.testimonials,
-                            isActive: e.target.checked,
-                          },
-                        })
-                      }
-                      className="w-5 h-5 rounded cursor-pointer border border-orange-500/20 bg-[#1a1b1e] text-orange-500 focus:outline-none focus:ring-orange-500/50"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.testimonials.isActive}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            testimonials: {
+                              ...formData.testimonials,
+                              isActive: e.target.checked,
+                            },
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                    </label>
                   </div>
 
                   {formData.testimonials.isActive && (
-                    <div className="mt-4 space-y-4">
+                    <div className="space-y-6">
                       {formData.testimonials.testimonialsMetaData.map(
                         (testimonial, index) => (
                           <div
                             key={index}
-                            className="bg-[#1a1b1e] p-4 rounded-lg border border-orange-500/20 space-y-3"
+                            className="bg-[#1f2937] p-6 rounded-lg border border-orange-500/20 space-y-4 shadow-md hover:border-orange-500/40 transition-colors"
                           >
-                            {/* Testimonial Name Input */}
-                            <div className="flex items-center">
-                              <input
-                                type="text"
-                                placeholder="Name"
-                                value={testimonial.name}
-                                onChange={(e) =>
-                                  handleTestimonialChange(
-                                    index,
-                                    "name",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full px-4 py-2 bg-[#1a1b1e] text-gray-300 rounded-lg border border-orange-500/20 focus:outline-none focus:border-orange-500/50 text-sm"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveTestimonial(index)}
-                                className="ml-2 text-red-500 hover:text-red-600"
-                              >
-                                <MinusCircle size={18} />
-                              </button>
-                            </div>
-
-                            {/* Testimonial Description Input */}
-                            <textarea
-                              placeholder="Description"
-                              value={testimonial.description}
-                              onChange={(e) =>
-                                handleTestimonialChange(
-                                  index,
-                                  "description",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full px-4 py-2 bg-[#1a1b1e] text-gray-300 rounded-lg border border-orange-500/20 focus:outline-none focus:border-orange-500/50 text-sm"
-                            ></textarea>
-
-                            {/* Testimonial Image Upload */}
-                            <label className="block text-orange-500 text-sm mb-2">
-                              Profile Image
-                            </label>
-                            <div className="flex items-center">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) =>
-                                  handleTestimonialImageUpload(index, e)
-                                }
-                                className="w-full px-4 py-2 bg-[#1a1b1e] text-gray-300 rounded-lg border border-orange-500/20 focus:outline-none focus:border-orange-500/50 text-sm"
-                              />
-                              {testimonialImagePreviews[index] && (
-                                <img
-                                  src={testimonialImagePreviews[index]}
-                                  alt={`Testimonial ${index}`}
-                                  className="w-16 h-16 rounded-full mt-2 ml-2"
-                                />
-                              )}
-                            </div>
-
-                            {testimonialImageUploading[index] && (
-                              <div className="flex items-center gap-2 text-orange-500 mt-2">
-                                <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full"></div>
-                                <span>Uploading image...</span>
+                            <div className="flex items-start gap-4">
+                              {/* Image Preview */}
+                              <div className="flex-shrink-0">
+                                {testimonialImagePreviews[index] ? (
+                                  <img
+                                    src={testimonialImagePreviews[index]}
+                                    alt={`Preview ${index}`}
+                                    className="w-16 h-16 rounded-full object-cover border-2 border-orange-500/50"
+                                  />
+                                ) : (
+                                  <div className="w-16 h-16 rounded-full bg-gray-800 border-2 border-dashed border-orange-500/30 flex items-center justify-center">
+                                    <User className="w-6 h-6 text-orange-500/50" />
+                                  </div>
+                                )}
                               </div>
-                            )}
+
+                              <div className="flex-1 space-y-4">
+                                {/* Name Input */}
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Reviewer Name"
+                                    value={testimonial.name}
+                                    onChange={(e) =>
+                                      handleTestimonialChange(
+                                        index,
+                                        "name",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="flex-1 px-4 py-2 bg-gray-800 text-gray-200 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRemoveTestimonial(index)
+                                    }
+                                    className="p-2 text-red-500 hover:text-red-400 transition-colors"
+                                    aria-label="Remove testimonial"
+                                  >
+                                    <Trash2 className="w-5 h-5" />
+                                  </button>
+                                </div>
+
+                                {/* Star Rating */}
+                                <div className="flex items-center gap-1">
+                                  <span className="text-sm text-gray-400 mr-2">
+                                    Rating:
+                                  </span>
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                      key={star}
+                                      type="button"
+                                      onClick={() =>
+                                        handleTestimonialChange(
+                                          index,
+                                          "rating",
+                                          star
+                                        )
+                                      }
+                                      className="focus:outline-none"
+                                    >
+                                      <Star
+                                        className={`w-6 h-6 ${
+                                          star <= testimonial.rating
+                                            ? "fill-orange-500 text-orange-500"
+                                            : "text-gray-600"
+                                        }`}
+                                      />
+                                    </button>
+                                  ))}
+                                </div>
+
+                                {/* Description */}
+                                <textarea
+                                  placeholder="Share your experience..."
+                                  value={testimonial.description}
+                                  onChange={(e) =>
+                                    handleTestimonialChange(
+                                      index,
+                                      "description",
+                                      e.target.value
+                                    )
+                                  }
+                                  rows={3}
+                                  className="w-full px-4 py-3 bg-gray-800 text-gray-200 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none"
+                                ></textarea>
+
+                                {/* Image Upload */}
+                                <div className="flex items-center gap-2">
+                                  <label className="flex-1">
+                                    <div className="flex items-center justify-center px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
+                                      <Upload className="w-5 h-5 text-orange-500 mr-2" />
+                                      <span className="text-sm text-gray-300">
+                                        {testimonialImagePreviews[index]
+                                          ? "Change Image"
+                                          : "Upload Profile Image"}
+                                      </span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) =>
+                                          handleTestimonialImageUpload(index, e)
+                                        }
+                                        className="hidden"
+                                      />
+                                    </div>
+                                  </label>
+                                  {testimonialImageUploading[index] && (
+                                    <div className="flex items-center text-orange-500">
+                                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                      <span className="text-sm">
+                                        Uploading...
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         )
                       )}
@@ -2084,10 +2143,10 @@ const NewCoursePage = () => {
                       <button
                         type="button"
                         onClick={handleAddTestimonial}
-                        className="flex items-center mt-4 text-sm px-4 py-2 bg-[#1a1b1e] text-orange-500 rounded-lg border border-orange-500/20 hover:border-orange-500/50 hover:text-orange-400 focus:outline-none"
+                        className="flex items-center justify-center w-full mt-4 px-6 py-3 bg-orange-600/20 text-orange-500 rounded-lg border border-orange-500/30 hover:bg-orange-600/30 hover:text-orange-400 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                       >
-                        <PlusCircle size={16} className="mr-2" />
-                        Add Testimonial
+                        <PlusCircle className="w-5 h-5 mr-2" />
+                        <span>Add New Testimonial</span>
                       </button>
                     </div>
                   )}

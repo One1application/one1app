@@ -9,6 +9,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { fetchWebinar } from "../../../../services/auth/api.services";
 import PageFooter from "../PayingUpPage/PageFooter";
 import { getInitials } from "../../../../utils/constants/nameCutter.js";
+import ClassInformation from "./ClassInformation.jsx";
 
 const WebinarPages = () => {
   const navigate = useNavigate();
@@ -437,7 +438,7 @@ const WebinarPages = () => {
     //       </div>
     //     )}
 
-    <div className="w-full max-w-7xl mx-auto min-h-screen bg-black rounded-3xl overflow-hidden px-4 py-10 text-white">
+    <div className="min-h-screen bg-gray-950 scrollbar-hide overflow-y-scroll">
       <PaymentSignUpModel
         open={showSignupModal}
         handleClose={() => setShowSignupModal(false)}
@@ -455,292 +456,136 @@ const WebinarPages = () => {
         onSwitchToSignup={handleSwitchToSignup}
       />
       {/* Header Section */}
-      <div className="bg-gradient-to-br from-orange-600/80 to-gray-900/60 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
-          {userDetails?.userImage ? (
-            <img
-              className="w-28 h-28 rounded-full border-4 border-white"
-              src={userDetails?.userImage}
-              alt="Creator Avatar"
-            />
-          ) : (
-            <div className="w-28 h-28 rounded-full border-4 border-white">
-              {getInitials(userDetails?.name)}
+      {webinarData?.coverImage && (
+        <section className="pb-6">
+          <div className="w-full mx-auto">
+            {/* Cover Image */}
+            <div className="relative overflow-hidden rounded-lg shadow-[0_8px_30px_rgba(0,0,0,0.3)] border border-orange-500/30 group transition-all duration-300 hover:shadow-[0_10px_40px_rgba(255,90,0,0.2)]">
+              <img
+                src={webinarData.coverImage}
+                alt="Webinar Cover"
+                className="w-full h-[180px] sm:h-[220px] md:h-[280px] object-cover transition-transform duration-500 group-hover:scale-102"
+              />
             </div>
-          )}
 
-          <div>
-            <p className="text-xl">Created by</p>
-            <h2 className="text-3xl font-semibold">
-              {webinarData.createdBy.name}
-            </h2>
+            {/* Info Block */}
+            <div className="bg-gradient-to-br from-gray-900 to-orange-900/70 mt-1 p-4 shadow-lg border border-white/10 backdrop-blur-sm">
+              <div className="flex items-center justify-between gap-4 px-5">
+                {/* Avatar or Initials */}
+                <div className="flex items-center gap-4">
+                  {webinarData?.createdBy?.userImage ? (
+                    <img
+                      className="w-12 h-12 rounded-full border-2 border-white/80 shadow-sm"
+                      src={webinarData.createdBy.userImage}
+                      alt="Creator Avatar"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-indigo-600/90 flex items-center justify-center border-2 border-white/80">
+                      <span className="text-lg font-bold text-white">
+                        {getInitials(webinarData?.createdBy?.name)}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-gray-300 uppercase tracking-wider">
+                      Created by
+                    </p>
+                    <h2 className="text-base font-semibold text-white">
+                      {webinarData?.createdBy?.name}
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Title & Badge */}
+                <div className="text-right flex flex-col items-center">
+                  <h1 className="text-xl font-bold text-white truncate max-w-[180px]">
+                    {webinarData?.title}
+                  </h1>
+                  <span className="inline-block px-2 py-1 text-xs font-bold bg-orange-500/90 text-white rounded-full">
+                    WEBINAR
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold">
-            {webinarData.title}
-          </h1>
-          <p className="text-2xl font-semibold">Webinar Event</p>
-        </div>
-      </div>
+        </section>
+      )}
 
       {/* Cover and Description */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-        <div>
-          <h3 className="text-3xl font-semibold text-orange-600 mb-4">
-            Cover Photo
-          </h3>
-          <img
-            className="w-full h-auto rounded-3xl object-cover"
-            src={webinarData.coverImage}
-            alt="Webinar Cover"
-          />
+      <section className="py-16 px-4 sm:px-6 relative">
+        <div className="max-w-6xl mx-auto">
+          <div className="relative p-8 sm:p-12 rounded-3xl border border-orange-500/30 bg-gray-900/60 backdrop-blur-xl shadow-xl transition-all duration-300 hover:shadow-orange-600/10">
+            {/* Gradient border accent ring */}
+            <div className="absolute -inset-0.5 bg-gradient-to-br from-orange-500/10 to-orange-700/10 rounded-3xl blur-md opacity-25"></div>
+
+            {/* Header */}
+            <div className="relative z-10 mb-8">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600 mb-3">
+                About the Webinar
+              </h2>
+              <div className="h-1.5 w-24 bg-gradient-to-r from-orange-500 to-orange-300 rounded-full"></div>
+            </div>
+
+            {/* Description */}
+            <div
+              className="relative z-10 text-gray-300 leading-relaxed text-[17px] sm:text-lg space-y-6 prose prose-invert max-w-none"
+              dangerouslySetInnerHTML={{
+                __html: webinarData.description
+                  ? webinarData.description
+                  : "At OneApp, we are focused on elevating creators by offering a platform that makes the path from passion to profit effortless...",
+              }}
+            />
+          </div>
         </div>
-        <div>
-          <h3 className="text-3xl font-semibold text-orange-600 mb-4">
-            Description
-          </h3>
-          <div
-            className="text-lg leading-8"
-            dangerouslySetInnerHTML={{
-              __html: webinarData.description
-                ? webinarData.description
-                : "At OneApp, we are focused on elevating creators by offering a platform that makes the path from passion to profit effortless... ",
-            }}
-          ></div>
-        </div>
-      </div>
+      </section>
 
       {/* Class Information */}
-      <section className="mt-16">
-        <h2 className="text-4xl font-semibold text-orange-600 mb-6">
-          Class Information
-        </h2>
-        <div className="bg-gray-900 p-6 rounded-2xl space-y-8">
-          <div className="border-2 border-solid border-orange-300 rounded-xl p-4 mt-4 mb-4 space-y-4">
-            <h3 className="text-2xl font-semibold text-orange-600">
-              Date & Time
-            </h3>
-            <p className="text-lg">
-              Start Date:{" "}
-              <span className="font-bold">
-                {new Date(webinarData.startDate).toLocaleString("en-IN", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </span>
-            </p>
-            <p className="text-lg">
-              End Date:{" "}
-              <span className="font-bold">
-                {new Date(webinarData.endDate).toLocaleString("en-IN", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </span>
-            </p>
-            <p className="text-lg font-bold">
-              {webinarData.occurrence || "Single Event"}
-            </p>
-          </div>
 
-          <div className="border-2 border-solid border-orange-300 rounded-2xl p-6 mt-6 mb-6 space-y-4">
-            <h3 className="text-3xl font-semibold text-orange-600">Category</h3>
-            <p className="text-xl">{webinarData.category}</p>
-          </div>
-
-          {isPurchased && (
-            <div className="border-2 border-solid border-orange-300 rounded-2xl p-6 mt-6 mb-8 space-y-8">
-              {/* Zoom Meeting Link */}
-              {webinarData.isOnline && webinarData.link.meetingLink && (
-                <div className="space-y-4">
-                  <h3 className="text-3xl font-semibold text-orange-600">
-                    Zoom Meeting Link
-                  </h3>
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src="https://www.vectorlogo.zone/logos/zoomus/zoomus-icon.svg"
-                      alt="Zoom logo"
-                      className="w-12 h-12"
-                    />
-                    <a
-                      href={webinarData.link.meetingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-lg text-white"
-                    >
-                      {webinarData.link.meetingLink}
-                    </a>
-                  </div>
-                  <h2 className="text-2xl font-semibold text-orange-600">
-                    Meeting Password:
-                    <span className="text-white font-semibold">
-                      {" "}
-                      {webinarData.link.meetingPassword}
-                    </span>
-                  </h2>
-                  <h2 className="text-2xl font-semibold text-orange-600">
-                    Meeting Id:
-                    <span className="text-white font-semibold">
-                      {webinarData.link.meetingId}
-                    </span>{" "}
-                  </h2>
-                </div>
-              )}
-
-              {/* Google Meet Meeting Link */}
-              {webinarData.isOnline && webinarData.link.platformLink && (
-                <div className="space-y-4">
-                  <h3 className="text-3xl font-semibold text-orange-600">
-                    Google Meet Link
-                  </h3>
-                  <div className="flex items-center space-x-4">
-                    {/* <img
-            src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Google_Meet_logo_2020.svg"
-            alt="Google Meet logo"
-            className="w-8 h-8"
-          /> */}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      x="0px"
-                      y="0px"
-                      width="60"
-                      height="60"
-                      viewBox="0 0 48 48"
-                    >
-                      <rect
-                        width="10"
-                        height="16"
-                        x="12"
-                        y="16"
-                        fill="#fff"
-                        transform="rotate(-90 20 24)"
-                      ></rect>
-                      <polygon
-                        fill="#1e88e5"
-                        points="3,17 3,31 8,32 13,31 13,17 8,16"
-                      ></polygon>
-                      <path
-                        fill="#4caf50"
-                        d="M37,24v14c0,1.657-1.343,3-3,3H13l-1-5l1-5h14v-7l5-1L37,24z"
-                      ></path>
-                      <path
-                        fill="#fbc02d"
-                        d="M37,10v14H27v-7H13l-1-5l1-5h21C35.657,7,37,8.343,37,10z"
-                      ></path>
-                      <path
-                        fill="#1565c0"
-                        d="M13,31v10H6c-1.657,0-3-1.343-3-3v-7H13z"
-                      ></path>
-                      <polygon
-                        fill="#e53935"
-                        points="13,7 13,17 3,17"
-                      ></polygon>
-                      <polygon
-                        fill="#2e7d32"
-                        points="38,24 37,32.45 27,24 37,15.55"
-                      ></polygon>
-                      <path
-                        fill="#4caf50"
-                        d="M46,10.11v27.78c0,0.84-0.98,1.31-1.63,0.78L37,32.45v-16.9l7.37-6.22C45.02,8.8,46,9.27,46,10.11z"
-                      ></path>
-                    </svg>
-                    <a
-                      href={webinarData.link.platformLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-lg text-white"
-                    >
-                      {webinarData.link.platformLink}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {/* Location for Offline Events */}
-              {!webinarData.isOnline && webinarData.venue && (
-                <div className="space-y-4">
-                  <h3 className="text-3xl font-semibold text-orange-600 flex items-center space-x-3">
-                    {/* Location Pin Icon */}
-
-                    <span>Location</span>
-                  </h3>
-                  <div className="flex gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      className="w-8 h-8 text-orange-600"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 2C8.134 2 5 5.134 5 8c0 3 7 10 7 10s7-7 7-10c0-2.866-3.134-6-7-6z"
-                      />
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 11c1.104 0 2-1.348 2-3s-.896-3-2-3-2 1.348-2 3 .896 3 2 3z"
-                      />
-                    </svg>
-                    <p className="text-lg text-white font-bold">
-                      {webinarData.venue}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Ticket Information */}
-      <section className="mt-16">
-        <h2 className="text-4xl font-semibold text-orange-600 mb-6">
-          Ticket Information
-        </h2>
-        <div className="bg-gray-900 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-6 border-2 border-solid border-orange-300 rounded-xl p-4 mt-4 mb-4">
-          <div>
-            <p className="text-lg">Ticket Type:</p>
-            <p className="text-lg">Price:</p>
-          </div>
-          <div className="bg-gray-800 p-4 rounded-xl text-center">
-            <h3 className="text-2xl font-semibold text-orange-600">
-              {" "}
-              {webinarData.isPaid ? "Paid" : "Free"}
-            </h3>
-            <p className="text-lg font-bold">{webinarData.amount}</p>
-          </div>
-        </div>
-      </section>
+      <ClassInformation webinarData={webinarData} isPurchased={isPurchased} />
 
       {/* Enroll CTA */}
-      <div className="mt-16 flex justify-center">
-        <button
-          onClick={() => {
-            if (!currentUserId) {
-              setShowSignupModal(true);
-            } else {
-              navigate("/app/payment", {
-                state: {
-                  id: webinarId,
-                  title: webinarData.title,
-                  baseAmount: webinarData.amount,
-                  courseType: "webinar",
-                  createdBy: webinarData.createdBy.name,
-                },
-              });
-            }
-          }}
-          disabled={!webinarData.paymentEnabled}
-          className="bg-orange-600 px-8  mb-4 py-4 rounded-2xl text-white text-2xl font-semibold shadow-lg"
-        >
-          ENROLL FOR ₹{webinarData.amount}
-        </button>
+      <div className="mt-16 flex justify-center mb-5">
+        {!isPurchased ? (
+          <button
+            onClick={() => {
+              if (!currentUserId) {
+                setShowSignupModal(true);
+              } else {
+                navigate("/app/payment", {
+                  state: {
+                    id: webinarId,
+                    title: webinarData.title,
+                    baseAmount: webinarData.amount,
+                    courseType: "webinar",
+                    createdBy: webinarData.createdBy.name,
+                  },
+                });
+              }
+            }}
+            disabled={!webinarData.paymentEnabled}
+            className="bg-orange-600 px-8 py-4 rounded-2xl text-white text-2xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center space-x-4"
+          >
+            <span>
+              {webinarData.paymentButtonTitle?.toUpperCase() || "ENROLL FOR"}
+            </span>
+            <span>₹{webinarData.amount}</span>
+          </button>
+        ) : webinarData.createdById === currentUserId ? (
+          <div className="bg-green-600 text-white py-3 px-6 rounded-2xl inline-flex items-center text-xl font-semibold shadow-lg">
+            <Icons.CheckCircle className="w-6 h-6 mr-2" />
+            <span>You Created This</span>
+          </div>
+        ) : (
+          <a
+            href="http://localhost:5174/dashboard"
+            className="bg-green-600 text-white py-3 px-6 rounded-2xl inline-flex items-center text-xl font-semibold shadow-lg hover:bg-green-700 transition-colors duration-300"
+          >
+            <Icons.LayoutDashboard className="w-6 h-6 mr-2" />
+            <span>Go to Dashboard</span>
+          </a>
+        )}
       </div>
+
       <PageFooter />
     </div>
   );

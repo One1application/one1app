@@ -134,6 +134,8 @@ export const handelUplaodFileS3 = async (formdata) => {
       headers: {
         "Content-Type": "application/json",
       },
+
+       
     }
   );
   return response;

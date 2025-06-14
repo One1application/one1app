@@ -1691,9 +1691,12 @@ const CreatePayUp = () => {
                     {formData.file.value.map((file) => (
                       <li
                         key={file.id}
-                        className="flex justify-between items-center text-gray-300"
+                        className="flex justify-between items-center text-gray-300 text"
                       >
-                        <span>{file.name}</span>
+                        <span className="block max-w-[200px] truncate text-sm text-gray-100">
+                          {file.name}
+                        </span>
+
                         <button
                           onClick={() => {
                             const updatedFiles = formData.file.value.filter(
