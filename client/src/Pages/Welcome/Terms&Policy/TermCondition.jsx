@@ -1,5 +1,6 @@
 import Navbar from "../../../components/NavBar/NavBar";
 import Footer from "../../../components/Footer/Footer";
+import { Star } from "lucide-react";
 // import DisclaimerImg from "../../../assets/Disclaimer.png";
 const TermCondition = () => {
   return (
@@ -15,7 +16,7 @@ const TermCondition = () => {
               Important Information
             </div>
             <h1 className="text-5xl font-extrabold text-orange-500 tracking-tight">
-            Term & COnditions
+              Term & COnditions
               <span className="block text-xl text-gray-300 mt-3 font-normal">
                 one1app One Hub Technology Pvt. Ltd.
               </span>
@@ -70,9 +71,18 @@ const TermCondition = () => {
               "Us" and "Our") having its registered office at F-G 103, Plot no.
               15, Orient Residency, Murlipura,Jaipur- 302039, Rajasthan through
               its "Website", "one1app", or "Platform" (which individually and
-              collectively refers to the website {<a className="text-orange-500" target="_blank" href="https://one1app.com/">https://one1app.com/</a>} and any
-              other linked pages or its application services (including mobile
-              application or mobile site services).
+              collectively refers to the website{" "}
+              {
+                <a
+                  className="text-orange-500"
+                  target="_blank"
+                  href="https://one1app.com/"
+                >
+                  https://one1app.com/
+                </a>
+              }{" "}
+              and any other linked pages or its application services (including
+              mobile application or mobile site services).
             </p>
             <p>
               This document is an electronic record of the terms under the
@@ -1060,13 +1070,74 @@ const TermCondition = () => {
               complaint.
             </p>
 
-
             <h3 className="text-2xl font-bold text-orange-500 mt-8">
               20. Refund & Return
             </h3>
+
             <p className="mb-4">
-            We don't entertain any refund and return on our website. Kindly contact us for more details.
+              We don't entertain any refund and return on our website. Kindly
+              contact us for more details.We strive to ensure that all creators
+              and customers have a fair and trustworthy experience on{" "}
+              <b>COHTPL</b>. This refund and return policy outlines the
+              conditions under which refunds may be granted for digital products
+              (e.g., courses, ebooks, templates) sold through our platform
             </p>
+
+            <ol className="list-decimal pl-5 space-y-2">
+              <li>
+                A technical issue prevents access to the product and cannot be
+                resolved
+              </li>
+              <li>
+                The content is significantly different from what was advertised
+                in the product description
+              </li>
+              <li>
+                Buyers must request a refund within 5 or 7 working days of
+                purchase.
+              </li>
+              <li>
+                No refunds will be issued after this period, except under
+                exceptional circumstances.
+              </li>
+              <li>
+                Products that have been fully downloaded or accessed (e.g.,
+                streamed more than 30%).
+              </li>
+            </ol>
+
+            <div>
+              <h2 className="font-bold text-orange-500 underline mb-2 text-left">
+                How to request a refund
+              </h2>
+
+              <div>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li>
+                    Buyers must submit a refund request via:{" "}
+                    <a href="/contactus" className="text-blue-700 underline">
+                      Contact us
+                    </a>
+                  </li>
+                  <li>
+                    Include order ID, email used, and reason for the refund
+                  </li>
+                  <li>
+                    We aim to process all requests within 5–7 business days
+                  </li>
+                </ol>
+              </div>
+
+              <div className="flex mt-4">
+                <p className="flex items-start gap-2">
+                  <Star fill="orange" color="orange" />
+                  <span className="font-bold">
+                    All the refunds will be charged processing fees as per
+                    policy.
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
