@@ -1257,7 +1257,7 @@ const CreatePayUp = () => {
                           { list: "bullet" },
                           { list: "check" },
                         ],
-                        ["link"],
+                        ["link" , "video"],
                         [{ size: ["small", false, "large", "huge"] }],
                         [{ color: [] }, { background: [] }],
                         [{ font: [] }],

@@ -16,7 +16,7 @@ import { webinarRouter } from "./routes/webinarRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 
-
+import createTelegrampromotionachannel from "./routes/TelegramPromotional.js"
 import { adminRouter } from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 import { productRouter } from "./routes/productRoutes.js";
@@ -76,6 +76,7 @@ app.use("/review", reviewRoutes);
 app.use("/admin", adminRouter);
 app.use('/product', productRouter)
 app.use("/AI" , airouter)
+app.use("/telegram" , createTelegrampromotionachannel)
  
 
 const Port = process.env.SERVER_PORT || 5000;

@@ -49,6 +49,7 @@
     "react-toastify": "^10.0.6",
     "recharts": "^2.13.3",
     "summernote": "^0.9.1",
+    "timeago.js": "^4.0.2",
     "zustand": "^5.0.4"
   },
   "devDependencies": {

@@ -24,7 +24,6 @@ const PaymentTab = () => {
   const drawerRef = useRef(null);
   const navigate = useNavigate();
 
-
   const paymentCardData = [
     {
       icon: <IoBookmarkOutline className="text-3xl" />,
@@ -78,9 +77,15 @@ const PaymentTab = () => {
           </h2>
 
           <div
-            className={`border-2 rounded-xl border-orange-900 ${userKYCStatus.color} text-[10px] md:text-sm px-2 py-1 mt-3 md:mt-0`}
+            className={`
+    border-2 rounded-xl px-2 py-1 
+    text-[10px] md:text-sm 
+    ${userKYCStatus?.color || "text-green-700"} 
+    border-orange-900 
+    ${userKYCStatus?.status ? "mt-3 md:mt-0" : ""}
+  `}
           >
-            {userKYCStatus.status}
+            {userKYCStatus?.status || "Status Unknown"}
           </div>
         </div>
 

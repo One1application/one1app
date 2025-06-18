@@ -6,9 +6,9 @@ const BillingTab = () => {
   const navigate = useNavigate();
 
   const billingHistory = [
-    { id: 1, amount: "Rs 10.00", date: "2024-10-01", status: "Paid" },
-    { id: 2, amount: "Rs 15.00", date: "2024-09-15", status: "Paid" },
-    { id: 3, amount: "Rs 20.00", date: "2024-08-30", status: "Pending" },
+    // { id: 1, amount: "Rs 10.00", date: "2024-10-01", status: "Paid" },
+    // { id: 2, amount: "Rs 15.00", date: "2024-09-15", status: "Paid" },
+    // { id: 3, amount: "Rs 20.00", date: "2024-08-30", status: "Pending" },
   ];
 
   return (
@@ -31,15 +31,15 @@ const BillingTab = () => {
             >
               View all plans
             </button>
-            <button className="bg-orange-500 text-white rounded-full text-sm p-2 transition duration-200 w-full sm:w-auto hover:bg-orange-700">
+            {/* <button className="bg-orange-500 text-white rounded-full text-sm p-2 transition duration-200 w-full sm:w-auto hover:bg-orange-700">
               Buy Plan
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
 
       {/* Billing History Section */}
-      <div className="shadow-md rounded-lg p-4 md:p-6 w-full flex flex-col gap-3">
+      {/* <div className="shadow-md rounded-lg p-4 md:p-6 w-full flex flex-col gap-3">
         <h2 className="text-sm md:text-base font-semibold text-orange-500 mb-2">
           Billing history
         </h2>
@@ -64,35 +64,43 @@ const BillingTab = () => {
                 </tr>
               </thead>
               <tbody>
-                {billingHistory.map((bill) => (
-                  <tr key={bill.id} className="hover:bg-orange-300">
-                    <td className="border border-gray-300 p-2 text-sm ">
-                      {bill.id}
-                    </td>
-                    <td className="border border-gray-300 p-2 text-sm ">
-                      {bill.amount}
-                    </td>
-                    <td className="border border-gray-300 p-2 text-sm">
-                      {bill.date}
-                    </td>
-                    <td
-                      className={`border border-gray-300 p-2 text-sm  ${
-                        bill.status === "Paid"
-                          ? "text-green-500"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {bill.status}
+                {billingHistory.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center p-4 text-gray-500">
+                      Currently nothing to show here
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  billingHistory.map((bill) => (
+                    <tr key={bill.id} className="hover:bg-orange-300">
+                      <td className="border border-gray-300 p-2 text-sm">
+                        {bill.id}
+                      </td>
+                      <td className="border border-gray-300 p-2 text-sm">
+                        {bill.amount}
+                      </td>
+                      <td className="border border-gray-300 p-2 text-sm">
+                        {bill.date}
+                      </td>
+                      <td
+                        className={`border border-gray-300 p-2 text-sm ${
+                          bill.status === "Paid"
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {bill.status}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         ) : (
           <span className="text-sm text-gray-600">No billing history yet</span>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };
