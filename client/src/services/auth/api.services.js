@@ -149,6 +149,7 @@ export const createPayUpContent = async (data) => {
   return response;
 };
 
+
 export const createLockedContent = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/premium/create-content",
@@ -218,6 +219,8 @@ export const fetchVerificationInformation = async () => {
   const response = await servicesAxiosInstance.get(
     "/wallet/get-verification-details"
   );
+
+  console.log(response)
   return response;
 };
 export const savePrimaryPaymentInformation = async (data) => {
@@ -451,86 +454,6 @@ export const fetchPremiumDashboardData = async () => {
 };
 
 
-
- 
-export const createPromotionalChannel = async (formData) => {
-  try {
-    
-
-    const response = await servicesAxiosInstance.post(
-      "/telegram/create-telegram-promotional",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        },
-        withCredentials: true
-      }
-    );
-    
-    return {
-      status: response.status,
-      success: true,
-      message: response.data?.message || "Channel created successfully",
-    }
-  } catch (error) {
-
-    return {
-      status: error.response?.status || 500,
-      success: false,
-      message: error.response?.data?.message || "Something went wrong",
-    }
-   
-  }
-};
-
- 
-
-  export const findCreatorTelegram = async () => {
-    const response = await servicesAxiosInstance.get("telegram/creator-telegram-promotional")
-     return response?.data?.found;
-  }
-
- 
-
-export const deletePromotionalChannel = async (id) => {
-  try {
-    const response = await servicesAxiosInstance.delete(
-      `/telegram/delete-telegram-promotional/${id}`
-    );
-    return {
-      status: response.status,
-      success: true,
-      message: response.data?.message || "Channel deleted successfully",
-    };
-  } catch (error) {
-    return {
-      status: error.response?.status || 500,
-      success: false,
-      message: error.response?.data?.message || "Something went wrong",
-    };
-  }
-}
-
-export const updatePromotionalChannel = async (id, data) => {
-  try {
-    const response = await servicesAxiosInstance.put(
-      `/telegram/edit-telegram-promotional/${id}`,
-      data
-    );
-    return {
-      status: response.status,
-      success: true,
-      message: response.data?.message || "Channel updated successfully",
-    };
-  } catch (error) {
-    return {
-      status: error.response?.status || 500,
-      success: false,
-      message: error.response?.data?.message || "Something went wrong",
-    };
-  }
-}
  
 export const fetchPremiumContentById = async (contentId) => {
   const response = await servicesAxiosInstance.get(

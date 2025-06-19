@@ -183,8 +183,7 @@ const ProfileTab = () => {
             className="hidden"
             onChange={handleImageChange}
           />
-
-          {/* Edit (pencil) icon to trigger file input */}
+ 
           <motion.label
             htmlFor="imageUpload"
             whileHover={{ scale: 1.1 }}

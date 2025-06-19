@@ -35,6 +35,7 @@ import {
   fetchWithdrawalPage,
   sendWithdrawAmount,
   fetchFilterEarningsAndWithdrawals,
+  fetchVerificationInformation,
 } from "../../../../services/auth/api.services";
 import { StoreContext } from "../../../../context/StoreContext/StoreContext";
 import { useAuth } from "../../../../context/AuthContext";
@@ -95,6 +96,7 @@ const WalletPage = () => {
   const [upi, setUpi] = useState([]);
   const [account, setAccount] = useState([]);
   const [reson, setReson] = useState();
+  const [kycDetails, setKycDetails] = useState({});
   const navigate = useNavigate();
 
   //filteredData for totalWithdrawals and totalEarnings
@@ -153,8 +155,6 @@ const WalletPage = () => {
     }
   };
 
-  
-  
   const handleEarningsFilterChange = (e) => {
     const selected = e.target.value;
     setEarningsFilter(selected);
@@ -300,10 +300,14 @@ const WalletPage = () => {
     }
   };
 
+  async function getKycdetails() {
+    await fetchVerificationInformation();
+  }
+
+  getKycdetails();
   useEffect(() => {
-  
     fetchEarningsFiltered("All Time");
-    fetchWithdrawalsFiltered("All Time")
+    fetchWithdrawalsFiltered("All Time");
     getPrimaryPaymentInformation();
     getWalletInformation();
     getWalletBalanceDetails();
@@ -311,6 +315,7 @@ const WalletPage = () => {
     getNextTransactionPage(1);
     setWithdrawalsLoading(true);
     setTransactionLoading(true);
+    getKycdetails();
   }, []);
 
   //pagination
@@ -535,6 +540,7 @@ const WalletPage = () => {
       </div>
 
       {/* KYC */}
+
       {!walletConfig.walletPage.KYCStatus && (
         <div className="bg-[#1A1D21] w-full py-3 px-3 mt-5 rounded-xl">
           <div className="flex bg-[#1E2328] py-3 justify-between items-center rounded-xl px-3">
@@ -579,7 +585,11 @@ const WalletPage = () => {
                   }
                    py-2 px-3 text-sm rounded-md text-white font-poppins`}
                 >
-                  {status === "NULL" ? "Update KYC" : status}
+                  {status === "NULL" ? (
+                    <Link to="/dashboard/kyc-setting">Update KYC</Link>
+                  ) : (
+                    status
+                  )}
                 </Link>
               ) : (
                 <div
@@ -594,7 +604,11 @@ const WalletPage = () => {
                   }
                    py-2 px-3 text-sm rounded-md text-white font-poppins`}
                 >
-                  {status === "NULL" ? "Update KYC" : status}
+                  {status === "NULL" ? (
+                    <Link to="/dashboard/kyc-setting">Update KYC</Link>
+                  ) : (
+                    status
+                  )}
                 </div>
               )}
             </div>
