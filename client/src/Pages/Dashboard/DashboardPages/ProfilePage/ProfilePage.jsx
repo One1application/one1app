@@ -7,6 +7,8 @@ import BrandingTab from "./components/BrandingTab";
 import PaymentTab from "./components/PaymentTab";
 import { fetchUserDetails } from "../../../../services/auth/api.services";
 import { useAuth } from "../../../../context/AuthContext";
+import TelegramChanneladd from "./components/TelegramChannelAdd";
+import { FaTelegram } from "react-icons/fa";
 
 const ProfilePage = () => {
   const [value, setValue] = useState("1");
@@ -115,6 +117,29 @@ const ProfilePage = () => {
                 >
                   Payments
                 </button>
+                <button
+                  className={`
+                    w-full md:w-auto 
+                    py-3 md:py-2 
+                    text-center 
+                    transition-all 
+                    duration-200 
+                    text-base md:text-xl 
+                    ${
+                      value === "4"
+                        ? "border-b-2 border-orange-500 text-orange-500"
+                        : "text-gray-400 hover:text-gray-200"
+                    }
+                  `}
+                  onClick={() => handleChange("4")}
+                >
+
+                  <div className="flex items-center justify-center gap-1">
+                   <FaTelegram className="md:size-5 size-4 text-orange-600"/>
+                   <span>Telegram</span>
+
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -126,6 +151,7 @@ const ProfilePage = () => {
         {value === "2" && <BillingTab />}
         {/* {value === "3" && <BrandingTab />} */}
         {value === "3" && <PaymentTab />}
+        {value === "4" && <TelegramChanneladd/>}
       </div>
     </div>
   );

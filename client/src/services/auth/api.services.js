@@ -149,6 +149,7 @@ export const createPayUpContent = async (data) => {
   return response;
 };
 
+
 export const createLockedContent = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/premium/create-content",
@@ -218,6 +219,8 @@ export const fetchVerificationInformation = async () => {
   const response = await servicesAxiosInstance.get(
     "/wallet/get-verification-details"
   );
+
+  console.log(response)
   return response;
 };
 export const savePrimaryPaymentInformation = async (data) => {
@@ -451,6 +454,7 @@ export const fetchPremiumDashboardData = async () => {
 };
 
 
+ 
 export const fetchPremiumContentById = async (contentId) => {
   const response = await servicesAxiosInstance.get(
     `/premium/premium-content/${contentId}` // Matches the route in premiumRoutes.js

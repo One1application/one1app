@@ -1,6 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import Lottie from "lottie-react";
 import animation from "../../../../assets/connecting.json";
+import TelegramHeader from "./TelegramHeader";
+import { motion } from "framer-motion";
+import {
+  MessageSquare,
+  Shield,
+  Key,
+  Lock,
+  Zap,
+  Phone,
+  AlertCircle,
+  Mail,
+  RotateCw,
+} from "lucide-react";
 
 const ConnectPage = () => {
   const [step, setStep] = useState(0);
@@ -10,7 +23,36 @@ const ConnectPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const otpInputRefs = useRef([]);
+  const container = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        when: "beforeChildren",
+      },
+    },
+  };
 
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5 },
+    },
+  };
+
+  const float = {
+    float: {
+      y: [-5, 5, -5],
+      transition: {
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+      },
+    },
+  };
   // Initialize OTP input refs
   useEffect(() => {
     otpInputRefs.current = otpInputRefs.current.slice(0, 6);
@@ -25,14 +67,14 @@ const ConnectPage = () => {
       setError("Please enter a valid 10-digit mobile number");
       return;
     }
-    
+
     setError("");
     setCountdown(60);
     setStep(2);
-    
+
     // Start countdown
     const timer = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           return 0;
@@ -44,18 +86,18 @@ const ConnectPage = () => {
 
   const handleOtpChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    
+
     // Auto-focus next input
     if (value && index < 5) {
       otpInputRefs.current[index + 1].focus();
     }
-    
+
     // Auto-submit when all fields are filled
-    if (index === 5 && value && newOtp.every(digit => digit !== "")) {
+    if (index === 5 && value && newOtp.every((digit) => digit !== "")) {
       handleOtpSubmit();
     }
   };
@@ -70,10 +112,10 @@ const ConnectPage = () => {
   const handleResendOtp = () => {
     setCountdown(60);
     setOtp(["", "", "", "", "", ""]);
-    
+
     // Restart countdown
     const timer = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           return 0;
@@ -89,10 +131,10 @@ const ConnectPage = () => {
       setError("Please enter a 6-digit OTP");
       return;
     }
-    
+
     setIsSubmitting(true);
     setError("");
-    
+
     // Simulate API call
     setTimeout(() => {
       console.log("OTP Submitted:", fullOtp);
@@ -103,12 +145,10 @@ const ConnectPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-200  to-pink-500 flex flex-col items-center justify-center p-4 sm:p-6">
-      
-
       {/* Main Card */}
       <div className="w-2/3 h-full bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-700 relative z-10">
         {/* Card Header */}
-        <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-orange-700 py-6 px-4 sm:px-8 text-center relative">
+        {/* <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-orange-700 py-6 px-4 sm:px-8 text-center relative">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
           <div className="relative">
             <div className="flex justify-center items-center space-x-4 sm:space-x-8 mb-4">
@@ -142,175 +182,280 @@ const ConnectPage = () => {
                   : "Enter Verification Code"}
             </h1>
           </div>
-        </div>
-
+        </div> */}
+        <TelegramHeader />
         {/* Card Content */}
-        <div className="py-8 px-4 sm:px-8">
-          {step === 0 && (
-            <div className="text-center">
-              <div className="mb-8">
-                <div className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-600 to-orange-700 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                </div>
-                <p className="text-gray-400 mb-6">
-                  Securely connect your Telegram account to access premium features on OneApp
-                </p>
-              </div>
-              
-              <button
-                onClick={handleConnectClick}
-                className="w-1/2 py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
+
+        <div className="py-8 px-4 sm:px-8 max-w-md mx-auto relative overflow-hidden">
+          {/* Floating decorative icons */}
+          <motion.div
+            className="absolute top-20 left-10 text-orange-400 opacity-20"
+            variants={float}
+            animate="float"
+          >
+            <Shield className="w-8 h-8" />
+          </motion.div>
+          <motion.div
+            className="absolute bottom-20 right-10 text-orange-300 opacity-20"
+            variants={float}
+            animate="float"
+          >
+            <Key className="w-8 h-8" />
+          </motion.div>
+
+          <motion.div
+            className="relative z-10"
+            variants={container}
+            initial="hidden"
+            animate="visible"
+          >
+            {step === 0 && (
+              <motion.div
+                className="flex flex-col items-center"
+                variants={container}
               >
-                Connect Accounts
-              </button>
-              
-              <div className="mt-6 text-xs text-gray-500 flex justify-center space-x-4">
-                <span>🔒 End-to-end encrypted</span>
-                <span>⚡ Instant setup</span>
-              </div>
-            </div>
-          )}
+                <div className="mb-8 text-center">
+                  <motion.div
+                    className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-600 to-orange-700 rounded-full flex items-center justify-center mb-4"
+                    variants={item}
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <MessageSquare className="w-8 h-8 text-white" />
+                  </motion.div>
+                  <motion.p className="text-gray-400 mb-6 px-4" variants={item}>
+                    Securely connect your Telegram account to access premium
+                    features on OneApp
+                  </motion.p>
+                </div>
 
-          {step === 1 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700">
-                  <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </div>
-                <p className="text-gray-400 mb-2">
-                  Enter your Telegram mobile number to receive a verification code
-                </p>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <span className="text-gray-300">+91</span>
-                  </div>
-                  <input
-                    type="tel"
-                    value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="Mobile number"
-                    className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
-                  />
-                </div>
-                
-                {error && (
-                  <div className="text-red-400 text-sm flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {error}
-                  </div>
-                )}
-                <div className="flex justify-center">
-                <button
-                  onClick={handleSendOtp}
-                  className="w-1/2 py-3 px-6 center bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
+                <motion.button
+                  onClick={handleConnectClick}
+                  className="w-full sm:w-3/4 py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
+                  variants={item}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  Send Verification Code
-                </button>
-                </div>
-              </div>
-              
-              
-            </div>
-          )}
+                  Connect Accounts
+                </motion.button>
 
-          {step === 2 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700">
-                  <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                  </svg>
-                </div>
-                <p className="text-gray-400">
-                  Enter the 6-digit code sent to
-                </p>
-                <p className="text-orange-400 font-medium mt-1">
-                  +91 ••• ••• {mobileNumber.slice(-4)}
-                </p>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex justify-center space-x-2 sm:space-x-3">
-                  {[0, 1, 2, 3, 4, 5].map((index) => (
-                    <input
-                      key={index}
-                      type="tel"
-                      maxLength={1}
-                      value={otp[index]}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      ref={(el) => (otpInputRefs.current[index] = el)}
-                      className="w-12 h-12 sm:w-14 sm:h-14 text-center text-xl bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
-                    />
-                  ))}
-                </div>
-                
-                {error && (
-                  <div className="text-red-400 text-sm flex items-center justify-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {error}
-                  </div>
-                )}
-                 <div className="flex justify-center">
-                <button
-                  onClick={handleOtpSubmit}
-                  disabled={isSubmitting || otp.some(digit => digit === "")}
-                  className={`w-1/2 py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${
-                    isSubmitting || otp.some(digit => digit === "")
-                      ? "bg-gray-700 cursor-not-allowed"
-                      : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
-                  }`}
+                <motion.div
+                  className="mt-6 text-xs text-gray-500 flex flex-col sm:flex-row justify-center gap-2 sm:gap-4"
+                  variants={item}
                 >
-                  {isSubmitting ? (
-                    <div className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Verifying...
+                  <motion.span
+                    className="flex items-center justify-center"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <Lock className="w-3 h-3 mr-1" />
+                    End-to-end encrypted
+                  </motion.span>
+                  <motion.span
+                    className="flex items-center justify-center"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <Zap className="w-3 h-3 mr-1" />
+                    Instant setup
+                  </motion.span>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {step === 1 && (
+              <motion.div
+                className="flex flex-col items-center"
+                variants={container}
+              >
+                <div className="mb-8 text-center">
+                  <motion.div
+                    className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700"
+                    variants={item}
+                    whileHover={{ rotate: 10 }}
+                  >
+                    <Phone className="w-6 h-6 text-orange-500" />
+                  </motion.div>
+                  <motion.p className="text-gray-400 mb-6 px-4" variants={item}>
+                    Enter your Telegram mobile number to receive a verification
+                    code
+                  </motion.p>
+                </div>
+
+                <div className="w-full sm:w-3/4 space-y-4">
+                  <motion.div className="relative" variants={item}>
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <span className="text-gray-300">+91</span>
                     </div>
-                  ) : (
-                    "Verify & Continue"
-                  )}
-                </button>
-                </div>
-                
-                <div className="text-center pt-4 border-t border-gray-700">
-                  <p className="text-gray-500 text-sm">
-                    {countdown > 0 ? (
-                      <span>Resend code in <span className="text-orange-400">{countdown}s</span></span>
-                    ) : (
-                      <button 
-                        onClick={handleResendOtp}
-                        className="text-orange-400 hover:text-orange-300 transition-colors"
-                      >
-                        Resend Verification Code
-                      </button>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+                    <input
+                      type="tel"
+                      value={mobileNumber}
+                      onChange={(e) =>
+                        setMobileNumber(
+                          e.target.value.replace(/\D/g, "").slice(0, 10)
+                        )
+                      }
+                      placeholder="Mobile number"
+                      className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
+                    />
+                  </motion.div>
 
+                  {error && (
+                    <motion.div
+                      className="text-red-400 text-sm flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {error}
+                    </motion.div>
+                  )}
+
+                  <motion.button
+                    onClick={handleSendOtp}
+                    className="w-full py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
+                    variants={item}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Send Verification Code
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 2 && (
+              <motion.div
+                className="flex flex-col items-center"
+                variants={container}
+              >
+                <div className="mb-8 text-center">
+                  <motion.div
+                    className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700"
+                    variants={item}
+                    animate={{
+                      rotate: [0, 10, -10, 0],
+                      transition: { duration: 2, repeat: Infinity },
+                    }}
+                  >
+                    <Mail className="w-6 h-6 text-orange-500" />
+                  </motion.div>
+                  <motion.p className="text-gray-400" variants={item}>
+                    Enter the 6-digit code sent to
+                  </motion.p>
+                  <motion.p
+                    className="text-orange-400 font-medium mt-1"
+                    variants={item}
+                    animate={{
+                      scale: [1, 1.05, 1],
+                      transition: { duration: 2, repeat: Infinity },
+                    }}
+                  >
+                    +91 ••• ••• {mobileNumber.slice(-4)}
+                  </motion.p>
+                </div>
+
+                <div className="w-full sm:w-3/4 space-y-4">
+                  <motion.div
+                    className="flex justify-center space-x-3"
+                    variants={item}
+                  >
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                      <motion.input
+                        key={index}
+                        type="tel"
+                        maxLength={1}
+                        value={otp[index]}
+                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
+                        ref={(el) => (otpInputRefs.current[index] = el)}
+                        className="w-12 h-12 text-center text-xl bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
+                        whileFocus={{ scale: 1.05 }}
+                        variants={item}
+                        transition={{ delay: index * 0.1 }}
+                      />
+                    ))}
+                  </motion.div>
+
+                  {error && (
+                    <motion.div
+                      className="text-red-400 text-sm flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {error}
+                    </motion.div>
+                  )}
+
+                  <motion.button
+                    onClick={handleOtpSubmit}
+                    disabled={isSubmitting || otp.some((digit) => digit === "")}
+                    className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${
+                      isSubmitting || otp.some((digit) => digit === "")
+                        ? "bg-gray-700 cursor-not-allowed"
+                        : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
+                    }`}
+                    variants={item}
+                    whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center">
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                        >
+                          <RotateCw className="w-4 h-4 mr-2 animate-spin" />
+                        </motion.span>
+                        Verifying...
+                      </div>
+                    ) : (
+                      "Verify & Continue"
+                    )}
+                  </motion.button>
+
+                  <motion.div
+                    className="text-center pt-4 border-t border-gray-700"
+                    variants={item}
+                  >
+                    <p className="text-gray-500 text-sm">
+                      {countdown > 0 ? (
+                        <span>
+                          Resend code in{" "}
+                          <span className="text-orange-400">{countdown}s</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={handleResendOtp}
+                          className="text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center mx-auto"
+                        >
+                          <Mail className="w-4 h-4 mr-1" />
+                          Resend Verification Code
+                        </button>
+                      )}
+                    </p>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        </div>
         {/* Card Footer */}
         <div className="bg-gray-850 py-4 px-6 border-t border-gray-700 text-center">
           <p className="text-xs text-gray-500">
-            © {new Date().getFullYear()} COHTPL • 
-            <a href="#" className="text-orange-500 hover:text-orange-300 transition-colors mx-1">Privacy Policy</a> • 
-            <a href="#" className="text-orange-500 hover:text-orange-300 transition-colors mx-1">Terms</a>
+            © {new Date().getFullYear()} COHTPL •
+            <a
+              href="#"
+              className="text-orange-500 hover:text-orange-300 transition-colors mx-1"
+            >
+              Privacy Policy
+            </a>{" "}
+            •
+            <a
+              href="#"
+              className="text-orange-500 hover:text-orange-300 transition-colors mx-1"
+            >
+              Terms
+            </a>
           </p>
         </div>
       </div>

@@ -13,9 +13,9 @@ import {
   editPayingUp,
   generativeDescription,
 } from "../../../../services/auth/api.services.js";
-import axios from "axios";
+
 import toast from "react-hot-toast";
-import { PlusCircle, Upload, ChevronDown } from "lucide-react";
+
 import { X, Edit, Trash } from "lucide-react";
 import AIAssistantButton from "../../../../components/Buttons/AIAssistantButton";
 
@@ -1257,7 +1257,7 @@ const CreatePayUp = () => {
                           { list: "bullet" },
                           { list: "check" },
                         ],
-                        ["link"],
+                        ["link" , "video"],
                         [{ size: ["small", false, "large", "huge"] }],
                         [{ color: [] }, { background: [] }],
                         [{ font: [] }],

@@ -104,13 +104,13 @@ const ContactInfo = () => {
           <span className="">
             <FaPhoneAlt />
           </span>
-          <p className="">+91 1234567890</p>
+          <p className="">+91 9253436309</p>
         </div>
         <div className="flex flex-row gap-3 justify-center items-center">
           <span className="">
             <MdEmail />
           </span>
-          <p className="">hello@one1app.com</p>
+          <p className="">support@one1app.com</p>
         </div>
       </div>
 

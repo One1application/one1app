@@ -84,7 +84,7 @@ export const updateUserProfile = async (req, res) => {
       });
     }
 
-    // If email is changing, trigger OTP flow
+    // If email is changing 
     if (email && email !== existingUser.email) {
       const emailTaken = await prisma.user.findUnique({ where: { email } });
       if (emailTaken) {

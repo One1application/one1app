@@ -1297,6 +1297,8 @@ export async function getKycDetails(req, res) {
         .json({ success: false, message: "KYC details not found." });
     }
 
+    console.log(kyc)
+
     return res.status(200).json({
       success: true,
       payload: kyc,
