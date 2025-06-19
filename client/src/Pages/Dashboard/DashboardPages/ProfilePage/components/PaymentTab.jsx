@@ -33,8 +33,6 @@ const PaymentTab = () => {
     let res = await fetchVerificationInformation();
 
     setStatus(res?.data?.payload?.status || null);
-    console.log(status);
-    console.log(res);
   };
 
   getKycDetails();
@@ -101,7 +99,6 @@ const PaymentTab = () => {
   };
 
   const handleAboutMeSave = () => {
-    console.log("GST Number Saved:", isGSTNumber);
     setIsGSTChangeI(false);
   };
 

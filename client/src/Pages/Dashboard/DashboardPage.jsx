@@ -11,6 +11,8 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
+  const product = dashboardConfig?.productRoute?.[0];
+
   const toggleSettings = () => {
     setIsSettingsOpen((prev) => !prev);
   };
@@ -105,7 +107,7 @@ const DashboardPage = () => {
             <hr className="border-gray-600 mb-4" />
             <span className="text-sm font-bold mb-2 block">Our Services</span>
 
-            <div>
+            {/* <div>
               {dashboardConfig.appItems.map((item, index) => (
                 <div
                   key={index}
@@ -119,7 +121,17 @@ const DashboardPage = () => {
                   <span>{item.label}</span>
                 </div>
               ))}
-            </div>
+            </div> */}
+
+            {product && (
+              <div
+                className="flex items-center text-sm py-3 px-4 cursor-pointer hover:bg-orange-600 hover:rounded-xl transition-all"
+                onClick={() => navigate(`/dashboard${product.path}`)}
+              >
+                <product.icon className="w-5 h-5 mr-3" />
+                <span>{product.label}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -147,8 +159,6 @@ const DashboardPage = () => {
             </div>
           )}
         </div>
-
-        
       </aside>
 
       <main className="flex-1 overflow-y-auto h-screen scrollbar-hide">

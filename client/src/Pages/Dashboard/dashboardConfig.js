@@ -7,6 +7,7 @@ import { HiOutlineCash } from "react-icons/hi";
 import { PiHandWithdraw } from "react-icons/pi";
 import { LiaIdCardSolid } from "react-icons/lia";
 import { HelpCircle } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 
 export const dashboardConfig = {
   logo: {
@@ -25,6 +26,12 @@ export const dashboardConfig = {
     ] },
     // commented out for now, as we don't have a superlinks dashboard yet
     // { label: "SuperLinks", icon: FaLink, path: "/superlinks" }
+  ],
+
+
+  productRoute : [
+    { label: "All Products", icon: LayoutDashboard, path: "/all-products" },
+
   ],
   
   appItems: [
