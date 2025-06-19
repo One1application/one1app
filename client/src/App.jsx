@@ -51,6 +51,7 @@ import HelpCenterBanner from "./Pages/HelpCenter/HelpCenterComingSoon.jsx";
 import ConnectPage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram1.jsx";
 import TelegramsPages2 from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramCreate2.jsx";
 import WelcomePage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram3.jsx";
+import CreatorProductsShowcase from "./Pages/Dashboard/DashboardPages/ProfilePage/components/CreatorProductsShowcase.jsx";
 
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
@@ -97,6 +98,8 @@ const App = () => {
             <Route path="wallets" element={<WalletPage />} />
             <Route path="payingup" element={<PayingUpPage />} />
             <Route path="appointment" element={<AppointementPage />} />
+            <Route path="all-products" element={<CreatorProductsShowcase />} />
+
             <Route path="webinar" element={<WebinarPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="telegram" element={<TelegramPage />} />
