@@ -17,7 +17,8 @@ import TextBox from "../../../../components/SellingPageShare/TextBox";
 import PaymentSignUpModel from "../../../../components/Modal/PaymentSignUpModel";
 import { getInitials } from "../../../../utils/constants/nameCutter.js";
 import InfoSections from "../../../../components/InfoSections.jsx";
-import ThreeinOne from "./ThreeinOne.jsx";
+import BenefitsAndFaqs from "./BenefitsAndFaqs.jsx";
+import FeaturesAndCourseContent from "./FeaturesAndCourseContent.jsx";
 
 const NewCourse = () => {
   const { userDetails } = useAuth();
@@ -115,7 +116,6 @@ const NewCourse = () => {
     }
   };
 
-  console.log("courseDetails", courseDetails);
   const handleSuccessfulSignIn = (data) => {
     if (data.token) {
       localStorage.setItem("AuthToken", data.token);
@@ -148,6 +148,7 @@ const NewCourse = () => {
       setIsLoading(true);
       try {
         const response = await fetchCourse(courseId);
+        console.log(response);
         setCourseDetails(response.data.payload.course);
 
         // Check if the course has been purchased
@@ -168,6 +169,8 @@ const NewCourse = () => {
     };
     getCourse();
   }, [courseId, currentUserId]);
+
+  console.log("courseDetails", courseDetails);
 
   // useEffect(() => {
   //   const script = document.createElement("script");
@@ -401,10 +404,10 @@ const NewCourse = () => {
                 <div className="flex items-center justify-between gap-4 px-5">
                   {/* Avatar or Initials */}
                   <div className="flex items-center gap-4">
-                    {userDetails?.avatar ? (
+                    {courseDetails?.creator?.userImage ? (
                       <img
                         className="w-12 h-12 rounded-full border-2 border-white/80 shadow-sm"
-                        src={userDetails.avatar}
+                        src={courseDetails?.creator?.userImage}
                         alt="Creator Avatar"
                       />
                     ) : (
@@ -466,7 +469,7 @@ const NewCourse = () => {
                           return (
                             <div className="p-3 rounded-lg  flex items-center gap-2">
                               {validity.icon}
-                              <span className="text-sm font-medium">
+                              <span className="text-sm font-medium text-green-500">
                                 {validity.text}
                               </span>
                             </div>
@@ -508,39 +511,6 @@ const NewCourse = () => {
         </section>
       )}
 
-      {/* Lessons Section - Moved to top and modified */}
-      {/* 
-      <section className="py-10 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold mb-8 text-center text-orange-500">
-            Course Content
-          </h2>
-          <div className="flex justify-center">
-            {isPurchased ? (
-              <button
-                onClick={() =>
-                  navigate(`/app/course/lessons?courseid=${courseId}`)
-                }
-                className="bg-orange-500 hover:bg-orange-600 text-white py-4 px-10 rounded-lg font-bold transition-colors duration-300 shadow-xl inline-flex items-center space-x-3 text-lg"
-              >
-                <Icons.BookOpen className="w-6 h-6 mr-2" />
-                <span>Go to Course Lessons</span>
-              </button>
-            ) : (
-              <div className="p-6 bg-gray-900 rounded-xl shadow-xl border border-orange-500/20 text-center">
-                <Icons.Lock className="w-10 h-10 text-orange-500 mx-auto mb-3" />
-                <h3 className="text-xl font-semibold mb-2 text-white">
-                  Course Content Locked
-                </h3>
-                <p className="text-gray-300">
-                  Purchase this course to access all lessons and materials
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section> */}
-
       {/* About Section */}
       <section className="py-16 px-4 sm:px-6 relative">
         <div className="max-w-6xl mx-auto">
@@ -566,6 +536,10 @@ const NewCourse = () => {
           </div>
         </div>
       </section>
+
+      {/*features and course benefits */}
+
+      <FeaturesAndCourseContent courseDetails={courseDetails} />
 
       {/* Testimonials */}
       {courseDetails.testimonials.isActive && (
@@ -606,29 +580,50 @@ const NewCourse = () => {
                   .map((testimonial, index) => (
                     <div
                       key={index}
-                      className="p-6 bg-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-300 border border-orange-500/20"
+                      className="p-8 bg-gray-900 rounded-xl shadow-lg hover:shadow-orange-500/10 transition-all duration-300 border border-gray-800 hover:border-orange-500/30 flex flex-col items-center"
                     >
-                      <div className="flex items-center mb-4">
-                        <img
-                          src={testimonial.profilePic || oneApp}
-                          alt={testimonial.name}
-                          className="w-14 h-14 rounded-full object-cover border-2 border-orange-500"
-                        />
-                        <div className="ml-4">
-                          <h3 className="font-semibold text-white text-lg">
+                      {/* Profile Image with Centered Content */}
+                      <div className="flex flex-col items-center mb-6">
+                        <div className="relative mb-4 w-20 h-20">
+                          <img
+                            src={testimonial.profilePic || oneApp}
+                            alt={testimonial.name}
+                            className="w-20 h-20 rounded-full object-cover border-2 border-orange-500"
+                          />
+                          {/* Verified badge repositioned */}
+                        </div>
+
+                        {/* Name and Rating */}
+                        <div className="text-center">
+                          <h3 className="text-lg flex items-center justify-center gap-2 font-semibold text-white mb-1">
                             {testimonial.name}
+
+                            <Icons.Verified className="w-4 h-4" fill="green" />
                           </h3>
-                          <div className="flex text-orange-500">
-                            {[...Array(testimonial.rating)].map((_, i) => (
+                          <div className="flex justify-center gap-0.5">
+                            {[...Array(5)].map((_, i) => (
                               <Icons.Star
                                 key={i}
-                                className="w-4 h-4 fill-current"
+                                className={`w-5 h-5 ${
+                                  i < testimonial.rating
+                                    ? "fill-orange-500 text-orange-500"
+                                    : "text-gray-600"
+                                }`}
                               />
                             ))}
                           </div>
                         </div>
                       </div>
-                      <p className="text-gray-300">{testimonial.description}</p>
+
+                      {/* Testimonial Text */}
+                      <div className="relative w-full">
+                        <Icons.Quote className="absolute top-0 left-0 text-orange-500/20 w-6 h-6" />
+                        <p className="text-gray-300 text-center px-6 py-2 leading-relaxed break-words w-full max-w-[90%] mx-auto">
+                          {testimonial.description}
+                        </p>
+
+                        <Icons.Quote className="absolute bottom-0 right-0 text-orange-500/20 w-6 h-6 transform rotate-180" />
+                      </div>
                     </div>
                   ))}
               </div>
@@ -720,7 +715,7 @@ const NewCourse = () => {
         </div>
       )}
 
-      <ThreeinOne courseDetails={courseDetails} />
+      <BenefitsAndFaqs courseDetails={courseDetails} />
 
       {/* Call to Action */}
       {/* <section className="py-12 px-4 bg-gradient-to-r from-orange-600 to-orange-500">

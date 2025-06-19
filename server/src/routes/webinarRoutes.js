@@ -24,7 +24,7 @@ webinarRouter.get(
 webinarRouter.use(authMiddleware);
 
 
-webinarRouter.post('/create-webinar', SchemaValidator(webinarSchema),  createWebinar
+webinarRouter.post('/create-webinar',  createWebinar
 );
 webinarRouter.post('/edit-webinar/:webinarId', SchemaValidator(webinarSchema) ,editWebinar)
 

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { KYCStatus } from "../../../../../utils/constants/constants";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaCcMastercard, FaGooglePay } from "react-icons/fa";
 import { SiPhonepe, SiPaytm } from "react-icons/si";
 import { RiVisaLine } from "react-icons/ri";
@@ -12,19 +12,68 @@ import Drawer from "@mui/material/Drawer";
 import PaymentDrawer from "./PaymentDrawer";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../../context/AuthContext";
+import { fetchVerificationInformation } from "../../../../../services/auth/api.services.js";
 
+import {
+  Clock,
+  BadgeCheck,
+  XCircle,
+  AlertCircle,
+  HelpCircle,
+} from "lucide-react";
 const PaymentTab = () => {
-  const { userDetails } = useAuth();
-  const [userKYCStatus, setUserKYCStatus] = useState(
-    userDetails?.verified ? KYCStatus[1] : KYCStatus[0]
-  );
+  const [status, setStatus] = useState("");
   const [isGSTChanged, setIsGSTChangeI] = useState(false);
   const [isGSTNumber, setIsGSTNumber] = useState("");
   const [open, setOpen] = useState(false);
   const drawerRef = useRef(null);
   const navigate = useNavigate();
 
+  const getKycDetails = async () => {
+    let res = await fetchVerificationInformation();
 
+    setStatus(res?.data?.payload?.status || null);
+  };
+
+  getKycDetails();
+
+  useEffect(() => {
+    getKycDetails();
+  }, [status]);
+  const getBadge = (status) => {
+    switch (status) {
+      case "PENDING":
+        return {
+          className: "bg-yellow-200 text-yellow-800 border border-yellow-800",
+          icon: <Clock className="w-4 h-4" />,
+          label: "Pending",
+        };
+
+      case "VERIFIED":
+        return {
+          className: "bg-green-200 text-green-800 border border-green-800",
+          icon: <BadgeCheck className="w-4 h-4" />,
+          label: "Verified",
+        };
+
+      case "REJECTED":
+        return {
+          className: "bg-red-200 text-red-800 border border-red-800",
+          icon: <XCircle className="w-4 h-4" />,
+          label: "Rejected",
+        };
+
+      default:
+        return {
+          className: "bg-orange-200 text-red-800 border border-red-200",
+          icon: <AlertCircle className="w-4 h-4" />,
+          label: "Verify KYC",
+          isNavigable: true,
+        };
+    }
+  };
+
+  const { className, label, icon, isNavigable } = getBadge(status) || {};
   const paymentCardData = [
     {
       icon: <IoBookmarkOutline className="text-3xl" />,
@@ -50,7 +99,6 @@ const PaymentTab = () => {
   };
 
   const handleAboutMeSave = () => {
-    console.log("GST Number Saved:", isGSTNumber);
     setIsGSTChangeI(false);
   };
 
@@ -77,11 +125,20 @@ const PaymentTab = () => {
             oneapp payments
           </h2>
 
-          <div
-            className={`border-2 rounded-xl border-orange-900 ${userKYCStatus.color} text-[10px] md:text-sm px-2 py-1 mt-3 md:mt-0`}
+          <button
+            className={`${className} flex items-center w-fit gap-2 p-2 rounded-xl`}
+            {...(isNavigable && {
+              onClick: () => {
+                navigate("/dashboard/kyc-setting");
+              },
+
+              role: "button",
+              tabIndex: 0,
+            })}
           >
-            {userKYCStatus.status}
-          </div>
+            {icon}
+            {label}
+          </button>
         </div>
 
         <hr className="border-gray-400" />
@@ -100,13 +157,16 @@ const PaymentTab = () => {
             cards, BNPL (Buy now, Pay Later), and more.
           </p>
 
-          <button
-            type="button"
-            className="bg-orange-600 text-white rounded-full text-sm px-6 py-2 transition duration-200 w-full md:w-auto hover:bg-orange-700"
-            onClick={() => navigate("/dashboard/kyc-setting")}
-          >
-            Set up payment
-          </button>
+          {status !== undefined && (
+            <button
+              type="button"
+              className="bg-orange-600 text-white rounded-full text-sm px-6 py-2 transition duration-200 w-full md:w-auto hover:bg-orange-700"
+              onClick={() => navigate("/dashboard/kyc-setting")}
+            >
+              {status ? "View Payment Setup" : "Set up Payment"}
+            </button>
+          )}
+
           <Drawer anchor="right" open={open} onClose={toggleDrawer(false)}>
             <div
               ref={drawerRef}

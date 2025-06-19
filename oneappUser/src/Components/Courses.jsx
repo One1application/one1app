@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getPuchasedCourses } from "../Apicalls/productsPurchased.js";
+import { getSignedVideoUrl } from "../Apicalls/Videosapi.js";
 import ReactPlayer from "react-player";
 import { format } from "date-fns";
 import {
@@ -18,17 +19,20 @@ import {
   PlayCircle,
   Pause,
   RotateCcw,
+  BadgeCheck,
 } from "lucide-react";
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [signedUrl, setSignedUrl] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [currentCourse, setCurrentCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedCourseIndex, setSelectedCourseIndex] = useState(null);
+  const [isFetchingSignedUrl, setIsFetchingSignedUrl] = useState(false);
 
   async function fetchCourses() {
     try {
@@ -47,13 +51,12 @@ const Courses = () => {
     fetchCourses();
   }, []);
 
-   
   const checkSubscriptionStatus = (validity, startingDate) => {
     if (!validity || !startingDate) return "Unknown";
 
     const now = new Date();
     const startDate = new Date(startingDate);
-    let endDate = new Date(startDate);  
+    let endDate = new Date(startDate);
 
     switch (validity) {
       case "Monthly":
@@ -71,16 +74,29 @@ const Courses = () => {
     return now < endDate ? "Active" : "Expired";
   };
 
-  const handleVideoSelect = (videoUrl, lesson, course) => {
-    setSelectedVideo(videoUrl);
-    setCurrentLesson(lesson);
-    setCurrentCourse(course);
-    setIsVideoModalOpen(true);
+  const handleVideoSelect = async (videoUrl, lesson, course) => {
+    setIsFetchingSignedUrl(true);
+    try {
+      // Get signed URL before opening modal
+      const response = await getSignedVideoUrl(videoUrl);
+      const signedUrl = response.data.signedUrl;
+
+      setSignedUrl(signedUrl);
+      setSelectedVideo(videoUrl);
+      setCurrentLesson(lesson);
+      setCurrentCourse(course);
+      setIsVideoModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching signed URL:", error);
+    } finally {
+      setIsFetchingSignedUrl(false);
+    }
   };
 
   const closeVideoModal = () => {
     setIsVideoModalOpen(false);
     setSelectedVideo(null);
+    setSignedUrl(null);
     setCurrentLesson(null);
     setCurrentCourse(null);
   };
@@ -109,6 +125,11 @@ const Courses = () => {
       default:
         return <Clock size={16} className="text-gray-400" />;
     }
+  };
+
+  const preventRightClick = (e) => {
+    e.preventDefault();
+    return false;
   };
 
   if (loading) {
@@ -237,12 +258,23 @@ const Courses = () => {
                       <h2 className="text-2xl font-bold text-white mb-2">
                         {course?.title || "Untitled Course"}
                       </h2>
-                      <div className="flex items-center text-gray-300 mb-3">
+                      <div className="flex items-center mb-3 font-mono">
                         <User className="h-4 w-4 mr-2 text-indigo-400" />
-                        <span>
-                          By {course?.creator?.name || "Unknown Author"}
+                        <span className="text-gray-300 border-b border-dashed border-indigo-400 pb-0.5">
+                         author=
+                          <span className="text-purple-300">
+                            "{course?.creator?.name || "null"}"
+                          </span>
                         </span>
                       </div>
+
+                      <span className="flex items-center gap-2 text-sm text-fuchsia-700">
+                        <BadgeCheck className="w-4 h-4 text-blue-600" />
+                        Subscription:{" "}
+                        <span className="font-medium text-green-500">
+                          {course.validity}
+                        </span>
+                      </span>
                     </div>
 
                     <div
@@ -458,14 +490,32 @@ const Courses = () => {
                 </div>
 
                 <div className="p-4">
-                  <div className="bg-black rounded-lg overflow-hidden">
-                    <ReactPlayer
-                      url={selectedVideo}
-                      controls
-                      width="100%"
-                      height="500px"
-                      playing
-                    />
+                  <div
+                    className="bg-black rounded-lg overflow-hidden"
+                    onContextMenu={preventRightClick}
+                  >
+                    {isFetchingSignedUrl ? (
+                      <div className="h-[500px] flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400"></div>
+                      </div>
+                    ) : (
+                      <ReactPlayer
+                        url={signedUrl || selectedVideo}
+                        controls
+                        width="100%"
+                        height="500px"
+                        playing
+                        config={{
+                          file: {
+                            attributes: {
+                              controlsList: "nodownload",
+                              disablePictureInPicture: true,
+                              onContextMenu: (e) => e.preventDefault(),
+                            },
+                          },
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               </motion.div>

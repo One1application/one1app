@@ -1,19 +1,25 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, HelpCircle, Sparkles, Star } from "lucide-react";
+import { ChevronDown, HelpCircle, Star } from "lucide-react";
 import { useState } from "react";
 
-function ThreeinOne({ courseDetails }) {
-  const [activeTab, setActiveTab] = useState("faqs");
+function BenefitsAndFaqs({ courseDetails }) {
+  const [activeTab, setActiveTab] = useState("benefits");
   const [openFaq, setOpenFaq] = useState(-1);
 
-  const faqs = courseDetails?.faqs?.faQMetaData || [];
-  const benefits = courseDetails?.courseBenefits?.benefitsMetaData || [];
-  const features = courseDetails?.aboutThisCourse?.features || [];
+  const rawfaqs = courseDetails?.faqs?.faQMetaData || [];
+
+  const rawBenefits = courseDetails?.courseBenefits?.benefitsMetaData || [];
+  const benefits = rawBenefits.filter(
+    (benefit) => benefit.emoji !== "" && benefit?.title?.trim() !== ""
+  );
+
+  const faqs = rawfaqs?.filter(
+    (faq) => faq?.question.trim() !== "" && faq?.answer?.trim() !== ""
+  );
 
   const tabs = [
-    { id: "features", label: "Key Features", icon: <Sparkles size={18} /> },
-    { id: "faqs", label: "FAQs", icon: <HelpCircle size={18} /> },
     { id: "benefits", label: "Course Benefits", icon: <Star size={18} /> },
+    { id: "faqs", label: "FAQs", icon: <HelpCircle size={18} /> },
   ];
 
   return (
@@ -93,8 +99,8 @@ function ThreeinOne({ courseDetails }) {
                     </motion.div>
                   ))
                 ) : (
-                  <div className="text-center py-12 text-gray-400">
-                    No FAQs available at the moment
+                  <div className="text-center py-12 text-gray-400 bg-gray-900 rounded-xl border border-gray-800">
+                    No FAQs available for this course
                   </div>
                 )}
               </motion.div>
@@ -108,11 +114,10 @@ function ThreeinOne({ courseDetails }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="grid md:grid-cols-2 gap-6"
               >
-                {benefits.map(
-                  (benefit, index) =>
-                    benefit.title && (
+                {benefits.length > 0 ? (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {benefits.map((benefit, index) => (
                       <motion.div
                         key={index}
                         className="p-6 bg-gray-900 rounded-xl shadow-lg border border-orange-500/20"
@@ -120,40 +125,18 @@ function ThreeinOne({ courseDetails }) {
                         transition={{ type: "spring" }}
                       >
                         <div className="text-lg font-semibold text-white">
-                          <span className="mr-2">{benefit.emoji}</span>
+                          <span className="mr-2">{benefit.emoji || "🌟"}</span>
                           {benefit.title}
                         </div>
                       </motion.div>
-                    )
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-400 bg-gray-900 rounded-xl border border-gray-800">
+                    No benefits information available for this course
+                  </div>
                 )}
               </motion.div>
-            )}
-
-            {/* Key Features Section */}
-            {activeTab === "features" && (
-              <motion.ul
-                key="features"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
-                {features.map(
-                  (feature, index) =>
-                    feature && (
-                      <li
-                        key={index}
-                        className="flex items-start gap-4 p-4 bg-gray-800/40 rounded-lg hover:bg-gray-800/60 transition-all duration-200 group"
-                      >
-                        <Sparkles className="w-6 h-6 text-orange-400 flex-shrink-0 mt-1 group-hover:scale-110 transition-transform" />
-                        <span className="text-lg text-gray-200 group-hover:text-white">
-                          {feature}
-                        </span>
-                      </li>
-                    )
-                )}
-              </motion.ul>
             )}
           </AnimatePresence>
         </div>
@@ -162,4 +145,4 @@ function ThreeinOne({ courseDetails }) {
   );
 }
 
-export default ThreeinOne;
+export default BenefitsAndFaqs;

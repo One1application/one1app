@@ -47,10 +47,14 @@ import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
 import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
 import PaymentInterface from "./newPurchase/PaymentInterface.jsx";
- 
+import HelpCenterBanner from "./Pages/HelpCenter/HelpCenterComingSoon.jsx";
+import ConnectPage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram1.jsx";
+import TelegramsPages2 from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramCreate2.jsx";
+import WelcomePage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram3.jsx";
+import CreatorProductsShowcase from "./Pages/Dashboard/DashboardPages/ProfilePage/components/CreatorProductsShowcase.jsx";
 
 const App = () => {
-  const { userRole, authenticated, logout, loading  } = useAuth();
+  const { userRole, authenticated, logout, loading } = useAuth();
 
   return (
     <>
@@ -94,11 +98,14 @@ const App = () => {
             <Route path="wallets" element={<WalletPage />} />
             <Route path="payingup" element={<PayingUpPage />} />
             <Route path="appointment" element={<AppointementPage />} />
+            <Route path="all-products" element={<CreatorProductsShowcase />} />
+
             <Route path="webinar" element={<WebinarPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="telegram" element={<TelegramPage />} />
             <Route path="discord" element={<DiscordPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="help-center" element={<HelpCenterBanner />} />
             <Route path="superlinks" element={<SuperLinkPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="whatsapp" element={<WhatsAppPage />} />
@@ -107,7 +114,6 @@ const App = () => {
             <Route path="all-transactions" element={<AllTransactionsPage />} />
             <Route path="kyc-setting" element={<KYCpage />} />
             <Route path="premium-content" element={<LockedContentPage />} />
-        
           </Route>
 
           {/* Sub-Pages for App-Specific Routes */}
@@ -121,12 +127,16 @@ const App = () => {
               path="create-premium-content"
               element={<CreateLockedContentPage />}
             />
-
+            <Route path="telegram-interface" element={<ConnectPage />} />
+            <Route path="telegram-page2" element={<TelegramsPages2 />} />
+            <Route path="telegram-page3" element={<WelcomePage />} />
             <Route path="edit-course" element={<CreateCoursePage />} />
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
-            <Route path="edit-premium-content" element={< CreateLockedContentPage/>} />
-
+            <Route
+              path="edit-premium-content"
+              element={<CreateLockedContentPage />}
+            />
           </Route>
         </Route>
 

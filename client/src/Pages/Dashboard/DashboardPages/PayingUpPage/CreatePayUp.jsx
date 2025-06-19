@@ -13,9 +13,9 @@ import {
   editPayingUp,
   generativeDescription,
 } from "../../../../services/auth/api.services.js";
-import axios from "axios";
+
 import toast from "react-hot-toast";
-import { PlusCircle, Upload, ChevronDown } from "lucide-react";
+
 import { X, Edit, Trash } from "lucide-react";
 import AIAssistantButton from "../../../../components/Buttons/AIAssistantButton";
 
@@ -1222,12 +1222,13 @@ const CreatePayUp = () => {
 
             {/* Overview Section */}
 
-            <div className="space-y-4 p-6 rounded-xl bg-black/30 border border-orange-500/20 relative">
-              <label className="text-orange-500 font-semibold">
-                Overview <span className="text-red-500">*</span>
-              </label>
-              <div
-                className="quill-wrapper h-64 [&_.ql-toolbar.ql-snow]:border-orange-500 
+            <div className="space-y-4 p-6 rounded-xl bg-gray-900 border border-orange-500/20 mt-4 mb-4">
+              <div className="bg-black/50 rounded-lg p-4 shadow-lg space-y-6">
+                <label className="text-orange-500 font-semibold">
+                  Overview <span className="text-red-500">*</span>
+                </label>
+                <div
+                  className="quill-wrapper h-64 [&_.ql-toolbar.ql-snow]:border-orange-500 
       [&_.ql-container.ql-snow]:border-orange-500
       [&_.ql-snow_.ql-stroke]:!stroke-orange-500
       [&_.ql-snow_.ql-fill]:!fill-orange-500
@@ -1241,61 +1242,61 @@ const CreatePayUp = () => {
       [&_.ql-toolbar.ql-snow]:rounded-t-lg
       [&_.ql-container.ql-snow]:rounded-b-lg
       [&_.ql-container.ql-snow]:!h-[calc(100%-42px)]"
-              >
-                <ReactQuill
-                  value={formData.description}
-                  onChange={handleOverviewChange}
-                  theme="snow"
-                  className="bg-black/50 text-white rounded-lg h-full"
-                  modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-                      ["bold", "italic", "underline", "strike"],
-                      [
-                        { list: "ordered" },
-                        { list: "bullet" },
-                        { list: "check" },
+                >
+                  <ReactQuill
+                    value={formData.description}
+                    onChange={handleOverviewChange}
+                    theme="snow"
+                    className="bg-black/50 text-white rounded-lg h-full"
+                    modules={{
+                      toolbar: [
+                        [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        [
+                          { list: "ordered" },
+                          { list: "bullet" },
+                          { list: "check" },
+                        ],
+                        ["link" , "video"],
+                        [{ size: ["small", false, "large", "huge"] }],
+                        [{ color: [] }, { background: [] }],
+                        [{ font: [] }],
+                        [{ align: [] }],
                       ],
-                      ["link"],
-                      [{ size: ["small", false, "large", "huge"] }],
-                      [{ color: [] }, { background: [] }],
-                      [{ font: [] }],
-                      [{ align: [] }],
-                    ],
-                  }}
-                />
-              </div>
+                    }}
+                  />
+                </div>
 
-              {/* AI Assistant Button with Loading State */}
-              <div className="absolute bottom-8 right-10">
-                {wait ? (
-                  <motion.div
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
-                    animate={{
-                      rotate: 360,
-                    }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  >
-                    <Loader2 className="w-5 h-5 text-white" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    onClick={generateDescription}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    
-                  >
-                    <AIAssistantButton
-                      cooldown={isCooldownActive}
-                      time={cooldown}
-                    />
-                  </motion.div>
-                )}
+                <div className="flex justify-end">
+                  {wait ? (
+                    <motion.div
+                      className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500"
+                      animate={{
+                        rotate: 360,
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      <Loader2 className="w-5 h-5 text-white" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      onClick={generateDescription}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <AIAssistantButton
+                        cooldown={isCooldownActive}
+                        time={cooldown}
+                      />
+                    </motion.div>
+                  )}
+                </div>
               </div>
+              {/* AI Assistant Button with Loading State */}
             </div>
 
             {/* Testimonials Section */}
@@ -1572,6 +1573,11 @@ const CreatePayUp = () => {
                 <label className="text-orange-500 font-semibold">
                   Cover Image <span className="text-red-500">*</span>
                 </label>
+                <label className="text-orange-500 font-semibold">
+                  Upload a <span className="text-white">poster image</span> with
+                  aspect ratio{" "}
+                  <span className="text-red-500 font-bold">16:9</span>
+                </label>
               </div>
 
               {formData.coverImage.isActive && (
@@ -1685,9 +1691,12 @@ const CreatePayUp = () => {
                     {formData.file.value.map((file) => (
                       <li
                         key={file.id}
-                        className="flex justify-between items-center text-gray-300"
+                        className="flex justify-between items-center text-gray-300 text"
                       >
-                        <span>{file.name}</span>
+                        <span className="block max-w-[200px] truncate text-sm text-gray-100">
+                          {file.name}
+                        </span>
+
                         <button
                           onClick={() => {
                             const updatedFiles = formData.file.value.filter(

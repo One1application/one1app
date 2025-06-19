@@ -134,6 +134,8 @@ export const handelUplaodFileS3 = async (formdata) => {
       headers: {
         "Content-Type": "application/json",
       },
+
+       
     }
   );
   return response;
@@ -146,6 +148,7 @@ export const createPayUpContent = async (data) => {
   );
   return response;
 };
+
 
 export const createLockedContent = async (data) => {
   const response = await servicesAxiosInstance.post(
@@ -216,6 +219,8 @@ export const fetchVerificationInformation = async () => {
   const response = await servicesAxiosInstance.get(
     "/wallet/get-verification-details"
   );
+
+  console.log(response)
   return response;
 };
 export const savePrimaryPaymentInformation = async (data) => {
@@ -449,6 +454,7 @@ export const fetchPremiumDashboardData = async () => {
 };
 
 
+ 
 export const fetchPremiumContentById = async (contentId) => {
   const response = await servicesAxiosInstance.get(
     `/premium/premium-content/${contentId}` // Matches the route in premiumRoutes.js
@@ -457,11 +463,26 @@ export const fetchPremiumContentById = async (contentId) => {
 };
 
 export const deletePremiumContentById = async (contentId) => {
-  const response = await servicesAxiosInstance.delete(
-    `/premium/delete-premium-content/${contentId}` // Matches the route in premiumRoutes.js
-  );
-  return response;
+  try {
+    const response = await servicesAxiosInstance.delete(
+      `/premium/delete-premium-content/${contentId}`
+    );
+
+    return {
+      status: response.status,
+      success: true,
+      message: response.data?.message || "Content deleted successfully",
+    };
+  } catch (error) {
+    return {
+      status: error.response?.status || 500,
+      success: false,
+      message: error.response?.data?.message || "Something went wrong",
+    };
+  }
 };
+
+
 
 export const editPremiumContentById = async (contentId, updatedContent) => {
   // Assuming `updatedContent` is the data you want to update (e.g., title, description, etc.)
@@ -526,7 +547,11 @@ export const updateUserProfile = async (data) => {
   try {
     const response = await servicesAxiosInstance.put(
       "/self/update/profile",
-      data
+      data , {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
     return response;
   } catch (error) {

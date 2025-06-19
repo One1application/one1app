@@ -11,6 +11,7 @@ import {
   updateUserProfile,
   userCustomers,
 } from "../controllers/userController.js";
+import { uploadFiles } from "../config/multer.js";
 
 export const userRouter = Router();
 
@@ -24,4 +25,4 @@ userRouter.get("/purchases/premium-content", getPremiumContentAccess);
 userRouter.get("/purchases/paying-up", getPayingUpPurchases);
 userRouter.get("/purchases/telegram", getTelegramSubscriptions);
 userRouter.get("/purchases/trasactions", getAllTransactions)
-userRouter.put("/update/profile" , updateUserProfile)
+userRouter.put("/update/profile" , uploadFiles, updateUserProfile)
