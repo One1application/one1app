@@ -1,5 +1,4 @@
 import { randomUUID } from "crypto";
-import dotenv from "dotenv";
 import { StandardCheckoutPayRequest } from "pg-sdk-node";
 import { PhonePayClient } from "../config/phonepay.js";
 import prisma from "../db/dbClient.js";
@@ -7,8 +6,14 @@ import { telegramValidation } from "../types/telegramValidation.js";
 import { SchemaValidator } from "../utils/validator.js";
 import axios from "axios";
 import { sendOtp } from "../utils/sendOtp.js";
+import { TelegramClient } from "telegram";
+import { StringSession } from "telegram/sessions/index.js";
+import { Api } from "telegram";
 
-dotenv.config();
+// API credentials loaded by index.js via dotenv.config()
+const apiId = parseInt(process.env.TELEGRAM_API_ID, 10);
+const apiHash = process.env.TELEGRAM_API_HASH;
+
 export async function createTelegram(req, res) {
   try {
     const isValid = await SchemaValidator(telegramValidation, req.body, res);
@@ -23,10 +28,9 @@ export async function createTelegram(req, res) {
       subscriptions,
       genre,
       ownerPhoneNumber,
+      chatId,
     } = req.body;
     const user = req.user;
-    const { chatId } = req.body || req.params;
-    console.log(req.body);
 
     if (discount) {
       if (!Array.isArray(discount)) {
@@ -94,7 +98,7 @@ export async function createTelegram(req, res) {
             chatId,
           }
         );
-        console.log("admin", adminCheckResponse.data);
+
         if (adminCheckResponse.data.success) {
           botHaveAdmin = adminCheckResponse.data.isAdmin;
           isGroupMonitored = botHaveAdmin;
@@ -103,9 +107,9 @@ export async function createTelegram(req, res) {
         console.error("Error checking bot admin status:", error);
         return res.status(500).json({
           success: false,
-           warning: !botHaveAdmin
-          ? "Bot doesn't have admin permissions. Group will not be monitored until bot is made admin"
-          : null,
+          warning: !botHaveAdmin
+            ? "Bot doesn't have admin permissions. Group will not be monitored until bot is made admin"
+            : null,
         });
       }
     }
@@ -132,7 +136,6 @@ export async function createTelegram(req, res) {
       payload: {
         isGroupMonitored,
         botHaveAdmin,
-       
       },
     });
   } catch (error) {
@@ -183,10 +186,10 @@ export async function getCreatorTelegram(req, res) {
     });
   }
 }
+
 export async function getTelegramById(req, res) {
   try {
     const { telegramId } = req.params;
-    console.log(req.params);
 
     if (!telegramId) {
       return res.status(403).json({
@@ -256,8 +259,6 @@ export async function purchaseTelegram(req, res) {
       },
     });
 
-    console.log("telegram", telegram);
-
     if (!telegram) {
       return res.status(400).json({
         success: false,
@@ -283,7 +284,6 @@ export async function purchaseTelegram(req, res) {
     const subscriptionDetails = telegram.subscription.find(
       (sub) => sub.days == days
     );
-    console.log(subscriptionDetails);
 
     if (!subscriptionDetails) {
       return res.status(400).json({
@@ -296,7 +296,6 @@ export async function purchaseTelegram(req, res) {
     let totalAmount = subscriptionDetails.cost;
 
     const orderId = randomUUID();
-    console.log("orderId", orderId);
 
     const request = StandardCheckoutPayRequest.builder()
       .merchantOrderId(orderId)
@@ -366,5 +365,219 @@ export async function getExpiringSubscriptions(req, res) {
     return res
       .status(500)
       .json({ success: false, message: "Internal server error." });
+  }
+}
+
+export async function getOwnedGroups(req, res) {
+  try {
+    const { telegramSession: sessionString } = req.cookies;
+
+    if (!sessionString) {
+      return res.status(401).json({ success: false, message: 'Authentication required. Please log in to Telegram.' });
+    }
+
+    const client = new TelegramClient(
+      new StringSession(sessionString),
+      apiId,
+      apiHash,
+      { connectionRetries: 3 }
+    );
+
+    await client.connect();
+
+    if (!(await client.isUserAuthorized())) {
+      return res.status(401).json({ success: false, message: 'Telegram session invalid. Please log in again.' });
+    }
+
+    const dialogs = await client.getDialogs({});
+    const ownedChats = new Map();
+
+    for (const dialog of dialogs) {
+      // We're interested in groups (basic groups) and supergroups (which are channels with megagroup=true)
+      const isGroup = dialog.isGroup;
+      const isSupergroup = dialog.isChannel && dialog.entity?.megagroup;
+
+      if (dialog.entity?.creator && (isGroup || isSupergroup)) {
+        const title = dialog.title;
+        const currentEntry = ownedChats.get(title);
+
+        // If we find a supergroup, it should always replace a basic group with the same title.
+        if (!currentEntry || (isSupergroup && !currentEntry.isSupergroup)) {
+          ownedChats.set(title, {
+            id: String(dialog.id),
+            title: title,
+            username: dialog.entity.username || null,
+            type: 'Group',
+            isSupergroup: isSupergroup, // temp flag for deduplication
+          });
+        }
+      }
+    }
+
+    // Clean up the temporary flag before sending to the client
+    const groups = Array.from(ownedChats.values()).map(({ isSupergroup, ...rest }) => rest);
+
+    return res.status(200).json({ success: true, payload: { groups: groups } });
+  } catch (error) {
+    console.error('Error fetching owned groups:', error);
+    return res.status(500).json({ success: false, message: 'Error fetching owned groups' });
+  }
+}
+
+// Send login code to user's phone to obtain phoneCodeHash
+export async function sendLoginCode(req, res) {
+  try {
+    console.log('sendLoginCode body:', req.body);
+    if (!req.body || typeof req.body.phoneNumber !== 'string') {
+      console.error('Invalid or missing phoneNumber in request body');
+      return res.status(400).json({ success: false, message: 'phoneNumber is required and must be a string' });
+    }
+    // Ensure API credentials
+    if (!apiId || !apiHash) {
+      console.error('Missing Telegram API credentials:', { apiId, apiHash });
+      return res.status(500).json({ success: false, message: 'Telegram API ID or Hash is not configured. Please set TELEGRAM_API_ID and TELEGRAM_API_HASH in your environment.' });
+    }
+
+    const { phoneNumber } = req.body;
+    console.log('phoneNumber before sendCode:', phoneNumber, typeof phoneNumber);
+    // Sanitize phone number: remove spaces and non-digit/plus characters
+    const sanitizedNumber = phoneNumber.replace(/[^\d+]/g, '');
+    console.log('Sanitized phoneNumber:', sanitizedNumber);
+    const session = new StringSession("");
+    const client = new TelegramClient(
+      session, 
+      apiId, 
+      apiHash, 
+      { connectionRetries: 3 }
+    );
+    await client.connect();
+    // Send login code via client helper
+    const sendCodeResult = await client.sendCode({ apiId, apiHash }, sanitizedNumber);
+    console.log('sendCodeResult:', sendCodeResult);
+    const phoneCodeHash = sendCodeResult.phoneCodeHash || sendCodeResult.phone_code_hash;
+    const sessionString = session.save();
+    return res.status(200).json({ success: true, payload: { phoneCodeHash, sessionString } });
+  } catch (error) {
+    console.error('Error sending login code:', error);
+    return res.status(500).json({ success: false, message: 'Failed to send login code', error: error.message });
+  }
+}
+
+// Sign in with phoneNumber, code and phoneCodeHash, then store session string in cookie
+export async function signInTelegram(req, res) {
+  try {
+    console.log('signInTelegram body:', req.body);
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body values:', req.body);
+    
+    // Support multiple possible field names
+    let phoneNumber = req.body.phoneNumber || req.body.phone_number || req.body.phone;
+    let phoneCodeHash = req.body.phoneCodeHash || req.body.phone_code_hash || req.body.phoneHash;
+    let code = req.body.code || req.body.phone_code || req.body.verificationCode;
+    let sessionString = req.body.sessionString;
+
+    console.log('Extracted values:', { phoneNumber, phoneCodeHash, code, sessionString });
+    
+    if (!phoneNumber || !phoneCodeHash || !code || !sessionString) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'phoneNumber, phoneCodeHash, code, and sessionString are required',
+        received: { phoneNumber, phoneCodeHash, code, sessionString }
+      });
+    }
+    
+    if (typeof phoneNumber !== 'string' ||
+        typeof phoneCodeHash !== 'string' ||
+        typeof code !== 'string') {
+      return res.status(400).json({ 
+        success: false,
+        message: 'phoneNumber, phoneCodeHash, and code must be strings',
+        types: { 
+          phoneNumber: typeof phoneNumber, 
+          phoneCodeHash: typeof phoneCodeHash, 
+          code: typeof code 
+        }
+      });
+    }
+
+    const sanitizedNumber = phoneNumber.replace(/[^\d+]/g, '');
+    const session = new StringSession(sessionString);
+    const client = new TelegramClient(session, apiId, apiHash, { connectionRetries: 3 });
+    
+    await client.connect();
+    
+    console.log('Inspecting Api.auth.SignIn constructor:', Api.auth.SignIn);
+    console.log('About to call SignIn with:', {
+      phoneNumber: sanitizedNumber,
+      phoneCodeHash: phoneCodeHash,
+      phoneCode: code,
+    });
+    
+    const signInResult = await client.invoke(
+      new Api.auth.SignIn({
+        phoneNumber: sanitizedNumber, // Use camelCase
+        phoneCodeHash: phoneCodeHash, // Use camelCase
+        phoneCode: code,             // Use camelCase
+      })
+    );
+    
+    console.log('Sign in successful:', signInResult);
+    
+    // Get the session string
+    const finalSessionString = session.save();
+    
+    // Set cookie with proper options
+    res.cookie('telegramSession', finalSessionString, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+    
+    return res.status(200).json({ 
+      success: true,
+      user: {
+        id: signInResult.user?.id,
+        firstName: signInResult.user?.first_name,
+        lastName: signInResult.user?.last_name,
+        username: signInResult.user?.username,
+        phone: signInResult.user?.phone,
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error signing in Telegram:', error);
+    
+    // Handle specific Telegram errors
+    if (error.message?.includes('PHONE_CODE_INVALID')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid verification code',
+        error: 'PHONE_CODE_INVALID'
+      });
+    }
+    
+    if (error.message?.includes('PHONE_CODE_EXPIRED')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code has expired',
+        error: 'PHONE_CODE_EXPIRED'
+      });
+    }
+    
+    if (error.message?.includes('SESSION_PASSWORD_NEEDED')) {
+      return res.status(200).json({
+        success: false,
+        requiresPassword: true,
+        message: 'Two-factor authentication is enabled. Password required.',
+        error: 'SESSION_PASSWORD_NEEDED'
+      });
+    }
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Telegram sign-in failed',
+      error: error.message
+    });
   }
 }

@@ -1,6 +1,14 @@
+import dotenv from 'dotenv';
+import path from "path";
+import { fileURLToPath } from 'url';
+// Load environment variables from server/.env
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
+import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { PhonePayClient } from "./config/phonepay.js";
 import { authenticationRouter } from "./routes/autheticationRoutes.js";
@@ -15,23 +23,18 @@ import { walletRoutes } from "./routes/walletRoutes.js";
 import { webinarRouter } from "./routes/webinarRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
-
-
 import { adminRouter } from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 import { productRouter } from "./routes/productRoutes.js";
-
-
 import airouter from "./routes/routes.ai.js"
- 
 
-
-dotenv.config();
 
 const app = express();
 
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "1gb" }));
+// parse cookies
+app.use(cookieParser());
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
  
 app.use(
