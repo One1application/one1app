@@ -16,6 +16,7 @@ export const pagesConfig = {
       ariaLabel: "Create Webinar",
     },
     bgGradient: "bg-gradient-to-b from-[#ADD8E6] to-[#FFD700]",
+    coverImage : "https://media.discordapp.net/attachments/1368862317877530684/1385627622121148569/webinar.png?ex=6856c1c8&is=68557048&hm=31728eb660bf6698b9d827f3bf5c38028f6633de83ef53aa27850eeef21fa819&=&format=webp&quality=lossless&width=1728&height=286" ,
     noContent: [
       {
         title: "No Published webinar yet",
@@ -59,12 +60,12 @@ export const pagesConfig = {
     icon: FaCalendarAlt,
     cardData: [
       { date: "24 Jan", value: "0" },
-      { date: "25 Jan", value: "0" },
+      { date: "25 Jan", value: "1500" },
       { date: "26 Jan", value: "0" },
-      { date: "27 Jan", value: "0" },
+      { date: "27 Jan", value: "18000" },
       { date: "28 Jan", value: "0" },
       { date: "29 Jan", value: "0" },
-      { date: "30 Jan", value: "0" },
+      { date: "30 Jan", value: "300" },
     ],
     path: "/app/create-webinar",
   },
@@ -110,15 +111,7 @@ export const pagesConfig = {
       { title: "Draft Discord", value: "0", content: [] },
     ],
     icon: FaDiscord,
-    cardData: [
-      { date: "24 Jan", value: "16000" },
-      { date: "25 Jan", value: "18000" },
-      { date: "26 Jan", value: "16000" },
-      { date: "27 Jan", value: "19000" },
-      { date: "28 Jan", value: "22000" },
-      { date: "29 Jan", value: "24000" },
-      { date: "30 Jan", value: "21000" },
-    ],
+  
   },
 
   lockedContentPage: {

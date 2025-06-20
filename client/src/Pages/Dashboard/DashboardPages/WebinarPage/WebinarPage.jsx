@@ -5,21 +5,48 @@ import NoContentComponent from "../../../../components/NoContent/NoContentCompon
 import Table from "../../../../components/Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
-import { fetchAllWebinarsData } from "../../../../services/auth/api.services";
+import {
+  fetchAllWebinarsData,
+  revenueOftheCreator,
+} from "../../../../services/auth/api.services";
 import WebinarTable from "../../../../components/Table/WebinarTable";
+import { useAuth } from "../../../../context/AuthContext.jsx";
 
 const WebinarPage = () => {
-  const { title, button, bgGradient, noContent, tabs, path, cardData } =
+  const { customers } = useAuth();
+  console.log(customers);
+  const { title, button, bgGradient, noContent, tabs, path, coverImage } =
     pagesConfig.webinarPage;
   const [activeTab, setActiveTab] = useState(0);
+
   const navigate = useNavigate();
   const [AllWebinars, setAllWebinars] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState([]);
+
+  // Function to format date as "DD MMM"
+
+  async function revenueData() {
+    try {
+      const revenue = await revenueOftheCreator("WEBINAR");
+      setData(revenue);
+      console.log(revenue);
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    revenueData();
+  }, []);
+
+  console.log(data);
 
   const getAllWebinars = async () => {
     setIsLoading(true);
     try {
-      const response = await fetchAllWebinarsData()
+      const response = await fetchAllWebinarsData();
       setAllWebinars(response.data.payload.createdWebinars);
     } catch (e) {
       console.log(e);
@@ -32,12 +59,68 @@ const WebinarPage = () => {
     getAllWebinars();
   }, []);
 
+  const MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  // const formatDate = (dateString) => {
+  //   const date = new Date(dateString);
+  //   const day = date.getDate();
+  //   const month = date.toLocaleString("default", { month: "short" });
+  //   return `${day} ${month}`;
+  // };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = MONTHS[date.getMonth()].substring(0, 3);
+    return `${day} ${month}`;
+  };
+
+  // Transform the data
+  const transformData = (data) => {
+    // Group by date and sum the revenue
+    const grouped = data.reduce((acc, transaction) => {
+      const dateKey = formatDate(transaction.createdAt);
+      const amount = parseFloat(transaction.amountAfterFee); // Correct key
+      acc[dateKey] = (acc[dateKey] || 0) + amount;
+      return acc;
+    }, {});
+
+    // Convert to array of objects
+    return Object.entries(grouped).map(([date, value]) => ({
+      date,
+      value: parseFloat(value.toFixed(2)), // Keep decimals
+    }));
+  };
+
+  // Get the transformed data
+  const cardData = transformData(data);
+  console.log(cardData);
+
   return (
     <div className="min-h-screen">
       {/* Background Section */}
       <div
-        className={`w-full h-64 ${bgGradient} flex justify-center items-center relative`}
+        className="flex items-center justify-center flex-col relative"
       >
+        <img
+          src={coverImage}
+          alt="cover"
+          className="w-full h-48 object-cover rounded-lg"
+        />
+
         <h1 className="font-bold text-white text-3xl md:text-4xl">{title}</h1>
         <button
           type="button"

@@ -122,7 +122,7 @@ const WebinarTable = ({ data }) => {
         headers.join(','),
         ...sortedData.map(webinar => [
           webinar.title.replace(/,/g, ';'),
-          webinar.amount || 0,
+          webinar.amountAfterFee || 0,
           webinar._count.tickets,
           calculateRevenue(webinar),
           webinar.isPaid ? 'Enabled' : 'Disabled',

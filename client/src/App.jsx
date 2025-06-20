@@ -99,6 +99,7 @@ const App = () => {
             <Route path="payingup" element={<PayingUpPage />} />
             <Route path="appointment" element={<AppointementPage />} />
             <Route path="all-products" element={<CreatorProductsShowcase />} />
+            <Route path="telegram-interface" element={<ConnectPage />} />
 
             <Route path="webinar" element={<WebinarPage />} />
             <Route path="courses" element={<CoursesPage />} />
@@ -127,7 +128,6 @@ const App = () => {
               path="create-premium-content"
               element={<CreateLockedContentPage />}
             />
-            <Route path="telegram-interface" element={<ConnectPage />} />
             <Route path="telegram-page2" element={<TelegramsPages2 />} />
             <Route path="telegram-page3" element={<WelcomePage />} />
             <Route path="edit-course" element={<CreateCoursePage />} />

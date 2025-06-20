@@ -230,6 +230,12 @@ export const savePrimaryPaymentInformation = async (data) => {
   );
   return response;
 };
+
+export const revenueOftheCreator = async (productType) =>{
+  const response = await servicesAxiosInstance.get(`/product/product-sale-revenue?productType=${productType}`);
+  console.log(response)
+  return response?.data?.payload?.products;
+}
 export const updatePrimaryPaymentInformation = async (bankDetailsId,data) => {
   const response = await servicesAxiosInstance.post(
     `/wallet/update-bank-details/${bankDetailsId}`,
