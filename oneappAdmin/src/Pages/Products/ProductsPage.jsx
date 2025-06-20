@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { FaBoxOpen, FaSearch } from 'react-icons/fa';
-import { CheckCircleIcon, XCircleIcon } from 'lucide-react'; // For verification icons
+import { CheckCircleIcon, XCircleIcon } from 'lucide-react';
 import { getProductsApiService, toggleProductVerificationApiService } from '../../services/api-service';
 
 const ProductsPage = () => {
@@ -69,7 +69,6 @@ const ProductsPage = () => {
         id: product.ProductID,
         productType: product.ProductType,
       });
-      // Update the product in the state
       setProducts(products.map(p =>
         p.ProductID === product.ProductID
           ? { ...p, Details: { ...p.Details, Verified: !p.Details.Verified } }
@@ -106,7 +105,6 @@ const ProductsPage = () => {
     'Product ID',
     'Title',
     'Product Type',
-    'Integrations',
     'Payment Page',
     'Verified',
     'Actions',
@@ -118,11 +116,7 @@ const ProductsPage = () => {
     product.ProductID,
     product.Title,
     product.ProductType,
-    [
-      product.Integrations.Telegram && 'Telegram',
-      product.Integrations.WhatsApp && 'WhatsApp',
-      product.Integrations.Discord && 'Discord',
-    ].filter(Boolean).join(', ') || 'None',
+
     product.PaymentPage ? 'Yes' : 'No',
     <div className="flex items-center space-x-2">
       {product.Details.Verified ? (
@@ -151,32 +145,42 @@ const ProductsPage = () => {
     </div>,
   ]);
 
-  const renderProductDetails = (product) => {
-    if (!product) return null;
-    const { ProductType, Title, Creator, Details } = product;
+  const parseJsonField = (field) => {
+    if (!field) return <span className="text-gray-500">N/A</span>;
 
-    const parseJsonField = (field) => {
-      if (!field) return 'N/A';
+    // If field is already an object, use it directly
+    if (typeof field === 'object' && field !== null) {
+      return Object.entries(field).map(([key, value]) => (
+        <p key={key} className="ml-2">
+          <span className="font-medium capitalize">{key}:</span>{' '}
+          {typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}
+        </p>
+      ));
+    }
+
+    // If field is a string, try parsing it as JSON
+    if (typeof field === 'string') {
       try {
-        if (typeof field === 'string') {
-          const parsed = JSON.parse(field);
-          return Object.entries(parsed).map(([key, value]) => (
-            <p key={key} className="ml-2">
-              <span className="font-medium">{key}:</span>{' '}
-              {typeof value === 'object' ? JSON.stringify(value) : value}
-            </p>
-          ));
-        }
-        return Object.entries(field).map(([key, value]) => (
+        const parsed = JSON.parse(field);
+        return Object.entries(parsed).map(([key, value]) => (
           <p key={key} className="ml-2">
-            <span className="font-medium">{key}:</span>{' '}
-            {typeof value === 'object' ? JSON.stringify(value) : value}
+            <span className="font-medium capitalize">{key}:</span>{' '}
+            {typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}
           </p>
         ));
       } catch {
-        return field;
+        // If parsing fails, treat it as a plain string
+        return <p className="ml-2">{field}</p>;
       }
-    };
+    }
+
+    // For other types (e.g., numbers, booleans), convert to string
+    return <p className="ml-2">{String(field)}</p>;
+  };
+
+  const renderProductDetails = (product) => {
+    if (!product) return null;
+    const { ProductType, Title, Creator, Details } = product;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
@@ -203,7 +207,6 @@ const ProductsPage = () => {
             <h2 className="text-3xl font-bold text-gray-800">
               {Title} <span className="text-orange-600">({ProductType})</span>
             </h2>
-
           </div>
           <div className="space-y-6">
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -215,7 +218,7 @@ const ProductsPage = () => {
                 <span className="font-medium">Email:</span> {Creator.Email}
               </p>
               <p>
-                <span className="font-medium">Phone:</span> {Creator.Phone}
+                <span className="font-medium">Phone:</span> {Creator.Phone || 'N/A'}
               </p>
               <p>
                 <span className="font-medium">Verification Status:</span>{' '}
@@ -252,14 +255,14 @@ const ProductsPage = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-xl font-semibold text-gray-700 mb-3">Course Details</h3>
                 <p>
-                  <span className="font-medium">Price:</span> ${Details.Price}
+                  <span className="font-medium">Price:</span> ${Details.Price || 'N/A'}
                 </p>
                 <p>
-                  <span className="font-medium">Validity:</span> {Details.Validity}
+                  <span className="font-medium">Validity:</span> {Details.Validity || 'N/A'}
                 </p>
                 <p>
                   <span className="font-medium">Start Date:</span>{' '}
-                  {new Date(Details.StartDate).toLocaleDateString()}
+                  {Details.StartDate ? new Date(Details.StartDate).toLocaleDateString() : 'N/A'}
                 </p>
                 <p>
                   <span className="font-medium">End Date:</span>{' '}
@@ -275,10 +278,10 @@ const ProductsPage = () => {
                   <span className="font-medium">Paid Group:</span> {Details.PaidGroupName || 'N/A'}
                 </p>
                 <p>
-                  <span className="font-medium">Language:</span> {JSON.stringify(Details.Language)}
+                  <span className="font-medium">Language:</span> {parseJsonField(Details.Language)}
                 </p>
                 <p>
-                  <span className="font-medium">About:</span> {JSON.stringify(Details.About)}
+                  <span className="font-medium">About:</span> {parseJsonField(Details.About)}
                 </p>
               </div>
             )}
@@ -286,27 +289,27 @@ const ProductsPage = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-xl font-semibold text-gray-700 mb-3">Webinar Details</h3>
                 <p>
-                  <span className="font-medium">Category:</span> {Details.Category}
+                  <span className="font-medium">Category:</span> {Details.Category || 'N/A'}
                 </p>
                 <p>
-                  <span className="font-medium">Occurrence:</span> {Details.Occurrence}
+                  <span className="font-medium">Occurrence:</span> {Details.Occurrence || 'N/A'}
                 </p>
                 <p>
                   <span className="font-medium">Start Date:</span>{' '}
-                  {new Date(Details.StartDate).toLocaleDateString()}
+                  {Details.StartDate ? new Date(Details.StartDate).toLocaleDateString() : 'N/A'}
                 </p>
                 <p>
                   <span className="font-medium">End Date:</span>{' '}
-                  {new Date(Details.EndDate).toLocaleDateString()}
+                  {Details.EndDate ? new Date(Details.EndDate).toLocaleDateString() : 'N/A'}
                 </p>
                 <p>
                   <span className="font-medium">Venue:</span> {Details.Venue || 'N/A'}
                 </p>
                 <p>
-                  <span className="font-medium">Amount:</span> ${Details.Amount}
+                  <span className="font-medium">Amount:</span> ${Details.Amount || 'N/A'}
                 </p>
                 <p>
-                  <span className="font-medium">Quantity:</span> {Details.Quantity}
+                  <span className="font-medium">Quantity:</span> {Details.Quantity || 'N/A'}
                 </p>
               </div>
             )}
@@ -314,17 +317,17 @@ const ProductsPage = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-xl font-semibold text-gray-700 mb-3">Telegram Details</h3>
                 <p>
-                  <span className="font-medium">Channel Link:</span> {Details.ChannelLink}
+                  <span className="font-medium">Invite Link:</span> {Details.InviteLink || 'N/A'} {/* Changed from ChannelLink */}
                 </p>
                 <p>
-                  <span className="font-medium">Description:</span> {Details.Description}
+                  <span className="font-medium">Description:</span> {Details.Description || 'N/A'}
                 </p>
                 <p>
-                  <span className="font-medium">Genre:</span> {Details.Genre}
+                  <span className="font-medium">Genre:</span> {Details.Genre || 'N/A'}
                 </p>
                 <p>
                   <span className="font-medium">Subscription:</span>{' '}
-                  {JSON.stringify(Details.Subscription)}
+                  {parseJsonField(Details.Subscription)}
                 </p>
               </div>
             )}
@@ -332,13 +335,13 @@ const ProductsPage = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-xl font-semibold text-gray-700 mb-3">Premium Content Details</h3>
                 <p>
-                  <span className="font-medium">Category:</span> {Details.Category}
+                  <span className="font-medium">Category:</span> {Details.Category || 'N/A'}
                 </p>
                 <p>
-                  <span className="font-medium">Unlock Price:</span> ${Details.UnlockPrice}
+                  <span className="font-medium">Unlock Price:</span> ${Details.UnlockPrice || 'N/A'}
                 </p>
                 <p>
-                  <span className="font-medium">Content:</span> {JSON.stringify(Details.Content)}
+                  <span className="font-medium">Content:</span> {parseJsonField(Details.Content)}
                 </p>
               </div>
             )}

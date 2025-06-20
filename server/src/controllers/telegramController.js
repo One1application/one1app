@@ -103,9 +103,9 @@ export async function createTelegram(req, res) {
         console.error("Error checking bot admin status:", error);
         return res.status(500).json({
           success: false,
-           warning: !botHaveAdmin
-          ? "Bot doesn't have admin permissions. Group will not be monitored until bot is made admin"
-          : null,
+          warning: !botHaveAdmin
+            ? "Bot doesn't have admin permissions. Group will not be monitored until bot is made admin"
+            : null,
         });
       }
     }
@@ -132,7 +132,7 @@ export async function createTelegram(req, res) {
       payload: {
         isGroupMonitored,
         botHaveAdmin,
-       
+
       },
     });
   } catch (error) {
@@ -330,7 +330,7 @@ export async function sendOtpToTelegramUser(req, res) {
     const { phoneNumber } = req.body;
     const user = req.user;
     await sendOtp(phoneNumber);
-    
+
     return res.status(200).json({
       success: true,
       message:

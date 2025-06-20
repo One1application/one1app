@@ -23,7 +23,7 @@ import { productRouter } from "./routes/productRoutes.js";
 
 
 import airouter from "./routes/routes.ai.js"
- 
+
 
 
 dotenv.config();
@@ -33,13 +33,10 @@ const app = express();
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "1gb" }));
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
- 
+
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:5174'
-    ],
+    origin: "*",
     credentials: true,
   })
 );
@@ -75,9 +72,9 @@ app.use("/newsletter", newsletterRoutes);
 app.use("/review", reviewRoutes);
 app.use("/admin", adminRouter);
 app.use('/product', productRouter)
-app.use("/AI" , airouter)
-app.use("/telegram" , createTelegrampromotionachannel)
- 
+app.use("/AI", airouter)
+app.use("/telegram", createTelegrampromotionachannel)
+
 
 const Port = process.env.SERVER_PORT || 5000;
 

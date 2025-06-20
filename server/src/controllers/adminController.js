@@ -211,7 +211,7 @@ export const createUser = async (req, res) => {
         .json({ message: "Invalid role. Only User or Creator allowed." });
     }
 
-   const goalsData = Array.isArray(goals) ? goals.map((goal) => goal.trim()) : (goals ? [goals.trim()] : []);
+    const goalsData = Array.isArray(goals) ? goals.map((goal) => goal.trim()) : (goals ? [goals.trim()] : []);
 
     const existingUserByEmail = await prisma.user.findFirst({
       where: { email },
@@ -363,16 +363,11 @@ export const getProducts = async (req, res) => {
     const skip = (page - 1) * limit;
     const productType = req.query.productType;
 
-    const courseFilter =
-      productType && productType !== "Course" ? { id: "" } : {};
-    const webinarFilter =
-      productType && productType !== "Webinar" ? { id: "" } : {};
-    const telegramFilter =
-      productType && productType !== "Telegram" ? { id: "" } : {};
-    const payingUpFilter =
-      productType && productType !== "PayingUp" ? { id: "" } : {};
-    const premiumContentFilter =
-      productType && productType !== "PremiumContent" ? { id: "" } : {};
+    const courseFilter = productType && productType !== "Course" ? { id: "" } : {};
+    const webinarFilter = productType && productType !== "Webinar" ? { id: "" } : {};
+    const telegramFilter = productType && productType !== "Telegram" ? { id: "" } : {};
+    const payingUpFilter = productType && productType !== "PayingUp" ? { id: "" } : {};
+    const premiumContentFilter = productType && productType !== "PremiumContent" ? { id: "" } : {};
 
     const [
       [courses, coursesCount],
@@ -439,7 +434,7 @@ export const getProducts = async (req, res) => {
             isPaid: true,
             quantity: true,
             amount: true,
-            isVerified: true, // Added
+            isVerified: true,
             createdBy: {
               select: {
                 id: true,
@@ -460,13 +455,13 @@ export const getProducts = async (req, res) => {
           select: {
             id: true,
             coverImage: true,
-            channelLink: true,
+            inviteLink: true, // Changed from channelLink to inviteLink
             title: true,
             description: true,
             genre: true,
             discount: true,
             subscription: true,
-            isVerified: true, // Added
+            isVerified: true,
             createdBy: {
               select: {
                 id: true,
@@ -497,7 +492,7 @@ export const getProducts = async (req, res) => {
             tacs: true,
             coverImage: true,
             files: true,
-            isVerified: true, // Added
+            isVerified: true,
             createdBy: {
               select: {
                 id: true,
@@ -522,7 +517,7 @@ export const getProducts = async (req, res) => {
             unlockPrice: true,
             content: true,
             discount: true,
-            isVerified: true, // Added
+            isVerified: true,
             createdBy: {
               select: {
                 id: true,
@@ -567,11 +562,10 @@ export const getProducts = async (req, res) => {
           Language: course.language,
           StartDate: course.startDate,
           EndDate: course.endDate,
-          CommunityName:
-            course.products[0]?.productMetaData?.communityName || null,
+          CommunityName: course.products[0]?.productMetaData?.communityName || null,
           FreeGroupName: course.products[0]?.productMetaData?.freeGroup || null,
           PaidGroupName: course.products[0]?.productMetaData?.paidGroup || null,
-          Verified: course.isVerified, // Use isVerified from Course model
+          Verified: course.isVerified,
         },
       })),
       ...webinars.map((webinar) => ({
@@ -603,7 +597,7 @@ export const getProducts = async (req, res) => {
           IsPaid: webinar.isPaid,
           Quantity: webinar.quantity,
           Amount: webinar.amount,
-          Verified: webinar.isVerified, // Added
+          Verified: webinar.isVerified,
         },
       })),
       ...telegrams.map((telegram) => ({
@@ -624,12 +618,12 @@ export const getProducts = async (req, res) => {
         PaymentPage: true,
         Details: {
           CoverImage: telegram.coverImage,
-          ChannelLink: telegram.channelLink,
+          InviteLink: telegram.inviteLink, // Changed from ChannelLink to InviteLink
           Description: telegram.description,
           Genre: telegram.genre,
           Discount: telegram.discount,
           Subscription: telegram.subscription,
-          Verified: telegram.isVerified, // Added
+          Verified: telegram.isVerified,
         },
       })),
       ...payingUps.map((payingUp) => ({
@@ -659,7 +653,7 @@ export const getProducts = async (req, res) => {
           TermsAndConditions: payingUp.tacs,
           CoverImage: payingUp.coverImage,
           Files: payingUp.files,
-          Verified: payingUp.isVerified, // Added
+          Verified: payingUp.isVerified,
         },
       })),
       ...premiumContents.map((premiumContent) => ({
@@ -683,7 +677,7 @@ export const getProducts = async (req, res) => {
           UnlockPrice: premiumContent.unlockPrice,
           Content: premiumContent.content,
           Discount: premiumContent.discount,
-          Verified: premiumContent.isVerified, // Added
+          Verified: premiumContent.isVerified,
         },
       })),
     ];
@@ -692,17 +686,13 @@ export const getProducts = async (req, res) => {
       ? productType === "Course"
         ? coursesCount
         : productType === "Webinar"
-        ? webinarsCount
-        : productType === "Telegram"
-        ? telegramsCount
-        : productType === "PayingUp"
-        ? payingUpsCount
-        : premiumContentsCount
-      : coursesCount +
-        webinarsCount +
-        telegramsCount +
-        payingUpsCount +
-        premiumContentsCount;
+          ? webinarsCount
+          : productType === "Telegram"
+            ? telegramsCount
+            : productType === "PayingUp"
+              ? payingUpsCount
+              : premiumContentsCount
+      : coursesCount + webinarsCount + telegramsCount + payingUpsCount + premiumContentsCount;
 
     return res.status(200).json({
       data: products,
@@ -1113,33 +1103,29 @@ export const getDashboardData = async (req, res) => {
           title: "Total Revenue",
           value: `₹${totalRevenue.toFixed(5)}`,
           trend: revenuePercentage >= 0 ? "positive" : "negative",
-          percentage: `${
-            revenuePercentage >= 0 ? "+" : ""
-          }${revenuePercentage.toFixed(5)}%`,
+          percentage: `${revenuePercentage >= 0 ? "+" : ""
+            }${revenuePercentage.toFixed(5)}%`,
         },
         {
           title: "Total Commission",
           value: `₹${totalCommission.toFixed(5)}`,
           trend: revenuePercentage >= 0 ? "positive" : "negative",
-          percentage: `${
-            revenuePercentage >= 0 ? "+" : ""
-          }${revenuePercentage.toFixed(5)}%`,
+          percentage: `${revenuePercentage >= 0 ? "+" : ""
+            }${revenuePercentage.toFixed(5)}%`,
         },
         {
           title: "Total Spend",
           value: `₹${totalSpend.toFixed(5)}`,
           trend: spendPercentage >= 0 ? "positive" : "negative",
-          percentage: `${
-            spendPercentage >= 0 ? "+" : ""
-          }${spendPercentage.toFixed(5)}%`,
+          percentage: `${spendPercentage >= 0 ? "+" : ""
+            }${spendPercentage.toFixed(5)}%`,
         },
         {
           title: "Total Saving",
           value: `₹${totalSaving.toFixed(5)}`,
           trend: savingPercentage >= 0 ? "positive" : "negative",
-          percentage: `${
-            savingPercentage >= 0 ? "+" : ""
-          }${savingPercentage.toFixed(5)}%`,
+          percentage: `${savingPercentage >= 0 ? "+" : ""
+            }${savingPercentage.toFixed(5)}%`,
         },
         {
           title: "Total GST",
@@ -1159,17 +1145,15 @@ export const getDashboardData = async (req, res) => {
           title: "New Creators",
           value: newCreators.toString(),
           trend: newCreatorsPercentage >= 0 ? "positive" : "negative",
-          percentage: `${
-            newCreatorsPercentage >= 0 ? "+" : ""
-          }${newCreatorsPercentage.toFixed(5)}%`,
+          percentage: `${newCreatorsPercentage >= 0 ? "+" : ""
+            }${newCreatorsPercentage.toFixed(5)}%`,
         },
         {
           title: "Deactive Creators",
           value: deactiveCreators.toString(),
           trend: deactiveCreatorsPercentage >= 0 ? "negative" : "positive",
-          percentage: `${
-            deactiveCreatorsPercentage >= 0 ? "+" : ""
-          }${deactiveCreatorsPercentage.toFixed(5)}%`,
+          percentage: `${deactiveCreatorsPercentage >= 0 ? "+" : ""
+            }${deactiveCreatorsPercentage.toFixed(5)}%`,
         },
       ],
       leaderboard: {
@@ -1203,10 +1187,10 @@ export const getCreatorReport = async (req, res) => {
       role: "Creator",
       OR: searchTerm
         ? [
-            { name: { contains: searchTerm, mode: "insensitive" } },
-            { email: { contains: searchTerm, mode: "insensitive" } },
-            { phone: { contains: searchTerm, mode: "insensitive" } },
-          ]
+          { name: { contains: searchTerm, mode: "insensitive" } },
+          { email: { contains: searchTerm, mode: "insensitive" } },
+          { phone: { contains: searchTerm, mode: "insensitive" } },
+        ]
         : undefined,
       kycRecords: kycStatus ? { status: kycStatus.toUpperCase() } : undefined,
       verified: verifiedStatus ? verifiedStatus === "true" : undefined,
