@@ -144,7 +144,7 @@ const ConnectPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-200  to-pink-500 flex flex-col items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 sm:p-6">
       {/* Main Card */}
       <div className="w-2/3 h-full bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-700 relative z-10">
         {/* Card Header */}

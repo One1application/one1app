@@ -78,7 +78,7 @@ const CreatorProductsShowcase = () => {
         "Manage your clients",
       ],
       cta: "Setup community",
-      path: "/dashboard/telegram",
+      path: "/dashboard/telegram-interface",
       color: "blue",
     },
     {

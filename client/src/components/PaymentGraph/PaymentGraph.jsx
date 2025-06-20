@@ -154,6 +154,7 @@ const DatePicker = ({ selectedDate, onDateSelect, isOpen, setIsOpen }) => {
 };
 
 const PaymentGraph = ({ cardData }) => {
+  console.log("card data ", cardData);
   const [selectedMetric, setSelectedMetric] = useState("sales");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -167,12 +168,12 @@ const PaymentGraph = ({ cardData }) => {
 
   // Process and memoize the graph data
   const graphData = useMemo(() => {
-    if (!cardData || !Array.isArray(cardData))   return [];
+    if (!cardData || !Array.isArray(cardData)) return [];
 
     return cardData
       .map((card) => {
         if (!card.date || !card.value) return null;
-        
+
         const [day, monthStr] = card.date.split(" ");
         const monthIndex = MONTHS.findIndex(
           (m) => m.substring(0, 3).toLowerCase() === monthStr.toLowerCase()
@@ -182,7 +183,7 @@ const PaymentGraph = ({ cardData }) => {
 
         const date = new Date(today.getFullYear(), monthIndex, parseInt(day));
         const sales = parseFloat(card.value) || 0;
-        
+
         // For revenue, we'll calculate cumulative values
         return {
           date: card.date,
@@ -198,7 +199,7 @@ const PaymentGraph = ({ cardData }) => {
         const cumulativeRevenue = array
           .slice(0, index + 1)
           .reduce((sum, curr) => sum + curr.revenue, 0);
-          
+
         return {
           ...item,
           revenue: cumulativeRevenue,
@@ -208,7 +209,8 @@ const PaymentGraph = ({ cardData }) => {
 
   // Calculate metrics
   const metrics = useMemo(() => {
-    const todaySales = graphData.find((item) => item.date === todayStr)?.sales || 0;
+    const todaySales =
+      graphData.find((item) => item.date === todayStr)?.sales || 0;
     const weekSales = graphData.reduce((sum, item) => sum + item.sales, 0);
     const totalRevenue = graphData[graphData.length - 1]?.revenue || 0;
 
@@ -242,13 +244,9 @@ const PaymentGraph = ({ cardData }) => {
           margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis 
-            dataKey="date" 
-            tick={{ fontSize: 12 }}
-            tickMargin={10}
-          />
+          <XAxis dataKey="date" tick={{ fontSize: 12 }} tickMargin={10} />
           <YAxis
-            domain={[0, 'auto']}
+            domain={[0, "auto"]}
             tickFormatter={(value) => `₹${value.toLocaleString()}`}
             tick={{ fontSize: 12 }}
             tickMargin={10}
@@ -256,14 +254,17 @@ const PaymentGraph = ({ cardData }) => {
           <Tooltip
             formatter={(value) => [
               `₹${value.toLocaleString()}`,
-              selectedMetric === "revenue" ? "Total Revenue" : 
-              selectedMetric === "todaySales" ? "Today's Sales" : "Daily Sales",
+              selectedMetric === "revenue"
+                ? "Total Revenue"
+                : selectedMetric === "todaySales"
+                ? "Today's Sales"
+                : "Daily Sales",
             ]}
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '0.5rem',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              backgroundColor: "#fff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "0.5rem",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
             }}
           />
           <Line
