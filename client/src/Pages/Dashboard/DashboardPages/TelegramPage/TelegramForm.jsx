@@ -1,14 +1,17 @@
 /* eslint-disable react/no-unescaped-entities */
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle, Upload, X, ChevronDown, Loader2 } from "lucide-react";
 import {
   createTelegram,
   handelUplaodFile,
   verifyInviteLink,
+  fetchOwnedGroups,
 } from "../../../../services/auth/api.services.js";
 import toast from "react-hot-toast";
+import Cookies from 'js-cookie';
+import { sendTelegramLoginCode, signInTelegramClient } from "../../../../services/auth/api.services.js";
 // Discount Form Component
 const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
   const [discountCode, setDiscountCode] = useState("");
@@ -152,6 +155,19 @@ const TelegramsPages = () => {
   const [genre, setGenre] = useState("Education");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [chatid, setChatid] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [ownedGroups, setOwnedGroups] = useState([]);
+  const [loadingGroups, setLoadingGroups] = useState(true); // Start with loading true
+  const [isTelegramAuthenticated, setIsTelegramAuthenticated] = useState(false);
+
+  // Telegram login states
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneCodeHash, setPhoneCodeHash] = useState("");
+  const [loginSessionString, setLoginSessionString] = useState("");
+  const [code, setCode] = useState("");
+  const [loginStage, setLoginStage] = useState("enterPhone"); // enterPhone, enterCode
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
 
   const getInitials = (name) => {
     if (!name) return "USER";
@@ -313,9 +329,41 @@ const TelegramsPages = () => {
     }
   };
 
+  const loadGroups = async () => {
+    setLoadingGroups(true);
+    try {
+      const res = await fetchOwnedGroups();
+      const groups = res.data.payload.groups || [];
+      // The backend already sends a unique list, so no client-side deduplication is needed.
+      setOwnedGroups(groups);
+      setIsTelegramAuthenticated(true);
+    } catch (error) {
+      console.error("Failed to load groups, user likely not authenticated.", error);
+      setIsTelegramAuthenticated(false);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  useEffect(() => {
+    // On initial mount, try to load groups to check for an existing session.
+    loadGroups();
+  }, []);
+
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
+
+      if (selectedGroup) {
+        console.log("Selected Group Details:", selectedGroup);
+      } else if (inviteLink) {
+        console.log("Using invite link.");
+      } else {
+        toast.error("Please select a group or provide an invite link.");
+        setIsSubmitting(false);
+        return;
+      }
+
       let response;
       if (imageFile) {
         const imagePic = new FormData();
@@ -327,29 +375,124 @@ const TelegramsPages = () => {
       const body = {
         title: telegramTitle,
         description: telegramDescription,
-        subscriptions: subscriptions,
+        subscriptions,
         coverImage: response?.data?.url || "",
         genre,
-        channelId: inviteLinkData?.chatId || "",
-        channelName: inviteLinkData?.title || "",
-        channelLink: inviteLink,
+        chatId: selectedGroup ? selectedGroup.id : inviteLinkData?.chatId || "",
+        channelName: selectedGroup ? selectedGroup.title : inviteLinkData?.title || "",
+        channelLink: selectedGroup && selectedGroup.username ? `https://t.me/${selectedGroup.username}` : inviteLink,
         discount: discounts,
       };
- 
+
       await createTelegram(body);
       window.location.href = "/dashboard/telegram";
-      toast.success("Telegram Is in the Development Phase")
- 
-      // await createTelegram(body);
-      // window.location.href = "/dashboard/telegram";
       toast.success("Telegram Is in the Development Phase");
- 
     } catch (error) {
       console.log("Error in creating telegram.", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleSendCode = async () => {
+    if (!phoneNumber) return;
+    setSendingCode(true);
+    try {
+      const res = await sendTelegramLoginCode(phoneNumber);
+      setPhoneCodeHash(res.data.payload.phoneCodeHash);
+      setLoginSessionString(res.data.payload.sessionString);
+      setLoginStage("enterCode");
+      toast.success("Code sent");
+    } catch {
+      toast.error("Failed to send code");
+    } finally { setSendingCode(false); }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!code) {
+      toast.error("Please enter the verification code.");
+      return;
+    }
+    setVerifyingCode(true);
+    try {
+      await signInTelegramClient({
+        phoneNumber,
+        phoneCodeHash,
+        code,
+        sessionString: loginSessionString,
+      });
+      toast.success("Successfully logged in to Telegram!");
+      setOwnedGroups([]); // Clear the list before fetching new groups
+      loadGroups(); // Fetch groups directly after successful login
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      const errorMessage = error.response?.data?.message || 'Verification failed.';
+      toast.error(errorMessage);
+      if (errorMessage.includes('PHONE_CODE_EXPIRED')) {
+        setLoginStage('enterPhone');
+        setPhoneCodeHash('');
+        setLoginSessionString('');
+      }
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
+  if (loadingGroups) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <Loader2 className="animate-spin text-orange-500" size={48} />
+      </div>
+    );
+  }
+
+  // If not logged in, show login UI
+  if (!isTelegramAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="bg-gray-800 p-6 rounded-lg w-full max-w-sm space-y-4">
+          {loginStage === "enterPhone" && (
+            <>
+              <label className="block text-sm text-white">Phone Number</label>
+              <input
+                type="text"
+                value={phoneNumber}
+                onChange={e => setPhoneNumber(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded"
+                placeholder="e.g. +123456789"
+              />
+              <button
+                onClick={handleSendCode}
+                disabled={sendingCode}
+                className="w-full bg-orange-600 py-2 rounded text-white"
+              >
+                {sendingCode ? "Sending..." : "Send Login Code"}
+              </button>
+            </>
+          )}
+          {loginStage === "enterCode" && (
+            <>
+              <label className="block text-sm text-white">Enter Code</label>
+              <input
+                type="text"
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded"
+                placeholder="Code from Telegram"
+              />
+              <button
+                onClick={handleVerifyCode}
+                disabled={verifyingCode}
+                className="w-full bg-orange-600 py-2 rounded text-white"
+              >
+                {verifyingCode ? "Verifying..." : "Verify Code"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -407,23 +550,71 @@ const TelegramsPages = () => {
 
           {/* Form Fields */}
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-orange-500 mb-2">
-              Chatid <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              maxLength={75}
-              value={chatId || chatid}
-              readOnly={!!chatId}
-              onChange={(e) => !chatId && setChatid(e.target.value)}
-              className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white placeholder-orange-400 cursor-default focus:outline-none"
-              placeholder="Enter your chat id"
-            />
+            {/* Session loaded from cookie; no input required */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-orange-500 mb-2">
+                Telegram Group
+              </label>
+              {ownedGroups.length > 0 ? (
+                <select
+                  value={chatid}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const group = ownedGroups.find((g) => g.id === selectedId);
+                    setChatid(selectedId);
+                    setSelectedGroup(group);
+                  }}
+                  className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white"
+                >
+                  <option value="" disabled>
+                    Choose from your owned groups
+                  </option>
+                  {ownedGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.title} (Group ID: {group.id})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={chatid}
+                  onChange={(e) => setChatid(e.target.value)}
+                  className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white placeholder-orange-400"
+                  placeholder="Enter Telegram Group ID"
+                />
+              )}
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-orange-500 mb-2">
+                Provide Public Group Invite Link
+              </label>
+              <input
+                type="text"
+                value={inviteLink}
+                onChange={(e) => {
+                  setInviteLink(e.target.value);
+                  setChatid(""); // Clear selected group when typing invite link
+                  setSelectedGroup(null);
+                }}
+                onBlur={handleInviteLinkBlur}
+                disabled={!!chatid} // Disable if a group is selected from dropdown
+                className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white disabled:bg-gray-700"
+                placeholder="e.g., https://t.me/yourchannel"
+              />
+              {isFetchingInviteLink && <p className="text-orange-400 mt-1">Verifying link...</p>}
+              {inviteLinkData && (
+                <p className="text-green-500 mt-1">
+                  Verified: {inviteLinkData.title}
+                </p>
+              )}
+            </div>
 
             {/* Page Title */}
-            <div>
+            <div className="mb-4">
               <label className="block text-sm font-medium text-orange-500 mb-2">
-                Page Title <span className="text-red-500">*</span>
+                Page Title
               </label>
               <input
                 type="text"

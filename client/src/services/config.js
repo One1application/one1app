@@ -14,6 +14,8 @@ const servicesAxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // allow sending and receiving cookies
+  withCredentials: true,
 });
 servicesAxiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("AuthToken");
@@ -28,6 +30,8 @@ const servicesAxiosInstanceForFileUpload = axios.create({
   headers: {
     "Content-Type": "multipart/form-data",
   },
+  // allow sending and receiving cookies for file uploads
+  withCredentials: true,
 });
 servicesAxiosInstanceForFileUpload.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
