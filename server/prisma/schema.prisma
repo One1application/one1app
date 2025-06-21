@@ -358,6 +358,7 @@ model PayingUpTicket {
   orderId    String?
 }
 
+
 model Telegram {
   id                    String                 @id @unique @default(uuid())
   coverImage            String
@@ -366,17 +367,17 @@ model Telegram {
   chatId                String                 @unique
   isGroupMonitored      Boolean                @default(false)
   genre                 String
-  discount              Json
-  subscription          Json
-  gstDetails            String?                  
-  courseDetails         String?                  
+  gstDetails            String?
+  courseDetails         String?
   isVerified            Boolean                @default(false)
   createdById           String
   createdBy             User                   @relation(fields: [createdById], references: [id])
   telegramSubscriptions TelegramSubscription[]
+  discounts             Discount[]             @relation("TelegramDiscounts")
+  subscriptions         Subscription[]         @relation("TelegramSubscriptions")
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
-  inviteLink            String?                
+  inviteLink            String?
 }
 
 model TelegramSubscription {
@@ -389,6 +390,31 @@ model TelegramSubscription {
   paymentId  String?
   orderId    String?
   createdAt  DateTime @default(now())
+}
+
+model Discount {
+  id         String   @id @unique @default(uuid())
+  code       String
+  percent    Float
+  expiry     DateTime
+  plan       String?  
+  telegramId String
+  telegram   Telegram @relation("TelegramDiscounts", fields: [telegramId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Subscription {
+  id         String   @id @unique @default(uuid())
+  type       String
+  price      Float
+  validDays  Int?
+  isLifetime Boolean  @default(false)
+  telegramId String
+  telegram   Telegram @relation("TelegramSubscriptions", fields: [telegramId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([telegramId, type]) 
 }
 
 model PremiumContent {
