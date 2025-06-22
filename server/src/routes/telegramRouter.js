@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createTelegram, getCreatorTelegram, getTelegramById, purchaseTelegram, getOwnedGroups, sendLoginCode, signInTelegram, deleteTelegram, editTelegram, editDiscount, deleteDiscount, createSubscription, editSubscription, deleteSubscription, createDiscount } from "../controllers/telegramController.js";
+import { createTelegram, getCreatorTelegram, getTelegramById, getOwnedGroups, sendLoginCode, signInTelegram, deleteTelegram, editTelegram, editDiscount, deleteDiscount, createSubscription, editSubscription, deleteSubscription, createDiscount, applyCoupon, purchaseTelegramSubscription, verifyTelegramPaymentCallback } from "../controllers/telegramController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 
@@ -20,7 +20,9 @@ telegramRouter.get('/get-creator-telegrams', authMiddleware, getCreatorTelegram)
 telegramRouter.get('/get-telegram-by-id/:telegramId', authMiddleware, getTelegramById);
 
 
-telegramRouter.post('/purchase-telegram', authMiddleware, purchaseTelegram);
+telegramRouter.post('/purchase-telegram', authMiddleware, purchaseTelegramSubscription);
+telegramRouter.post('/verify-telegram-payment', authMiddleware, verifyTelegramPaymentCallback);
+telegramRouter.post('/apply-coupon', authMiddleware, applyCoupon);
 
 
 

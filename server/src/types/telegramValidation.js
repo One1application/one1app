@@ -231,3 +231,18 @@ export const getTelegramByIdSchema = z.object({
   telegramId: z.string().uuid('Invalid UUID format'),
 });
 
+const uuidSchema = z.string().uuid('Invalid UUID format');
+
+export const applyCouponSchema = z.object({
+  telegramId: uuidSchema,
+  subscriptionId: uuidSchema,
+  couponCode: z.string().regex(/^[A-Z0-9]+$/, 'Coupon code must contain only uppercase letters and numbers').optional(),
+});
+
+export const purchaseSubscriptionSchema = z.object({
+  telegramId: uuidSchema,
+  subscriptionId: uuidSchema,
+  couponCode: z.string().regex(/^[A-Z0-9]+$/, 'Coupon code must contain only uppercase letters and numbers').optional(),
+  validateOnly: z.boolean().optional().default(false),
+});
+

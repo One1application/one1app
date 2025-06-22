@@ -381,15 +381,22 @@ model Telegram {
 }
 
 model TelegramSubscription {
-  id         String   @id @unique @default(uuid())
-  validDays  Int
-  telegramId String
-  telegram   Telegram @relation(fields: [telegramId], references: [id], onDelete: Cascade)
-  boughtById String   @unique
-  boughtBy   User     @relation(fields: [boughtById], references: [id], onDelete: Cascade)
-  paymentId  String?
-  orderId    String?
-  createdAt  DateTime @default(now())
+  id            String    @id @unique @default(uuid())
+  telegramId    String
+  telegram      Telegram  @relation(fields: [telegramId], references: [id], onDelete: Cascade)
+  subscriptionId String
+  subscription  Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  boughtById    String
+  boughtBy      User      @relation(fields: [boughtById], references: [id], onDelete: Cascade)
+  validDays     Int?
+  expireDate    DateTime?
+  isLifetime    Boolean   @default(false)
+  isExpired     Boolean   @default(false)
+  paymentId     String?   @unique
+  orderId       String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  @@unique([telegramId, boughtById, isExpired]) // Prevent active duplicate subscriptions
 }
 
 model Discount {
@@ -402,6 +409,7 @@ model Discount {
   telegram   Telegram @relation("TelegramDiscounts", fields: [telegramId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+   @@unique([telegramId, code])
 }
 
 model Subscription {
@@ -412,9 +420,10 @@ model Subscription {
   isLifetime Boolean  @default(false)
   telegramId String
   telegram   Telegram @relation("TelegramSubscriptions", fields: [telegramId], references: [id], onDelete: Cascade)
+  telegramSubscriptions TelegramSubscription[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  @@unique([telegramId, type]) 
+  @@unique([telegramId, type])
 }
 
 model PremiumContent {

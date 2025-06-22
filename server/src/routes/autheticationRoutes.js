@@ -4,7 +4,7 @@ import {
   register,
   signIn,
   userlogin,
- 
+
   verifyAdminOtp,
   verifyOtpForLogin,
   verifyOtpForRegister,

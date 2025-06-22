@@ -190,7 +190,7 @@ export async function verifyPayment(req, res) {
           const commissionAmount =
             Math.round(
               ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
+              100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -405,7 +405,7 @@ export async function verifyPayment(req, res) {
           const commissionAmount =
             Math.round(
               ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
+              100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -492,7 +492,7 @@ export async function verifyPayment(req, res) {
           const commissionAmount =
             Math.round(
               ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
+              100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -557,92 +557,92 @@ export async function verifyPayment(req, res) {
         }
       }
 
-      if (telegramId && days) {
-        const creator = await prisma.telegram.findFirst({
-          where: {
-            id: telegramId,
-          },
-          select: {
-            createdById: true,
-            subscription: true,
-            createdBy: true,
-          },
-        });
+      // if (telegramId && days) {
+      //   const creator = await prisma.telegram.findFirst({
+      //     where: {
+      //       id: telegramId,
+      //     },
+      //     select: {
+      //       createdById: true,
+      //       subscription: true,
+      //       createdBy: true,
+      //     },
+      //   });
 
-        if (!creator) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Creator not found." });
-        }
+      //   if (!creator) {
+      //     return res
+      //       .status(400)
+      //       .json({ success: false, message: "Creator not found." });
+      //   }
 
-        const subscriptionDetails = creator.subscription.find(
-          (sub) => sub.days == days
-        );
-        let amountToBeAdded = subscriptionDetails.cost;
-        if (creator.createdBy.creatorComission) {
-          const commissionAmount =
-            Math.round(
-              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
-            ) / 100;
-          const gstOnCommission =
-            Math.round(commissionAmount * GST_RATE * 100) / 100;
-          amountToBeAdded =
-            Math.round(
-              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
-            ) / 100;
-        }
-        const creatorWallet = await prisma.wallet.update({
-          where: {
-            userId: creator.createdById,
-          },
-          data: {
-            totalEarnings: {
-              increment: parseFloat(amountToBeAdded),
-            },
-            balance: { increment: parseFloat(amountToBeAdded) },
-          },
-        });
+      //   const subscriptionDetails = creator.subscription.find(
+      //     (sub) => sub.days == days
+      //   );
+      //   let amountToBeAdded = subscriptionDetails.cost;
+      //   if (creator.createdBy.creatorComission) {
+      //     const commissionAmount =
+      //       Math.round(
+      //         ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
+      //           100
+      //       ) / 100;
+      //     const gstOnCommission =
+      //       Math.round(commissionAmount * GST_RATE * 100) / 100;
+      //     amountToBeAdded =
+      //       Math.round(
+      //         (amountToBeAdded - commissionAmount - gstOnCommission) * 100
+      //       ) / 100;
+      //   }
+      //   const creatorWallet = await prisma.wallet.update({
+      //     where: {
+      //       userId: creator.createdById,
+      //     },
+      //     data: {
+      //       totalEarnings: {
+      //         increment: parseFloat(amountToBeAdded),
+      //       },
+      //       balance: { increment: parseFloat(amountToBeAdded) },
+      //     },
+      //   });
 
-        const telegramSubs = await prisma.telegramSubscription.create({
-          data: {
-            telegramId,
-            boughtById: existingUser.id,
-            validDays: parseInt(days),
-            paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
-            orderId: phonePayOrderId,
-          },
-        });
+      //   const telegramSubs = await prisma.telegramSubscription.create({
+      //     data: {
+      //       telegramId,
+      //       boughtById: existingUser.id,
+      //       validDays: parseInt(days),
+      //       paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
+      //       orderId: phonePayOrderId,
+      //     },
+      //   });
 
-        if (!telegramSubs) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Failed to buy course." });
-        }
+      //   if (!telegramSubs) {
+      //     return res
+      //       .status(400)
+      //       .json({ success: false, message: "Failed to buy course." });
+      //   }
 
-        const transaction = await prisma.transaction.create({
-          data: {
-            amount: parseFloat(subscriptionDetails.cost),
-            amountAfterFee: parseFloat(amountToBeAdded),
-            buyerId: existingUser.id,
-            modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
-            productId: telegramId,
-            productType: "TELEGRAM",
-            creatorId: creator.createdById,
-            status: PhonePayPaymentDetails.paymentDetails[0].state,
-            phonePayTransId:
-              PhonePayPaymentDetails.paymentDetails[0].transactionId,
-            walletId: creatorWallet.id,
-          },
-        });
+      //   const transaction = await prisma.transaction.create({
+      //     data: {
+      //       amount: parseFloat(subscriptionDetails.cost),
+      //       amountAfterFee: parseFloat(amountToBeAdded),
+      //       buyerId: existingUser.id,
+      //       modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
+      //       productId: telegramId,
+      //       productType: "TELEGRAM",
+      //       creatorId: creator.createdById,
+      //       status: PhonePayPaymentDetails.paymentDetails[0].state,
+      //       phonePayTransId:
+      //         PhonePayPaymentDetails.paymentDetails[0].transactionId,
+      //       walletId: creatorWallet.id,
+      //     },
+      //   });
 
-        if (!transaction) {
-          return res.status(400).json({
-            success: false,
-            message: "Failed to create transaction.",
-          });
-        }
-      }
+      //   if (!transaction) {
+      //     return res.status(400).json({
+      //       success: false,
+      //       message: "Failed to create transaction.",
+      //     });
+      //   }
+      // }
     });
 
     if (webinarId) {
@@ -710,7 +710,7 @@ export async function verifyPayment(req, res) {
           },
         },
       });
-       
+
       return res.status(200).json({
         success: true,
         message: "Paying up purchased successfully.",
@@ -894,17 +894,17 @@ export async function updateBusinessInfo(req, res) {
     }
 
     const isKycVerified = await prisma.wallet.findFirst({
-      where: {userId: user.id,},
+      where: { userId: user.id, },
       select: {
         isKycVerified: true,
       }
     });
-    
-    if(isKycVerified.isKycVerified){
-       return res.status(400).json({
+
+    if (isKycVerified.isKycVerified) {
+      return res.status(400).json({
         success: false,
         message: "You have already verified your Kyc!"
-       });
+      });
     }
 
     const updatedBusinessInfo = await prisma.businessInfo.update({
@@ -1130,17 +1130,17 @@ export async function updateKycDetails(req, res) {
     }
 
     const isKycVerified = await prisma.wallet.findFirst({
-      where: {userId: user.id,},
+      where: { userId: user.id, },
       select: {
         isKycVerified: true,
       }
     })
-    
-    if(isKycVerified.isKycVerified){
-       return res.status(400).json({
+
+    if (isKycVerified.isKycVerified) {
+      return res.status(400).json({
         success: false,
         message: "You have already verified your Kyc!"
-       })
+      })
     }
 
     // Extract only the fields that are provided
@@ -1479,17 +1479,17 @@ export async function updateBankDetails(req, res) {
     }
 
     const isKycVerified = await prisma.wallet.findFirst({
-      where: {userId: user.id,},
+      where: { userId: user.id, },
       select: {
         isKycVerified: true,
       }
     })
 
-    if(isKycVerified.isKycVerified){
-       return res.status(400).json({
+    if (isKycVerified.isKycVerified) {
+      return res.status(400).json({
         success: false,
         message: "You have already verified your Kyc!"
-       })
+      })
     }
 
     const existingUpiRecords = await prisma.uPI.findMany({
@@ -2946,7 +2946,7 @@ export async function getFilterEarningsAndWithdrawal(req, res) {
       const [start, end] = CustomRange.split(",");
       startDate = new Date(start);
       endDate = new Date(end);
-    }else if (AllTime){
+    } else if (AllTime) {
       startDate = null
       endDate = null
     }
