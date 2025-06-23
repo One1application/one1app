@@ -233,87 +233,65 @@ const TableComponent = ({
 
       )
       : paginatedData.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border border-orange-500 bg-orange-300 shadow-lg">
-          <table className="min-w-full divide-y divide-orange-500">
-            <thead className="bg-orange-300">
-              <tr>
-                {headers.map((header, index) => (
-                  <th
-                    key={index}
-                    onClick={() => handleSort(header)}
-                    className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-orange-200 transition duration-300 group"
+        <div className="overflow-x-auto rounded-lg border border-orange-500 bg-orange-300 shadow-lg">
+        <table className="min-w-full divide-y divide-orange-500">
+         <thead className="bg-orange-300">
+        <tr>
+        {headers.map((header, index) => (
+          <th
+            key={index}
+            onClick={() => handleSort(header)}
+            className="px-1 py-2 sm:px-3 sm:py-3 text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-orange-200 transition duration-300 group"
+          >
+            <div className="flex items-center justify-between font-poppins">
+              <div className="text-center w-full">{header}</div>
+              <Filter className="h-4 w-4 sm:h-6 sm:w-6 text-gray-400 opacity-0 group-hover:opacity-100 transition" />
+            </div>
+          </th>
+        ))}
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200">
+       {paginatedData.map((row, rowIndex) => (
+        <tr
+          key={rowIndex}
+          className="hover:bg-gray-50 transition-colors duration-200 font-poppins text-sm tracking-tight">
+          {row.map((cell, cellIndex) => {
+            const isStatusColumn =
+              cellIndex === row.length - 2 || cellIndex === row.length - 1;
+            return (
+              <td
+                key={cellIndex}
+                className={`px-3 py-4 whitespace-nowrap text-sm text-center ${
+                  headers[cellIndex] === "Status" || isStatusColumn
+                    ? ""
+                    : "text-gray-700"
+                } ${headers[cellIndex] === "Status" ? "hidden sm:table-cell" : ""}`}
+              >
+                {isStatusColumn ? (
+                  <span
+                    className={`px-2 py-1 rounded text-xs ${
+                      cell === "COMPLETED" || cell === "SUCCESS"
+                        ? "bg-green-100 text-green-800"
+                        : cell === "FAILED" || cell === "FAILURE"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
                   >
-                    <div className="flex items-center justify-between font-poppins ">
-                      <div className="text-center w-full">{header}</div>
-                      <Filter className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition" />
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedData.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className="hover:bg-gray-50 transition-colors duration-200 font-poppins text-sm tracking-tight"
-                >
-                  {row.map((cell, cellIndex) => {
-                    if (
-                      type === "transactions" &&
-                      cellIndex === 1 &&
-                      typeof cell === "object"
-                    ) {
-                      return (
-                        <td
-                          key={cellIndex}
-                          className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-700 cursor-pointer hover:text-orange-600"
-                          onClick={() => toggleTransactionId(rowIndex)}
-                          title="Click to expand/collapse"
-                        >
-                          <span className="transition-all duration-300">
-                            {expandedTransactionIds[rowIndex]
-                              ? cell.value
-                              : cell.truncated}
-                          </span>
-                        </td>
-                      );
-                    }
-                    const isStatusColumn =
-                      cellIndex === row.length - 2 ||
-                      cellIndex === row.length - 1;
+                    {cell}
+                  </span>
+                ) : (
+                  cell
+                )}
+              </td>
+            );
+          })}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
-                    return (
-                      <td
-                        key={cellIndex}
-                        className={`px-3 py-4 whitespace-nowrap text-sm text-center ${
-                          headers[cellIndex] === "Status" || isStatusColumn
-                            ? ""
-                            : "text-gray-700"
-                        }`}
-                      >
-                        {isStatusColumn ? (
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${
-                              cell === "COMPLETED" || cell === "SUCCESS"
-                                ? "bg-green-100 text-green-800"
-                                : cell === "FAILED" || cell === "FAILURE"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {cell}
-                          </span>
-                        ) : (
-                          cell
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       ) : (
         <div className="text-center bg-white p-8 rounded-lg shadow-md">
           <p className="text-gray-500 text-lg">No data available</p>
