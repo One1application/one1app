@@ -3,7 +3,9 @@ import { BookOpen, Video, Gem, FileText, ArrowRight } from "lucide-react";
 import { FaTelegramPlane } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import logo from "../../../../../assets/oneapp.png";
+
+ 
+
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i) => ({
@@ -112,6 +114,7 @@ const CreatorProductsShowcase = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
+          
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-orange-100">
               Monetize Your Creativity

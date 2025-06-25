@@ -6,6 +6,7 @@ import Table from "../../../../components/Table/TableComponent";
 import pagesConfig from "../pagesConfig";
 import { useState, useEffect } from "react";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
+import telegrambanner from "../../../../assets/telegram.png";
 
 import {
   fetchAllTelegramData,
@@ -62,9 +63,14 @@ const TelegramPage = () => {
   return (
     <div className="min-h-screen">
       <div
-        className={`w-full h-64 ${bgGradient} flex justify-center items-center relative`}
+        className="flex items-center justify-center flex-col  mt-1"
       >
-        <h1 className="font-bold text-white text-3xl md:text-4xl">{title}</h1>
+         
+          <img
+          src={telegrambanner}
+          alt="cover"
+          className="w-full h-48 object-cover rounded-lg"
+        />
         <button
           type="button"
           onClick={() =>

@@ -248,6 +248,7 @@ export const fetchPrimaryPaymentInformation = async () => {
   return response;
 };
 
+ 
 export const fetchTransactionsPage = async (data) => {
   const response = await servicesAxiosInstance.get(
     `/wallet/get-transactions`, {
@@ -263,6 +264,18 @@ export const fetchTransactionsPage = async (data) => {
   );
   return response;
 };
+
+
+export const getTransactionDetails = async () => {
+  const response = await servicesAxiosInstance.get(`/wallet/get-transactions`,{
+    params : {
+      status: "COMPLETED"
+    }
+  });
+
+  console.log(response)
+  return response?.data?.payload?.transactions;
+}
 export const fetchWithdrawalPage = async (data) => {
   const response = await servicesAxiosInstance.get("/wallet/get-withdrawals", {
     params: {

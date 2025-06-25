@@ -82,7 +82,7 @@ const DatePicker = ({ selectedDate, onDateSelect, isOpen, setIsOpen }) => {
   };
 
   return (
-    <div className="relative inline-block">
+    <div className=" inline-block">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="bg-white border border-gray-300 rounded-lg px-4 py-2 w-48 text-left flex items-center justify-between focus:outline-none hover:border-orange-500"
@@ -292,7 +292,7 @@ const PaymentGraph = ({ cardData }) => {
   }
 
   return (
-    <div className="w-full px-6 relative -mt-20 z-10">
+    <div className="w-full p-4">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">

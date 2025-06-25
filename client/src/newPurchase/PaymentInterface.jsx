@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ChevronRight, Check, X, ShieldCheck } from "lucide-react";
-import { purchaseCourse, purchaseWebinar, purchasePayingUp, purchasePremiumContent } from "../services/auth/api.services";
+import {
+  purchaseCourse,
+  purchaseWebinar,
+  purchasePayingUp,
+  purchasePremiumContent,
+} from "../services/auth/api.services";
 import toast from "react-hot-toast";
 
 export default function PaymentInterface() {
@@ -10,7 +15,7 @@ export default function PaymentInterface() {
   const navigate = useNavigate();
   const location = useLocation();
   const productData = location.state || {};
-  console.log('product data',productData)
+  console.log("product data", productData);
   const [showCoupon, setShowCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
@@ -21,7 +26,7 @@ export default function PaymentInterface() {
   const [productTitle, setProductTitle] = useState(
     productData.title || "product"
   );
-   const [createdBy, setCreatedBy]= useState(productData.createdBy || "sumit")
+  const [createdBy, setCreatedBy] = useState(productData.createdBy || "sumit");
   const [productId, setProductId] = useState(productData.id || "");
 
   const [courseType, setCourseType] = useState(productData.courseType || "");
@@ -34,7 +39,7 @@ export default function PaymentInterface() {
       setProductTitle(location.state.title || "product");
       setProductId(location.state.id || "");
       setCourseType(location.state.courseType || "");
-      setCreatedBy(location.state.createdBy || "sumit")
+      setCreatedBy(location.state.createdBy || "sumit");
     }
   }, [location.state]);
 
@@ -69,7 +74,6 @@ export default function PaymentInterface() {
       icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/RuPay.svg/1200px-RuPay.svg.png",
       color: "bg-orange-600",
     },
-    
   ];
 
   const applyCoupon = async () => {
@@ -113,13 +117,13 @@ export default function PaymentInterface() {
           }
           break;
 
-          case "payingUp": 
-           res = await purchasePayingUp({
+        case "payingUp":
+          res = await purchasePayingUp({
             payingUpId: productId,
             couponCode,
             validateOnly: true,
-           });
-            if (res?.data?.success) {
+          });
+          if (res?.data?.success) {
             setDiscountAmount(
               parseFloat((res.data.payload.discountPrice || 0).toFixed(2))
             );
@@ -129,22 +133,21 @@ export default function PaymentInterface() {
           }
           break;
 
-          case "premiumcontent":
-            res = await purchasePremiumContent({
-              contentId: productId,
-              couponCode,
-              validateOnly: true,
-            });
-            if (res?.data?.success) {
-              setDiscountAmount(
-                parseFloat((res.data.payload.discountPrice || 0).toFixed(2))
-              );
-              setDiscountApplied(true);
-              setShowCoupon(false);
-              toast.success("Coupon apllied successfully");
-            }
-            break;
-           
+        case "premiumcontent":
+          res = await purchasePremiumContent({
+            contentId: productId,
+            couponCode,
+            validateOnly: true,
+          });
+          if (res?.data?.success) {
+            setDiscountAmount(
+              parseFloat((res.data.payload.discountPrice || 0).toFixed(2))
+            );
+            setDiscountApplied(true);
+            setShowCoupon(false);
+            toast.success("Coupon apllied successfully");
+          }
+          break;
 
         default:
           toast.error("Invalid Product type");
@@ -188,10 +191,10 @@ export default function PaymentInterface() {
 
         case "payingUp":
           res = await purchasePayingUp({
-             payingUpId: productId,
+            payingUpId: productId,
             couponCode: discountApplied ? couponCode : null,
           });
-          break;  
+          break;
 
         case "premiumcontent":
           res = await purchasePremiumContent({
@@ -253,7 +256,7 @@ export default function PaymentInterface() {
           </motion.div>
 
           <div className="flex flex-col lg:flex-row">
-            { /* Left Side - Course Info */ }
+            {/* Left Side - Course Info */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -272,17 +275,16 @@ export default function PaymentInterface() {
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-gray-300 text-sm">
-                        Created by
-                      </h3>
-                      <p className="text-gray-100 text-md font-semibold pl-2">{createdBy || "sumit"}</p>
+                      <h3 className="text-gray-300 text-sm">Created by</h3>
+                      <p className="text-gray-100 text-md font-semibold pl-2">
+                        {createdBy || "sumit"}
+                      </p>
                     </div>
                   </div>
 
-                  <h2 className="text-white text-2xl font-semibold mb-2">{productTitle}</h2>
-
-               
-
+                  <h2 className="text-white text-2xl font-semibold mb-2">
+                    {productTitle}
+                  </h2>
                 </div>
               </div>
 
@@ -379,10 +381,10 @@ export default function PaymentInterface() {
                   className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex items-center justify-between"
                 >
                   <span className="text-white">
-                  {courseType === "course" && "Course"}
-                  {courseType === "webinar" && "Webinar"}
-                  {courseType === "payingUp" && "Paying Up"}
-                  {courseType === "premiumcontent" && "Premium Content"}
+                    {courseType === "course" && "Course"}
+                    {courseType === "webinar" && "Webinar"}
+                    {courseType === "payingUp" && "Paying Up"}
+                    {courseType === "premiumcontent" && "Premium Content"}
                   </span>
 
                   <motion.div
