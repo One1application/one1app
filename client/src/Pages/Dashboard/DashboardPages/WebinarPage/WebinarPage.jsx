@@ -1,16 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useInsertionEffect, useRef, useState } from "react";
 import pagesConfig from "../pagesConfig";
 // import Card from "../../../../components/Cards/Card";
 import NoContentComponent from "../../../../components/NoContent/NoContentComponent";
 import Table from "../../../../components/Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
+import webinar from "../../../../assets/webinar.png"
 import {
   fetchAllWebinarsData,
   revenueOftheCreator,
 } from "../../../../services/auth/api.services";
 import WebinarTable from "../../../../components/Table/WebinarTable";
 import { useAuth } from "../../../../context/AuthContext.jsx";
+import { getTransactionDetails } from "../../../../services/auth/api.services.js";
 
 const WebinarPage = () => {
   const { customers } = useAuth();
@@ -23,9 +25,21 @@ const WebinarPage = () => {
   const [AllWebinars, setAllWebinars] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState([]);
+  const [transactions, setTransactions] = useState([]);
 
   // Function to format date as "DD MMM"
 
+  async function loda() {
+    const res = await getTransactionDetails();
+
+    setTransactions(res.filter((item) => item.productType === "WEBINAR"));
+  }
+
+  loda();
+
+  useEffect(() => {
+    loda();
+  }, []);
   async function revenueData() {
     try {
       const revenue = await revenueOftheCreator("WEBINAR");
@@ -37,6 +51,7 @@ const WebinarPage = () => {
     }
   }
 
+  console.log(transactions);
   useEffect(() => {
     revenueData();
   }, []);
@@ -74,13 +89,6 @@ const WebinarPage = () => {
     "December",
   ];
 
-  // const formatDate = (dateString) => {
-  //   const date = new Date(dateString);
-  //   const day = date.getDate();
-  //   const month = date.toLocaleString("default", { month: "short" });
-  //   return `${day} ${month}`;
-  // };
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, "0");
@@ -88,40 +96,38 @@ const WebinarPage = () => {
     return `${day} ${month}`;
   };
 
-  // Transform the data
+  
   const transformData = (data) => {
-    // Group by date and sum the revenue
-    const grouped = data.reduce((acc, transaction) => {
+ 
+    const grouped = transactions.reduce((acc, transaction) => {
       const dateKey = formatDate(transaction.createdAt);
-      const amount = parseFloat(transaction.amountAfterFee); // Correct key
+      const amount = parseFloat(transaction.amountAfterFee); 
       acc[dateKey] = (acc[dateKey] || 0) + amount;
       return acc;
     }, {});
 
-    // Convert to array of objects
+    
     return Object.entries(grouped).map(([date, value]) => ({
       date,
-      value: parseFloat(value.toFixed(2)), // Keep decimals
+      value: parseFloat(value.toFixed(2)), 
     }));
   };
 
-  // Get the transformed data
-  const cardData = transformData(data);
-  console.log(cardData);
+ 
+  const cardData = transformData(transactions);
+  
 
   return (
     <div className="min-h-screen">
       {/* Background Section */}
-      <div
-        className="flex items-center justify-center flex-col relative"
-      >
+      <div className="flex items-center justify-center flex-col relative mt-1">
         <img
-          src={coverImage}
+          src={webinar}
           alt="cover"
           className="w-full h-48 object-cover rounded-lg"
         />
 
-        <h1 className="font-bold text-white text-3xl md:text-4xl">{title}</h1>
+       
         <button
           type="button"
           className="bg-orange-600 text-white rounded-full text-xs md:text-sm px-4 md:px-6 py-2 transition duration-200 md:w-auto hover:bg-orange-700 absolute top-4 right-4 md:top-5 md:right-10 flex justify-center items-center gap-1"
@@ -129,7 +135,7 @@ const WebinarPage = () => {
           onClick={() => navigate(path)}
         >
           <button.icon className="font-bold" />
-          {button.label}
+           {button.label}
         </button>
       </div>
 

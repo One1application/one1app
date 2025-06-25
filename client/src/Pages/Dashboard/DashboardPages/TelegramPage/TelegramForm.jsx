@@ -10,7 +10,7 @@ import {
   fetchOwnedGroups,
 } from "../../../../services/auth/api.services.js";
 import toast from "react-hot-toast";
-import Cookies from 'js-cookie';
+ 
 import { sendTelegramLoginCode, signInTelegramClient } from "../../../../services/auth/api.services.js";
 // Discount Form Component
 const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
