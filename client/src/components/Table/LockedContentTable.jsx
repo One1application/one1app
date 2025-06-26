@@ -4,6 +4,7 @@ import { Search, Filter, SortAsc, Mail, ArrowDown, ArrowUp,Edit2, Copy, Trash2 }
 import toast from "react-hot-toast";
 import Pagination from '@mui/material/Pagination';
 import Option from '../../Pages/Dashboard/DashboardPages/LockedContentPage/Option';
+import {revenueOftheCreator} from "../../services/auth/api.services";
 
 const LockedContentTable = ({ data, refreshData }) => {
   const navigate = useNavigate();
@@ -17,8 +18,30 @@ const LockedContentTable = ({ data, refreshData }) => {
   });
   const itemsPerPage = 10;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+   const [revMap, setRevMap] = useState({});
   const dropdownRef = useRef(null);
   // const [coupons, setCoupons] = useState(item.discount);
+
+  // Fetch revenue data for each item
+  async function revenueData() {
+    try {
+      const revenue = await revenueOftheCreator("PREMIUMCONTENT");
+
+      // Create a map: { [itemId]: amountAfterFee }
+      const map = {};
+      revenue.forEach(item => {
+        map[item.productId] = item.amountAfterFee;
+      });
+
+      setRevMap(map);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    revenueData();
+  }, []);
 
   useEffect(() => {
     setPage(1);
@@ -298,10 +321,10 @@ const LockedContentTable = ({ data, refreshData }) => {
                     ₹{item.unlockPrice || '0'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {item._count?.purchases || 0} {/* Adjust field name if needed */}
+                    {item._count?.purchases || 0} 
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    ₹{calculateRevenue(item)}
+                    ₹{revMap[item.id] || 0}
                   </td>
                    <td className="px-6 py-7 text-sm text-gray-500 flex gap-2">
                        {
@@ -390,7 +413,7 @@ const LockedContentTable = ({ data, refreshData }) => {
               </div>
               <div>
                 <span className="text-gray-500">Revenue: </span>
-                <span>₹{calculateRevenue(item)}</span>
+                <span>₹{revMap[item.id] || 0}</span>
               </div>
                <div>
                 <span className="text-gray-500">Coupon: </span>
