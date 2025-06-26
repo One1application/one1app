@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ArrowUpDown, Pencil, ChevronRight, Mail, SortAsc, ArrowDown, ArrowUp, Copy } from 'lucide-react';
 import { Pagination } from '@mui/material';
 import  toast  from "react-hot-toast";
+import {revenueOftheCreator} from "../../services/auth/api.services";
 
 
 const CourseTable = ({ data }) => {
@@ -15,11 +16,32 @@ const CourseTable = ({ data }) => {
   });
   const itemsPerPage = 10;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+   const [revMap, setRevMap] = useState({});
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     setPage(1);
   }, [searchTerm]);
+
+  async function revenueData() {
+    try {
+      const revenue = await revenueOftheCreator("COURSE");
+
+      // Create a map: { [itemId]: amountAfterFee }
+      const map = {};
+      revenue.forEach(item => {
+        map[item.productId] = item.amountAfterFee;
+      });
+
+      setRevMap(map);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    revenueData();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -283,7 +305,7 @@ const CourseTable = ({ data }) => {
                   <td className="px-6 py-4 text-gray-900">{course.title}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">₹{course.price || 0}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{course.purchasedBy?.length || 0}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">₹{calculateRevenue(course)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">₹{revMap[course.id] || 0}</td>
                    <td className="px-6 py-4 text-sm text-gray-500">
                        {
     course.discount && course.discount.length > 0 ? (
@@ -376,7 +398,7 @@ const CourseTable = ({ data }) => {
               </div>
               <div>
                 <span className="text-gray-500">Revenue: </span>
-                <span>₹{calculateRevenue(course)}</span>
+                <span>₹{revMap[course.id] || 0}</span>
               </div>
               <div>
                 <span className="text-gray-500">Coupon: </span>
