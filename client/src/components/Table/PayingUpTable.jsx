@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Pagination from "@mui/material/Pagination";
+import {revenueOftheCreator} from "../../services/auth/api.services";
 
 const PayingUpTable = ({ data }) => {
   const navigate = useNavigate();
@@ -19,7 +20,28 @@ const PayingUpTable = ({ data }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const itemsPerPage = 10;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+   const [revMap, setRevMap] = useState({});
   const dropdownRef = useRef(null);
+
+  async function revenueData() {
+    try {
+      const revenue = await revenueOftheCreator("PAYINGUP");
+
+      // Create a map: { [itemId]: amountAfterFee }
+      const map = {};
+      revenue.forEach(item => {
+        map[item.productId] = item.amountAfterFee;
+      });
+
+      setRevMap(map);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+   useEffect(() => {
+    revenueData();
+  }, []);
 
   useEffect(() => {
     setPage(1);
@@ -278,7 +300,7 @@ const PayingUpTable = ({ data }) => {
                     {item._count?.payingUpTickets || 0}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    ₹{calculateRevenue(item)}
+                    ₹{revMap[item.id] || 0}
                   </td>
                    <td className="px-6 py-4 text-sm text-gray-500">
                          {
