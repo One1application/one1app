@@ -129,7 +129,7 @@ export async function getProductSalesRevenue(req, res) {
           unlockPrice: true,
           isVerified: true,
           createdAt: true,
-          updatedAt: true
+          // updatedAt: true
         }
       }) : []
     ]);

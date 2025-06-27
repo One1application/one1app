@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp, Copy } from 'lucide-react';
 import Pagination from '@mui/material/Pagination';
 import  toast  from "react-hot-toast";
+import {revenueOftheCreator} from "../../services/auth/api.services";
 
 const WebinarTable = ({ data }) => {
   const navigate = useNavigate();
@@ -14,14 +15,41 @@ const WebinarTable = ({ data }) => {
   });
   const itemsPerPage = 10;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+ const [revMap, setRevMap] = useState({});
   const dropdownRef = useRef(null);
 
+  async function revenueData() {
+  try {
+    const revenue = await revenueOftheCreator("WEBINAR");
+
+    // Create a map: { [webinarId]: amountAfterFee }
+    const map = {};
+    revenue.forEach(item => {
+      map[item.productId] = item.amountAfterFee;
+    });
+
+    setRevMap(map);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+
+  useEffect(() => {
+    revenueData();
+  }, []);
+  
   useEffect(() => {
     setPage(1);
   }, [searchTerm]);
 
+ 
+
+ 
+
   // Add click outside handler
   useEffect(() => {
+  
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
@@ -275,7 +303,7 @@ const WebinarTable = ({ data }) => {
                   <td className="px-6 py-4 text-gray-900">{webinar.title}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">₹{webinar.amount || 0}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{webinar._count.tickets}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">₹{calculateRevenue(webinar)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500"> ₹{revMap[webinar.id] || 0}</td>
                    <td className="px-6 py-4 text-sm text-gray-500">
                         {
     webinar.discount && webinar.discount.length > 0 ? (
@@ -378,7 +406,7 @@ const WebinarTable = ({ data }) => {
               </div>
               <div>
                 <span className="text-gray-500">Revenue: </span>
-                <span>₹{calculateRevenue(webinar)}</span>
+                <span> ₹{revMap[webinar.id] || 0}</span>
               </div>
                             <div>
                 <span className="text-gray-500">Coupon: </span>
