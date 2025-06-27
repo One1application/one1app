@@ -6,7 +6,6 @@ import Table from "../../../../components/Table/TableComponent";
 import pagesConfig from "../pagesConfig";
 import { useState, useEffect } from "react";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
-import telegrambanner from "../../../../assets/telegram.png";
 
 import {
   fetchAllTelegramData,
@@ -22,7 +21,7 @@ const TelegramPage = () => {
   const [telegramData, setTelegramData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const [chatid , setChatid] = useState(false);
+  const [chatid, setChatid] = useState(false);
 
   const { title, button, bgGradient, noContent, tabs, cardData } =
     pagesConfig.telegramPage;
@@ -65,12 +64,13 @@ const TelegramPage = () => {
       <div
         className="flex items-center justify-center flex-col  mt-1"
       >
-         
-          <img
+
+        {/**
+        * <img
           src={telegrambanner}
           alt="cover"
           className="w-full h-48 object-cover rounded-lg"
-        />
+        /> */ }
         <button
           type="button"
           onClick={() =>
