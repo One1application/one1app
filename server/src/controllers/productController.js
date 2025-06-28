@@ -246,3 +246,50 @@ export async function getProductSalesRevenue(req, res) {
     });
   }
 }
+
+// Get revenue per day for a specific product type (e.g., WEBINAR)
+export const getRevenuePerDay = async (req, res) => {
+  const { productType } = req.query;
+
+  try {
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        productType,
+        status: "COMPLETED", 
+      },
+      select: {
+        amountAfterFee: true,
+        createdAt: true,
+      },
+    });
+
+    const revenueByDay = {};
+
+    transactions.forEach(tx => {
+      const date = new Date(tx.createdAt);
+      const day = date.getDate(); // 1 to 31
+      revenueByDay[day] = (revenueByDay[day] || 0) + parseFloat(tx.amountAfterFee);
+    });
+
+  const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+]; 
+const now = new Date();
+const year = now.getFullYear();
+const monthIndex = now.getMonth(); // 0-indexed
+const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+    // Prepare result: array of 31 values
+    const result = Array.from({ length: daysInMonth }, (_, i) => ({
+  // day: i + 1,
+  date: `${i + 1} ${MONTHS[monthIndex]}`,
+  value: parseFloat((revenueByDay[i + 1] || 0).toFixed(2)),
+}));
+
+    return res.status(200).json({ revenue: result });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Failed to fetch revenue" });
+  }
+};
