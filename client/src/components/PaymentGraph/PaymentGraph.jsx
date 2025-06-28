@@ -172,7 +172,8 @@ const PaymentGraph = ({ cardData }) => {
 
     return cardData
       .map((card) => {
-        if (!card.date || !card.value) return null;
+        if (!card.date || card.value === undefined || card.value === null) return null;
+
 
         const [day, monthStr] = card.date.split(" ");
         const monthIndex = MONTHS.findIndex(
@@ -244,7 +245,7 @@ const PaymentGraph = ({ cardData }) => {
           margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} tickMargin={10} />
+          <XAxis dataKey="date" tick={{ fontSize: 12 }} tickMargin={10}/>
           <YAxis
             domain={[0, "auto"]}
             tickFormatter={(value) => `₹${value.toLocaleString()}`}
@@ -390,12 +391,31 @@ const PaymentGraph = ({ cardData }) => {
             </div>
           </div>
 
-          <DatePicker
+          {/* <DatePicker
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
             isOpen={isCalendarOpen}
             setIsOpen={setIsCalendarOpen}
-          />
+          /> */}
+          <div className="flex items-center">
+  <DatePicker
+     selectedDate={selectedDate}
+     onDateSelect={setSelectedDate}
+     isOpen={isCalendarOpen}
+     setIsOpen={setIsCalendarOpen}
+  />
+
+     {selectedDate && (
+    <button
+      onClick={() => setSelectedDate(null)}
+      className="text-sm text-orange-500 hover:underline ml-2"
+    >
+      Clear date
+    </button>
+  )}
+</div>
+
+         
         </div>
 
         <div className="h-[400px] w-full">{renderGraph()}</div>
