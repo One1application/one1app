@@ -1,16 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useInsertionEffect, useRef, useState } from "react";
 import pagesConfig from "../pagesConfig";
 // import Card from "../../../../components/Cards/Card";
 import NoContentComponent from "../../../../components/NoContent/NoContentComponent";
 import Table from "../../../../components/Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
+import webinar from "../../../../assets/webinar.png"
 import {
   fetchAllWebinarsData,
   getRevenuePerDay,
 } from "../../../../services/auth/api.services";
 import WebinarTable from "../../../../components/Table/WebinarTable";
 import { useAuth } from "../../../../context/AuthContext.jsx";
+import { getTransactionDetails } from "../../../../services/auth/api.services.js";
 
 const WebinarPage = () => {
   const { customers } = useAuth();
@@ -22,10 +24,10 @@ const WebinarPage = () => {
   const navigate = useNavigate();
   const [AllWebinars, setAllWebinars] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [transactions, setTransactions] = useState([]);
   const [cardData, setCardData] = useState([]);
 
   // Function to format date as "DD MMM"
-
   useEffect(() => {
   async function fetchRevenue() {
     const daily = await getRevenuePerDay("WEBINAR");
@@ -67,6 +69,7 @@ const WebinarPage = () => {
     "December",
   ];
 
+
   // const formatDate = (dateString) => {
   //   const date = new Date(dateString);
   //   const day = date.getDate();
@@ -102,19 +105,18 @@ const WebinarPage = () => {
   // const cardData = transformData(data);
   // console.log(cardData);
 
+
   return (
     <div className="min-h-screen">
       {/* Background Section */}
-      <div
-        className="flex items-center justify-center flex-col relative"
-      >
+      <div className="flex items-center justify-center flex-col relative mt-1">
         <img
-          src={coverImage}
+          src={webinar}
           alt="cover"
           className="w-full h-48 object-cover rounded-lg"
         />
 
-        <h1 className="font-bold text-white text-3xl md:text-4xl">{title}</h1>
+       
         <button
           type="button"
           className="bg-orange-600 text-white rounded-full text-xs md:text-sm px-4 md:px-6 py-2 transition duration-200 md:w-auto hover:bg-orange-700 absolute top-4 right-4 md:top-5 md:right-10 flex justify-center items-center gap-1"
@@ -122,7 +124,7 @@ const WebinarPage = () => {
           onClick={() => navigate(path)}
         >
           <button.icon className="font-bold" />
-          {button.label}
+           {button.label}
         </button>
       </div>
 

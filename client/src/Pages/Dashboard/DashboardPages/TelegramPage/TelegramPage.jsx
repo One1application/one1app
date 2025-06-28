@@ -21,7 +21,7 @@ const TelegramPage = () => {
   const [telegramData, setTelegramData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const [chatid , setChatid] = useState(false);
+  const [chatid, setChatid] = useState(false);
 
   const { title, button, bgGradient, noContent, tabs, cardData } =
     pagesConfig.telegramPage;
@@ -62,9 +62,15 @@ const TelegramPage = () => {
   return (
     <div className="min-h-screen">
       <div
-        className={`w-full h-64 ${bgGradient} flex justify-center items-center relative`}
+        className="flex items-center justify-center flex-col  mt-1"
       >
-        <h1 className="font-bold text-white text-3xl md:text-4xl">{title}</h1>
+
+        {/**
+        * <img
+          src={telegrambanner}
+          alt="cover"
+          className="w-full h-48 object-cover rounded-lg"
+        /> */ }
         <button
           type="button"
           onClick={() =>

@@ -5,14 +5,19 @@ import pagesConfig from "../pagesConfig";
 import CourseTable from "../../../../components/Table/CourseTable";
 import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
+
 import { fetchAllCoursesData,getRevenuePerDay } from "../../../../services/auth/api.services";
+import courseBanner from "../../../../assets/course.png";
+
 
 const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [cardData, setCardData] = useState([]);
 
+
   const { title, button, bgGradient, noContent, tabs, path } = pagesConfig.coursesPage;
+
   const navigate = useNavigate();
 
   const [AllCourses, setAllCourses] = useState([]);
@@ -44,10 +49,13 @@ const CoursesPage = () => {
 
   return (
     <div className="min-h-screen">
-      <div
-        className={`w-full h-64 ${bgGradient} flex justify-center items-center relative`}
-      >
-        <h1 className="font-bold text-white text-3xl md:text-4xl">{title}</h1>
+      <div className="flex items-center justify-center flex-col  mt-1">
+        <img
+          src={courseBanner}
+          alt="cover"
+          className="w-full h-48 object-cover rounded-lg"
+        />
+      
         <button
           type="button"
           className="bg-orange-600 text-white rounded-full text-xs md:text-sm px-4 md:px-6 py-2 transition duration-200 md:w-auto hover:bg-orange-700 absolute top-4 right-4 md:top-5 md:right-10 flex justify-center items-center gap-1"
@@ -66,7 +74,7 @@ const CoursesPage = () => {
           <Card key={index} title={card.title} value={card.value} description={card.description} />
         ))}
       </div> */}
-{/* 
+      {/* 
       <div className="flex justify-start items-center gap-4 p-6">
         {tabs.map((tab, index) => (
           <div

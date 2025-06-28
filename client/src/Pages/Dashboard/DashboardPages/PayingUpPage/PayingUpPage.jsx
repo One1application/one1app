@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
 import { fetchAllPayingUpsData,getRevenuePerDay  } from "../../../../services/auth/api.services";
 import PayingUpTable from "../../../../components/Table/PayingUpTable";
+import payinupBanner from "../../../../assets/payinup.png";
 import toast from "react-hot-toast";
 
 const PayingUpPage = () => {
@@ -25,7 +26,7 @@ const PayingUpPage = () => {
     setIsLoading(true);
     try {
       const response = await fetchAllPayingUpsData();
-      
+
       // console.log(response.data.payload.payingUps);
       setAllPayingUps(response.data.payload.payingUps);
     } catch (e) {
@@ -50,10 +51,12 @@ const PayingUpPage = () => {
 
   return (
     <div className="min-h-screen">
-      <div
-        className={`w-full h-64 ${bgGradient} flex justify-center items-center relative`}
-      >
-        <h1 className="font-bold text-white text-3xl md:text-4xl">{title}</h1>
+      <div className="flex items-center justify-center flex-col  mt-1">
+        <img
+          src={payinupBanner}
+          alt="cover"
+          className="w-full h-58 object-cover rounded-lg"
+        />
 
         <button
           type="button"

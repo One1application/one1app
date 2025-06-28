@@ -358,6 +358,7 @@ model PayingUpTicket {
   orderId    String?
 }
 
+
 model Telegram {
   id                    String                 @id @unique @default(uuid())
   coverImage            String
@@ -366,29 +367,63 @@ model Telegram {
   chatId                String                 @unique
   isGroupMonitored      Boolean                @default(false)
   genre                 String
-  discount              Json
-  subscription          Json
-  gstDetails            String?                  
-  courseDetails         String?                  
+  gstDetails            String?
+  courseDetails         String?
   isVerified            Boolean                @default(false)
   createdById           String
   createdBy             User                   @relation(fields: [createdById], references: [id])
   telegramSubscriptions TelegramSubscription[]
+  discounts             Discount[]             @relation("TelegramDiscounts")
+  subscriptions         Subscription[]         @relation("TelegramSubscriptions")
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
-  inviteLink            String?                
+  inviteLink            String?
 }
 
 model TelegramSubscription {
+  id            String    @id @unique @default(uuid())
+  telegramId    String
+  telegram      Telegram  @relation(fields: [telegramId], references: [id], onDelete: Cascade)
+  subscriptionId String
+  subscription  Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  boughtById    String
+  boughtBy      User      @relation(fields: [boughtById], references: [id], onDelete: Cascade)
+  validDays     Int?
+  expireDate    DateTime?
+  isLifetime    Boolean   @default(false)
+  isExpired     Boolean   @default(false)
+  paymentId     String?   @unique
+  orderId       String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  @@unique([telegramId, boughtById, isExpired]) // Prevent active duplicate subscriptions
+}
+
+model Discount {
   id         String   @id @unique @default(uuid())
-  validDays  Int
+  code       String
+  percent    Float
+  expiry     DateTime
+  plan       String?  
   telegramId String
-  telegram   Telegram @relation(fields: [telegramId], references: [id], onDelete: Cascade)
-  boughtById String   @unique
-  boughtBy   User     @relation(fields: [boughtById], references: [id], onDelete: Cascade)
-  paymentId  String?
-  orderId    String?
+  telegram   Telegram @relation("TelegramDiscounts", fields: [telegramId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+   @@unique([telegramId, code])
+}
+
+model Subscription {
+  id         String   @id @unique @default(uuid())
+  type       String
+  price      Float
+  validDays  Int?
+  isLifetime Boolean  @default(false)
+  telegramId String
+  telegram   Telegram @relation("TelegramSubscriptions", fields: [telegramId], references: [id], onDelete: Cascade)
+  telegramSubscriptions TelegramSubscription[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([telegramId, type])
 }
 
 model PremiumContent {
