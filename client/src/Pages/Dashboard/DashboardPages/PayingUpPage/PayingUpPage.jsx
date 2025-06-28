@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import pagesConfig from "../pagesConfig";
 import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
-import { fetchAllPayingUpsData } from "../../../../services/auth/api.services";
+import { fetchAllPayingUpsData,getRevenuePerDay  } from "../../../../services/auth/api.services";
 import PayingUpTable from "../../../../components/Table/PayingUpTable";
 import toast from "react-hot-toast";
 
 const PayingUpPage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+   const [cardData, setCardData] = useState([]);
 
-  const { title, button, bgGradient, noContent, tabs, path, cardData } =
+  const { title, button, bgGradient, noContent, tabs, path } =
     pagesConfig.payingUp;
   // console.log("Dynamic path:", path);
 
@@ -37,6 +38,15 @@ const PayingUpPage = () => {
   useEffect(() => {
     getAllPayingUps();
   }, []);
+
+   useEffect(() => {
+  async function fetchRevenue() {
+    const daily = await getRevenuePerDay("PAYINGUP");
+    setCardData(daily); // setChartData used in your <PaymentGraph />
+  }
+
+  fetchRevenue();
+}, []);
 
   return (
     <div className="min-h-screen">

@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
 import {
   fetchAllWebinarsData,
-  revenueOftheCreator,
+  getRevenuePerDay,
 } from "../../../../services/auth/api.services";
 import WebinarTable from "../../../../components/Table/WebinarTable";
 import { useAuth } from "../../../../context/AuthContext.jsx";
@@ -22,26 +22,19 @@ const WebinarPage = () => {
   const navigate = useNavigate();
   const [AllWebinars, setAllWebinars] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState([]);
+  const [cardData, setCardData] = useState([]);
 
   // Function to format date as "DD MMM"
 
-  async function revenueData() {
-    try {
-      const revenue = await revenueOftheCreator("WEBINAR");
-      setData(revenue);
-      console.log(revenue);
-      console.log(data);
-    } catch (error) {
-      console.log(error);
-    }
+  useEffect(() => {
+  async function fetchRevenue() {
+    const daily = await getRevenuePerDay("WEBINAR");
+    setCardData(daily); // setChartData used in your <PaymentGraph />
   }
 
-  useEffect(() => {
-    revenueData();
-  }, []);
+  fetchRevenue();
+}, []);
 
-  console.log(data);
 
   const getAllWebinars = async () => {
     setIsLoading(true);
@@ -81,33 +74,33 @@ const WebinarPage = () => {
   //   return `${day} ${month}`;
   // };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = MONTHS[date.getMonth()].substring(0, 3);
-    return `${day} ${month}`;
-  };
+  // const formatDate = (dateString) => {
+  //   const date = new Date(dateString);
+  //   const day = date.getDate().toString().padStart(2, "0");
+  //   const month = MONTHS[date.getMonth()].substring(0, 3);
+  //   return `${day} ${month}`;
+  // };
 
   // Transform the data
-  const transformData = (data) => {
-    // Group by date and sum the revenue
-    const grouped = data.reduce((acc, transaction) => {
-      const dateKey = formatDate(transaction.createdAt);
-      const amount = parseFloat(transaction.amountAfterFee); // Correct key
-      acc[dateKey] = (acc[dateKey] || 0) + amount;
-      return acc;
-    }, {});
+  // const transformData = (data) => {
+  //   // Group by date and sum the revenue
+  //   const grouped = data.reduce((acc, transaction) => {
+  //     const dateKey = formatDate(transaction.createdAt);
+  //     const amount = parseFloat(transaction.amountAfterFee); // Correct key
+  //     acc[dateKey] = (acc[dateKey] || 0) + amount;
+  //     return acc;
+  //   }, {});
 
     // Convert to array of objects
-    return Object.entries(grouped).map(([date, value]) => ({
-      date,
-      value: parseFloat(value.toFixed(2)), // Keep decimals
-    }));
-  };
+  //   return Object.entries(grouped).map(([date, value]) => ({
+  //     date,
+  //     value: parseFloat(value.toFixed(2)), // Keep decimals
+  //   }));
+  // };
 
   // Get the transformed data
-  const cardData = transformData(data);
-  console.log(cardData);
+  // const cardData = transformData(data);
+  // console.log(cardData);
 
   return (
     <div className="min-h-screen">
