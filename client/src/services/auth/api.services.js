@@ -236,6 +236,12 @@ export const revenueOftheCreator = async (productType) =>{
   console.log(response)
   return response?.data?.payload?.products;
 }
+
+export const getRevenuePerDay = async (productType) => {
+  const response = await servicesAxiosInstance.get(`/product/revenue-per-day?productType=${productType}`);
+  return response.data.revenue;
+};
+
 export const updatePrimaryPaymentInformation = async (bankDetailsId,data) => {
   const response = await servicesAxiosInstance.post(
     `/wallet/update-bank-details/${bankDetailsId}`,

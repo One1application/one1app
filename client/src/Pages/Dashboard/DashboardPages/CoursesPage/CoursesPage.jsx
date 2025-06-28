@@ -5,15 +5,19 @@ import pagesConfig from "../pagesConfig";
 import CourseTable from "../../../../components/Table/CourseTable";
 import { useNavigate } from "react-router-dom";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
-import { fetchAllCoursesData } from "../../../../services/auth/api.services";
+
+import { fetchAllCoursesData,getRevenuePerDay } from "../../../../services/auth/api.services";
 import courseBanner from "../../../../assets/course.png";
+
 
 const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [cardData, setCardData] = useState([]);
 
-  const { title, button, bgGradient, noContent, tabs, path, cardData } =
-    pagesConfig.coursesPage;
+
+  const { title, button, bgGradient, noContent, tabs, path } = pagesConfig.coursesPage;
+
   const navigate = useNavigate();
 
   const [AllCourses, setAllCourses] = useState([]);
@@ -33,6 +37,15 @@ const CoursesPage = () => {
   useEffect(() => {
     getAllCourses();
   }, []);
+
+   useEffect(() => {
+  async function fetchRevenue() {
+    const daily = await getRevenuePerDay("COURSE");
+    setCardData(daily); // setChartData used in your <PaymentGraph />
+  }
+
+  fetchRevenue();
+}, []);
 
   return (
     <div className="min-h-screen">
