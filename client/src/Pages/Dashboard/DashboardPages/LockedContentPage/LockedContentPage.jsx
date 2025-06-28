@@ -2,7 +2,7 @@ import Card from "../../../../components/Cards/Card";
 import NoContentComponent from "../../../../components/NoContent/NoContentComponent";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { fetchPremiumDashboardData } from "../../../../services/auth/api.services";
+import { fetchPremiumDashboardData,getRevenuePerDay } from "../../../../services/auth/api.services";
 import pagesConfig from "../pagesConfig";
 import Table from "../../../../components/Table/TableComponent";
 import { useNavigate } from "react-router-dom";
@@ -12,8 +12,9 @@ import LockedContentTable from "../../../../components/Table/LockedContentTable"
 const LockedContentPage = () => {
   const [premiumContentData, setPremiumContentData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+    const [cardData, setCardData] = useState([]);
 
-  const { title, button, bgGradient, noContent, tabs, cardData, path } = pagesConfig.lockedContentPage;
+  const { title, button, bgGradient, noContent, tabs, path } = pagesConfig.lockedContentPage;
   const navigate = useNavigate()
 
   const getPremiumData = async () => {
@@ -38,6 +39,15 @@ const LockedContentPage = () => {
   useEffect(() => {
     getPremiumData();
   }, []);
+
+   useEffect(() => {
+  async function fetchRevenue() {
+    const daily = await getRevenuePerDay("PREMIUMCONTENT");
+    setCardData(daily); // setChartData used in your <PaymentGraph />
+  }
+
+  fetchRevenue();
+}, []);
 
   return (
     <div className="min-h-screen">
