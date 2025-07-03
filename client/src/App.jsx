@@ -9,6 +9,7 @@ import AppointementPage from "./Pages/Dashboard/DashboardPages/AppointementPage/
 import ChatPage from "./Pages/Dashboard/DashboardPages/ChatPage/ChatPage.jsx";
 import CoursesPage from "./Pages/Dashboard/DashboardPages/CoursesPage/CoursesPage.jsx";
 import CreateCoursePage from "./Pages/Dashboard/DashboardPages/CoursesPage/CreateCoursePage.jsx";
+import { useTelegramAuthStore } from "./Zustand/TelegramApicalls.js";
 import LessonsPage from "./Pages/Dashboard/DashboardPages/CoursesPage/LessonsPage.jsx";
 import NewCourse from "./Pages/Dashboard/DashboardPages/CoursesPage/NewCourse.jsx";
 import DiscordPage from "./Pages/Dashboard/DashboardPages/DiscordPage/DiscordPage.jsx";
@@ -55,6 +56,7 @@ import CreatorProductsShowcase from "./Pages/Dashboard/DashboardPages/ProfilePag
 
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
+  const { isAuthenticated } = useTelegramAuthStore();
 
   return (
     <>
@@ -103,7 +105,16 @@ const App = () => {
 
             <Route path="webinar" element={<WebinarPage />} />
             <Route path="courses" element={<CoursesPage />} />
-            <Route path="telegram" element={<TelegramPage />} />
+            <Route
+              path="telegram"
+              element={
+                isAuthenticated ? (
+                  <TelegramPage />
+                ) : (
+                  <Navigate to="/dashboard/telegram-interface" />
+                )
+              }
+            />
             <Route path="discord" element={<DiscordPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="help-center" element={<HelpCenterBanner />} />
@@ -123,7 +134,16 @@ const App = () => {
             <Route path="create-course" element={<CreateCoursePage />} />
             <Route path="create-course" element={<NewCourse />} />
             <Route path="create-pay-up" element={<CreatePayUp />} />
-            <Route path="create-telegram" element={<TelegramForm />} />
+            <Route
+              path="create-telegram"
+              element={
+                isAuthenticated ? (
+                  <TelegramForm />
+                ) : (
+                  <Navigate to="/dashboard/telegram-interface" />
+                )
+              }
+            />
             <Route
               path="create-premium-content"
               element={<CreateLockedContentPage />}
@@ -133,6 +153,7 @@ const App = () => {
             <Route path="edit-course" element={<CreateCoursePage />} />
             <Route path="edit-webinar" element={<CreateWebinarPage />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
+            <Route path="edit-telegram" element={<TelegramForm />} />
             <Route
               path="edit-premium-content"
               element={<CreateLockedContentPage />}

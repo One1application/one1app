@@ -43,8 +43,12 @@ export async function createTelegram(req, res) {
       courseDetails,
       inviteLink,
     } = req.body;
+
+    console.log(req.body)
     const user = req.user;
 
+
+    console.log(subscriptions)
     // Check bot admin status
     let botHaveAdmin = false;
     let isGroupMonitored = false;
@@ -67,6 +71,7 @@ export async function createTelegram(req, res) {
     const telegram = await prisma.$transaction(async (tx) => {
       const newTelegram = await tx.telegram.create({
         data: {
+       
           coverImage: coverImage || 'https://default-cover.com',
           title,
           description,
@@ -78,13 +83,15 @@ export async function createTelegram(req, res) {
           createdById: user.id,
           isGroupMonitored,
         },
+
+        
       });
 
       if (discounts && discounts.length > 0) {
         await tx.discount.createMany({
           data: discounts.map((d) => ({
             code: d.code,
-            percent: d.percent,
+            percent: parseFloat(d.percent),
             expiry: new Date(d.expiry),
             plan: d.plan || null,
             telegramId: newTelegram.id,
@@ -1532,6 +1539,8 @@ export async function sendLoginCode(req, res) {
     console.log('sendCodeResult:', sendCodeResult);
     const phoneCodeHash = sendCodeResult.phoneCodeHash || sendCodeResult.phone_code_hash;
     const sessionString = session.save();
+
+    
     return res.status(200).json({ success: true, payload: { phoneCodeHash, sessionString } });
   } catch (error) {
     console.error('Error sending login code:', error);
@@ -1575,6 +1584,8 @@ export async function signInTelegram(req, res) {
         }
       });
     }
+
+    
 
     const sanitizedNumber = phoneNumber.replace(/[^\d+]/g, '');
     const session = new StringSession(sessionString);

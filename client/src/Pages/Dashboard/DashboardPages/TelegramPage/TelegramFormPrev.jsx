@@ -1,9 +1,8 @@
-// import React from 'react';
 import { Antenna, CreditCard, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
-import ProfileImg from "../../../../assets/oneapp.jpeg";
+// import ProfileImg from "../../../../assets/oneapp.jpeg";
 import SigninModal from "../../../../components/Modal/SigninModal";
 import SignupModal from "../../../../components/Modal/SignupModal";
 import {
@@ -12,77 +11,26 @@ import {
 } from "../../../../services/auth/api.services";
 
 const TelegramFormPrev = () => {
-  // Mock Data
-  const channelData = {
-    channelName: "One1App",
-    description: "You get daily sureshoot tips of stock market",
-    genre: "Education",
-    numberOfPlans: 10,
-    plans: [
-      {
-        cost: "2000",
-        totalCost: "2055",
-        duration: "1 Month",
-        features: ["Daily Market Updates", "Premium Signals", "24/7 Support"],
-      },
-      {
-        cost: "3000",
-        totalCost: "3079",
-        duration: "3 Months",
-        features: [
-          "Everything in Basic",
-          "Weekly Analysis",
-          "Priority Support",
-        ],
-      },
-      {
-        cost: "4000",
-        totalCost: "4109",
-        duration: "6 Months",
-        features: [
-          "Everything in Standard",
-          "Personal Consultation",
-          "VIP Access",
-        ],
-      },
-    ],
-    channelOwner: {
-      name: "Sumit Kumar",
-      avatar: ProfileImg,
-      experience: "10+ years",
-      qualification: "Certified Financial Analyst",
-    },
-    statistics: {
-      members: "50K+",
-      accuracy: "92%",
-      reviews: "4.8/5",
-    },
-    paymentMethods: [
-      {
-        name: "PhonePe",
-        icon: "Wallet",
-        color: "purple-600",
-      },
-      {
-        name: "GPay",
-        icon: "CreditCard",
-        color: "green-600",
-      },
-    ],
-    disclaimers: {
-      general:
-        "CosmicFeed Technologies Pvt. Ltd. shall not be held liable for any content or materials published, sold, or distributed by content creators on our associated apps or websites. We do not endorse or take responsibility for the accuracy, legality, or quality of their content. Users must exercise their own judgment and discretion when relying on such content.",
-      riskWarning:
-        "Trading in financial markets involves substantial risks. Past performance is not indicative of future results.",
-    },
-  };
-
   const [params] = useSearchParams();
   const telegramId = params.get("id");
-  const [data, setdata] = useState(null);
+  const [data, setData] = useState(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showSigninModal, setShowSigninModal] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+
+  // Default payment methods
+  const paymentMethods = [
+    {
+      name: "PhonePe",
+      icon: "Wallet",
+      color: "purple-600",
+    },
+    {
+      name: "GPay",
+      icon: "CreditCard",
+      color: "green-600",
+    },
+  ];
 
   const footerLinks = [
     { title: "Privacy", path: "/publicpolicy" },
@@ -90,6 +38,13 @@ const TelegramFormPrev = () => {
     { title: "Refund", path: "/refund-cancellation" },
     { title: "Disclaimer", path: "/disclaimer" },
   ];
+
+  const disclaimers = {
+    general:
+      "CosmicFeed Technologies Pvt. Ltd. shall not be held liable for any content or materials published, sold, or distributed by content creators on our associated apps or websites. We do not endorse or take responsibility for the accuracy, legality, or quality of their content. Users must exercise their own judgment and discretion when relying on such content.",
+    riskWarning:
+      "Trading in financial markets involves substantial risks. Past performance is not indicative of future results.",
+  };
 
   const handleAuthError = (error) => {
     if (
@@ -103,85 +58,34 @@ const TelegramFormPrev = () => {
   };
 
   useEffect(() => {
-    console.log("aaya");
-
     if (!telegramId) return;
-    const telegramDetails = async () => {
+
+    const fetchTelegramDetails = async () => {
       try {
         const response = await fetchTelegram(telegramId);
-        console.log(response);
-        setdata(response.data.payload.telegram);
+        setData(response?.telegram);
       } catch (error) {
         console.error("Error while fetching telegram.", error);
         if (!handleAuthError(error)) {
-          toast("Please try later.");
+          toast.error("Please try later.");
         }
       }
     };
-    telegramDetails();
-  }, []);
 
-  // useEffect(() => {
-  //   const script = document.createElement("script");
-  //   script.src = "https://checkout.razorpay.com/v1/checkout.js";
-  //   script.async = true;
-  //   document.body.appendChild(script);
-  // }, []);
+    fetchTelegramDetails();
+  }, [telegramId]);
 
   const handlePayment = async (plan) => {
     try {
       const response = await purchaseTelegram({
         telegramId: data.id,
-        days: plan.days,
+        days: plan.validDays,
       });
-      //   const orderDetails = response.data.payload;
-
-      //   var options = {
-      //     "key": import.meta.env.VITE_RAZORPAY_KEY,
-      //     "amount": orderDetails.amount,
-      //     "currency": orderDetails.currency,
-      //     "name": "One App",
-      //     "description": "Complete Your Purchase",
-      //     "order_id": orderDetails.orderId,
-      //     "handler": async function (response) {
-      //       const body = {
-      //         razorpay_order_id: response.razorpay_order_id,
-      //         razorpay_payment_id: response.razorpay_payment_id,
-      //         razorpay_signature: response.razorpay_signature,
-      //         telegramId: orderDetails.telegramId,
-      //         channelId: data.channelId,
-      //         days: plan.days
-      //       };
-
-      //       try {
-      //         const response = await verifyPayment(body);
-      //         if(response.data.payload.telegramInvitelink) {
-      //           window.location.href = `${response.data.payload.telegramInvitelink}`;
-      //         }
-      //       } catch (error) {
-      //         console.error("Error while verifying payment.", error);
-      //         if (!handleAuthError(error)) {
-      //           toast("Payment Failed");
-      //         }
-      //       }
-      //     },
-      //     "prefill": {
-      //         "name": "John Doe",
-      //         "email": "john.doe@example.com",
-      //         "contact": "9999999999"
-      //     },
-      //     "theme": {
-      //         "color": "#F37254"
-      //     }
-      // };
-
-      // const rzp1 = new window.Razorpay(options);
-      // rzp1.open()
       window.location.href = response.data.payload.redirectUrl;
     } catch (error) {
-      console.log("Error during payment of telegram.", error);
+      console.error("Error during payment of telegram.", error);
       if (!handleAuthError(error)) {
-        toast("Payment initiation failed");
+        toast.error("Payment initiation failed");
       }
     }
   };
@@ -208,6 +112,8 @@ const TelegramFormPrev = () => {
     setShowSigninModal(false);
     setShowSignupModal(true);
   };
+
+   
 
   if (!data) {
     return (
@@ -247,21 +153,18 @@ const TelegramFormPrev = () => {
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
                 <img
-                  src={data.imageUrl}
-                  alt={`${data.channelName}'s avatar`}
+                  src={data.coverImage}
+                  alt={`${data.title}'s avatar`}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = "/api/placeholder/40/40";
-                  }}
                 />
               </div>
               <div>
                 <div className="text-gray-400 text-sm">Channel Name</div>
-                <div className="text-white font-medium">{data.channelName}</div>
+                <div className="text-white font-medium">{data.title}</div>
               </div>
             </div>
 
-            <div className="space-y-6 ">
+            <div className="space-y-6">
               <div>
                 <h2 className="text-white text-lg font-semibold mb-4">
                   About the channel
@@ -271,7 +174,8 @@ const TelegramFormPrev = () => {
                     {data.genre}
                   </span>
                   <span className="px-3 py-1 bg-gray-800/60 rounded-full text-sm text-orange-400">
-                    + {data.subscription.length} Plans
+                    {data.subscriptions.length} Plan
+                    {data.subscriptions.length !== 1 ? "s" : ""}
                   </span>
                 </div>
                 <p className="text-gray-400 text-sm leading-relaxed">
@@ -282,10 +186,10 @@ const TelegramFormPrev = () => {
               <div className="justify-end">
                 <h3 className="text-gray-400 font-medium mb-2">Disclaimer</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  {channelData.disclaimers.general}
+                  {disclaimers.general}
                 </p>
                 <p className="text-xs text-gray-500 leading-relaxed mt-2">
-                  {channelData.disclaimers.riskWarning}
+                  {disclaimers.riskWarning}
                 </p>
               </div>
             </div>
@@ -299,7 +203,7 @@ const TelegramFormPrev = () => {
                   <Antenna className="w-8 h-8 text-orange-400" />
                 </div>
                 <h2 className="text-white text-xl font-semibold">
-                  {channelData.channelName} payment
+                  Subscribe to {data.title}
                 </h2>
               </div>
             </div>
@@ -308,19 +212,17 @@ const TelegramFormPrev = () => {
               <div className="text-gray-400 mb-2 font-medium">
                 Select a plan and continue
               </div>
-              {data.subscription.map((plan, index) => (
+              {data.subscriptions.map((plan) => (
                 <button
-                  key={plan.days}
+                  key={plan.id}
                   className="w-full p-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg flex justify-between items-center hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg shadow-orange-500/20"
-                  onClick={(e) => handlePayment(plan)}
+                  onClick={() => handlePayment(plan)}
                 >
                   <div className="flex flex-col items-start">
-                    <span className="font-medium">₹{plan.cost}</span>
-                    <span className="text-xs text-orange-200">
-                      {plan.selectedValue}
-                    </span>
+                    <span className="font-medium">₹{plan.price}</span>
+                    <span className="text-xs text-orange-200">{plan.type}</span>
                   </div>
-                  <span className="font-semibold">₹{plan.cost}</span>
+                  <span className="font-semibold">₹{plan.price}</span>
                 </button>
               ))}
             </div>
@@ -330,7 +232,7 @@ const TelegramFormPrev = () => {
                 Guaranteed safe & secure payment
               </div>
               <div className="flex justify-center items-center gap-6">
-                {channelData.paymentMethods.map((method, index) => (
+                {paymentMethods.map((method, index) => (
                   <div key={index} className="flex flex-col items-center group">
                     <div
                       className={`w-12 h-12 bg-${method.color} rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300`}

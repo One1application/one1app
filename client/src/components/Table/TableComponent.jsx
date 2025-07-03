@@ -22,6 +22,8 @@ const Table = ({ data }) => {
     setPage(1);
   }, [searchTerm]);
 
+
+  console.log(data)
   // Add click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {

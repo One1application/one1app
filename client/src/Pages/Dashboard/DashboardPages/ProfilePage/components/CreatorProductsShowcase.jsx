@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BookOpen, Video, Gem, FileText, ArrowRight } from "lucide-react";
 import { FaTelegramPlane } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
- 
+import { useTelegramAuthStore } from "../../../../../Zustand/TelegramApicalls.js";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -22,6 +21,9 @@ const cardVariants = {
 
 const CreatorProductsShowcase = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useTelegramAuthStore();
+
+  useEffect(() => {}, [isAuthenticated]);
 
   const products = [
     {
@@ -80,7 +82,9 @@ const CreatorProductsShowcase = () => {
         "Manage your clients",
       ],
       cta: "Setup community",
-      path: "/dashboard/telegram-interface",
+      path: isAuthenticated
+        ? "/dashboard/telegram"
+        : "/dashboard/telegram-interface",
       color: "blue",
     },
     {
@@ -114,7 +118,6 @@ const CreatorProductsShowcase = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-orange-100">
               Monetize Your Creativity

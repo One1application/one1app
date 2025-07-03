@@ -15,8 +15,23 @@ const servicesAxiosInstance = axios.create({
     "Content-Type": "application/json",
   },
 });
+
 servicesAxiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("AuthToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+const telegramAxiosInstance = axios.create({
+  baseURL: baseURL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+telegramAxiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem("sessionString");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -37,4 +52,4 @@ servicesAxiosInstanceForFileUpload.interceptors.request.use((config) => {
   return config;
 });
 
-export { servicesAxiosInstance, servicesAxiosInstanceForFileUpload };
+export { servicesAxiosInstance, servicesAxiosInstanceForFileUpload  , telegramAxiosInstance};
