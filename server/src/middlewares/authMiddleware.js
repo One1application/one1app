@@ -1,7 +1,10 @@
 import jwt from 'jsonwebtoken';
+import prisma from "../db/dbClient.js";
 
 
-export const authMiddleware = (req, res, next) => {
+ 
+
+export const authMiddleware = async(req, res, next) => {
     const token = req.header('Authorization');
     
     if(!token){
@@ -13,12 +16,17 @@ export const authMiddleware = (req, res, next) => {
     }
     try {
         const incomingToken = token.replace('Bearer ', '');
+
+       
         const decodedToken = jwt.verify(incomingToken, process.env.JWT_SECRET); 
         if(!decodedToken){
             return res.status(401).json({
                 message:"Invalid Token"
             })
         }
+        
+        
+         
         req.user = decodedToken;
         next();
     } catch (error) {

@@ -1,8 +1,12 @@
 /* eslint-disable react/no-unescaped-entities */
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
-import { PlusCircle, Upload, X, ChevronDown, Loader2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+
+import { Loader2, PlusCircle, X, ChevronDown } from "lucide-react";
+
+import { useAuth } from "../../../../context/AuthContext.jsx";
+
 import {
   createTelegram,
   handelUplaodFile,
@@ -10,9 +14,13 @@ import {
   fetchOwnedGroups,
 } from "../../../../services/auth/api.services.js";
 import toast from "react-hot-toast";
- 
-import { sendTelegramLoginCode, signInTelegramClient } from "../../../../services/auth/api.services.js";
+
+import {
+  sendTelegramLoginCode,
+  signInTelegramClient,
+} from "../../../../services/auth/api.services.js";
 // Discount Form Component
+import { useTelegramAuthStore } from "../../../../Zustand/TelegramApicalls.js";
 const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
   const [discountCode, setDiscountCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState("");
@@ -118,7 +126,6 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
 };
 
 import { useSearchParams } from "react-router-dom";
-import { useAuth } from "../../../../context/AuthContext.jsx";
 
 // Main TelegramsPages Component
 const TelegramsPages = () => {
@@ -134,8 +141,16 @@ const TelegramsPages = () => {
     },
   ]);
 
+  const { createTelegram, getTelegram } = useTelegramAuthStore();
   const chatId = useSearchParams()[0].get("chatid");
-  console.log("chatId", chatId)
+  const [searchParams] = useSearchParams();
+  const telegramId = searchParams.get("telegramId");
+  const isEditMode = !!telegramId;
+
+  console.log(telegramId);
+  console.log(isEditMode);
+
+  console.log(telegramId);
   const { userDetails } = useAuth();
   const [freeDays, setFreeDays] = useState("");
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -168,6 +183,7 @@ const TelegramsPages = () => {
   const [loginStage, setLoginStage] = useState("enterPhone"); // enterPhone, enterCode
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
+  const [telegramData, setTelegramData] = useState(null);
 
   const getInitials = (name) => {
     if (!name) return "USER";
@@ -261,6 +277,14 @@ const TelegramsPages = () => {
     setSubscriptions(newSubscriptions);
   };
 
+  const prepareSubscriptions = (subscriptions) =>
+    subscriptions.map((sub) => ({
+      type: sub.inputValue,
+      cost: parseFloat(sub.cost || 0),
+      isLifetime: sub.inputValue === "lifetime",
+      days: sub.inputValue === "lifetime" ? null : sub.days,
+    }));
+
   const addSubscription = () => {
     setSubscriptions([
       ...subscriptions,
@@ -268,10 +292,11 @@ const TelegramsPages = () => {
         inputValue: "",
         showDropdown: false,
         showCreate: false,
-        hasThirdBox: false,
+        hasThirdBox: true,
         selectedValue: "",
         cost: "",
         days: "",
+        isLifetime: false,
       },
     ]);
   };
@@ -338,7 +363,10 @@ const TelegramsPages = () => {
       setOwnedGroups(groups);
       setIsTelegramAuthenticated(true);
     } catch (error) {
-      console.error("Failed to load groups, user likely not authenticated.", error);
+      console.error(
+        "Failed to load groups, user likely not authenticated.",
+        error
+      );
       setIsTelegramAuthenticated(false);
     } finally {
       setLoadingGroups(false);
@@ -350,6 +378,46 @@ const TelegramsPages = () => {
     loadGroups();
   }, []);
 
+  useEffect(() => {
+    const fetchTelegram = async () => {
+      if (!isEditMode) return;
+
+      try {
+        const res = await getTelegram(telegramId);
+        console.log(res);
+        const data = res.data;
+        setTelegramData(data);
+
+        setTelegramTitle(data.title || "");
+        setTelegramDescription(data.description || "");
+        setGenre(data.genre || "education");
+        setUploadedImage(data.coverImage || "");
+        setDiscounts(data.discounts || []);
+        setSubscriptions(
+          (data.subscriptions || []).map((s) => ({
+            inputValue: s.type,
+            selectedValue: s.type,
+            cost: s.cost.toString(),
+            days: s.days,
+            hasThirdBox: !!s.days,
+            isLifetime: s.isLifetime,
+            showDropdown: false,
+            showCreate: false,
+          }))
+        );
+      } catch (err) {
+        toast.error("Failed to fetch telegram data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTelegram();
+  }, [telegramId]);
+
+  console.log(telegramData);
+
+ 
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
@@ -375,15 +443,21 @@ const TelegramsPages = () => {
       const body = {
         title: telegramTitle,
         description: telegramDescription,
-        subscriptions,
+        subscriptions: prepareSubscriptions(subscriptions),
         coverImage: response?.data?.url || "",
         genre,
         chatId: selectedGroup ? selectedGroup.id : inviteLinkData?.chatId || "",
-        channelName: selectedGroup ? selectedGroup.title : inviteLinkData?.title || "",
-        channelLink: selectedGroup && selectedGroup.username ? `https://t.me/${selectedGroup.username}` : inviteLink,
-        discount: discounts,
+        channelName: selectedGroup
+          ? selectedGroup.title
+          : inviteLinkData?.title || "",
+        channelLink:
+          selectedGroup && selectedGroup.username
+            ? `https://t.me/${selectedGroup.username}`
+            : inviteLink,
+        discounts: discounts,
       };
 
+      console.log(body);
       await createTelegram(body);
       window.location.href = "/dashboard/telegram";
       toast.success("Telegram Is in the Development Phase");
@@ -394,49 +468,49 @@ const TelegramsPages = () => {
     }
   };
 
-  const handleSendCode = async () => {
-    if (!phoneNumber) return;
-    setSendingCode(true);
-    try {
-      const res = await sendTelegramLoginCode(phoneNumber);
-      setPhoneCodeHash(res.data.payload.phoneCodeHash);
-      setLoginSessionString(res.data.payload.sessionString);
-      setLoginStage("enterCode");
-      toast.success("Code sent");
-    } catch {
-      toast.error("Failed to send code");
-    } finally { setSendingCode(false); }
-  };
+  // const handleSendCode = async () => {
+  //   if (!phoneNumber) return;
+  //   setSendingCode(true);
+  //   try {
+  //     const res = await sendTelegramLoginCode(phoneNumber);
+  //     setPhoneCodeHash(res.data.payload.phoneCodeHash);
+  //     setLoginSessionString(res.data.payload.sessionString);
+  //     setLoginStage("enterCode");
+  //     toast.success("Code sent");
+  //   } catch {
+  //     toast.error("Failed to send code");
+  //   } finally { setSendingCode(false); }
+  // };
 
-  const handleVerifyCode = async () => {
-    if (!code) {
-      toast.error("Please enter the verification code.");
-      return;
-    }
-    setVerifyingCode(true);
-    try {
-      await signInTelegramClient({
-        phoneNumber,
-        phoneCodeHash,
-        code,
-        sessionString: loginSessionString,
-      });
-      toast.success("Successfully logged in to Telegram!");
-      setOwnedGroups([]); // Clear the list before fetching new groups
-      loadGroups(); // Fetch groups directly after successful login
-    } catch (error) {
-      console.error("Error verifying code:", error);
-      const errorMessage = error.response?.data?.message || 'Verification failed.';
-      toast.error(errorMessage);
-      if (errorMessage.includes('PHONE_CODE_EXPIRED')) {
-        setLoginStage('enterPhone');
-        setPhoneCodeHash('');
-        setLoginSessionString('');
-      }
-    } finally {
-      setVerifyingCode(false);
-    }
-  };
+  // const handleVerifyCode = async () => {
+  //   if (!code) {
+  //     toast.error("Please enter the verification code.");
+  //     return;
+  //   }
+  //   setVerifyingCode(true);
+  //   try {
+  //     await signInTelegramClient({
+  //       phoneNumber,
+  //       phoneCodeHash,
+  //       code,
+  //       sessionString: loginSessionString,
+  //     });
+  //     toast.success("Successfully logged in to Telegram!");
+  //     setOwnedGroups([]); // Clear the list before fetching new groups
+  //     loadGroups(); // Fetch groups directly after successful login
+  //   } catch (error) {
+  //     console.error("Error verifying code:", error);
+  //     const errorMessage = error.response?.data?.message || 'Verification failed.';
+  //     toast.error(errorMessage);
+  //     if (errorMessage.includes('PHONE_CODE_EXPIRED')) {
+  //       setLoginStage('enterPhone');
+  //       setPhoneCodeHash('');
+  //       setLoginSessionString('');
+  //     }
+  //   } finally {
+  //     setVerifyingCode(false);
+  //   }
+  // };
 
   if (loadingGroups) {
     return (
@@ -446,53 +520,53 @@ const TelegramsPages = () => {
     );
   }
 
-  // If not logged in, show login UI
-  if (!isTelegramAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="bg-gray-800 p-6 rounded-lg w-full max-w-sm space-y-4">
-          {loginStage === "enterPhone" && (
-            <>
-              <label className="block text-sm text-white">Phone Number</label>
-              <input
-                type="text"
-                value={phoneNumber}
-                onChange={e => setPhoneNumber(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded"
-                placeholder="e.g. +123456789"
-              />
-              <button
-                onClick={handleSendCode}
-                disabled={sendingCode}
-                className="w-full bg-orange-600 py-2 rounded text-white"
-              >
-                {sendingCode ? "Sending..." : "Send Login Code"}
-              </button>
-            </>
-          )}
-          {loginStage === "enterCode" && (
-            <>
-              <label className="block text-sm text-white">Enter Code</label>
-              <input
-                type="text"
-                value={code}
-                onChange={e => setCode(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded"
-                placeholder="Code from Telegram"
-              />
-              <button
-                onClick={handleVerifyCode}
-                disabled={verifyingCode}
-                className="w-full bg-orange-600 py-2 rounded text-white"
-              >
-                {verifyingCode ? "Verifying..." : "Verify Code"}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
+  // // If not logged in, show login UI
+  // if (!isTelegramAuthenticated) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+  //       <div className="bg-gray-800 p-6 rounded-lg w-full max-w-sm space-y-4">
+  //         {loginStage === "enterPhone" && (
+  //           <>
+  //             <label className="block text-sm text-white">Phone Number</label>
+  //             <input
+  //               type="text"
+  //               value={phoneNumber}
+  //               onChange={e => setPhoneNumber(e.target.value)}
+  //               className="w-full px-3 py-2 bg-gray-700 text-white rounded"
+  //               placeholder="e.g. +123456789"
+  //             />
+  //             <button
+  //               onClick={handleSendCode}
+  //               disabled={sendingCode}
+  //               className="w-full bg-orange-600 py-2 rounded text-white"
+  //             >
+  //               {sendingCode ? "Sending..." : "Send Login Code"}
+  //             </button>
+  //           </>
+  //         )}
+  //         {loginStage === "enterCode" && (
+  //           <>
+  //             <label className="block text-sm text-white">Enter Code</label>
+  //             <input
+  //               type="text"
+  //               value={code}
+  //               onChange={e => setCode(e.target.value)}
+  //               className="w-full px-3 py-2 bg-gray-700 text-white rounded"
+  //               placeholder="Code from Telegram"
+  //             />
+  //             <button
+  //               onClick={handleVerifyCode}
+  //               disabled={verifyingCode}
+  //               className="w-full bg-orange-600 py-2 rounded text-white"
+  //             >
+  //               {verifyingCode ? "Verifying..." : "Verify Code"}
+  //             </button>
+  //           </>
+  //         )}
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -603,7 +677,9 @@ const TelegramsPages = () => {
                 className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white disabled:bg-gray-700"
                 placeholder="e.g., https://t.me/yourchannel"
               />
-              {isFetchingInviteLink && <p className="text-orange-400 mt-1">Verifying link...</p>}
+              {isFetchingInviteLink && (
+                <p className="text-orange-400 mt-1">Verifying link...</p>
+              )}
               {inviteLinkData && (
                 <p className="text-green-500 mt-1">
                   Verified: {inviteLinkData.title}
@@ -710,7 +786,11 @@ const TelegramsPages = () => {
               </label>
 
               {subscriptions.map((sub, index) => (
-                <div key={index} className="flex gap-4 items-start relative">
+                <div
+                  key={index}
+                  className="flex gap-4 items-start relative flex-wrap"
+                >
+                  {/* Input with dropdown */}
                   <div className="relative subscription-dropdown">
                     <div className="relative">
                       <input
@@ -771,6 +851,7 @@ const TelegramsPages = () => {
                     )}
                   </div>
 
+                  {/* Cost input */}
                   <div className="relative">
                     <input
                       type="number"
@@ -788,20 +869,51 @@ const TelegramsPages = () => {
                     </span>
                   </div>
 
-                  {sub.hasThirdBox && (
-                    <input
-                      type="number"
-                      placeholder="Number of Days"
-                      value={sub.days}
-                      onChange={(e) => {
-                        const newSubs = [...subscriptions];
-                        newSubs[index].days = e.target.value;
-                        setSubscriptions(newSubs);
-                      }}
-                      className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                    />
-                  )}
+                  {/* Days only if not lifetime */}
+                  {sub.hasThirdBox &&
+                    (!sub.isLifetime ||
+                      (!sub.showCreate &&
+                        predefinedTypes.includes(sub.selectedValue))) && (
+                      <input
+                        type="number"
+                        placeholder="Number of Days"
+                        value={sub.days}
+                        onChange={(e) => {
+                          const newSubs = [...subscriptions];
+                          newSubs[index].days = e.target.value;
+                          setSubscriptions(newSubs);
+                        }}
+                        className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
+                      />
+                    )}
 
+                  {(sub.showCreate ||
+                    !predefinedTypes.includes(sub.selectedValue)) && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-white text-sm">Lifetime</span>
+                      <button
+                        onClick={() => {
+                          const newSubs = [...subscriptions];
+                          newSubs[index].isLifetime =
+                            !newSubs[index].isLifetime;
+                          if (newSubs[index].isLifetime) {
+                            newSubs[index].days = "";
+                          }
+                          setSubscriptions(newSubs);
+                        }}
+                        className={`w-12 h-6 rounded-full p-1 duration-300 ease-in-out ${
+                          sub.isLifetime ? "bg-green-500" : "bg-gray-600"
+                        }`}
+                      >
+                        <div
+                          className={`w-4 h-4 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
+                            sub.isLifetime ? "translate-x-6" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+                  {/* Delete */}
                   <button
                     onClick={() => deleteSubscription(index)}
                     className="text-gray-400 hover:text-gray-200 transition duration-200 mt-1"

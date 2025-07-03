@@ -3,6 +3,9 @@ import Lottie from "lottie-react";
 import animation from "../../../../assets/connecting.json";
 import TelegramHeader from "./TelegramHeader";
 import { motion } from "framer-motion";
+import { useTelegramAuthStore } from "../../../../Zustand/TelegramApicalls.js";
+import { useNavigate } from "react-router-dom";
+
 import {
   MessageSquare,
   Shield,
@@ -13,15 +16,31 @@ import {
   AlertCircle,
   Mail,
   RotateCw,
+  Loader,
 } from "lucide-react";
+import { Telegram } from "developer-icons";
+import toast from "react-hot-toast";
 
 const ConnectPage = () => {
+  const navigate = useNavigate();
+  const { sendLoginCode, signInClient, loading } = useTelegramAuthStore();
+
   const [step, setStep] = useState(0);
   const [mobileNumber, setMobileNumber] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+
+  const [otp, setOtp] = useState(["", "", "", "", ""]);
   const [countdown, setCountdown] = useState(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [payload, setPayload] = useState({
+    phoneNumber: "",
+    phoneCodeHash: "",
+    sessionString: "",
+    code: "",
+  });
+
+  console.log("phone number ", mobileNumber);
+
   const otpInputRefs = useRef([]);
   const container = {
     hidden: { opacity: 0 },
@@ -62,26 +81,42 @@ const ConnectPage = () => {
     setStep(1);
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (!mobileNumber.match(/^\d{10}$/)) {
       setError("Please enter a valid 10-digit mobile number");
       return;
     }
 
-    setError("");
-    setCountdown(60);
-    setStep(2);
+    try {
+      const res = await sendLoginCode(`+91${mobileNumber}`);
+      console.log(res);
 
-    // Start countdown
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      if (res?.success) {
+        const { phoneCodeHash, sessionString } = res.data;
+
+        setPayload({
+          ...payload,
+          phoneCodeHash,
+          sessionString,
+          phoneNumber: `+91${mobileNumber}`,
+        });
+        setError("");
+        setCountdown(60);
+        setStep(2);
+
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    } catch (error) {
+      console.log("Unexpected error:", error?.message);
+    }
   };
 
   const handleOtpChange = (index, value) => {
@@ -109,11 +144,46 @@ const ConnectPage = () => {
     }
   };
 
-  const handleResendOtp = () => {
-    setCountdown(60);
-    setOtp(["", "", "", "", "", ""]);
+  console.log("payload", payload);
+  const handleResendOtp = async () => {
+    toast.error("Abhi setup nhi kiya hu ");
 
     // Restart countdown
+  };
+
+  useEffect(() => {
+    if (otp.length === 5) {
+      setPayload((prev) => ({
+        ...prev,
+        code: otp.join(""),
+      }));
+    }
+  }, [otp]);
+
+  const handleOtpSubmit = async () => {
+    try {
+      setCountdown(60);
+
+      if (!otp) {
+        toast.error("Enter otp first");
+        return;
+      }
+
+      if (otp.length !== 5) {
+        toast.error("Please enter a valid 5-digit OTP");
+        return;
+      }
+
+      let res = await signInClient(payload);
+
+      if (res.success) {
+        localStorage.setItem("sessionString", payload.sessionString);
+        window.location.href = "/app/create-telegram";
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -123,24 +193,6 @@ const ConnectPage = () => {
         return prev - 1;
       });
     }, 1000);
-  };
-
-  const handleOtpSubmit = () => {
-    const fullOtp = otp.join("");
-    if (fullOtp.length !== 6) {
-      setError("Please enter a 6-digit OTP");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError("");
-
-    // Simulate API call
-    setTimeout(() => {
-      console.log("OTP Submitted:", fullOtp);
-      setIsSubmitting(false);
-      // Here you would typically redirect to the success page
-    }, 1500);
   };
 
   return (
@@ -309,11 +361,22 @@ const ConnectPage = () => {
 
                   <motion.button
                     onClick={handleSendOtp}
+                    disabled={loading}
                     className="w-full py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
                     variants={item}
                     whileTap={{ scale: 0.98 }}
                   >
-                    Send Verification Code
+                    {loading ? (
+                      <span className="flex items-center gap-1">
+                        <Loader className="w-5 h-5 animate-spin" />
+                        Check Your Telegram..
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <Telegram className="w-5 h-5 mr-1" />
+                        <span>Send Verification Code</span>
+                      </span>
+                    )}
                   </motion.button>
                 </div>
               </motion.div>
@@ -336,7 +399,7 @@ const ConnectPage = () => {
                     <Mail className="w-6 h-6 text-orange-500" />
                   </motion.div>
                   <motion.p className="text-gray-400" variants={item}>
-                    Enter the 6-digit code sent to
+                    Enter the 5-digit code sent to
                   </motion.p>
                   <motion.p
                     className="text-orange-400 font-medium mt-1"
@@ -355,7 +418,7 @@ const ConnectPage = () => {
                     className="flex justify-center space-x-3"
                     variants={item}
                   >
-                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                    {[0, 1, 2, 3, 4].map((index) => (
                       <motion.input
                         key={index}
                         type="tel"
@@ -394,7 +457,7 @@ const ConnectPage = () => {
                     variants={item}
                     whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                   >
-                    {isSubmitting ? (
+                    {loading ? (
                       <div className="flex items-center justify-center">
                         <motion.span
                           animate={{ rotate: 360 }}

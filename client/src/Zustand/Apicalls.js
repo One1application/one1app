@@ -34,7 +34,7 @@ const useTelegramStore = create((set, get) => ({
       );
 
       toast.success(response?.data?.message || "Channel created successfully");
-      await get().fetchTelegramChannel(); // Refresh data after creation
+      await get().fetchTelegramChannel();  
       return { success: true };
     } catch (error) {
       toast.error(error?.response?.data?.message || "Create failed");

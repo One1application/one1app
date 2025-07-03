@@ -2,6 +2,7 @@ import axios from "axios";
 import {
   servicesAxiosInstance,
   servicesAxiosInstanceForFileUpload,
+  telegramAxiosInstance,
 } from "../config";
 import toast from "react-hot-toast";
 /**
@@ -401,7 +402,7 @@ export const verifyInviteLink = async (inviteLink) => {
 
 export const createTelegram = async (body) => {
   const response = await servicesAxiosInstance.post(
-    "/telegram/create-telegram",
+    "/telegram/create-telegrams",
     body
   );
   return response;
@@ -417,8 +418,9 @@ export const fetchAllTelegramData = async () => {
 export const fetchTelegram = async (id) => {
   const response = await servicesAxiosInstance.get(
     `/telegram/get-telegram-by-id/${id}`
+
   );
-  return response;
+  return response?.data?.payload;
 };
 
 export const purchaseTelegram = async ({ telegramId, days }) => {
@@ -620,16 +622,29 @@ export const fetchFilterEarningsAndWithdrawals = async ({ fetchRange }) => {
 
 // Fetch Telegram groups owned by the user
 export const fetchOwnedGroups = async () => {
-  // The session is identified by the httpOnly cookie, so no body is needed.
-  const response = await servicesAxiosInstance.get(
-    "/telegram/get-owned-groups"
-  );
-  return response;
+
+ 
+  try {
+    const response = await telegramAxiosInstance.get(
+      "/telegram/get-owned-groups",{
+        withCredentials : true
+      }
+    
+    );
+
+    console.log(response);
+    return response;
+  } catch (error) {
+    console.error("Failed to fetch owned groups:", error?.response?.data || error.message);
+    throw error;
+  }
 };
+
 
 // Telegram login API services
 export const sendTelegramLoginCode = async (phoneNumber) => {
-  const response = await servicesAxiosInstance.post(
+ 
+  const response = await telegramAxiosInstance.post(
     "/telegram/send-login-code",
     { phoneNumber }
   );
@@ -637,7 +652,8 @@ export const sendTelegramLoginCode = async (phoneNumber) => {
 };
 
 export const signInTelegramClient = async (data) => {
-  const response = await servicesAxiosInstance.post(
+  console.log(data)
+  const response = await telegramAxiosInstance.post(
     "/telegram/sign-in",
     data
   );
