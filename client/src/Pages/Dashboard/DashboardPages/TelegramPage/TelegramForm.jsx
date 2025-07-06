@@ -401,11 +401,7 @@ const TelegramsPages = () => {
       const res = await sendTelegramLoginCode(phoneNumber);
       setPhoneCodeHash(res.data.payload.phoneCodeHash);
       setLoginSessionString(res.data.payload.sessionString);
-      localStorage.setItem("sessionString", res.data.payload.sessionString);
-//           const sessionString = localStorage.getItem("sessionString");
-// if (res.data.payload.sessionString) {
-//   document.cookie = `session=${res.data.payload.sessionString}; path=/;`;
-// }
+   
       setLoginStage("enterCode");
       toast.success("Code sent");
     } catch {
