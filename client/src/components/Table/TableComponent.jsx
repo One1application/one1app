@@ -1,19 +1,31 @@
 /* eslint-disable react/prop-types */
-import { useNavigate } from 'react-router-dom';
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, Filter, SortAsc, Mail, ChevronRight, Edit2, ArrowDown, ArrowUp, Copy } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect, useRef } from "react";
+import {
+  Search,
+  Filter,
+  SortAsc,
+  Mail,
+  ChevronRight,
+  Edit2,
+  ArrowDown,
+  ArrowUp,
+  Copy,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
-import Pagination from '@mui/material/Pagination';
+import Pagination from "@mui/material/Pagination";
 
 const Table = ({ data }) => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
     key: null,
-    direction: 'asc'
+    direction: "asc",
   });
+
+  console.log("telgramData==>", data);
   const itemsPerPage = 10;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -30,9 +42,9 @@ const Table = ({ data }) => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -46,62 +58,96 @@ const Table = ({ data }) => {
 
   const handleEdit = (e, item) => {
     e.stopPropagation();
-    toast('Editing: ' + item.title);
+    navigate("/app/edit-telegram", {
+      state: {
+        data: item,
+      },
+    });
+    toast("Editing: " + item.title);
   };
 
   // Add sort handler
   const handleSort = (key) => {
-    setSortConfig(prev => ({
+    setSortConfig((prev) => ({
       key,
-      direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
+      direction: prev.key === key && prev.direction === "desc" ? "asc" : "desc",
     }));
   };
 
   const handleExport = () => {
-    toast('Starting export...', {
+    toast("Starting export...", {
       position: "top-right",
       autoClose: 1000,
     });
 
     try {
       // Convert data to CSV format
-      const headers = ['Title', 'Price', 'Sales', 'Revenue', 'Payment Status', 'Created At', 'Updated At'];
+      const headers = [
+        "Title",
+        "Price",
+        "Sales",
+        "Revenue",
+        "Payment Status",
+        "Created At",
+        "Updated At",
+      ];
       const csvData = [
-        headers.join(','),
-        ...data.map(event => [
-          event.title.replace(/,/g, ';'),
-          event.price || 'N/A',
-          event._count?.telegramSubscriptions || 0,
-          event.revenue || 'N/A',
-          (event.paymentDetails?.paymentEnabled || event.paymentEnabled) ? 'Enabled' : 'Disabled',
-          `"${new Date(event.createdAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}"`,
-          `"${new Date(event.updatedAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}"`
-        ].join(','))
-      ].join('\n');
+        headers.join(","),
+        ...data.map((event) =>
+          [
+            event.title.replace(/,/g, ";"),
+            event.price || "N/A",
+            event._count?.telegramSubscriptions || 0,
+            event.revenue || "N/A",
+            event.paymentDetails?.paymentEnabled || event.paymentEnabled
+              ? "Enabled"
+              : "Disabled",
+            `"${new Date(event.createdAt).toLocaleString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}"`,
+            `"${new Date(event.updatedAt).toLocaleString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}"`,
+          ].join(",")
+        ),
+      ].join("\n");
 
       // Create blob and download link
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
 
-      link.setAttribute('href', url);
-      link.setAttribute('download', `table_export_${new Date().toLocaleDateString()}.csv`);
-      link.style.visibility = 'hidden';
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `table_export_${new Date().toLocaleDateString()}.csv`
+      );
+      link.style.visibility = "hidden";
 
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      toast.success('Export completed successfully!', {
+      toast.success("Export completed successfully!", {
         position: "top-right",
         autoClose: 3000,
       });
     } catch (error) {
-      toast.error('Export failed. Please try again.', {
+      toast.error("Export failed. Please try again.", {
         position: "top-right",
         autoClose: 3000,
       });
-      console.error('Export error:', error);
+      console.error("Export error:", error);
     }
   };
 
@@ -110,11 +156,21 @@ const Table = ({ data }) => {
   };
 
   const filteredData = useMemo(() => {
-    return data.filter(event =>
-      event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.price?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.sale?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.revenue?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    return data.filter(
+      (event) =>
+        event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.price
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        event.sale
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        event.revenue
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
@@ -124,38 +180,36 @@ const Table = ({ data }) => {
 
     return [...filteredData].sort((a, b) => {
       switch (sortConfig.key) {
-        case 'title':
-          return sortConfig.direction === 'asc'
+        case "title":
+          return sortConfig.direction === "asc"
             ? a.title.localeCompare(b.title)
             : b.title.localeCompare(a.title);
-        case 'price':
+        case "price":
           const priceA = parseFloat(a.price) || 0;
           const priceB = parseFloat(b.price) || 0;
-          return sortConfig.direction === 'asc'
+          return sortConfig.direction === "asc"
             ? priceA - priceB
             : priceB - priceA;
-        case 'sales':
+        case "sales":
           const salesA = parseInt(a.sale) || 0;
           const salesB = parseInt(b.sale) || 0;
-          return sortConfig.direction === 'asc'
+          return sortConfig.direction === "asc"
             ? salesA - salesB
             : salesB - salesA;
-        case 'revenue':
+        case "revenue":
           const revenueA = parseFloat(a.revenue) || 0;
           const revenueB = parseFloat(b.revenue) || 0;
-          return sortConfig.direction === 'asc'
+          return sortConfig.direction === "asc"
             ? revenueA - revenueB
             : revenueB - revenueA;
-        case 'createdAt':
+        case "createdAt":
           const dateA = new Date(a.createdAt);
           const dateB = new Date(b.createdAt);
-          return sortConfig.direction === 'asc'
-            ? dateA - dateB
-            : dateB - dateA;
-        case 'updatedAt':
+          return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
+        case "updatedAt":
           const updateA = new Date(a.updatedAt);
           const updateB = new Date(b.updatedAt);
-          return sortConfig.direction === 'asc'
+          return sortConfig.direction === "asc"
             ? updateA - updateB
             : updateB - updateA;
         default:
@@ -169,14 +223,15 @@ const Table = ({ data }) => {
     return sortedData.slice(startIndex, startIndex + itemsPerPage);
   }, [sortedData, page]);
 
+  console.log("paginatedData==>", paginatedData);
+
   const handleChangePage = (event, value) => {
     setPage(value);
   };
 
- const formatDate = (dateString) => {
+  const formatDate = (dateString) => {
     return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   };
-
 
   // Create dropdown component for sorting
   const renderSortButton = () => (
@@ -189,43 +244,107 @@ const Table = ({ data }) => {
         <span className="inline">Sort</span>
       </button>
 
-      <div className={`${isDropdownOpen ? 'block' : 'hidden'} absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10`}>
+      <div
+        className={`${
+          isDropdownOpen ? "block" : "hidden"
+        } absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10`}
+      >
         <div className="py-1">
           <button
-            onClick={() => handleSort('title')}
+            onClick={() => handleSort("title")}
             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
           >
-            Title {sortConfig.key === 'title' && (sortConfig.direction === 'asc' ? <><ArrowUp className="h-4 w-4 inline" /> (asc)</> : <><ArrowDown className="h-4 w-4 inline" /> (desc)</>)}
+            Title{" "}
+            {sortConfig.key === "title" &&
+              (sortConfig.direction === "asc" ? (
+                <>
+                  <ArrowUp className="h-4 w-4 inline" /> (asc)
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="h-4 w-4 inline" /> (desc)
+                </>
+              ))}
           </button>
           <button
-            onClick={() => handleSort('price')}
+            onClick={() => handleSort("price")}
             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
           >
-            Price {sortConfig.key === 'price' && (sortConfig.direction === 'asc' ? <><ArrowUp className="h-4 w-4 inline" /> (asc)</> : <><ArrowDown className="h-4 w-4 inline" /> (desc)</>)}
+            Price{" "}
+            {sortConfig.key === "price" &&
+              (sortConfig.direction === "asc" ? (
+                <>
+                  <ArrowUp className="h-4 w-4 inline" /> (asc)
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="h-4 w-4 inline" /> (desc)
+                </>
+              ))}
           </button>
           <button
-            onClick={() => handleSort('sales')}
+            onClick={() => handleSort("sales")}
             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
           >
-            Sales {sortConfig.key === 'sales' && (sortConfig.direction === 'asc' ? <><ArrowUp className="h-4 w-4 inline" /> (asc)</> : <><ArrowDown className="h-4 w-4 inline" /> (desc)</>)}
+            Sales{" "}
+            {sortConfig.key === "sales" &&
+              (sortConfig.direction === "asc" ? (
+                <>
+                  <ArrowUp className="h-4 w-4 inline" /> (asc)
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="h-4 w-4 inline" /> (desc)
+                </>
+              ))}
           </button>
           <button
-            onClick={() => handleSort('revenue')}
+            onClick={() => handleSort("revenue")}
             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
           >
-            Revenue {sortConfig.key === 'revenue' && (sortConfig.direction === 'asc' ? <><ArrowUp className="h-4 w-4 inline" /> (asc)</> : <><ArrowDown className="h-4 w-4 inline" /> (desc)</>)}
+            Revenue{" "}
+            {sortConfig.key === "revenue" &&
+              (sortConfig.direction === "asc" ? (
+                <>
+                  <ArrowUp className="h-4 w-4 inline" /> (asc)
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="h-4 w-4 inline" /> (desc)
+                </>
+              ))}
           </button>
           <button
-            onClick={() => handleSort('createdAt')}
+            onClick={() => handleSort("createdAt")}
             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
           >
-            Created Date {sortConfig.key === 'createdAt' && (sortConfig.direction === 'asc' ? <><ArrowUp className="h-4 w-4 inline" /> (asc)</> : <><ArrowDown className="h-4 w-4 inline" /> (desc)</>)}
+            Created Date{" "}
+            {sortConfig.key === "createdAt" &&
+              (sortConfig.direction === "asc" ? (
+                <>
+                  <ArrowUp className="h-4 w-4 inline" /> (asc)
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="h-4 w-4 inline" /> (desc)
+                </>
+              ))}
           </button>
           <button
-            onClick={() => handleSort('updatedAt')}
+            onClick={() => handleSort("updatedAt")}
             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
           >
-            Updated Date {sortConfig.key === 'updatedAt' && (sortConfig.direction === 'asc' ? <><ArrowUp className="h-4 w-4 inline" /> (asc)</> : <><ArrowDown className="h-4 w-4 inline" /> (desc)</>)}
+            Updated Date{" "}
+            {sortConfig.key === "updatedAt" &&
+              (sortConfig.direction === "asc" ? (
+                <>
+                  <ArrowUp className="h-4 w-4 inline" /> (asc)
+                </>
+              ) : (
+                <>
+                  <ArrowDown className="h-4 w-4 inline" /> (desc)
+                </>
+              ))}
           </button>
         </div>
       </div>
@@ -250,8 +369,6 @@ const Table = ({ data }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-
-
           {renderSortButton()}
 
           <button
@@ -269,15 +386,33 @@ const Table = ({ data }) => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sale</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Revenue</th>
-               <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Coupon</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created At</th>
-              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Updated At</th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Title
+              </th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Price
+              </th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Sale
+              </th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Revenue
+              </th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Coupon
+              </th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Payment
+              </th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Created At
+              </th>
+              <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Updated At
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -291,7 +426,7 @@ const Table = ({ data }) => {
                   <div className="font-medium text-gray-900">{event.title}</div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {"variable"}
+                  {event?.subscriptions[0].price || "-"}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {event._count?.telegramSubscriptions || 0}
@@ -300,40 +435,43 @@ const Table = ({ data }) => {
                   {"variable"}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                 {
-    event.discount && event.discount.length > 0 ? (
-    // Find the coupon with the highest discount percentage
-    (() => {
-      const highestDiscountCoupon = event.discount.reduce((max, current) => {
-        // Compare the discount percentage to find the maximum
-        return (current.percent > max.percent) ? current : max;
-      });
+                  {event.discount && event.discount.length > 0 ? (
+                    // Find the coupon with the highest discount percentage
+                    (() => {
+                      const highestDiscountCoupon = event.discount.reduce(
+                        (max, current) => {
+                          // Compare the discount percentage to find the maximum
+                          return current.percent > max.percent ? current : max;
+                        }
+                      );
 
-      // Return the JSX for the highest discount coupon
-      return (
-        <div className="flex gap-2">
-          <span>{highestDiscountCoupon.code}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigator.clipboard.writeText(highestDiscountCoupon.code);
-              toast.success('Coupon copied to clipboard');
-            }}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-          >
-            <Copy className="h-4 w-4 ml-1" />
-          </button>
-        </div>
-      );
-    })()
-  ) : (
-    <span>N/A</span>
-  )
-}
+                      // Return the JSX for the highest discount coupon
+                      return (
+                        <div className="flex gap-2">
+                          <span>{highestDiscountCoupon.code}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(
+                                highestDiscountCoupon.code
+                              );
+                              toast.success("Coupon copied to clipboard");
+                            }}
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                          >
+                            <Copy className="h-4 w-4 ml-1" />
+                          </button>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <span>N/A</span>
+                  )}
                 </td>
 
                 <td className="px-6 py-4 text-sm">
-                  {event.paymentDetails?.paymentEnabled || event.paymentEnabled ? (
+                  {event.paymentDetails?.paymentEnabled ||
+                  event.paymentEnabled ? (
                     <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                       Enabled
                     </span>
@@ -348,19 +486,20 @@ const Table = ({ data }) => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigator.clipboard.writeText(`${window.location.origin}/app/telegram?id=${event.id}`);
+                        navigator.clipboard.writeText(
+                          `${window.location.origin}/app/telegram?id=${event.id}`
+                        );
 
-                        toast.success('Link copied to clipboard');
+                        toast.success("Link copied to clipboard");
                       }}
                       className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
                     >
-                     <Copy className="h-4 w-4 ml-1"/>
+                      <Copy className="h-4 w-4 ml-1" />
                     </button>
                     <button
                       onClick={(e) => handleEdit(e, event)}
                       className="inline-flex items-center text-orange-500 hover:text-orange-600 text-sm font-medium transition-colors duration-200"
                     >
-                      
                       <Edit2 className="h-4 w-4 ml-1" />
                     </button>
                   </div>
@@ -371,7 +510,6 @@ const Table = ({ data }) => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {formatDate(event.updatedAt)}
                 </td>
-
               </tr>
             ))}
           </tbody>
@@ -401,11 +539,16 @@ const Table = ({ data }) => {
               </div>
               <div className="space-y-1">
                 <span className="text-gray-500 block">Revenue</span>
-                <span className="font-medium text-gray-900">{event.revenue}</span>
+                <span className="font-medium text-gray-900">
+                  {event.revenue}
+                </span>
               </div>
-               <div className="space-y-1">
+              <div className="space-y-1">
                 <span className="text-gray-500 block">Coupon</span>
-                <span className="font-medium text-gray-900"> {event.discount?.map(d => d.code).join(", ") || "No"}</span>
+                <span className="font-medium text-gray-900">
+                  {" "}
+                  {event.discount?.map((d) => d.code).join(", ") || "No"}
+                </span>
               </div>
               <div className="space-y-1">
                 <span className="text-gray-500 block">Payment</span>
@@ -421,20 +564,26 @@ const Table = ({ data }) => {
               </div>
               <div className="space-y-1">
                 <span className="text-gray-500 block">Created</span>
-                <span className="font-medium text-gray-900">{formatDate(event.createdAt)}</span>
+                <span className="font-medium text-gray-900">
+                  {formatDate(event.createdAt)}
+                </span>
               </div>
               <div className="space-y-1">
                 <span className="text-gray-500 block">Updated</span>
-                <span className="font-medium text-gray-900">{formatDate(event.updatedAt)}</span>
+                <span className="font-medium text-gray-900">
+                  {formatDate(event.updatedAt)}
+                </span>
               </div>
               <div className="col-span-2 flex items-center space-x-4 mt-2 pt-4 border-t border-gray-100">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
 
-                    navigator.clipboard.writeText(`${window.location.origin}/app/telegram?id=${event.id}`);
+                    navigator.clipboard.writeText(
+                      `${window.location.origin}/app/telegram?id=${event.id}`
+                    );
 
-                    toast.success('Link copied to clipboard');
+                    toast.success("Link copied to clipboard");
                   }}
                   className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
                 >
@@ -454,31 +603,31 @@ const Table = ({ data }) => {
       </div>
 
       {/* Pagination */}
-            {sortedData.length > itemsPerPage && (
-              <div className="flex justify-center mt-6">
-                <Pagination 
-                  count={Math.ceil(sortedData.length / itemsPerPage)} 
-                  page={page} 
-                  onChange={(_, value) => setPage(value)}
-                  size="medium"
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      backgroundColor: 'rgb(249, 250, 251)',
-                      border: '1px solid rgb(229, 231, 235)',
-                      color: 'rgb(107, 114, 128)',
-                      '&:hover': {
-                        backgroundColor: 'rgb(234, 88, 12)',
-                        color: 'white',
-                      },
-                      '&.Mui-selected': {
-                        backgroundColor: 'rgb(234, 88, 12)',
-                        color: 'white',
-                      },
-                    },
-                  }}
-                />
-              </div>
-            )}
+      {sortedData.length > itemsPerPage && (
+        <div className="flex justify-center mt-6">
+          <Pagination
+            count={Math.ceil(sortedData.length / itemsPerPage)}
+            page={page}
+            onChange={(_, value) => setPage(value)}
+            size="medium"
+            sx={{
+              "& .MuiPaginationItem-root": {
+                backgroundColor: "rgb(249, 250, 251)",
+                border: "1px solid rgb(229, 231, 235)",
+                color: "rgb(107, 114, 128)",
+                "&:hover": {
+                  backgroundColor: "rgb(234, 88, 12)",
+                  color: "white",
+                },
+                "&.Mui-selected": {
+                  backgroundColor: "rgb(234, 88, 12)",
+                  color: "white",
+                },
+              },
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

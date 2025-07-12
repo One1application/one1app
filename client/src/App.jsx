@@ -2,6 +2,7 @@ import { Toaster } from "react-hot-toast";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
+
 import SignInPage from "./Pages/Authentication/SigninPage/SignInPage.jsx";
 import SignUpPage from "./Pages/Authentication/SignupPage/SignUpPage.jsx";
 import DashboardPage from "./Pages/Dashboard/DashboardPage.jsx";
@@ -52,6 +53,7 @@ import ConnectPage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram1
 import TelegramsPages2 from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramCreate2.jsx";
 import WelcomePage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram3.jsx";
 import CreatorProductsShowcase from "./Pages/Dashboard/DashboardPages/ProfilePage/components/CreatorProductsShowcase.jsx";
+import EditTelegram from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramEditForm.jsx";
 
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
@@ -124,6 +126,7 @@ const App = () => {
             <Route path="create-course" element={<NewCourse />} />
             <Route path="create-pay-up" element={<CreatePayUp />} />
             <Route path="create-telegram" element={<TelegramForm />} />
+            <Route path="edit-telegram" element={<EditTelegram />} />
             <Route
               path="create-premium-content"
               element={<CreateLockedContentPage />}

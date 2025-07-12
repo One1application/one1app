@@ -14,7 +14,7 @@ const servicesAxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials : true
+  withCredentials: true
 });
 servicesAxiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("AuthToken");

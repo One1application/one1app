@@ -109,7 +109,7 @@ const TelegramFormPrev = () => {
     const telegramDetails = async () => {
       try {
         const response = await fetchTelegram(telegramId);
-        console.log(response);
+        console.log("prevForm==>", response);
         setdata(response.data.payload.telegram);
       } catch (error) {
         console.error("Error while fetching telegram.", error);
@@ -120,6 +120,8 @@ const TelegramFormPrev = () => {
     };
     telegramDetails();
   }, []);
+
+  console.log("subs==?", data?.subscriptions);
 
   // useEffect(() => {
   //   const script = document.createElement("script");
@@ -247,8 +249,8 @@ const TelegramFormPrev = () => {
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
                 <img
-                  src={data.imageUrl}
-                  alt={`${data.channelName}'s avatar`}
+                  src={data?.imageUrl}
+                  alt={`${data?.channelName}'s avatar`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.src = "/api/placeholder/40/40";
@@ -257,7 +259,9 @@ const TelegramFormPrev = () => {
               </div>
               <div>
                 <div className="text-gray-400 text-sm">Channel Name</div>
-                <div className="text-white font-medium">{data.channelName}</div>
+                <div className="text-white font-medium">
+                  {data?.channelName}
+                </div>
               </div>
             </div>
 
@@ -268,24 +272,24 @@ const TelegramFormPrev = () => {
                 </h2>
                 <div className="flex gap-2 mb-4">
                   <span className="px-3 py-1 bg-gray-800/60 rounded-full text-sm text-gray-300">
-                    {data.genre}
+                    {data?.genre}
                   </span>
                   <span className="px-3 py-1 bg-gray-800/60 rounded-full text-sm text-orange-400">
-                    + {data.subscription.length} Plans
+                    + {data?.subscription?.length} Plans
                   </span>
                 </div>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  {data.description}
+                  {data?.description}
                 </p>
               </div>
 
               <div className="justify-end">
                 <h3 className="text-gray-400 font-medium mb-2">Disclaimer</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  {channelData.disclaimers.general}
+                  {channelData?.disclaimers?.general}
                 </p>
                 <p className="text-xs text-gray-500 leading-relaxed mt-2">
-                  {channelData.disclaimers.riskWarning}
+                  {channelData?.disclaimers?.riskWarning}
                 </p>
               </div>
             </div>
@@ -308,19 +312,20 @@ const TelegramFormPrev = () => {
               <div className="text-gray-400 mb-2 font-medium">
                 Select a plan and continue
               </div>
-              {data.subscription.map((plan, index) => (
+
+              {data?.subscriptions?.map((plan, index) => (
                 <button
-                  key={plan.days}
+                  key={index}
                   className="w-full p-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg flex justify-between items-center hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg shadow-orange-500/20"
                   onClick={(e) => handlePayment(plan)}
                 >
                   <div className="flex flex-col items-start">
-                    <span className="font-medium">₹{plan.cost}</span>
+                    <span className="font-medium">₹{plan?.price}</span>
                     <span className="text-xs text-orange-200">
-                      {plan.selectedValue}
+                      {plan?.type}
                     </span>
                   </div>
-                  <span className="font-semibold">₹{plan.cost}</span>
+                  <span className="font-semibold">₹{plan?.price}</span>
                 </button>
               ))}
             </div>
@@ -330,7 +335,7 @@ const TelegramFormPrev = () => {
                 Guaranteed safe & secure payment
               </div>
               <div className="flex justify-center items-center gap-6">
-                {channelData.paymentMethods.map((method, index) => (
+                {channelData?.paymentMethods?.map((method, index) => (
                   <div key={index} className="flex flex-col items-center group">
                     <div
                       className={`w-12 h-12 bg-${method.color} rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300`}
@@ -342,7 +347,7 @@ const TelegramFormPrev = () => {
                       )}
                     </div>
                     <span className="text-sm text-gray-400 mt-2 group-hover:text-white transition-colors duration-300">
-                      {method.name}
+                      {method?.name}
                     </span>
                   </div>
                 ))}

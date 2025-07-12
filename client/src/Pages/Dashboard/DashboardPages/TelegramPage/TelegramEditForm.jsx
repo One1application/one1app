@@ -136,13 +136,13 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../../context/AuthContext.jsx";
 import ConnectPage from "./Telegram1.jsx";
 import TelegramHeader from "./TelegramHeader.jsx";
 
 // Main TelegramsPages Component
-const Telgrampage = () => {
+const TelegramsPages = () => {
   const [subscriptions, setSubscriptions] = useState([
     {
       inputValue: "",
@@ -233,6 +233,13 @@ const Telgrampage = () => {
     setDiscounts([...discounts, discountData]);
   };
 
+  const location = useLocation();
+  const { state } = location;
+
+  const [userData, setUserData] = useState(state?.data);
+  const [subDropdown, setSubDropDown] = useState(null);
+  console.log("location==>", userData);
+
   const handleInputChange = (value, index) => {
     const newSubscriptions = [...subscriptions];
     newSubscriptions[index] = {
@@ -305,19 +312,7 @@ const Telgrampage = () => {
     }
   };
   const toggleDropdown = (index) => {
-    const newSubscriptions = [...subscriptions];
-    newSubscriptions[index] = {
-      ...newSubscriptions[index],
-      showDropdown: !newSubscriptions[index].showDropdown,
-      showCreate:
-        newSubscriptions[index].inputValue.length > 0 &&
-        !predefinedTypes.some((type) =>
-          type
-            .toLowerCase()
-            .includes(newSubscriptions[index].inputValue.toLowerCase())
-        ),
-    };
-    setSubscriptions(newSubscriptions);
+    setSubDropDown(index);
   };
 
   const handleCreateClick = (index) => {
@@ -337,18 +332,21 @@ const Telgrampage = () => {
     setStep(1);
   };
 
-  const handleOptionClick = (option, index) => {
-    const newSubscriptions = [...subscriptions];
-    newSubscriptions[index] = {
-      ...newSubscriptions[index],
-      selectedValue: option,
-      inputValue: option,
-      showDropdown: false,
-      showCreate: false,
-      hasThirdBox: false,
-      days: subscriptionDays[option],
-    };
-    setSubscriptions(newSubscriptions);
+  const handleOptionClick = (option, id) => {
+    setUserData((prev) => {
+      const updatedData = prev?.subscriptions?.map((data) => {
+        if (data?.id == id) {
+          return {
+            ...data,
+            type: option,
+          };
+        }
+        return data;
+      });
+      return { ...prev, subscriptions: updatedData };
+    });
+    setSubDropDown(null);
+    console.log(userData.subscriptions);
   };
 
   const addSubscription = () => {
@@ -389,13 +387,7 @@ const Telgrampage = () => {
   };
 
   const handleClickOutside = (e, index) => {
-    if (!e.target.closest(".subscription-dropdown")) {
-      const newSubscriptions = [...subscriptions];
-      if (newSubscriptions[index]) {
-        newSubscriptions[index].showDropdown = false;
-        setSubscriptions(newSubscriptions);
-      }
-    }
+    setSubDropDown(null);
   };
 
   const handleInviteLinkBlur = async () => {
@@ -443,8 +435,24 @@ const Telgrampage = () => {
     loadGroups();
   }, []);
 
+  // const body = {
+  //   title: telegramTitle,
+  //   description: telegramDescription,
+  //   subscriptions,
+  //   coverImage: response?.data?.url || "",
+  //   genre,
+  //   chatId: selectedGroup ? selectedGroup.id : inviteLinkData?.chatId || "",
+  //   channelName: selectedGroup
+  //     ? selectedGroup.title
+  //     : inviteLinkData?.title || "",
+  //   channelLink:
+  //     selectedGroup && selectedGroup.username
+  //       ? `https://t.me/${selectedGroup.username}`
+  //       : inviteLink,
+  //   discount: discounts,
+  // };
+
   const handleSubmit = async () => {
-    console.log("discounts=-=>", discounts);
     try {
       setIsSubmitting(true);
 
@@ -493,443 +501,11 @@ const Telgrampage = () => {
     }
   };
 
-  const handleSendCode = async () => {
-    // alert();
-    if (!mobileNumber) return;
-    //console.log("phoneNumber==>", mobileNumber);
-    setSendingCode(true);
-    try {
-      const res = await sendTelegramLoginCode(`+91 ${mobileNumber}`);
-      setPhoneCodeHash(res.data.payload.phoneCodeHash);
-      setLoginSessionString(res.data.payload.sessionString);
-
-      toast.success("Code sent");
-      setStep(2);
-    } catch {
-      toast.error("Failed to send code");
-    } finally {
-      setSendingCode(false);
-    }
-  };
-
-  const handleVerifyCode = async (code) => {
-    const fullOtp = code.join("");
-    console.log(fullOtp, phoneCodeHash, loginSessionString);
-    if (!fullOtp) {
-      toast.error("Please enter the verification code.");
-      return;
-    }
-    setVerifyingCode(true);
-
-    try {
-      await signInTelegramClient({
-        phoneNumber: `91 ${mobileNumber}`,
-        phoneCodeHash,
-        code: fullOtp,
-        sessionString: loginSessionString,
-      });
-      toast.success("Successfully logged in to Telegram!");
-      setOwnedGroups([]); // Clear the list before fetching new groups
-      loadGroups(); // Fetch groups directly after successful login
-    } catch (error) {
-      console.error("Error verifying code:", error);
-      const errorMessage =
-        error.response?.data?.message || "Verification failed.";
-      toast.error(errorMessage);
-      if (errorMessage.includes("PHONE_CODE_EXPIRED")) {
-        setLoginStage("enterPhone");
-        setPhoneCodeHash("");
-        setLoginSessionString("");
-      }
-    } finally {
-      setVerifyingCode(false);
-    }
-  };
-
   if (loadingGroups) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <Loader2 className="animate-spin text-orange-500" size={48} />
       </div>
-    );
-  }
-
-  // If not logged in, show login UI
-  if (!isTelegramAuthenticated) {
-    return (
-      <>
-        {/* new opt screen starts here */}
-        <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 sm:p-6">
-          {/* Main Card */}
-          <div className="w-2/3 h-full bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-700 relative z-10">
-            {/* Card Header */}
-            {/* <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-orange-700 py-6 px-4 sm:px-8 text-center relative">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-          <div className="relative">
-            <div className="flex justify-center items-center space-x-4 sm:space-x-8 mb-4">
-              <div className="bg-gray-900 p-2 rounded-lg border border-gray-700">
-                <img 
-                  src="https://www.celsoazevedo.com/files/android/f/telegram-img.png" 
-                  alt="Telegram Logo"
-                  className="w-12 h-12 object-contain"
-                />
-              </div>
-              
-             <Lottie
-          animationData={animation}
-          loop={true}
-          autoplay={true}
-          className="w-1/4"
-        />
-              
-              <div className="bg-gray-900 p-2 rounded-lg border border-gray-700">
-                <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-sm px-2 py-1 rounded">
-                  OneApp
-                </div>
-              </div>
-            </div>
-            
-            <h1 className="text-xl font-bold text-white tracking-tight">
-              {step === 0 
-                ? "Connect Telegram with OneApp" 
-                : step === 1 
-                  ? "Verify Your Identity" 
-                  : "Enter Verification Code"}
-            </h1>
-          </div>
-        </div> */}
-            <TelegramHeader />
-            {/* Card Content */}
-
-            <div className="py-8 px-4 sm:px-8 max-w-md mx-auto relative overflow-hidden">
-              {/* Floating decorative icons */}
-              <motion.div
-                className="absolute top-20 left-10 text-orange-400 opacity-20"
-                variants={float}
-                animate="float"
-              >
-                <Shield className="w-8 h-8" />
-              </motion.div>
-              <motion.div
-                className="absolute bottom-20 right-10 text-orange-300 opacity-20"
-                variants={float}
-                animate="float"
-              >
-                <Key className="w-8 h-8" />
-              </motion.div>
-
-              <motion.div
-                className="relative z-10"
-                variants={container}
-                initial="hidden"
-                animate="visible"
-              >
-                {step === 0 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-600 to-orange-700 rounded-full flex items-center justify-center mb-4"
-                        variants={item}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <MessageSquare className="w-8 h-8 text-white" />
-                      </motion.div>
-                      <motion.p
-                        className="text-gray-400 mb-6 px-4"
-                        variants={item}
-                      >
-                        Securely connect your Telegram account to access premium
-                        features on OneApp
-                      </motion.p>
-                    </div>
-
-                    <motion.button
-                      onClick={handleConnectClick}
-                      className="w-full sm:w-3/4 py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
-                      variants={item}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Connect Accounts
-                    </motion.button>
-
-                    <motion.div
-                      className="mt-6 text-xs text-gray-500 flex flex-col sm:flex-row justify-center gap-2 sm:gap-4"
-                      variants={item}
-                    >
-                      <motion.span
-                        className="flex items-center justify-center"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <Lock className="w-3 h-3 mr-1" />
-                        End-to-end encrypted
-                      </motion.span>
-                      <motion.span
-                        className="flex items-center justify-center"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <Zap className="w-3 h-3 mr-1" />
-                        Instant setup
-                      </motion.span>
-                    </motion.div>
-                  </motion.div>
-                )}
-
-                {step === 1 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700"
-                        variants={item}
-                        whileHover={{ rotate: 10 }}
-                      >
-                        <Phone className="w-6 h-6 text-orange-500" />
-                      </motion.div>
-                      <motion.p
-                        className="text-gray-400 mb-6 px-4"
-                        variants={item}
-                      >
-                        Enter your Telegram mobile number to receive a
-                        verification code
-                      </motion.p>
-                    </div>
-
-                    <div className="w-full sm:w-3/4 space-y-4">
-                      <motion.div className="relative" variants={item}>
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <span className="text-gray-300">+91</span>
-                        </div>
-                        <input
-                          type="tel"
-                          value={mobileNumber}
-                          onChange={(e) => setMobileNumber(e.target.value)}
-                          placeholder="Mobile number"
-                          className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
-                        />
-                      </motion.div>
-                      {error && (
-                        <motion.div
-                          className="text-red-400 text-sm flex items-center justify-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {error}
-                        </motion.div>
-                      )}
-                      <motion.button
-                        //   onClick={handleSendOtp}
-                        onClick={handleSendCode}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
-                        variants={item}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {sendingCode ? "Sending" : "Send OTP"}
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                )}
-
-                {step === 2 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700"
-                        variants={item}
-                        animate={{
-                          rotate: [0, 10, -10, 0],
-                          transition: { duration: 2, repeat: Infinity },
-                        }}
-                      >
-                        <Mail className="w-6 h-6 text-orange-500" />
-                      </motion.div>
-                      <motion.p className="text-gray-400" variants={item}>
-                        Enter the 6-digit code sent to
-                      </motion.p>
-                      <motion.p
-                        className="text-orange-400 font-medium mt-1"
-                        variants={item}
-                        animate={{
-                          scale: [1, 1.05, 1],
-                          transition: { duration: 2, repeat: Infinity },
-                        }}
-                      >
-                        +91 ••• ••• {mobileNumber.slice(-4)}
-                      </motion.p>
-                    </div>
-
-                    <div className="w-full sm:w-3/4 space-y-4">
-                      <motion.div
-                        className="flex justify-center space-x-3"
-                        variants={item}
-                      >
-                        {[0, 1, 2, 3, 4].map((index) => (
-                          <motion.input
-                            key={index}
-                            style={{
-                              color: "white",
-                            }}
-                            type="tel"
-                            maxLength={1}
-                            value={otp[index]}
-                            onChange={(e) =>
-                              handleOtpChange(index, e.target.value)
-                            }
-                            onKeyDown={(e) => handleKeyDown(index, e)}
-                            ref={(el) => (otpInputRefs.current[index] = el)}
-                            className="w-12 h-12 text-center text-xl bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
-                            whileFocus={{ scale: 1.05 }}
-                            variants={item}
-                            transition={{ delay: index * 0.1 }}
-                          />
-                        ))}
-                      </motion.div>
-
-                      {error && (
-                        <motion.div
-                          className="text-red-400 text-sm flex items-center justify-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {error}
-                        </motion.div>
-                      )}
-
-                      <motion.button
-                        //    onClick={handleOtpSubmit}
-                        disabled={
-                          isSubmitting || otp.some((digit) => digit === "")
-                        }
-                        className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${
-                          isSubmitting || otp.some((digit) => digit === "")
-                            ? "bg-gray-700 cursor-not-allowed"
-                            : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
-                        }`}
-                        variants={item}
-                        whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-                      >
-                        {verifyingCode ? (
-                          <div className="flex items-center justify-center">
-                            <motion.span
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                ease: "linear",
-                              }}
-                            >
-                              <RotateCw className="w-4 h-4 mr-2 animate-spin" />
-                            </motion.span>
-                            Verifying...
-                          </div>
-                        ) : (
-                          "Verify & Continue"
-                        )}
-                      </motion.button>
-
-                      <motion.div
-                        className="text-center pt-4 border-t border-gray-700"
-                        variants={item}
-                      >
-                        <p className="text-gray-500 text-sm">
-                          {countdown > 0 ? (
-                            <span>
-                              Resend code in{" "}
-                              <span className="text-orange-400">
-                                {countdown}s
-                              </span>
-                            </span>
-                          ) : (
-                            <button
-                              // onClick={handleResendOtp}
-                              className="text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center mx-auto"
-                            >
-                              <Mail className="w-4 h-4 mr-1" />
-                              Resend Verification Code
-                            </button>
-                          )}
-                        </p>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            </div>
-            {/* Card Footer */}
-            <div className="bg-gray-850 py-4 px-6 border-t border-gray-700 text-center">
-              <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} COHTPL •
-                <a
-                  href="#"
-                  className="text-orange-500 hover:text-orange-300 transition-colors mx-1"
-                >
-                  Privacy Policy
-                </a>{" "}
-                •
-                <a
-                  href="#"
-                  className="text-orange-500 hover:text-orange-300 transition-colors mx-1"
-                >
-                  Terms
-                </a>
-              </p>
-            </div>
-          </div>
-        </div>
-        {/* <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-          <div className="bg-gray-800 p-6 rounded-lg w-full  space-y-4">
-            {loginStage === "enterPhone" && (
-              <>
-                <label className="block text-sm text-white">Phone Number</label>
-                <input
-                  type="text"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded"
-                  placeholder="e.g. +123456789"
-                />
-                <button
-                  //  onClick={handleSendCode}
-                  disabled={sendingCode}
-                  className="w-full bg-orange-600 py-2 rounded text-white"
-                >
-                  {sendingCode ? "Sending..." : "Send Login Code"}
-                </button>
-
-               
-              </>
-            )} */}
-        {/* {loginStage === "enterCode" && (
-              <>
-                <label className="block text-sm text-white">Enter Code</label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded"
-                  placeholder="Code from Telegram"
-                />
-                <button
-                  onClick={handleVerifyCode}
-                  disabled={verifyingCode}
-                  className="w-full bg-orange-600 py-2 rounded text-white"
-                >
-                  {verifyingCode ? "Verifying..." : "Verify Code"}
-                </button>
-              </>
-            )} */}
-        {/* </div>
-        </div> */}
-      </>
     );
   }
 
@@ -953,10 +529,14 @@ const Telgrampage = () => {
               </label>
               {ownedGroups.length > 0 ? (
                 <select
-                  value={chatid}
+                  value={userData?.chatId}
                   onChange={(e) => {
                     const selectedId = e.target.value;
                     const group = ownedGroups.find((g) => g.id === selectedId);
+                    setUserData({
+                      ...userData,
+                      chatId: selectedId,
+                    });
                     setChatid(selectedId);
                     setSelectedGroup(group);
                   }}
@@ -1061,8 +641,13 @@ const Telgrampage = () => {
               <input
                 type="text"
                 maxLength={75}
-                value={telegramTitle}
-                onChange={(e) => setTelegramTitle(e.target.value)}
+                value={userData?.title}
+                onChange={(e) =>
+                  setUserData({
+                    ...userData,
+                    title: e.target.value,
+                  })
+                }
                 className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                 placeholder="Enter page title"
               />
@@ -1074,8 +659,13 @@ const Telgrampage = () => {
                 Page Description
               </label>
               <textarea
-                value={telegramDescription}
-                onChange={(e) => setTelegramDescription(e.target.value)}
+                value={userData?.description}
+                onChange={(e) =>
+                  setUserData({
+                    ...userData,
+                    description: e.target.value,
+                  })
+                }
                 className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent h-32 bg-gray-900 text-white"
                 placeholder="Enter description"
               />
@@ -1088,8 +678,13 @@ const Telgrampage = () => {
               </label>
               <select
                 className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                value={genre}
-                onChange={(e) => setGenre(e.target.value)}
+                value={userData?.genre}
+                onChange={(e) =>
+                  setUserData({
+                    ...userData,
+                    genre: e.target.value,
+                  })
+                }
               >
                 <option value="education">Education</option>
                 <option value="entertainment">Entertainment</option>
@@ -1151,18 +746,18 @@ const Telgrampage = () => {
                 Subscriptions <span className="text-red-500">*</span>
               </label>
 
-              {subscriptions.map((sub, index) => (
+              {userData?.subscriptions?.map((sub, index) => (
                 <div key={index} className="flex gap-4 items-start relative">
                   <div className="relative subscription-dropdown">
                     <div className="relative">
                       <input
                         type="text"
-                        value={sub.selectedValue || sub.inputValue}
+                        value={sub?.type}
                         onChange={(e) =>
                           handleInputChange(e.target.value, index)
                         }
                         onClick={() => toggleDropdown(index)}
-                        onBlur={(e) => handleClickOutside(e, index)}
+                        //onBlur={(e) => handleClickOutside(e, index)}
                         placeholder="Select type"
                         className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white pr-8"
                       />
@@ -1173,7 +768,7 @@ const Telgrampage = () => {
                       />
                     </div>
 
-                    {(sub.showDropdown || sub.showCreate) && (
+                    {subDropdown === index && (
                       <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-orange-600 rounded-lg shadow-lg">
                         {sub.showCreate && (
                           <div
@@ -1184,29 +779,22 @@ const Telgrampage = () => {
                           </div>
                         )}
 
-                        {predefinedTypes.filter((type) =>
-                          type
-                            .toLowerCase()
-                            .includes(sub.inputValue.toLowerCase())
+                        {predefinedTypes.filter(
+                          (type) => type.toLowerCase()
+                          //  .includes(sub.inputValue.toLowerCase())
                         ).length > 0 && (
                           <div className="max-h-48 overflow-auto">
-                            {predefinedTypes
-                              .filter((type) =>
-                                type
-                                  .toLowerCase()
-                                  .includes(sub.inputValue.toLowerCase())
-                              )
-                              .map((option) => (
-                                <div
-                                  key={option}
-                                  className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                                  onClick={() =>
-                                    handleOptionClick(option, index)
-                                  }
-                                >
-                                  {option}
-                                </div>
-                              ))}
+                            {predefinedTypes.map((option) => (
+                              <div
+                                key={option}
+                                className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                                onClick={() => {
+                                  handleOptionClick(option, sub?.id);
+                                }}
+                              >
+                                {option}
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -1217,11 +805,22 @@ const Telgrampage = () => {
                     <input
                       type="number"
                       placeholder="Cost"
-                      value={sub.cost}
+                      value={sub?.price}
                       onChange={(e) => {
-                        const newSubs = [...subscriptions];
-                        newSubs[index].cost = parseInt(e.target.value);
-                        setSubscriptions(newSubs);
+                        setUserData((prev) => {
+                          const updatedData = prev?.subscriptions?.map(
+                            (data) => {
+                              if (data?.id == sub?.id) {
+                                return {
+                                  ...data,
+                                  price: parseInt(e.target.value),
+                                };
+                              }
+                              return data;
+                            }
+                          );
+                          return { ...prev, subscriptions: updatedData };
+                        });
                       }}
                       className="w-32 px-4 py-2 pl-16 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                     />
@@ -1328,4 +927,4 @@ const Telgrampage = () => {
   );
 };
 
-export default Telgrampage;
+export default TelegramsPages;
