@@ -71,7 +71,7 @@ export async function createTelegram(req, res) {
           isGroupMonitored = botHaveAdmin;
         }
       } catch (error) {
-        console.error("Error checking bot admin status:");
+        console.error("Error checking bot admin status:", error);
       }
     }
 
@@ -89,6 +89,7 @@ export async function createTelegram(req, res) {
           inviteLink: inviteLink || null,
           createdById: user.id,
           isGroupMonitored,
+          discounts,
         },
       });
 
@@ -130,7 +131,7 @@ export async function createTelegram(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error in creating telegram:", error);
+    // console.error("Error in creating telegram:", error);
     if (error.code === "P2002" && error.meta?.target?.includes("chatId")) {
       return res.status(400).json({
         success: false,
