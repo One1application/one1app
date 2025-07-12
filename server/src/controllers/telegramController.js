@@ -44,6 +44,19 @@ export async function createTelegram(req, res) {
     } = req.body;
     const user = req.user;
 
+    console.log({
+      coverImage,
+      title,
+      description,
+      chatId,
+      discounts,
+      subscriptions,
+      genre,
+      gstDetails,
+      courseDetails,
+      inviteLink,
+    });
+
     // Check bot admin status
     let botHaveAdmin = false;
     let isGroupMonitored = false;
@@ -118,7 +131,7 @@ export async function createTelegram(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error in creating telegram:", error);
+    // console.error("Error in creating telegram:", error);
     if (error.code === "P2002" && error.meta?.target?.includes("chatId")) {
       return res.status(400).json({
         success: false,
