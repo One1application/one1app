@@ -71,7 +71,7 @@ export async function createTelegram(req, res) {
           isGroupMonitored = botHaveAdmin;
         }
       } catch (error) {
-        console.error("Error checking bot admin status:", error);
+        console.error("Error checking bot admin status:");
       }
     }
 
@@ -89,7 +89,6 @@ export async function createTelegram(req, res) {
           inviteLink: inviteLink || null,
           createdById: user.id,
           isGroupMonitored,
-          discounts,
         },
       });
 
@@ -144,6 +143,8 @@ export async function createTelegram(req, res) {
         message: "Duplicate subscription type for this Telegram.",
       });
     }
+    console.log(error?.message);
+
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
