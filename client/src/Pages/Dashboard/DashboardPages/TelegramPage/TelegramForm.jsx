@@ -120,7 +120,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
             onClick={() => {
               onSubmit({
                 code: discountCode,
-                percent: discountPercent,
+                percent: parseInt(discountPercent),
                 expiry: expiryDate,
                 plan: selectedPlan,
               });
@@ -480,7 +480,7 @@ const Telgrampage = () => {
           selectedGroup && selectedGroup.username
             ? `https://t.me/${selectedGroup.username}`
             : inviteLink,
-        discount: discounts,
+        discounts,
       };
 
       await createTelegram(body);
@@ -494,7 +494,6 @@ const Telgrampage = () => {
   };
 
   const handleSendCode = async () => {
-    // alert();
     if (!mobileNumber) return;
     //console.log("phoneNumber==>", mobileNumber);
     setSendingCode(true);
@@ -1237,7 +1236,7 @@ const Telgrampage = () => {
                       value={sub.days}
                       onChange={(e) => {
                         const newSubs = [...subscriptions];
-                        newSubs[index].days = e.target.value;
+                        newSubs[index].days = parseInt(e.target.value);
                         setSubscriptions(newSubs);
                       }}
                       className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"

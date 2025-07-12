@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   PlusCircle,
   Upload,
@@ -334,11 +334,13 @@ const TelegramsPages = () => {
 
   const handleOptionClick = (option, id) => {
     setUserData((prev) => {
-      const updatedData = prev?.subscriptions?.map((data) => {
-        if (data?.id == id) {
+      const updatedData = prev?.subscriptions?.map((data, index) => {
+        if (index == id) {
           return {
             ...data,
             type: option,
+            isLifetime: false,
+            validDays: subscriptionDays[option],
           };
         }
         return data;
@@ -350,37 +352,63 @@ const TelegramsPages = () => {
   };
 
   const addSubscription = () => {
-    setSubscriptions([
-      ...subscriptions,
-      {
-        inputValue: "",
-        showDropdown: false,
-        showCreate: false,
-        hasThirdBox: false,
-        selectedValue: "",
-        cost: "",
-        days: "",
-      },
-    ]);
+    setUserData((prev) => {
+      return {
+        ...prev,
+        subscriptions: [
+          ...prev.subscriptions,
+          {
+            isLifetime: "",
+            price: "",
+            type: "",
+            validDays: "",
+          },
+        ],
+      };
+    });
   };
+
+  const [showDrop, setShowDrop] = useState(false);
+
+  const filterData = useCallback(
+    (value) => {
+      const valid =
+        !predefinedTypes.some((type) =>
+          type.toLowerCase().includes(value?.toLowerCase())
+        ) && value?.length > 0;
+
+      setShowDrop(valid);
+    },
+    [userData]
+  );
 
   const deleteSubscription = (index) => {
     const updatedSubscriptions = subscriptions.filter((_, i) => i !== index);
     setSubscriptions(updatedSubscriptions);
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    setImageFile(file);
+    // setImageFile(file);
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
         setUploadedImage(reader.result);
       };
       reader.readAsDataURL(file);
+      const imagePic = new FormData();
+      imagePic.append("file", file);
+      try {
+        let response = await handelUplaodFile(imagePic);
+        setUserData((prev) => {
+          return { ...prev, coverImage: response?.data?.url };
+        });
+      } catch (error) {
+        console.log("error while uploading image");
+      }
     }
   };
-
+  console.log(uploadedImage);
   const handleImageLoad = (e) => {
     const { naturalWidth, naturalHeight } = e.target;
     setImageAspectRatio(naturalWidth / naturalHeight);
@@ -567,9 +595,9 @@ const TelegramsPages = () => {
               </label>
               <div className="flex items-center gap-4">
                 <div className="w-24 h-24 rounded-full border-2 border-orange-600 flex items-center justify-center overflow-hidden bg-orange-500">
-                  {uploadedImage ? (
+                  {userData?.coverImage ? (
                     <img
-                      src={uploadedImage}
+                      src={userData?.coverImage}
                       alt="Uploaded Cover"
                       className="w-full h-full object-cover"
                       onLoad={handleImageLoad}
@@ -753,9 +781,23 @@ const TelegramsPages = () => {
                       <input
                         type="text"
                         value={sub?.type}
-                        onChange={(e) =>
-                          handleInputChange(e.target.value, index)
-                        }
+                        onChange={(e) => {
+                          setUserData((prev) => {
+                            const updatedData = prev?.subscriptions?.map(
+                              (data, i) => {
+                                if (index == i) {
+                                  return {
+                                    ...data,
+                                    type: e.target.value,
+                                  };
+                                }
+                                return data;
+                              }
+                            );
+                            return { ...prev, subscriptions: updatedData };
+                          });
+                          filterData(e.target.value);
+                        }}
                         onClick={() => toggleDropdown(index)}
                         //onBlur={(e) => handleClickOutside(e, index)}
                         placeholder="Select type"
@@ -770,31 +812,36 @@ const TelegramsPages = () => {
 
                     {subDropdown === index && (
                       <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-orange-600 rounded-lg shadow-lg">
-                        {sub.showCreate && (
+                        {showDrop && (
                           <div
                             onClick={() => handleCreateClick(index)}
                             className="px-4 py-3 text-sm text-orange-500 bg-gray-900 cursor-pointer hover:bg-gray-700"
                           >
-                            Create "{sub.inputValue}"
+                            Create "{sub?.type}"
                           </div>
                         )}
 
-                        {predefinedTypes.filter(
-                          (type) => type.toLowerCase()
-                          //  .includes(sub.inputValue.toLowerCase())
+                        {predefinedTypes.filter((type) =>
+                          type.toLowerCase().includes(sub?.type.toLowerCase())
                         ).length > 0 && (
                           <div className="max-h-48 overflow-auto">
-                            {predefinedTypes.map((option) => (
-                              <div
-                                key={option}
-                                className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                                onClick={() => {
-                                  handleOptionClick(option, sub?.id);
-                                }}
-                              >
-                                {option}
-                              </div>
-                            ))}
+                            {predefinedTypes
+                              .filter((type) =>
+                                type
+                                  .toLowerCase()
+                                  .includes(sub?.type.toLowerCase())
+                              )
+                              .map((option) => (
+                                <div
+                                  key={option}
+                                  className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                                  onClick={() => {
+                                    handleOptionClick(option, index);
+                                  }}
+                                >
+                                  {option}
+                                </div>
+                              ))}
                           </div>
                         )}
                       </div>
@@ -809,8 +856,8 @@ const TelegramsPages = () => {
                       onChange={(e) => {
                         setUserData((prev) => {
                           const updatedData = prev?.subscriptions?.map(
-                            (data) => {
-                              if (data?.id == sub?.id) {
+                            (data, i) => {
+                              if (index == i) {
                                 return {
                                   ...data,
                                   price: parseInt(e.target.value),
@@ -829,15 +876,29 @@ const TelegramsPages = () => {
                     </span>
                   </div>
 
-                  {sub.hasThirdBox && (
+                  {(!predefinedTypes.some(
+                    (type) => type.toLowerCase() === sub?.type.toLowerCase()
+                  ) ||
+                    sub?.type === "") && (
                     <input
                       type="number"
                       placeholder="Number of Days"
-                      value={sub.days}
+                      value={sub?.validDays}
                       onChange={(e) => {
-                        const newSubs = [...subscriptions];
-                        newSubs[index].days = e.target.value;
-                        setSubscriptions(newSubs);
+                        setUserData((prev) => {
+                          const updatedData = prev?.subscriptions?.map(
+                            (data, i) => {
+                              if (index == i) {
+                                return {
+                                  ...data,
+                                  validDays: parseInt(e.target.value),
+                                };
+                              }
+                              return data;
+                            }
+                          );
+                          return { ...prev, subscriptions: updatedData };
+                        });
                       }}
                       className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                     />
