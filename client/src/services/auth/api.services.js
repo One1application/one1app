@@ -402,6 +402,55 @@ export const createTelegram = async (body) => {
   return response;
 };
 
+export const editTelegram = async (telegramId, body) => {
+  const response = await servicesAxiosInstance.patch(
+    `/telegram/${telegramId}`,
+    body
+  );
+  return response;
+};
+
+export const createTelegramDiscount = async (paramsperimeter, body) => {
+  const { telegramId } = paramsperimeter;
+  const response = await servicesAxiosInstance.post(
+    `/telegram/${telegramId}/discounts`,
+    body
+  );
+  return response;
+};
+export const editTelgramDiscount = async (paramsperimeter, body) => {
+  const { telegramId, discountId } = paramsperimeter;
+  const response = await servicesAxiosInstance.patch(
+    `/telegram/${telegramId}/discounts/${discountId}`,
+    body
+  );
+  return response;
+};
+export const editTelegramSubscription = async (paramsperimeter, body) => {
+  const { telegramId, subsId } = paramsperimeter;
+  const response = await servicesAxiosInstance.patch(
+    `/telegram/${telegramId}/subscriptions/${subsId}`,
+    body
+  );
+  return response;
+};
+
+export const deleteTelgramDiscount = async (paramsperimeter) => {
+  const { telegramId, discountId } = paramsperimeter;
+  const response = await servicesAxiosInstance.delete(
+    `/telegram/${telegramId}/discounts/${discountId}`
+  );
+  return response;
+};
+
+export const deleteTelgramSubscription = async (paramsperimeter) => {
+  const { telegramId, subsId } = paramsperimeter;
+  const response = await servicesAxiosInstance.delete(
+    `/telegram/${telegramId}/subscriptions/${subsId}`
+  );
+  return response;
+};
+
 export const fetchAllTelegramData = async () => {
   const response = await servicesAxiosInstance.get(
     "/telegram/get-creator-telegrams"

@@ -810,10 +810,11 @@ const Telgrampage = () => {
                         disabled={
                           isSubmitting || otp.some((digit) => digit === "")
                         }
-                        className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${isSubmitting || otp.some((digit) => digit === "")
+                        className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${
+                          isSubmitting || otp.some((digit) => digit === "")
                             ? "bg-gray-700 cursor-not-allowed"
                             : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
-                          }`}
+                        }`}
                         variants={item}
                         whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                       >
@@ -1167,8 +1168,9 @@ const Telgrampage = () => {
                         className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white pr-8"
                       />
                       <ChevronDown
-                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${sub.showDropdown ? "transform rotate-180" : ""
-                          }`}
+                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                          sub.showDropdown ? "transform rotate-180" : ""
+                        }`}
                       />
                     </div>
 
@@ -1188,26 +1190,26 @@ const Telgrampage = () => {
                             .toLowerCase()
                             .includes(sub.inputValue.toLowerCase())
                         ).length > 0 && (
-                            <div className="max-h-48 overflow-auto">
-                              {predefinedTypes
-                                .filter((type) =>
-                                  type
-                                    .toLowerCase()
-                                    .includes(sub.inputValue.toLowerCase())
-                                )
-                                .map((option) => (
-                                  <div
-                                    key={option}
-                                    className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                                    onClick={() =>
-                                      handleOptionClick(option, index)
-                                    }
-                                  >
-                                    {option}
-                                  </div>
-                                ))}
-                            </div>
-                          )}
+                          <div className="max-h-48 overflow-auto">
+                            {predefinedTypes
+                              .filter((type) =>
+                                type
+                                  .toLowerCase()
+                                  .includes(sub.inputValue.toLowerCase())
+                              )
+                              .map((option) => (
+                                <div
+                                  key={option}
+                                  className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                                  onClick={() =>
+                                    handleOptionClick(option, index)
+                                  }
+                                >
+                                  {option}
+                                </div>
+                              ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1229,7 +1231,7 @@ const Telgrampage = () => {
                     </span>
                   </div>
 
-                  {sub.hasThirdBox && (
+                  {sub.hasThirdBox && !sub.isLifetime && (
                     <input
                       type="number"
                       placeholder="Number of Days"
@@ -1255,7 +1257,6 @@ const Telgrampage = () => {
                             const newSubs = [...subscriptions];
                             newSubs[index].isLifetime = e.target.checked;
                             newSubs[index].days = null;
-
 
                             setSubscriptions(newSubs);
                           }}

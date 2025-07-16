@@ -1,6 +1,6 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 // Load environment variables from server/.env
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,13 +24,11 @@ import { webinarRouter } from "./routes/webinarRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 
-import createTelegrampromotionachannel from "./routes/TelegramPromotional.js"
+import createTelegrampromotionachannel from "./routes/TelegramPromotional.js";
 import { adminRouter } from "./routes/adminRoutes.js";
 import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 import { productRouter } from "./routes/productRoutes.js";
-import airouter from "./routes/routes.ai.js"
-
-
+import airouter from "./routes/routes.ai.js";
 
 dotenv.config();
 
@@ -42,14 +40,18 @@ app.use(express.json({ limit: "1gb" }));
 app.use(cookieParser());
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
 
-// const origin = ["http://localhost:5173", "http://localhost:5174", "http://localhost:5174"];
+const origin = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5174",
+];
 
 app.use(
   cors({
-    origin: "*"
+    origin,
+    credentials: true,
   })
 );
-
 
 const postLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -65,8 +67,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
 app.use("/auth", authenticationRouter);
 app.use("/webinar", webinarRouter);
 app.use("/course", courseRouter);
@@ -80,10 +80,9 @@ app.use("/payment", paymentRouter);
 app.use("/newsletter", newsletterRoutes);
 app.use("/review", reviewRoutes);
 app.use("/admin", adminRouter);
-app.use('/product', productRouter)
-app.use("/AI", airouter)
-app.use("/telegram", createTelegrampromotionachannel)
-
+app.use("/product", productRouter);
+app.use("/AI", airouter);
+app.use("/telegram", createTelegrampromotionachannel);
 
 const Port = process.env.SERVER_PORT || 5000;
 
@@ -91,8 +90,6 @@ app.listen(Port, async () => {
   console.log(await PhonePayClient.env);
   console.log("Server running on", Port);
 });
-
-
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack || err.message || err);
@@ -106,4 +103,4 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.use(globalErrorHandler)
+app.use(globalErrorHandler);

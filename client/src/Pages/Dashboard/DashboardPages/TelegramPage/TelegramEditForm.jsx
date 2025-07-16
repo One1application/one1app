@@ -23,16 +23,31 @@ import {
   handelUplaodFile,
   verifyInviteLink,
   fetchOwnedGroups,
+  editTelgramDiscount,
+  fetchAllTelegramData,
+  deleteTelgramDiscount,
+  createTelegramDiscount,
+  editTelegramSubscription,
+  deleteTelgramSubscription,
+  editTelegram,
 } from "../../../../services/auth/api.services.js";
+import { FaCheckCircle } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-
+import { CiEdit } from "react-icons/ci";
 import {
   sendTelegramLoginCode,
   signInTelegramClient,
 } from "../../../../services/auth/api.services.js";
 // Discount Form Component
-const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
+const DiscountForm = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  discountData,
+  handleDiscountValue,
+  handleDiscountSubmit,
+}) => {
   const [discountCode, setDiscountCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
@@ -40,6 +55,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
 
   if (!isOpen) return null;
 
+  console.log("sendDiscountData==>", discountData);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md border border-gray-700">
@@ -59,8 +75,13 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
             </label>
             <input
               type="text"
-              value={discountCode}
-              onChange={(e) => setDiscountCode(e.target.value)}
+              value={discountData?.code}
+              onChange={(e) =>
+                handleDiscountValue({
+                  ...discountData,
+                  code: e.target.value,
+                })
+              }
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
             />
           </div>
@@ -71,8 +92,13 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
             </label>
             <input
               type="number"
-              value={discountPercent}
-              onChange={(e) => setDiscountPercent(e.target.value)}
+              value={discountData?.percent}
+              onChange={(e) =>
+                handleDiscountValue({
+                  ...discountData,
+                  percent: parseInt(e.target.value),
+                })
+              }
               min="0"
               max="100"
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
@@ -85,8 +111,17 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
             </label>
             <input
               type="date"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
+              value={
+                discountData?.expiry
+                  ? new Date(discountData.expiry).toISOString().split("T")[0]
+                  : ""
+              }
+              onChange={(e) =>
+                handleDiscountValue({
+                  ...discountData,
+                  expiry: e.target.value,
+                })
+              }
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
             />
           </div>
@@ -97,8 +132,13 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
               plans)
             </label>
             <select
-              value={selectedPlan}
-              onChange={(e) => setSelectedPlan(e.target.value)}
+              value={discountData?.plan}
+              onChange={(e) =>
+                handleDiscountValue({
+                  ...discountData,
+                  plan: e.target.value,
+                })
+              }
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
             >
               <option value="">All Plans</option>
@@ -109,28 +149,37 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
           </div>
         </div>
 
-        <div className="flex gap-4 mt-6">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-200"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              onSubmit({
-                code: discountCode,
-                percent: discountPercent,
-                expiry: expiryDate,
-                plan: selectedPlan,
-              });
-              onClose();
-            }}
-            className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200"
-          >
-            Create
-          </button>
-        </div>
+        {!discountData.id ? (
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                handleDiscountSubmit();
+                // onClose();
+              }}
+              className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200"
+            >
+              Create
+            </button>
+          </div>
+        ) : (
+          <div className="text-center mt-3">
+            <button
+              onClick={() => {
+                onSubmit();
+                //onClose();
+              }}
+              className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200"
+            >
+              Save
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -154,15 +203,18 @@ const TelegramsPages = () => {
       days: "",
     },
   ]);
+  const location = useLocation();
+  const { state } = location;
 
+  const [userData, setUserData] = useState(state?.data);
   const chatId = useSearchParams()[0].get("chatid");
   console.log("chatId", chatId);
   const { userDetails } = useAuth();
   const [freeDays, setFreeDays] = useState("");
   const [uploadedImage, setUploadedImage] = useState(null);
   const [isFormVisible, setFormVisible] = useState(false);
-  const [gstInfoRequired, setGstInfoRequired] = useState(false);
-  const [courseAccess, setCourseAccess] = useState(false);
+  const [gstInfoRequired, setGstInfoRequired] = useState(userData?.gstDetails);
+  const [courseAccess, setCourseAccess] = useState(userData?.courseDetails);
   const [enableAffiliate, setEnableAffiliate] = useState(false);
   const [imageAspectRatio, setImageAspectRatio] = useState(null);
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
@@ -180,7 +232,9 @@ const TelegramsPages = () => {
   const [ownedGroups, setOwnedGroups] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(true); // Start with loading true
   const [isTelegramAuthenticated, setIsTelegramAuthenticated] = useState(false);
-
+  const [sendDiscountData, setSendDiscountData] = useState({});
+  const [loader, setLoader] = useState(false);
+  const [disableEdit, setDisableEdit] = useState(0);
   // new screen states
 
   const [step, setStep] = useState(0);
@@ -229,103 +283,66 @@ const TelegramsPages = () => {
     Yearly: 365,
   };
 
-  const handleDiscountSubmit = (discountData) => {
-    setDiscounts([...discounts, discountData]);
+  const handleDiscountSubmit = async () => {
+    const { id: telegramId } = userData;
+
+    const params = {
+      telegramId,
+    };
+
+    const { code, expiry, percent, plan } = sendDiscountData;
+
+    const body = {
+      code,
+      expiry,
+      percent,
+      plan,
+    };
+    setLoader(true);
+    try {
+      await createTelegramDiscount(params, body);
+      getTelegramData();
+      setLoader(false);
+      toast.success("Discound Created Successfully!");
+      setIsDiscountModalOpen(false);
+    } catch (error) {
+      console.log("editdiscounterror==>", error);
+      setLoader(false);
+      toast.success("Something went wrong");
+    }
   };
 
-  const location = useLocation();
-  const { state } = location;
-
-  const [userData, setUserData] = useState(state?.data);
   const [subDropdown, setSubDropDown] = useState(null);
   console.log("location==>", userData);
 
-  const handleInputChange = (value, index) => {
-    const newSubscriptions = [...subscriptions];
-    newSubscriptions[index] = {
-      ...newSubscriptions[index],
-      inputValue: value,
-      showDropdown: true,
-      showCreate:
-        !predefinedTypes.some((type) =>
-          type.toLowerCase().includes(value.toLowerCase())
-        ) && value.length > 0,
-      selectedValue: "",
-      hasThirdBox: newSubscriptions[index].hasThirdBox,
-    };
-    setSubscriptions(newSubscriptions);
-  };
-
-  const float = {
-    float: {
-      y: [-5, 5, -5],
-      transition: {
-        duration: 3,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
-
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        when: "beforeChildren",
-      },
-    },
-  };
-
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 },
-    },
-  };
-
-  const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (value && index < 4) {
-      otpInputRefs.current[index + 1].focus();
-    }
-
-    // ✅ Use newOtp directly instead of outdated state
-    if (index === 4 && value && newOtp.every((digit) => digit !== "")) {
-      handleVerifyCode(newOtp); // ✅ Pass newOtp, not otp
+  const getTelegramData = async () => {
+    try {
+      const response = await fetchAllTelegramData();
+      console.log(response);
+      const filterData = response.data.payload.telegrams.filter((data) => {
+        return data.id == userData.id;
+      });
+      setUserData(filterData[0]);
+    } catch (error) {
+      console.error("telegram", error);
+    } finally {
+      // setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (index, e) => {
-    // Handle backspace to move to previous input
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpInputRefs.current[index - 1].focus();
-    }
-  };
-  const toggleDropdown = (index) => {
-    setSubDropDown(index);
-  };
-
-  const handleCreateClick = (index) => {
-    const newSubscriptions = [...subscriptions];
-    newSubscriptions[index] = {
-      ...newSubscriptions[index],
-      selectedValue: newSubscriptions[index].inputValue,
-      showCreate: false,
-      showDropdown: false,
-      hasThirdBox: true,
-      days: "",
-    };
-    setSubscriptions(newSubscriptions);
+  const handleCreateClick = (index, sub) => {
+    console.log(sub);
+    // const newSubscriptions = [...subscriptions];
+    // newSubscriptions[index] = {
+    //   ...newSubscriptions[index],
+    //   selectedValue: newSubscriptions[index].inputValue,
+    //   showCreate: false,
+    //   showDropdown: false,
+    //   hasThirdBox: true,
+    //   days: "",
+    // };
+    // setSubscriptions(newSubscriptions);
+    setSubDropDown(null);
   };
 
   const handleConnectClick = () => {
@@ -352,20 +369,7 @@ const TelegramsPages = () => {
   };
 
   const addSubscription = () => {
-    setUserData((prev) => {
-      return {
-        ...prev,
-        subscriptions: [
-          ...prev.subscriptions,
-          {
-            isLifetime: "",
-            price: "",
-            type: "",
-            validDays: "",
-          },
-        ],
-      };
-    });
+    setDisableEdit(0);
   };
 
   const [showDrop, setShowDrop] = useState(false);
@@ -381,11 +385,6 @@ const TelegramsPages = () => {
     },
     [userData]
   );
-
-  const deleteSubscription = (index) => {
-    const updatedSubscriptions = subscriptions.filter((_, i) => i !== index);
-    setSubscriptions(updatedSubscriptions);
-  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -414,30 +413,114 @@ const TelegramsPages = () => {
     setImageAspectRatio(naturalWidth / naturalHeight);
   };
 
-  const handleClickOutside = (e, index) => {
-    setSubDropDown(null);
-  };
+  const handleEditDiscountForm = async () => {
+    const { id: telegramId } = userData;
+    const { id: discountId } = sendDiscountData;
+    const params = {
+      telegramId,
+      discountId,
+    };
 
-  const handleInviteLinkBlur = async () => {
+    const { code, expiry, percent, plan } = sendDiscountData;
+
+    const body = {
+      code,
+      expiry,
+      percent,
+      plan,
+    };
+    setLoader(true);
     try {
-      if (inviteLink === "") return;
-      const match = inviteLink.match(
-        /^(https?:\/\/t\.me\/(\+?[a-zA-Z0-9_-]+))$/
-      );
-
-      if (!match) {
-        toast("Invalid Invite Link.");
-        return;
-      }
-
-      if (inviteLink === "") return;
-      const response = await verifyInviteLink(inviteLink);
-      setInviteLinkData(response.data.channelDetails);
-      console.log(response);
+      await editTelgramDiscount(params, body);
+      getTelegramData();
+      setIsDiscountModalOpen(false);
+      setLoader(false);
+      toast.success("Discound Saved Successfully!");
     } catch (error) {
-      console.error("Error in verify invite link.", error);
+      console.log("editdiscounterror==>", error);
+      setLoader(false);
+      toast.error("Something went wrong");
+      toast.success("Something went wrong");
     }
   };
+
+  const handleDeleteDiscount = async (id) => {
+    const { id: telegramId } = userData;
+
+    const params = {
+      telegramId,
+      discountId: id,
+    };
+
+    setLoader(true);
+    try {
+      await deleteTelgramDiscount(params);
+      getTelegramData();
+      setUserData((prev) => {
+        const deleteddata = prev.discounts.filter((data) => data.id != id);
+        return { ...prev, discounts: deleteddata };
+      });
+      setLoader(false);
+      toast.success("Discound Deleted Successfully!");
+    } catch (error) {
+      console.log("editdiscounterror==>", error);
+      setLoader(false);
+      toast.error("Something went wrong");
+    }
+  };
+
+  const handleDeleteSubscription = async (id) => {
+    const { id: telegramId } = userData;
+
+    console.log(id);
+    const params = {
+      telegramId,
+      subsId: id,
+    };
+
+    setLoader(true);
+    try {
+      await deleteTelgramSubscription(params);
+      getTelegramData();
+      setUserData((prev) => {
+        const deleteddata = prev.subscriptions.filter((data) => data.id != id);
+        return { ...prev, subscriptions: deleteddata };
+      });
+      setLoader(false);
+      toast.success("Discound Deleted Successfully!");
+    } catch (error) {
+      console.log("editdiscounterror==>", error);
+      setLoader(false);
+      toast.error("Something went wrong");
+    }
+  };
+
+  const handleEditSubscriptions = async (subsData) => {
+    const { id: telegramId } = userData;
+    const { id: subsId } = subsData;
+
+    const params = {
+      telegramId,
+      subsId,
+    };
+
+    setLoader(true);
+    try {
+      await editTelegramSubscription(params, subsData);
+      // getTelegramData();
+      setIsDiscountModalOpen(false);
+      setLoader(false);
+      setDisableEdit(0);
+      setSubDropDown(null);
+      toast.success("Discound Saved Successfully!");
+    } catch (error) {
+      console.log("editdiscounterror==>", error);
+      setLoader(false);
+      toast.error("Something went wrong");
+    }
+  };
+
+  console.log(loader);
 
   const loadGroups = async () => {
     setLoadingGroups(true);
@@ -480,54 +563,41 @@ const TelegramsPages = () => {
   //   discount: discounts,
   // };
 
-  const handleSubmit = async () => {
+  const handleEdit = async () => {
+    const {
+      coverImage,
+      title,
+      description,
+      genre,
+      inviteLink,
+      gstDetails,
+      courseDetails,
+    } = userData;
+    const { id: telegamId } = userData;
+    setLoader(true);
+    const body = {
+      coverImage,
+      title,
+      description,
+      genre,
+      inviteLink,
+      courseDetails,
+      gstDetails,
+    };
+    setLoader(true);
     try {
-      setIsSubmitting(true);
-
-      if (selectedGroup) {
-        console.log("Selected Group Details:", selectedGroup);
-      } else if (inviteLink) {
-        console.log("Using invite link.");
-      } else {
-        toast.error("Please select a group or provide an invite link.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      let response;
-      if (imageFile) {
-        const imagePic = new FormData();
-        imagePic.append("file", imageFile);
-        response = await handelUplaodFile(imagePic);
-        console.log(response);
-      }
-
-      const body = {
-        title: telegramTitle,
-        description: telegramDescription,
-        subscriptions,
-        coverImage: response?.data?.url || "",
-        genre,
-        chatId: selectedGroup ? selectedGroup.id : inviteLinkData?.chatId || "",
-        channelName: selectedGroup
-          ? selectedGroup.title
-          : inviteLinkData?.title || "",
-        channelLink:
-          selectedGroup && selectedGroup.username
-            ? `https://t.me/${selectedGroup.username}`
-            : inviteLink,
-        discount: discounts,
-      };
-
-      await createTelegram(body);
+      await editTelegram(telegamId, body);
+      setLoader(false);
+      toast.success("Discound Saved Successfully!");
       window.location.href = "/dashboard/telegram";
-      toast.success("Telegram Is in the Development Phase");
     } catch (error) {
-      console.log("Error in creating telegram.", error);
-    } finally {
-      setIsSubmitting(false);
+      console.log("editdiscounterror==>", error);
+      setLoader(false);
+      toast.error("Something went wrong");
     }
   };
+
+  console.log(disableEdit);
 
   if (loadingGroups) {
     return (
@@ -539,6 +609,23 @@ const TelegramsPages = () => {
 
   return (
     <div className="min-h-screen bg-gray-900">
+      {loader ? (
+        <div
+          className=" flex items-center  min-h-screen justify-center"
+          style={{
+            position: "fixed",
+            top: "0",
+            zIndex: "22",
+            width: "100%",
+            height: "100%",
+            background: "#0000009c",
+          }}
+        >
+          <Loader2 className="animate-spin text-orange-500" size={48} />
+        </div>
+      ) : (
+        " "
+      )}
       {/* Header Section */}
       <div className="w-full h-64 bg-gradient-to-r from-orange-500 to-orange-600 flex justify-center items-center relative">
         <h1 className="font-bold text-white text-3xl md:text-4xl mb-8">
@@ -558,16 +645,17 @@ const TelegramsPages = () => {
               {ownedGroups.length > 0 ? (
                 <select
                   value={userData?.chatId}
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const group = ownedGroups.find((g) => g.id === selectedId);
-                    setUserData({
-                      ...userData,
-                      chatId: selectedId,
-                    });
-                    setChatid(selectedId);
-                    setSelectedGroup(group);
-                  }}
+                  disabled={userData?.chatId}
+                  // onChange={(e) => {
+                  //   const selectedId = e.target.value;
+                  //   const group = ownedGroups.find((g) => g.id === selectedId);
+                  //   setUserData({
+                  //     ...userData,
+                  //     chatId: selectedId,
+                  //   });
+                  //   setChatid(selectedId);
+                  //   setSelectedGroup(group);
+                  // }}
                   className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white"
                 >
                   <option value="" disabled>
@@ -583,7 +671,6 @@ const TelegramsPages = () => {
                 <input
                   type="text"
                   value={chatid}
-                  onChange={(e) => setChatid(e.target.value)}
                   className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white placeholder-orange-400"
                   placeholder="Enter Telegram Group ID"
                 />
@@ -595,7 +682,7 @@ const TelegramsPages = () => {
               </label>
               <div className="flex items-center gap-4">
                 <div className="w-24 h-24 rounded-full border-2 border-orange-600 flex items-center justify-center overflow-hidden bg-orange-500">
-                  {userData?.coverImage ? (
+                  {!userData?.coverImage == "https://default-cover.com" ? (
                     <img
                       src={userData?.coverImage}
                       alt="Uploaded Cover"
@@ -728,9 +815,9 @@ const TelegramsPages = () => {
                 </label>
               </div>
 
-              {discounts.length > 0 && (
+              {userData?.discounts?.length > 0 && (
                 <div className="space-y-2 mb-4">
-                  {discounts.map((discount, index) => (
+                  {userData?.discounts?.map((discount, index) => (
                     <div
                       key={index}
                       className="flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-orange-600"
@@ -746,6 +833,24 @@ const TelegramsPages = () => {
                       <div className="text-gray-400 text-sm">
                         Expires:{" "}
                         {new Date(discount.expiry).toLocaleDateString()}
+                      </div>
+                      <div>
+                        <button
+                          className="px-2 py-2 bg-orange-500 rounded-lg text-white "
+                          onClick={() => {
+                            setIsDiscountModalOpen(true);
+                            setSendDiscountData(discount);
+                          }}
+                        >
+                          <CiEdit />
+                        </button>
+                        <button
+                          className="px-2 py-2 bg-orange-500 rounded-lg text-white ml-2"
+                          onClick={() => handleDeleteDiscount(discount.id)}
+                        >
+                          {" "}
+                          <X size={16} />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -763,8 +868,11 @@ const TelegramsPages = () => {
 
               <DiscountForm
                 isOpen={isDiscountModalOpen}
+                discountData={sendDiscountData}
+                handleDiscountValue={setSendDiscountData}
                 onClose={() => setIsDiscountModalOpen(false)}
-                onSubmit={handleDiscountSubmit}
+                onSubmit={handleEditDiscountForm}
+                handleDiscountSubmit={handleDiscountSubmit}
               />
             </div>
 
@@ -781,6 +889,8 @@ const TelegramsPages = () => {
                       <input
                         type="text"
                         value={sub?.type}
+                        style={{ color: disableEdit != sub?.id ? "grey" : "" }}
+                        disabled={disableEdit != sub?.id}
                         onChange={(e) => {
                           setUserData((prev) => {
                             const updatedData = prev?.subscriptions?.map(
@@ -814,7 +924,7 @@ const TelegramsPages = () => {
                       <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-orange-600 rounded-lg shadow-lg">
                         {showDrop && (
                           <div
-                            onClick={() => handleCreateClick(index)}
+                            onClick={() => handleCreateClick(index, sub)}
                             className="px-4 py-3 text-sm text-orange-500 bg-gray-900 cursor-pointer hover:bg-gray-700"
                           >
                             Create "{sub?.type}"
@@ -853,6 +963,8 @@ const TelegramsPages = () => {
                       type="number"
                       placeholder="Cost"
                       value={sub?.price}
+                      disabled={disableEdit != sub?.id}
+                      style={{ color: disableEdit != sub?.id ? "grey" : "" }}
                       onChange={(e) => {
                         setUserData((prev) => {
                           const updatedData = prev?.subscriptions?.map(
@@ -879,37 +991,110 @@ const TelegramsPages = () => {
                   {(!predefinedTypes.some(
                     (type) => type.toLowerCase() === sub?.type.toLowerCase()
                   ) ||
-                    sub?.type === "") && (
-                    <input
-                      type="number"
-                      placeholder="Number of Days"
-                      value={sub?.validDays}
-                      onChange={(e) => {
-                        setUserData((prev) => {
-                          const updatedData = prev?.subscriptions?.map(
-                            (data, i) => {
-                              if (index == i) {
-                                return {
-                                  ...data,
-                                  validDays: parseInt(e.target.value),
-                                };
+                    sub?.type === "") &&
+                    !sub?.isLifetime && (
+                      <input
+                        type="number"
+                        disabled={disableEdit != sub?.id}
+                        style={{ color: disableEdit != sub?.id ? "grey" : "" }}
+                        placeholder="Number of Days"
+                        value={sub?.validDays || ""}
+                        onChange={(e) => {
+                          setUserData((prev) => {
+                            const updatedData = prev?.subscriptions?.map(
+                              (data, i) => {
+                                if (index == i) {
+                                  return {
+                                    ...data,
+                                    validDays: parseInt(e.target.value),
+                                  };
+                                }
+                                return data;
                               }
-                              return data;
-                            }
-                          );
-                          return { ...prev, subscriptions: updatedData };
-                        });
-                      }}
-                      className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                    />
+                            );
+                            return { ...prev, subscriptions: updatedData };
+                          });
+                        }}
+                        className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
+                      />
+                    )}
+                  {(!predefinedTypes.some(
+                    (type) => type.toLowerCase() === sub?.type.toLowerCase()
+                  ) ||
+                    sub?.type === "") && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-orange-500">
+                        IsLifeTime
+                      </span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          disabled={disableEdit != sub?.id}
+                          style={{
+                            color: disableEdit != sub?.id ? "grey" : "",
+                          }}
+                          checked={sub?.isLifetime}
+                          onChange={(e) => {
+                            setUserData((prev) => {
+                              const updatedData = prev?.subscriptions?.map(
+                                (data, i) => {
+                                  if (index == i) {
+                                    return {
+                                      ...data,
+                                      isLifetime: e.target.checked,
+                                      validDays: null,
+                                    };
+                                  }
+                                  return data;
+                                }
+                              );
+                              return { ...prev, subscriptions: updatedData };
+                            });
+                          }}
+                        />
+                        <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                      </label>
+                    </div>
                   )}
 
-                  <button
+                  <div className="flex align-items-center">
+                    {disableEdit != sub?.id ? (
+                      <button
+                        className="px-2 py-2 bg-orange-500 rounded-lg text-white "
+                        onClick={() => {
+                          setDisableEdit(sub?.id);
+                        }}
+                      >
+                        <CiEdit />
+                      </button>
+                    ) : (
+                      <button
+                        className="px-2 py-2 bg-orange-500 rounded-lg text-white "
+                        onClick={() => {
+                          handleEditSubscriptions(sub);
+                        }}
+                      >
+                        <FaCheckCircle />
+                      </button>
+                    )}
+                    <button
+                      className="px-2 py-2 bg-orange-500 rounded-lg text-white ml-2"
+                      onClick={() => {
+                        handleDeleteSubscription(sub?.id);
+                      }}
+                    >
+                      {" "}
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {/* <button
                     onClick={() => deleteSubscription(index)}
                     className="text-gray-400 hover:text-gray-200 transition duration-200 mt-1"
                   >
                     <X size={24} />
-                  </button>
+                  </button> */}
                 </div>
               ))}
 
@@ -942,6 +1127,12 @@ const TelegramsPages = () => {
               {gstInfoRequired && (
                 <input
                   type="text"
+                  value={userData?.gstDetails}
+                  onChange={(e) => {
+                    setUserData((prev) => {
+                      return { ...prev, gstDetails: e.target.value };
+                    });
+                  }}
                   placeholder="Enter GST Information"
                   className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                 />
@@ -965,6 +1156,12 @@ const TelegramsPages = () => {
               {courseAccess && (
                 <input
                   type="text"
+                  value={userData?.courseDetails}
+                  onChange={(e) => {
+                    setUserData((prev) => {
+                      return { ...prev, courseDetails: e.target.value };
+                    });
+                  }}
                   placeholder="Enter course access details"
                   className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                 />
@@ -975,7 +1172,7 @@ const TelegramsPages = () => {
           {/* Submit Button */}
           <div className="mt-8">
             <button
-              onClick={handleSubmit}
+              onClick={handleEdit}
               disabled={isSubmitting}
               className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200 disabled:cursor-not-allowed"
             >

@@ -123,7 +123,7 @@ const TelegramPage = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
           </div>
         ) : tabs[activeTab].content && telegramData.length > 0 ? (
-          <Table data={telegramData} />
+          <Table data={telegramData} getTelegramData={getTelegramData} />
         ) : (
           <NoContentComponent
             title={noContent[activeTab].title}

@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 
 import Pagination from "@mui/material/Pagination";
 
-const Table = ({ data }) => {
+const Table = ({ data, getTelegramData }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
