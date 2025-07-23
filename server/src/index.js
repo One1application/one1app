@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 // Load environment variables from server/.env
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({});
 
 import cors from "cors";
 import express from "express";
@@ -42,10 +42,11 @@ app.use(express.json({ limit: "1gb" }));
 app.use(cookieParser());
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
 
+// const origin = ["http://localhost:5173", "http://localhost:5174", "http://localhost:5174"];
+
 app.use(
   cors({
-    origin: "*",
-    credentials: true,
+    origin: "*"
   })
 );
 

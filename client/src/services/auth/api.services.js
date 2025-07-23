@@ -63,35 +63,35 @@ export const verifyEnteredOTP = async (data) => {
  *   .catch(error => console.error(error));
  */
 
+// Ai description generator for products
 
- // Ai description generator for products
-  
- export const generativeDescription = async (data) => {
+export const generativeDescription = async (data) => {
   try {
-    const response = await servicesAxiosInstance.post("AI/generate/description", data);
-   
-   return response;
+    const response = await servicesAxiosInstance.post(
+      "AI/generate/description",
+      data
+    );
+
+    return response;
   } catch (error) {
-    console.log(error || error?.message || "Something went wrong !")
+    console.log(error || error?.message || "Something went wrong !");
     return error;
   }
-   
- }
+};
 
- // ends here 
-
+// ends here
 
 export const signInUser = async (data) => {
-  console.log(data)
+  console.log(data);
   const response = await servicesAxiosInstance.post("auth/login", data);
-   
+
   return response;
 };
 
 export const userSignIn = async (data) => {
   const response = await servicesAxiosInstance.post("auth/user/login", data);
   return response;
-}
+};
 /**
  *
  * @param {Object} data - The user Credentials
@@ -134,8 +134,6 @@ export const handelUplaodFileS3 = async (formdata) => {
       headers: {
         "Content-Type": "application/json",
       },
-
-       
     }
   );
   return response;
@@ -148,7 +146,6 @@ export const createPayUpContent = async (data) => {
   );
   return response;
 };
-
 
 export const createLockedContent = async (data) => {
   const response = await servicesAxiosInstance.post(
@@ -188,12 +185,12 @@ export const saveBusinessInformation = async (data) => {
 };
 
 export const updateBusinessInfo = async (data) => {
-   const response  = await servicesAxiosInstance.post(
+  const response = await servicesAxiosInstance.post(
     "/wallet/update-business-info",
     data
-   );
+  );
   return response;
-}
+};
 
 export const fetchBusinessInformation = async () => {
   const response = await servicesAxiosInstance.get("/wallet/get-business-info");
@@ -220,7 +217,7 @@ export const fetchVerificationInformation = async () => {
     "/wallet/get-verification-details"
   );
 
-  console.log(response)
+  console.log(response);
   return response;
 };
 export const savePrimaryPaymentInformation = async (data) => {
@@ -231,18 +228,20 @@ export const savePrimaryPaymentInformation = async (data) => {
   return response;
 };
 
-export const revenueOftheCreator = async (productType) =>{
-  const response = await servicesAxiosInstance.get(`/product/product-sale-revenue?productType=${productType}`);
-  console.log(response)
+export const revenueOftheCreator = async (productType) => {
+  const response = await servicesAxiosInstance.get(
+    `/product/product-sale-revenue?productType=${productType}`
+  );
+  console.log(response);
   return response?.data?.payload?.products;
-}
+};
 
 export const getRevenuePerDay = async (productType) => {
   const response = await servicesAxiosInstance.get(`/product/revenue-per-day?productType=${productType}`);
   return response.data.revenue;
 };
 
-export const updatePrimaryPaymentInformation = async (bankDetailsId,data) => {
+export const updatePrimaryPaymentInformation = async (bankDetailsId, data) => {
   const response = await servicesAxiosInstance.post(
     `/wallet/update-bank-details/${bankDetailsId}`,
     data
@@ -254,38 +253,34 @@ export const fetchPrimaryPaymentInformation = async () => {
   return response;
 };
 
- 
 export const fetchTransactionsPage = async (data) => {
-  const response = await servicesAxiosInstance.get(
-    `/wallet/get-transactions`, {
-       params: {
-        page: data?.page || 1,
-        limit: data?.limit || 10,
-        sortBy: data?.sortBy || 'createdAt',
-        sortOrder: data?.sortOrder || 'desc',
-        status: data?.status,
-        buyerId: data?.buyerId
-      }
-    }
-  );
+  const response = await servicesAxiosInstance.get(`/wallet/get-transactions`, {
+    params: {
+      page: data?.page || 1,
+      limit: data?.limit || 10,
+      sortBy: data?.sortBy || "createdAt",
+      sortOrder: data?.sortOrder || "desc",
+      status: data?.status,
+      buyerId: data?.buyerId,
+    },
+  });
   return response;
 };
 
-
 export const getTransactionDetails = async () => {
-  const response = await servicesAxiosInstance.get(`/wallet/get-transactions`,{
-    params : {
-      status: "COMPLETED"
-    }
+  const response = await servicesAxiosInstance.get(`/wallet/get-transactions`, {
+    params: {
+      status: "COMPLETED",
+    },
   });
 
-  console.log(response)
+  console.log(response);
   return response?.data?.payload?.transactions;
-}
+};
 export const fetchWithdrawalPage = async (data) => {
   const response = await servicesAxiosInstance.get("/wallet/get-withdrawals", {
     params: {
-       page: data?.page || 1,
+      page: data?.page || 1,
       limit: data?.limit || 10,
       upiId: data?.upiId,
       bankDetailsId: data?.bankDetailsId,
@@ -297,7 +292,7 @@ export const fetchWithdrawalPage = async (data) => {
       maxAmount: data?.maxAmount,
       sortBy: data.sortBy || "createdAt",
       sortOrder: data.sortOrder || "desc",
-    }
+    },
   });
   return response;
 };
@@ -312,7 +307,7 @@ export const saveSecondaryBankorUpiAccount = async (data) => {
 export const deleteSecondaryBankorUpiAccount = async (data) => {
   const response = await servicesAxiosInstance.delete(
     "/wallet/delete-bank-or-upi",
-    {data}
+    { data }
   );
   return response;
 };
@@ -382,7 +377,7 @@ export const fetchPayingUp = async (id) => {
 export const purchasePayingUp = async (data) => {
   const response = await servicesAxiosInstance.post(
     "/payingup/purchase-payingup",
-     data
+    data
   );
   return response;
 };
@@ -407,7 +402,7 @@ export const verifyInviteLink = async (inviteLink) => {
 
 export const createTelegram = async (body) => {
   const response = await servicesAxiosInstance.post(
-    "/telegram/create-telegram",
+    "/telegram/create-telegrams",
     body
   );
   return response;
@@ -459,7 +454,7 @@ export const fetchUserDetails = async () => {
   return response;
 };
 
-export const fetchCustomers = async (page=1) => {
+export const fetchCustomers = async (page = 1) => {
   const response = await servicesAxiosInstance.get(`/self/customers/`, page);
   return response;
 };
@@ -478,8 +473,6 @@ export const fetchPremiumDashboardData = async () => {
   return response;
 };
 
-
- 
 export const fetchPremiumContentById = async (contentId) => {
   const response = await servicesAxiosInstance.get(
     `/premium/premium-content/${contentId}` // Matches the route in premiumRoutes.js
@@ -507,8 +500,6 @@ export const deletePremiumContentById = async (contentId) => {
   }
 };
 
-
-
 export const editPremiumContentById = async (contentId, updatedContent) => {
   // Assuming `updatedContent` is the data you want to update (e.g., title, description, etc.)
   const response = await servicesAxiosInstance.put(
@@ -519,8 +510,8 @@ export const editPremiumContentById = async (contentId, updatedContent) => {
 };
 
 export const purchasePremiumContent = async (data) => {
-const response = await servicesAxiosInstance.post(
-    "/premium/purchase-premium-content", 
+  const response = await servicesAxiosInstance.post(
+    "/premium/purchase-premium-content",
     data
   );
   return response;
@@ -572,7 +563,8 @@ export const updateUserProfile = async (data) => {
   try {
     const response = await servicesAxiosInstance.put(
       "/self/update/profile",
-      data , {
+      data,
+      {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -609,14 +601,13 @@ export const fetchWalletChartData = async ({ fetchCat }) => {
 };
 
 export const fetchFilterEarningsAndWithdrawals = async ({ fetchRange }) => {
-   if (fetchRange.startsWith('CustomRange=')) {
+  if (fetchRange.startsWith("CustomRange=")) {
     // For custom Range remove true in path
     const response = await servicesAxiosInstance.get(
       `/wallet/withdrawal-earnings?${fetchRange}`
     );
     return response;
   } else {
-    
     const response = await servicesAxiosInstance.get(
       `/wallet/withdrawal-earnings?${fetchRange}=true`
     );
@@ -643,9 +634,6 @@ export const sendTelegramLoginCode = async (phoneNumber) => {
 };
 
 export const signInTelegramClient = async (data) => {
-  const response = await servicesAxiosInstance.post(
-    "/telegram/sign-in",
-    data
-  );
+  const response = await servicesAxiosInstance.post("/telegram/sign-in", data);
   return response;
 };
