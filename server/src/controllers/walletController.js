@@ -1,16 +1,13 @@
-import axios from "axios";
-import dotenv from "dotenv";
-import { generateSignedUrl } from "../config/imagekit.js";
-import { PhonePayClient } from "../config/phonepay.js";
-import {
-  createContact,
-  createFundAccount,
-  createPayout,
-} from "../config/razorpay.js";
-import prisma from "../db/dbClient.js";
-import { sendOtp } from "../utils/sendOtp.js";
-import bcrypt from "bcrypt";
-import { calculateExpiryDate } from "../utils/courseExpiryDate.js";
+import axios from 'axios';
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import dotenv from 'dotenv';
+import { generateSignedUrl } from '../config/imagekit.js';
+import { PhonePayClient } from '../config/phonepay.js';
+import { fetchPaymentDetails } from '../config/razorpay.js';
+import prisma from '../db/dbClient.js';
+import { sendOtp } from '../utils/sendOtp.js';
+import { calculateExpiryDate } from './telegramController.js';
 
 dotenv.config();
 
@@ -21,7 +18,7 @@ export async function getWalletDetails(req, res) {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "User not found.",
+        message: 'User not found.',
       });
     }
 
@@ -33,7 +30,7 @@ export async function getWalletDetails(req, res) {
     if (!wallet) {
       return res.status(400).send({
         success: false,
-        message: "Wallet Not Found",
+        message: 'Wallet Not Found',
       });
     }
     const accountNumbers = await prisma.bankDetails.findMany({
@@ -54,31 +51,26 @@ export async function getWalletDetails(req, res) {
       },
     });
 
-    const accountNumberResponse = accountNumbers.map(
-      (account) => account.accountNumber
-    );
+    const accountNumberResponse = accountNumbers.map((account) => account.accountNumber);
     const upiIdResponse = upiIds.map((upi) => upi.upiId);
 
     const withdrawals = await prisma.withdrawal.findMany({
       where: {
         walletId: wallet.id,
-        status: "SUCCESS",
+        status: 'SUCCESS',
       },
       select: {
         amount: true,
       },
     });
 
-    const totalWithdrawals = withdrawals.reduce(
-      (total, withdrawal) => total + withdrawal.amount,
-      0
-    );
+    const totalWithdrawals = withdrawals.reduce((total, withdrawal) => total + withdrawal.amount, 0);
 
-    console.log("totalWithdrawals", totalWithdrawals);
+    console.log('totalWithdrawals', totalWithdrawals);
 
     return res.status(200).json({
       success: true,
-      message: "Fetched wallet details successfully.",
+      message: 'Fetched wallet details successfully.',
       payload: {
         balance: wallet.balance === null ? 0 : wallet.balance,
         totalEarnings: wallet.totalEarnings === null ? 0 : wallet.totalEarnings,
@@ -91,15 +83,16 @@ export async function getWalletDetails(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error while fetching balance.", error);
+    console.error('Error while fetching balance.', error);
     res.status(500).json({
       success: false,
-      message: "Internal Server Error.",
+      message: 'Internal Server Error.',
     });
   }
 }
 
 export async function verifyPayment(req, res) {
+  console.log('INSIDE VERIFY PAYMENT');
   try {
     const {
       webinarId,
@@ -107,10 +100,15 @@ export async function verifyPayment(req, res) {
       payingUpId,
       telegramId,
       premiumContentId,
+      subscriptionId,
       days,
       channelId,
       phonePayOrderId,
       discountedPrice,
+      paymentProvider,
+      razorpay_signature,
+      razorpay_payment_id,
+      razorpay_order_id,
     } = req.body;
 
     const user = req.user;
@@ -125,45 +123,64 @@ export async function verifyPayment(req, res) {
     if (!existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User not found.",
+        message: 'User not found.',
       });
     }
 
-    if (
-      !courseId &&
-      !webinarId &&
-      !payingUpId &&
-      !telegramId &&
-      !premiumContentId
-    ) {
+    if (!courseId && !webinarId && !payingUpId && !telegramId && !premiumContentId) {
       return res.status(400).json({
         success: false,
-        message: "Invalid request.",
+        message: 'Invalid request.',
       });
     }
 
-    // const generatedSignature = crypto
-    //   .createHmac("sha256", process.env.RAZORPAY_SECRET)
-    //   .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    //   .digest("hex");
+    let paymentDetails;
+    let transactionId;
+    let orderId;
+    let paymentMode;
+    let paymentStatus;
+    console.log('Payment Provider', paymentProvider);
 
-    // if (generatedSignature !== razorpay_signature) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Invalid payment signature.",
-    //   });
-    // }
+    if (paymentProvider === 'Razorpay') {
+      const generatedSignature = crypto
+        .createHmac('sha256', process.env.RAZORPAY_SECRET)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
 
-    // const paymentDetails = await fetchPaymentDetails(razorpay_payment_id);
+      if (generatedSignature !== razorpay_signature) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid payment signature.',
+        });
+      }
 
-    const PhonePayPaymentDetails = await PhonePayClient.getOrderStatus(
-      phonePayOrderId
-    );
+      paymentDetails = await fetchPaymentDetails(razorpay_payment_id);
+      transactionId = razorpay_payment_id;
+      orderId = razorpay_order_id;
+      paymentMode = paymentDetails.method || 'RAZORPAY';
+      paymentStatus = paymentDetails.status;
 
-    if (PhonePayPaymentDetails.state === "FAILED") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Payment failed" });
+      if (paymentStatus !== 'captured') {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment not captured',
+        });
+      }
+      console.log('RAZORPAY SUCCESS');
+    } else {
+      paymentDetails = await PhonePayClient.getOrderStatus(phonePayOrderId);
+
+      if (paymentDetails.state === 'FAILED') {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment failed',
+        });
+      }
+
+      transactionId = paymentDetails.paymentDetails[0].transactionId;
+      orderId = phonePayOrderId;
+      paymentMode = paymentDetails.paymentDetails[0].paymentMode;
+      paymentStatus = paymentDetails.paymentDetails[0].state;
     }
 
     await prisma.$transaction(async (prisma) => {
@@ -178,26 +195,14 @@ export async function verifyPayment(req, res) {
         });
 
         if (!creator) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Creator not found." });
+          return res.status(400).json({ success: false, message: 'Creator not found.' });
         }
 
-        let amountToBeAdded = discountedPrice
-          ? parseFloat(discountedPrice)
-          : creator.amount;
+        let amountToBeAdded = discountedPrice ? parseFloat(discountedPrice) : creator.amount;
         if (creator.createdBy.creatorComission) {
-          const commissionAmount =
-            Math.round(
-              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-              100
-            ) / 100;
-          const gstOnCommission =
-            Math.round(commissionAmount * GST_RATE * 100) / 100;
-          amountToBeAdded =
-            Math.round(
-              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
-            ) / 100;
+          const commissionAmount = Math.round(((creator.createdBy.creatorComission * amountToBeAdded) / 100) * 100) / 100;
+          const gstOnCommission = Math.round(commissionAmount * GST_RATE * 100) / 100;
+          amountToBeAdded = Math.round((amountToBeAdded - commissionAmount - gstOnCommission) * 100) / 100;
         }
 
         const creatorWallet = await prisma.wallet.update({
@@ -214,15 +219,15 @@ export async function verifyPayment(req, res) {
           data: {
             webinarId,
             boughtById: existingUser.id,
-            paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
-            orderId: phonePayOrderId,
+            paymentId: transactionId,
+            orderId: orderId,
           },
         });
 
         if (!webinar) {
           return res.status(400).json({
             success: false,
-            message: "Failed to buy ticket for webinar.",
+            message: 'Failed to buy ticket for webinar.',
           });
         }
 
@@ -230,22 +235,22 @@ export async function verifyPayment(req, res) {
           data: {
             amount: parseFloat(discountedPrice || creator.amount),
             amountAfterFee: parseFloat(amountToBeAdded),
-            modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
+            modeOfPayment: paymentMode,
             productId: webinarId,
             buyerId: existingUser.id,
             creatorId: creator.createdById,
-            productType: "WEBINAR",
-            status: PhonePayPaymentDetails.paymentDetails[0].state,
-            phonePayTransId:
-              PhonePayPaymentDetails.paymentDetails[0].transactionId,
+            productType: 'WEBINAR',
+            status: 'COMPLETED',
+            txnID: transactionId,
             walletId: creatorWallet.id,
           },
         });
-        console.log("transaction", transaction);
+
+        console.log('transaction', transaction);
         if (!transaction) {
           return res.status(400).json({
             success: false,
-            message: "Failed to create transaction.",
+            message: 'Failed to create transaction.',
           });
         }
       }
@@ -261,28 +266,18 @@ export async function verifyPayment(req, res) {
         });
 
         if (!creator) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Creator not found." });
+          return res.status(400).json({ success: false, message: 'Creator not found.' });
         }
-        console.log("creatorCOURSE", creator);
+        console.log('creatorCOURSE', creator);
 
-        let amountToBeAdded = discountedPrice
-          ? parseFloat(discountedPrice)
-          : creator.price;
-        console.log("amount", amountToBeAdded);
+        let amountToBeAdded = discountedPrice ? parseFloat(discountedPrice) : creator.price;
+        console.log('amount', amountToBeAdded);
         if (creator.creator.creatorComission) {
-          const commissionAmount =
-            Math.round(
-              ((creator.creator.creatorComission * amountToBeAdded) / 100) * 100
-            ) / 100;
-          const gstOnCommission =
-            Math.round(commissionAmount * GST_RATE * 100) / 100;
-          amountToBeAdded =
-            Math.round(
-              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
-            ) / 100;
+          const commissionAmount = Math.round(((creator.creator.creatorComission * amountToBeAdded) / 100) * 100) / 100;
+          const gstOnCommission = Math.round(commissionAmount * GST_RATE * 100) / 100;
+          amountToBeAdded = Math.round((amountToBeAdded - commissionAmount - gstOnCommission) * 100) / 100;
         }
+
         const creatorWallet = await prisma.wallet.update({
           where: {
             userId: creator.createdBy,
@@ -299,12 +294,10 @@ export async function verifyPayment(req, res) {
             courseId,
           },
         });
-        console.log("existingPurchase", existingPurchase);
+
+        console.log('existingPurchase', existingPurchase);
         if (existingPurchase) {
-          let calculateExpiry = calculateExpiryDate(
-            creator?.validity,
-            existingPurchase.expiryDate
-          );
+          let calculateExpiry = calculateExpiryDate(creator?.validity, existingPurchase.expiryDate);
           if (existingPurchase.expiryDate < new Date()) {
             calculateExpiry = calculateExpiryDate(creator?.validity);
           }
@@ -314,11 +307,11 @@ export async function verifyPayment(req, res) {
               purchaseId: existingPurchase.id,
               newExpiryDate: calculateExpiry,
               renewalDate: new Date(),
-              orderId: phonePayOrderId,
-              paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
+              orderId: orderId,
+              paymentId: transactionId,
             },
           });
-          console.log("renewalRecord", renewal);
+          console.log('renewalRecord', renewal);
 
           const updateCoursePurchase = await prisma.coursePurchasers.update({
             where: {
@@ -330,24 +323,22 @@ export async function verifyPayment(req, res) {
               updatedAt: new Date(),
             },
           });
-          console.log("updateCourse", updateCoursePurchase);
+          console.log('updateCourse', updateCoursePurchase);
         } else {
           const calculateExpiry = calculateExpiryDate(creator.validity);
           const course = await prisma.coursePurchasers.create({
             data: {
               courseId,
               purchaserId: existingUser.id,
-              paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
-              orderId: phonePayOrderId,
+              paymentId: transactionId,
+              orderId: orderId,
               expiryDate: calculateExpiry,
               isActive: true,
             },
           });
 
           if (!course) {
-            return res
-              .status(400)
-              .json({ success: false, message: "Failed to buy course." });
+            return res.status(400).json({ success: false, message: 'Failed to buy course.' });
           }
         }
 
@@ -356,13 +347,12 @@ export async function verifyPayment(req, res) {
             amount: parseFloat(discountedPrice || creator.price),
             amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
-            modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
+            modeOfPayment: paymentMode,
             productId: courseId,
-            productType: "COURSE",
+            productType: 'COURSE',
             creatorId: creator.createdBy,
-            status: PhonePayPaymentDetails.paymentDetails[0].state,
-            phonePayTransId:
-              PhonePayPaymentDetails.paymentDetails[0].transactionId,
+            status: 'COMPLETED',
+            txnID: transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -370,13 +360,13 @@ export async function verifyPayment(req, res) {
         if (!transaction) {
           return res.status(400).json({
             success: false,
-            message: "Failed to create transaction.",
+            message: 'Failed to create transaction.',
           });
         }
       }
 
       if (payingUpId) {
-        console.log("payingUpId", payingUpId);
+        console.log('payingUpId', payingUpId);
         const creator = await prisma.payingUp.findFirst({
           where: {
             id: payingUpId,
@@ -388,31 +378,19 @@ export async function verifyPayment(req, res) {
           },
         });
 
-        console.log("cre", creator);
+        console.log('cre', creator);
 
         if (!creator) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Creator not found." });
+          return res.status(400).json({ success: false, message: 'Creator not found.' });
         }
-        let amount = discountedPrice
-          ? parseFloat(discountedPrice)
-          : creator.paymentDetails.totalAmount;
+        let amount = discountedPrice ? parseFloat(discountedPrice) : creator.paymentDetails.totalAmount;
 
         let amountToBeAdded = parseFloat(amount);
 
         if (creator.createdBy.creatorComission) {
-          const commissionAmount =
-            Math.round(
-              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-              100
-            ) / 100;
-          const gstOnCommission =
-            Math.round(commissionAmount * GST_RATE * 100) / 100;
-          amountToBeAdded =
-            Math.round(
-              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
-            ) / 100;
+          const commissionAmount = Math.round(((creator.createdBy.creatorComission * amountToBeAdded) / 100) * 100) / 100;
+          const gstOnCommission = Math.round(commissionAmount * GST_RATE * 100) / 100;
+          amountToBeAdded = Math.round((amountToBeAdded - commissionAmount - gstOnCommission) * 100) / 100;
         }
 
         const creatorWallet = await prisma.wallet.update({
@@ -433,31 +411,26 @@ export async function verifyPayment(req, res) {
           data: {
             payingUpId,
             boughtById: existingUser.id,
-            paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
-            orderId: phonePayOrderId,
+            paymentId: transactionId,
+            orderId: orderId,
           },
         });
 
         if (!payingUpTicket) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Failed to buy course." });
+          return res.status(400).json({ success: false, message: 'Failed to buy course.' });
         }
 
         const transaction = await prisma.transaction.create({
           data: {
-            amount: parseFloat(
-              discountedPrice || creator.paymentDetails.totalAmount
-            ),
+            amount: parseFloat(discountedPrice || creator.paymentDetails.totalAmount),
             amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
-            modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
+            modeOfPayment: paymentMode,
             productId: payingUpId,
-            productType: "PAYINGUP",
+            productType: 'PAYINGUP',
             creatorId: creator.createdById,
-            status: PhonePayPaymentDetails.paymentDetails[0].state,
-            phonePayTransId:
-              PhonePayPaymentDetails.paymentDetails[0].transactionId,
+            status: 'COMPLETED',
+            txnID: transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -465,7 +438,7 @@ export async function verifyPayment(req, res) {
         if (!transaction) {
           return res.status(400).json({
             success: false,
-            message: "Failed to create transaction.",
+            message: 'Failed to create transaction.',
           });
         }
       }
@@ -481,25 +454,13 @@ export async function verifyPayment(req, res) {
         });
 
         if (!creator) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Creator not found." });
+          return res.status(400).json({ success: false, message: 'Creator not found.' });
         }
-        let amountToBeAdded = discountedPrice
-          ? parseFloat(discountedPrice)
-          : creator.unlockPrice;
+        let amountToBeAdded = discountedPrice ? parseFloat(discountedPrice) : creator.unlockPrice;
         if (creator.createdBy.creatorComission) {
-          const commissionAmount =
-            Math.round(
-              ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-              100
-            ) / 100;
-          const gstOnCommission =
-            Math.round(commissionAmount * GST_RATE * 100) / 100;
-          amountToBeAdded =
-            Math.round(
-              (amountToBeAdded - commissionAmount - gstOnCommission) * 100
-            ) / 100;
+          const commissionAmount = Math.round(((creator.createdBy.creatorComission * amountToBeAdded) / 100) * 100) / 100;
+          const gstOnCommission = Math.round(commissionAmount * GST_RATE * 100) / 100;
+          amountToBeAdded = Math.round((amountToBeAdded - commissionAmount - gstOnCommission) * 100) / 100;
         }
 
         const creatorWallet = await prisma.wallet.update({
@@ -520,8 +481,8 @@ export async function verifyPayment(req, res) {
           data: {
             userId: user.id,
             contentId: premiumContentId,
-            paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
-            orderId: phonePayOrderId,
+            paymentId: transactionId,
+            orderId: orderId,
             expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), //currently for 30 days
           },
         });
@@ -529,7 +490,7 @@ export async function verifyPayment(req, res) {
         if (!premiumContent) {
           return res.status(400).json({
             success: false,
-            message: "Failed to create premium content access.",
+            message: 'Failed to create premium content access.',
           });
         }
 
@@ -538,13 +499,12 @@ export async function verifyPayment(req, res) {
             amount: parseFloat(discountedPrice || creator.unlockPrice),
             amountAfterFee: parseFloat(amountToBeAdded),
             buyerId: existingUser.id,
-            modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
+            modeOfPayment: paymentMode,
             productId: premiumContentId,
-            productType: "PREMIUMCONTENT",
+            productType: 'PREMIUMCONTENT',
             creatorId: creator.createdById,
-            status: PhonePayPaymentDetails.paymentDetails[0].state,
-            phonePayTransId:
-              PhonePayPaymentDetails.paymentDetails[0].transactionId,
+            status: 'COMPLETED',
+            txnID: transactionId,
             walletId: creatorWallet.id,
           },
         });
@@ -552,99 +512,135 @@ export async function verifyPayment(req, res) {
         if (!transaction) {
           return res.status(400).json({
             success: false,
-            message: "Failed to create transaction.",
+            message: 'Failed to create transaction.',
           });
         }
       }
 
-      // if (telegramId && days) {
-      //   const creator = await prisma.telegram.findFirst({
-      //     where: {
-      //       id: telegramId,
-      //     },
-      //     select: {
-      //       createdById: true,
-      //       subscription: true,
-      //       createdBy: true,
-      //     },
-      //   });
+      // FIXED TELEGRAM PAYMENT VERIFICATION
+      if (telegramId && subscriptionId) {
+        console.log('INSIDE TELEGRAM ID AND SUBSCRIPTION ID', telegramId, subscriptionId);
 
-      //   if (!creator) {
-      //     return res
-      //       .status(400)
-      //       .json({ success: false, message: "Creator not found." });
-      //   }
+        // Fetch telegram channel and subscription details
+        const telegram = await prisma.telegram.findUnique({
+          where: {
+            id: telegramId,
+          },
+          include: {
+            createdBy: true,
+          },
+        });
 
-      //   const subscriptionDetails = creator.subscription.find(
-      //     (sub) => sub.days == days
-      //   );
-      //   let amountToBeAdded = subscriptionDetails.cost;
-      //   if (creator.createdBy.creatorComission) {
-      //     const commissionAmount =
-      //       Math.round(
-      //         ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-      //           100
-      //       ) / 100;
-      //     const gstOnCommission =
-      //       Math.round(commissionAmount * GST_RATE * 100) / 100;
-      //     amountToBeAdded =
-      //       Math.round(
-      //         (amountToBeAdded - commissionAmount - gstOnCommission) * 100
-      //       ) / 100;
-      //   }
-      //   const creatorWallet = await prisma.wallet.update({
-      //     where: {
-      //       userId: creator.createdById,
-      //     },
-      //     data: {
-      //       totalEarnings: {
-      //         increment: parseFloat(amountToBeAdded),
-      //       },
-      //       balance: { increment: parseFloat(amountToBeAdded) },
-      //     },
-      //   });
+        if (!telegram) {
+          return res.status(400).json({ success: false, message: 'Telegram channel not found.' });
+        }
 
-      //   const telegramSubs = await prisma.telegramSubscription.create({
-      //     data: {
-      //       telegramId,
-      //       boughtById: existingUser.id,
-      //       validDays: parseInt(days),
-      //       paymentId: PhonePayPaymentDetails.paymentDetails[0].transactionId,
-      //       orderId: phonePayOrderId,
-      //     },
-      //   });
+        const subscription = await prisma.subscription.findFirst({
+          where: {
+            id: subscriptionId,
+            telegramId: telegramId,
+          },
+        });
 
-      //   if (!telegramSubs) {
-      //     return res
-      //       .status(400)
-      //       .json({ success: false, message: "Failed to buy course." });
-      //   }
+        if (!subscription) {
+          return res.status(400).json({ success: false, message: 'Subscription not found.' });
+        }
 
-      //   const transaction = await prisma.transaction.create({
-      //     data: {
-      //       amount: parseFloat(subscriptionDetails.cost),
-      //       amountAfterFee: parseFloat(amountToBeAdded),
-      //       buyerId: existingUser.id,
-      //       modeOfPayment: PhonePayPaymentDetails.paymentDetails[0].paymentMode,
-      //       productId: telegramId,
-      //       productType: "TELEGRAM",
-      //       creatorId: creator.createdById,
-      //       status: PhonePayPaymentDetails.paymentDetails[0].state,
-      //       phonePayTransId:
-      //         PhonePayPaymentDetails.paymentDetails[0].transactionId,
-      //       walletId: creatorWallet.id,
-      //     },
-      //   });
+        // Calculate amount after commission
+        let amountToBeAdded = discountedPrice ? parseFloat(discountedPrice) : subscription.price;
+        if (telegram.createdBy.creatorComission) {
+          const commissionAmount = Math.round(((telegram.createdBy.creatorComission * amountToBeAdded) / 100) * 100) / 100;
+          const gstOnCommission = Math.round(commissionAmount * GST_RATE * 100) / 100;
+          amountToBeAdded = Math.round((amountToBeAdded - commissionAmount - gstOnCommission) * 100) / 100;
+        }
 
-      //   if (!transaction) {
-      //     return res.status(400).json({
-      //       success: false,
-      //       message: "Failed to create transaction.",
-      //     });
-      //   }
-      // }
+        // Update creator wallet
+        const creatorWallet = await prisma.wallet.update({
+          where: {
+            userId: telegram.createdById,
+          },
+          data: {
+            totalEarnings: { increment: parseFloat(amountToBeAdded) },
+            balance: { increment: parseFloat(amountToBeAdded) },
+          },
+        });
+
+        // Check for existing active subscription
+        const existingSubscription = await prisma.telegramSubscription.findFirst({
+          where: {
+            telegramId: telegramId,
+            boughtById: user.id,
+            isExpired: false,
+          },
+        });
+
+        // Calculate expiry date and valid days
+        let newValidDays = days ? parseInt(days) : subscription.validDays;
+        let expireDate = null;
+
+        if (!subscription.isLifetime) {
+          if (existingSubscription && existingSubscription.expireDate > new Date()) {
+            // Extend existing subscription
+            expireDate = new Date(existingSubscription.expireDate.getTime() + newValidDays * 24 * 60 * 60 * 1000);
+          } else {
+            // Create new subscription from now
+            expireDate = new Date(Date.now() + newValidDays * 24 * 60 * 60 * 1000);
+          }
+        }
+
+        // Mark existing subscription as expired if applicable
+        if (existingSubscription) {
+          await prisma.telegramSubscription.update({
+            where: { id: existingSubscription.id },
+            data: { isExpired: true, updatedAt: new Date() },
+          });
+        }
+
+        // Create new telegram subscription
+        const telegramSubs = await prisma.telegramSubscription.create({
+          data: {
+            telegramId: telegramId,
+            subscriptionId: subscriptionId,
+            boughtById: user.id,
+            validDays: subscription.isLifetime ? null : newValidDays,
+            expireDate: expireDate,
+            isLifetime: subscription.isLifetime,
+            isExpired: false,
+            paymentId: transactionId,
+            orderId: orderId,
+          },
+        });
+
+        if (!telegramSubs) {
+          return res.status(400).json({ success: false, message: 'Failed to create telegram subscription.' });
+        }
+
+        // Create transaction record
+        const transaction = await prisma.transaction.create({
+          data: {
+            amount: parseFloat(discountedPrice || subscription.price),
+            amountAfterFee: parseFloat(amountToBeAdded),
+            buyerId: existingUser.id,
+            modeOfPayment: paymentMode,
+            productId: telegramId,
+            productType: 'TELEGRAM',
+            creatorId: telegram.createdById,
+            status: 'COMPLETED',
+            txnID: transactionId,
+            walletId: creatorWallet.id,
+          },
+        });
+
+        if (!transaction) {
+          return res.status(400).json({
+            success: false,
+            message: 'Failed to create transaction.',
+          });
+        }
+      }
     });
 
+    // Return appropriate response based on product type
     if (webinarId) {
       const response = await prisma.webinar.findUnique({
         where: {
@@ -654,7 +650,7 @@ export async function verifyPayment(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "Webinar purchased successfully.",
+        message: 'Webinar purchased successfully.',
         payload: {
           webinarDetail: response.link,
           venue: response.venue,
@@ -665,7 +661,7 @@ export async function verifyPayment(req, res) {
     if (courseId) {
       return res.status(200).json({
         success: true,
-        message: "Course purchased successfully.",
+        message: 'Course purchased successfully.',
         payload: null,
       });
     }
@@ -673,7 +669,7 @@ export async function verifyPayment(req, res) {
     if (premiumContentId) {
       return res.status(200).json({
         success: true,
-        message: "Premium content purchased successfully.",
+        message: 'Premium content purchased successfully.',
         payload: null,
       });
     }
@@ -689,10 +685,7 @@ export async function verifyPayment(req, res) {
       });
 
       const filesignedUrls = response.files.value.map((file, index) => {
-        const filePath = new URL(file.url).pathname.replace(
-          /^.*\/images/,
-          "/images"
-        );
+        const filePath = new URL(file.url).pathname.replace(/^.*\/images/, '/images');
         const signedUrl = generateSignedUrl(filePath);
         return {
           ...file,
@@ -713,69 +706,74 @@ export async function verifyPayment(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "Paying up purchased successfully.",
+        message: 'Paying up purchased successfully.',
         payload: {
           urls: filesignedUrls,
         },
       });
     }
 
-    if (telegramId && days) {
-      const response = await axios.get(
-        `${process.env.BOT_SERVER_URL}/channel/generate-invite?channelId=${channelId}&boughtById=${user.id}`
-      );
-      await prisma.telegram.update({
-        where: {
-          id: telegramId,
-        },
-        data: {
-          inviteLink: response.data.payload.inviteLink,
-        },
-      });
-      return res.status(200).json({
-        success: true,
-        message: "Telegram purchased successfully.",
-        payload: {
-          telegramInvitelink: response.data.payload.inviteLink,
-        },
-      });
+    if (telegramId && subscriptionId) {
+      console.log('GENERATING TELEGRAM INVITE LINK');
+
+      try {
+        // Generate invite link via bot server
+        const response = await axios.get(`${process.env.BOT_SERVER_URL}/channel/generate-invite?channelId=${channelId}&boughtById=${user.id}`);
+
+        // Update telegram with invite link
+        await prisma.telegram.update({
+          where: {
+            id: telegramId,
+          },
+          data: {
+            inviteLink: response.data.payload.inviteLink,
+          },
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: 'Telegram subscription purchased successfully.',
+          payload: {
+            telegramInvitelink: response.data.payload.inviteLink,
+          },
+        });
+      } catch (error) {
+        console.error('Error generating invite link:', error);
+        return res.status(200).json({
+          success: true,
+          message: 'Telegram subscription purchased successfully, but invite link generation failed.',
+          payload: {
+            telegramInvitelink: null,
+          },
+        });
+      }
     }
 
     return res.status(200).json({
       success: true,
-      message: "Purchase successfully.",
+      message: 'Purchase completed successfully.',
     });
   } catch (error) {
-    console.error("Error in verifying payment.", error);
+    console.error('Error in verifying payment.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
-
 export async function addBusinessInfo(req, res) {
   try {
     const user = req.user;
-    const {
-      firstName,
-      lastName,
-      businessStructure,
-      gstNumber,
-      sebiNumber,
-      sebiCertificate,
-    } = req.body;
+    const { firstName, lastName, businessStructure, gstNumber, sebiNumber, sebiCertificate } = req.body;
 
     if (!firstName || !lastName || !businessStructure) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields.",
+        message: 'Missing required fields.',
       });
     }
-    if (businessStructure != "Others" && !gstNumber && !sebiNumber) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields." });
+    if (businessStructure != 'Others' && !gstNumber && !sebiNumber) {
+      return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
     const userExists = await prisma.user.findUnique({
       where: {
@@ -784,9 +782,7 @@ export async function addBusinessInfo(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const businessExists = await prisma.businessInfo.findFirst({
@@ -798,7 +794,7 @@ export async function addBusinessInfo(req, res) {
     if (businessExists) {
       return res.status(400).json({
         success: false,
-        message: "Business Information already exists.",
+        message: 'Business Information already exists.',
       });
     }
 
@@ -815,20 +811,18 @@ export async function addBusinessInfo(req, res) {
     });
 
     if (!businessInfo) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Failed to add business info." });
+      return res.status(400).json({ success: false, message: 'Failed to add business info.' });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Business info added successfully.",
+      message: 'Business info added successfully.',
     });
   } catch (error) {
-    console.error("Error in adding business info.", error);
+    console.error('Error in adding business info.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -836,39 +830,19 @@ export async function addBusinessInfo(req, res) {
 export async function updateBusinessInfo(req, res) {
   try {
     const user = req.user;
-    const {
-      firstName,
-      lastName,
-      businessStructure,
-      gstNumber,
-      sebiNumber,
-      sebiCertificate,
-    } = req.body;
+    const { firstName, lastName, businessStructure, gstNumber, sebiNumber, sebiCertificate } = req.body;
 
-    if (
-      !firstName &&
-      !lastName &&
-      !businessStructure &&
-      !gstNumber &&
-      !sebiNumber &&
-      !sebiCertificate
-    ) {
+    if (!firstName && !lastName && !businessStructure && !gstNumber && !sebiNumber && !sebiCertificate) {
       return res.status(400).json({
         success: false,
-        message: "At least one field to update is required.",
+        message: 'At least one field to update is required.',
       });
     }
 
-    if (
-      businessStructure &&
-      businessStructure !== "Others" &&
-      !gstNumber &&
-      !sebiNumber
-    ) {
+    if (businessStructure && businessStructure !== 'Others' && !gstNumber && !sebiNumber) {
       return res.status(400).json({
         success: false,
-        message:
-          "GST number or SEBI number is required for this business structure.",
+        message: 'GST number or SEBI number is required for this business structure.',
       });
     }
 
@@ -877,9 +851,7 @@ export async function updateBusinessInfo(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
     const businessExists = await prisma.businessInfo.findFirst({
@@ -889,21 +861,21 @@ export async function updateBusinessInfo(req, res) {
     if (!businessExists) {
       return res.status(404).json({
         success: false,
-        message: "Business information not found. Please create it first.",
+        message: 'Business information not found. Please create it first.',
       });
     }
 
     const isKycVerified = await prisma.wallet.findFirst({
-      where: { userId: user.id, },
+      where: { userId: user.id },
       select: {
         isKycVerified: true,
-      }
+      },
     });
 
     if (isKycVerified.isKycVerified) {
       return res.status(400).json({
         success: false,
-        message: "You have already verified your Kyc!"
+        message: 'You have already verified your Kyc!',
       });
     }
 
@@ -923,14 +895,14 @@ export async function updateBusinessInfo(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Business information updated successfully.",
+      message: 'Business information updated successfully.',
       data: updatedBusinessInfo,
     });
   } catch (error) {
-    console.error("Error in updating business info:", error);
+    console.error('Error in updating business info:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
       error: error.message,
     });
   }
@@ -945,9 +917,7 @@ export async function deleteBusinessInfo(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
     const businessExists = await prisma.businessInfo.findFirst({
@@ -955,9 +925,7 @@ export async function deleteBusinessInfo(req, res) {
     });
 
     if (!businessExists) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Business information not found." });
+      return res.status(404).json({ success: false, message: 'Business information not found.' });
     }
 
     await prisma.businessInfo.delete({
@@ -968,13 +936,13 @@ export async function deleteBusinessInfo(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Business information deleted successfully.",
+      message: 'Business information deleted successfully.',
     });
   } catch (error) {
-    console.error("Error in deleting business info:", error);
+    console.error('Error in deleting business info:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
       error: error.message,
     });
   }
@@ -991,21 +959,19 @@ export async function getBusinessInfo(req, res) {
     });
 
     if (!businessInfo) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Business info not found." });
+      return res.status(400).json({ success: false, message: 'Business info not found.' });
     }
 
     return res.status(200).json({
       success: true,
       payload: businessInfo,
-      message: "Fetched business info successfully.",
+      message: 'Fetched business info successfully.',
     });
   } catch (error) {
-    console.error("Error in fetching business info.", error);
+    console.error('Error in fetching business info.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -1014,27 +980,14 @@ export async function addKycDetails(req, res) {
   try {
     const user = req.user;
     const { socialMedia, idVerification } = req.body;
-    const { aadhaarNumber, aadhaarFront, aadhaarBack, panCard, selfie } =
-      idVerification;
+    const { aadhaarNumber, aadhaarFront, aadhaarBack, panCard, selfie } = idVerification;
 
-    if (
-      !socialMedia ||
-      !idVerification ||
-      !aadhaarNumber ||
-      !aadhaarFront ||
-      !aadhaarBack ||
-      !panCard ||
-      !selfie
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields." });
+    if (!socialMedia || !idVerification || !aadhaarNumber || !aadhaarFront || !aadhaarBack || !panCard || !selfie) {
+      return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
 
     if (aadhaarNumber.trim().length != 12) {
-      return res
-        .status(400)
-        .json({ success: false, message: "AadhaarNumber must be 12 digit." });
+      return res.status(400).json({ success: false, message: 'AadhaarNumber must be 12 digit.' });
     }
 
     const userExists = await prisma.user.findUnique({
@@ -1044,9 +997,7 @@ export async function addKycDetails(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const kycExists = await prisma.kycRecords.findFirst({
@@ -1056,9 +1007,7 @@ export async function addKycDetails(req, res) {
     });
 
     if (kycExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "KYC details already exists." });
+      return res.status(400).json({ success: false, message: 'KYC details already exists.' });
     }
 
     const kyc = await prisma.kycRecords.create({
@@ -1074,20 +1023,18 @@ export async function addKycDetails(req, res) {
     });
 
     if (!kyc) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Failed to add KYC details." });
+      return res.status(400).json({ success: false, message: 'Failed to add KYC details.' });
     }
 
     return res.status(200).json({
       success: true,
-      message: "KYC details added successfully.",
+      message: 'KYC details added successfully.',
     });
   } catch (error) {
-    console.error("Error in adding KYC details.", error);
+    console.error('Error in adding KYC details.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -1098,12 +1045,11 @@ export async function updateKycDetails(req, res) {
     const { socialMedia, idVerification } = req.body;
 
     if (idVerification) {
-      const { aadhaarNumber, aadhaarFront, aadhaarBack, panCard, selfie } =
-        idVerification;
+      const { aadhaarNumber, aadhaarFront, aadhaarBack, panCard, selfie } = idVerification;
       if (aadhaarNumber && aadhaarNumber.trim().length !== 12) {
         return res.status(400).json({
           success: false,
-          message: "Aadhaar Number must be 12 digits.",
+          message: 'Aadhaar Number must be 12 digits.',
         });
       }
     }
@@ -1113,9 +1059,7 @@ export async function updateKycDetails(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
     const kycExists = await prisma.kycRecords.findFirst({
@@ -1125,22 +1069,22 @@ export async function updateKycDetails(req, res) {
     if (!kycExists) {
       return res.status(404).json({
         success: false,
-        message: "KYC details not found. Please create KYC details first.",
+        message: 'KYC details not found. Please create KYC details first.',
       });
     }
 
     const isKycVerified = await prisma.wallet.findFirst({
-      where: { userId: user.id, },
+      where: { userId: user.id },
       select: {
         isKycVerified: true,
-      }
-    })
+      },
+    });
 
     if (isKycVerified.isKycVerified) {
       return res.status(400).json({
         success: false,
-        message: "You have already verified your Kyc!"
-      })
+        message: 'You have already verified your Kyc!',
+      });
     }
 
     // Extract only the fields that are provided
@@ -1169,9 +1113,7 @@ export async function updateKycDetails(req, res) {
     }
 
     if (Object.keys(updateData).length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No fields provided for update." });
+      return res.status(400).json({ success: false, message: 'No fields provided for update.' });
     }
 
     const updatedKyc = await prisma.kycRecords.update({
@@ -1191,21 +1133,21 @@ export async function updateKycDetails(req, res) {
       await prisma.kycRecords.update({
         where: { id: kycExists.id },
         data: {
-          status: "PENDING",
+          status: 'PENDING',
         },
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "KYC details updated successfully.",
+      message: 'KYC details updated successfully.',
       data: updatedKyc,
     });
   } catch (error) {
-    console.error("Error in updating KYC details:", error);
+    console.error('Error in updating KYC details:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
       error: error.message,
     });
   }
@@ -1220,9 +1162,7 @@ export async function deleteKycDetails(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
     const kycExists = await prisma.kycRecords.findFirst({
@@ -1230,9 +1170,7 @@ export async function deleteKycDetails(req, res) {
     });
 
     if (!kycExists) {
-      return res
-        .status(404)
-        .json({ success: false, message: "KYC details not found." });
+      return res.status(404).json({ success: false, message: 'KYC details not found.' });
     }
 
     const hasActiveServices = await prisma.wallet.findFirst({
@@ -1245,7 +1183,7 @@ export async function deleteKycDetails(req, res) {
     if (hasActiveServices) {
       return res.status(400).json({
         success: false,
-        message: "Cannot delete KYC details while you have active services.",
+        message: 'Cannot delete KYC details while you have active services.',
       });
     }
 
@@ -1257,13 +1195,13 @@ export async function deleteKycDetails(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "KYC details deleted successfully.",
+      message: 'KYC details deleted successfully.',
     });
   } catch (error) {
-    console.error("Error in deleting KYC details:", error);
+    console.error('Error in deleting KYC details:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
       error: error.message,
     });
   }
@@ -1280,9 +1218,7 @@ export async function getKycDetails(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const kyc = await prisma.kycRecords.findUnique({
@@ -1292,23 +1228,21 @@ export async function getKycDetails(req, res) {
     });
 
     if (!kyc) {
-      return res
-        .status(400)
-        .json({ success: false, message: "KYC details not found." });
+      return res.status(400).json({ success: false, message: 'KYC details not found.' });
     }
 
-    console.log(kyc)
+    console.log(kyc);
 
     return res.status(200).json({
       success: true,
       payload: kyc,
-      message: "Fetched KYC details successfully.",
+      message: 'Fetched KYC details successfully.',
     });
   } catch (error) {
-    console.error("Error in fetching KYC details.", error);
+    console.error('Error in fetching KYC details.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -1317,19 +1251,10 @@ export async function addBankDetails(req, res) {
   try {
     const user = req.user;
     const { bankingInfo } = req.body;
-    const { ifscCode, accountHolderName, accountNumber, bankDocument, upiId } =
-      bankingInfo;
+    const { ifscCode, accountHolderName, accountNumber, bankDocument, upiId } = bankingInfo;
 
-    if (
-      !ifscCode ||
-      !accountHolderName ||
-      !accountNumber ||
-      !bankDocument ||
-      !upiId
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields." });
+    if (!ifscCode || !accountHolderName || !accountNumber || !bankDocument || !upiId) {
+      return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
 
     const userExists = await prisma.user.findUnique({
@@ -1339,9 +1264,7 @@ export async function addBankDetails(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const userWallet = await prisma.wallet.findUnique({
@@ -1351,9 +1274,7 @@ export async function addBankDetails(req, res) {
     });
 
     if (!userWallet) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User wallet not found." });
+      return res.status(400).json({ success: false, message: 'User wallet not found.' });
     }
 
     const existingBankDetails = await prisma.bankDetails.findFirst({
@@ -1370,13 +1291,13 @@ export async function addBankDetails(req, res) {
     if (totalBankAccounts >= 4) {
       return res.status(400).json({
         success: false,
-        message: "You can add only maximum 4 bank accounts or UPIs",
+        message: 'You can add only maximum 4 bank accounts or UPIs',
       });
     }
     if (existingBankDetails) {
       return res.status(400).json({
         success: false,
-        message: "Primary Bank details already exist.",
+        message: 'Primary Bank details already exist.',
       });
     }
 
@@ -1392,9 +1313,7 @@ export async function addBankDetails(req, res) {
     });
 
     if (!bankDetails) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Failed to add bank details." });
+      return res.status(400).json({ success: false, message: 'Failed to add bank details.' });
     }
 
     const updateUpiId = await prisma.uPI.create({
@@ -1406,20 +1325,18 @@ export async function addBankDetails(req, res) {
     });
 
     if (!updateUpiId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Failed to add UPI ID." });
+      return res.status(400).json({ success: false, message: 'Failed to add UPI ID.' });
     }
 
     return res.status(200).json({
       success: true,
-      message: "KYC updated and bank details added successfully.",
+      message: 'KYC updated and bank details added successfully.',
     });
   } catch (error) {
-    console.error("Error in adding bank details.", error);
+    console.error('Error in adding bank details.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -1430,26 +1347,17 @@ export async function updateBankDetails(req, res) {
     const user = req.user;
     const { bankDetailsId } = req.params;
     const { bankingInfo } = req.body;
-    const { ifscCode, accountHolderName, accountNumber, bankDocument, upiId } =
-      bankingInfo;
+    const { ifscCode, accountHolderName, accountNumber, bankDocument, upiId } = bankingInfo;
 
     if (!bankDetailsId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Bank details id required." });
+      return res.status(400).json({ success: false, message: 'Bank details id required.' });
     }
-    console.log("bankDetailsId", bankDetailsId);
+    console.log('bankDetailsId', bankDetailsId);
 
-    if (
-      !ifscCode &&
-      !accountHolderName &&
-      !accountNumber &&
-      !bankDocument &&
-      !upiId
-    ) {
+    if (!ifscCode && !accountHolderName && !accountNumber && !bankDocument && !upiId) {
       return res.status(400).json({
         success: false,
-        message: "At least one field to update is required.",
+        message: 'At least one field to update is required.',
       });
     }
 
@@ -1460,9 +1368,7 @@ export async function updateBankDetails(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const existingBankDetails = await prisma.bankDetails.findFirst({
@@ -1473,23 +1379,21 @@ export async function updateBankDetails(req, res) {
     });
 
     if (!existingBankDetails) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Bank details not found." });
+      return res.status(400).json({ success: false, message: 'Bank details not found.' });
     }
 
     const isKycVerified = await prisma.wallet.findFirst({
-      where: { userId: user.id, },
+      where: { userId: user.id },
       select: {
         isKycVerified: true,
-      }
-    })
+      },
+    });
 
     if (isKycVerified.isKycVerified) {
       return res.status(400).json({
         success: false,
-        message: "You have already verified your Kyc!"
-      })
+        message: 'You have already verified your Kyc!',
+      });
     }
 
     const existingUpiRecords = await prisma.uPI.findMany({
@@ -1498,7 +1402,7 @@ export async function updateBankDetails(req, res) {
         userId: user.id,
       },
     });
-    console.log("existingupi records", existingUpiRecords);
+    console.log('existingupi records', existingUpiRecords);
 
     //update bank details
     const updatedBankDetails = await prisma.bankDetails.update({
@@ -1518,9 +1422,7 @@ export async function updateBankDetails(req, res) {
     let updatedUpi = null;
     if (upiId) {
       if (existingUpiRecords && existingUpiRecords.length > 0) {
-        const matchingUpi = existingUpiRecords.find(
-          (upi) => upi.upiId === upiId
-        );
+        const matchingUpi = existingUpiRecords.find((upi) => upi.upiId === upiId);
         if (matchingUpi) {
           updatedUpi = matchingUpi;
         }
@@ -1547,17 +1449,17 @@ export async function updateBankDetails(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Bank details updated successfully.",
+      message: 'Bank details updated successfully.',
       data: {
         bankDetails: updatedBankDetails,
         upi: updatedUpi,
       },
     });
   } catch (error) {
-    console.error("Error in updating bank details:", error);
+    console.error('Error in updating bank details:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
       error: error.message,
     });
   }
@@ -1574,9 +1476,7 @@ export async function getBankDetails(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const bankDetails = await prisma.bankDetails.findFirst({
@@ -1588,7 +1488,7 @@ export async function getBankDetails(req, res) {
         upiIds: true,
       },
     });
-    console.log("bankDetails", bankDetails);
+    console.log('bankDetails', bankDetails);
 
     const kycRecord = await prisma.kycRecords.findFirst({
       where: {
@@ -1597,21 +1497,15 @@ export async function getBankDetails(req, res) {
     });
 
     if (!bankDetails) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Bank details not found." });
+      return res.status(400).json({ success: false, message: 'Bank details not found.' });
     }
 
     if (!kycRecord) {
-      return res
-        .status(400)
-        .json({ success: false, message: "kyc Record not found." });
+      return res.status(400).json({ success: false, message: 'kyc Record not found.' });
     }
 
     if (bankDetails.userId != kycRecord.userId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "kyc Record not found." });
+      return res.status(400).json({ success: false, message: 'kyc Record not found.' });
     }
 
     return res.status(200).json({
@@ -1620,13 +1514,13 @@ export async function getBankDetails(req, res) {
         bankDetails: bankDetails,
         kycRecord: kycRecord,
       },
-      message: "Fetched bank details successfully.",
+      message: 'Fetched bank details successfully.',
     });
   } catch (error) {
-    console.error("Error in fetching bank details.", error);
+    console.error('Error in fetching bank details.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -1637,9 +1531,7 @@ export async function withdrawAmount(req, res) {
     const { withdrawAmount, withdrawalMethod, withdrawFrom, mpin } = req.body;
     //TODO
     if (!withdrawAmount || !withdrawalMethod || !withdrawFrom || !mpin) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields." });
+      return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
 
     const userExists = await prisma.user.findUnique({
@@ -1649,9 +1541,7 @@ export async function withdrawAmount(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const wallet = await prisma.wallet.findFirst({
@@ -1661,37 +1551,33 @@ export async function withdrawAmount(req, res) {
     });
 
     if (!wallet) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Wallet not found." });
+      return res.status(400).json({ success: false, message: 'Wallet not found.' });
     }
 
     if (wallet.isKycVerified === false) {
-      return res
-        .status(400)
-        .json({ success: false, message: "KYC not completed." });
+      return res.status(400).json({ success: false, message: 'KYC not completed.' });
     }
 
     if (wallet.mpin == null) {
       return res.status(400).json({
         success: false,
-        message: "MPIN not set. Please set MPIN first.",
+        message: 'MPIN not set. Please set MPIN first.',
       });
     }
 
     const isMatchMpin = await bcrypt.compare(mpin, wallet.mpin);
     if (!isMatchMpin) {
-      return res.status(400).json({ success: false, message: "Invalid MPIN." });
+      return res.status(400).json({ success: false, message: 'Invalid MPIN.' });
     }
 
     if (wallet.balance < +withdrawAmount || wallet.balance <= 50) {
       return res.status(400).json({
         success: false,
-        message: "Insufficient balance or wallet balance is less than 50rs.",
+        message: 'Insufficient balance or wallet balance is less than 50rs.',
       });
     }
 
-    if (withdrawalMethod == "bank") {
+    if (withdrawalMethod == 'bank') {
       const bankDetails = await prisma.bankDetails.findFirst({
         where: {
           userId: userExists.id,
@@ -1700,9 +1586,7 @@ export async function withdrawAmount(req, res) {
       });
 
       if (!bankDetails) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Bank details not found." });
+        return res.status(400).json({ success: false, message: 'Bank details not found.' });
       }
 
       await prisma.withdrawal.create({
@@ -1716,9 +1600,9 @@ export async function withdrawAmount(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "Amount withdrawn processed successfully. ",
+        message: 'Amount withdrawn processed successfully. ',
       });
-    } else if (withdrawalMethod === "upi") {
+    } else if (withdrawalMethod === 'upi') {
       const upiDetails = await prisma.uPI.findFirst({
         where: {
           userId: userExists.id,
@@ -1727,9 +1611,7 @@ export async function withdrawAmount(req, res) {
       });
 
       if (!upiDetails) {
-        return res
-          .status(400)
-          .json({ success: false, message: "UPI not found." });
+        return res.status(400).json({ success: false, message: 'UPI not found.' });
       }
 
       await prisma.withdrawal.create({
@@ -1743,19 +1625,17 @@ export async function withdrawAmount(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "Amount withdrawn processed successfully.",
+        message: 'Amount withdrawn processed successfully.',
         amount: withdrawAmount,
       });
     }
 
-    return res
-      .status(400)
-      .json({ success: false, message: "Invalid withdrawal method." });
+    return res.status(400).json({ success: false, message: 'Invalid withdrawal method.' });
   } catch (error) {
-    console.error("Error in withdrawing amount.", error);
+    console.error('Error in withdrawing amount.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -1763,20 +1643,13 @@ export async function withdrawAmount(req, res) {
 export async function getTransactions(req, res) {
   try {
     const user = req.user;
-    const {
-      page = 1,
-      status,
-      buyerId,
-      limit = 10,
-      sortBy = "createdAt",
-      sortOrder = "desc",
-    } = req.query;
+    const { page = 1, status, buyerId, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
     const pageNumber = parseInt(page);
     if (isNaN(pageNumber) || pageNumber < 1) {
       return res.status(400).json({
         success: false,
-        message: "Invalid page Number",
+        message: 'Invalid page Number',
       });
     }
 
@@ -1789,9 +1662,7 @@ export async function getTransactions(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const wallet = await prisma.wallet.findFirst({
@@ -1801,9 +1672,7 @@ export async function getTransactions(req, res) {
     });
 
     if (!wallet) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Wallet not found." });
+      return res.status(400).json({ success: false, message: 'Wallet not found.' });
     }
 
     // Build the where clause with filters
@@ -1827,11 +1696,9 @@ export async function getTransactions(req, res) {
 
     const totalPages = Math.max(1, Math.ceil(totalTransactions / pageSize));
     const effectivePage = Math.min(pageNumber, totalPages);
-    const validSortFields = ["createdAt", "amount", "status", "productType"];
-    const actualSortBy = validSortFields.includes(sortBy)
-      ? sortBy
-      : "createdAt";
-    const actualSortOrder = sortOrder.toLowerCase() === "asc" ? "asc" : "desc";
+    const validSortFields = ['createdAt', 'amount', 'status', 'productType'];
+    const actualSortBy = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const actualSortOrder = sortOrder.toLowerCase() === 'asc' ? 'asc' : 'desc';
 
     const transactions = await prisma.transaction.findMany({
       where: whereClause,
@@ -1858,13 +1725,13 @@ export async function getTransactions(req, res) {
         currentPage: effectivePage,
         totalItems: totalTransactions,
       },
-      message: "Fetched transactions successfully.",
+      message: 'Fetched transactions successfully.',
     });
   } catch (error) {
-    console.error("Error in getting transactions.", error);
+    console.error('Error in getting transactions.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -1884,8 +1751,8 @@ export async function getWithdrawals(req, res) {
       endDate,
       minAmount,
       maxAmount,
-      sortBy = "createdAt",
-      sortOrder = "desc",
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
     } = req.query;
 
     const pageSize = parseInt(limit);
@@ -1894,7 +1761,7 @@ export async function getWithdrawals(req, res) {
     if (isNaN(pageNumber) || pageNumber < 1) {
       return res.status(400).json({
         success: false,
-        message: "Invalid page Number",
+        message: 'Invalid page Number',
       });
     }
 
@@ -1905,9 +1772,7 @@ export async function getWithdrawals(req, res) {
     });
 
     if (!userExist) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const wallet = await prisma.wallet.findFirst({
@@ -1917,9 +1782,7 @@ export async function getWithdrawals(req, res) {
     });
 
     if (!wallet) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Wallet not found." });
+      return res.status(400).json({ success: false, message: 'Wallet not found.' });
     }
 
     //build whereClause for filters
@@ -1986,17 +1849,13 @@ export async function getWithdrawals(req, res) {
     const effectivePage = Math.min(pageNumber, totalPages);
 
     if (pageNumber > totalPages && totalPages !== 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid page number" });
+      return res.status(400).json({ success: false, message: 'Invalid page number' });
     }
 
     //validate sorting parameters
-    const allowedSortFields = ["createdAt", "amount", "status"];
-    const actualSortBy = allowedSortFields.includes(sortBy)
-      ? sortBy
-      : "createdAt";
-    const actualSortOrder = sortOrder === "asc" ? "asc" : "desc";
+    const allowedSortFields = ['createdAt', 'amount', 'status'];
+    const actualSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const actualSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
 
     //Get withdrawals with applied filters, pagination and sorting
 
@@ -2039,9 +1898,7 @@ export async function getWithdrawals(req, res) {
     const filterOptions = await getFilterOptions(wallet.id);
 
     if (!withdrawals) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Unable to fetch withdrawals" });
+      return res.status(400).json({ success: false, message: 'Unable to fetch withdrawals' });
     }
 
     return res.status(200).json({
@@ -2054,13 +1911,13 @@ export async function getWithdrawals(req, res) {
         totalWithdrawalAmount: totalWithdrawalAmount._sum.amount || 0,
         filterOptions,
       },
-      message: "Fetched withdrawals successfully.",
+      message: 'Fetched withdrawals successfully.',
     });
   } catch (error) {
-    console.error("Error in getting withdrawals.", error);
+    console.error('Error in getting withdrawals.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -2079,7 +1936,7 @@ async function getFilterOptions(walletId) {
           },
         },
       },
-      distinct: ["upiId"],
+      distinct: ['upiId'],
     });
 
     // Get unique bank details
@@ -2094,21 +1951,21 @@ async function getFilterOptions(walletId) {
           },
         },
       },
-      distinct: ["bankDetailsId"],
+      distinct: ['bankDetailsId'],
     });
 
     // Get unique withdrawal modes
     const modesOfWithdrawal = await prisma.withdrawal.findMany({
       where: { walletId },
       select: { modeOfWithdrawal: true },
-      distinct: ["modeOfWithdrawal"],
+      distinct: ['modeOfWithdrawal'],
     });
 
     // Get unique statuses
     const statuses = await prisma.withdrawal.findMany({
       where: { walletId },
       select: { status: true },
-      distinct: ["status"],
+      distinct: ['status'],
     });
 
     return {
@@ -2118,7 +1975,7 @@ async function getFilterOptions(walletId) {
       statuses: statuses.map((item) => item.status),
     };
   } catch (error) {
-    console.error("Error getting filter options:", error);
+    console.error('Error getting filter options:', error);
     return {
       upis: [],
       bankDetails: [],
@@ -2130,13 +1987,7 @@ async function getFilterOptions(walletId) {
 
 export async function addBankOrUpi(req, res) {
   try {
-    const {
-      accountNumber,
-      ifscCode,
-      accountHolderName,
-      upiId,
-      type = "bank",
-    } = req.body;
+    const { accountNumber, ifscCode, accountHolderName, upiId, type = 'bank' } = req.body;
 
     const user = req.user;
 
@@ -2147,9 +1998,7 @@ export async function addBankOrUpi(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const existingBankAccounts = await prisma.bankDetails.count({
@@ -2168,7 +2017,7 @@ export async function addBankOrUpi(req, res) {
     if (existingBankAccounts + existingUpis >= 4) {
       return res.status(400).json({
         success: false,
-        message: "You can add only maximum 4 bank accounts or UPIs",
+        message: 'You can add only maximum 4 bank accounts or UPIs',
       });
     }
 
@@ -2182,15 +2031,13 @@ export async function addBankOrUpi(req, res) {
     if (!primaryAccount) {
       return res.status(400).json({
         success: false,
-        message: "Please add a primary account first",
+        message: 'Please add a primary account first',
       });
     }
 
-    if (type === "bank") {
+    if (type === 'bank') {
       if (!accountHolderName || !accountNumber || !ifscCode) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Missing required fields." });
+        return res.status(400).json({ success: false, message: 'Missing required fields.' });
       }
 
       const bankExists = await prisma.bankDetails.findFirst({
@@ -2200,9 +2047,7 @@ export async function addBankOrUpi(req, res) {
       });
 
       if (bankExists) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Account number already exists." });
+        return res.status(400).json({ success: false, message: 'Account number already exists.' });
       }
 
       const bankDetails = await prisma.bankDetails.create({
@@ -2215,20 +2060,16 @@ export async function addBankOrUpi(req, res) {
       });
 
       if (!bankDetails) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Failed to add bank details." });
+        return res.status(400).json({ success: false, message: 'Failed to add bank details.' });
       }
 
       return res.status(200).json({
         success: true,
-        message: "Bank details added successfully.",
+        message: 'Bank details added successfully.',
       });
-    } else if (type === "upi") {
+    } else if (type === 'upi') {
       if (!upiId) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Missing required fields." });
+        return res.status(400).json({ success: false, message: 'Missing required fields.' });
       }
 
       const upiExists = await prisma.uPI.findFirst({
@@ -2238,9 +2079,7 @@ export async function addBankOrUpi(req, res) {
       });
 
       if (upiExists) {
-        return res
-          .status(400)
-          .json({ success: false, message: "UPI ID already exists." });
+        return res.status(400).json({ success: false, message: 'UPI ID already exists.' });
       }
 
       const upiDetails = await prisma.uPI.create({
@@ -2252,43 +2091,33 @@ export async function addBankOrUpi(req, res) {
       });
 
       if (!upiDetails) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Failed to add UPI ID." });
+        return res.status(400).json({ success: false, message: 'Failed to add UPI ID.' });
       }
 
       return res.status(200).json({
         success: true,
-        message: "UPI ID added successfully.",
+        message: 'UPI ID added successfully.',
       });
     }
   } catch (error) {
-    console.error("Error in adding bank or upi details.", error);
+    console.error('Error in adding bank or upi details.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
 
 export async function updateBankOrUpi(req, res) {
   try {
-    const {
-      id,
-      accountNumber,
-      ifscCode,
-      accountHolderName,
-      upiId,
-      type = "bank",
-      primary = false,
-    } = req.body;
+    const { id, accountNumber, ifscCode, accountHolderName, upiId, type = 'bank', primary = false } = req.body;
 
     const user = req.user;
 
     if (!id) {
       return res.status(400).json({
         success: false,
-        message: "id is required",
+        message: 'id is required',
       });
     }
 
@@ -2299,12 +2128,10 @@ export async function updateBankOrUpi(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
-    if (type === "bank") {
+    if (type === 'bank') {
       const bankAccount = await prisma.bankDetails.findFirst({
         where: {
           id: id,
@@ -2313,9 +2140,7 @@ export async function updateBankOrUpi(req, res) {
       });
 
       if (!bankAccount) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Bank account not found." });
+        return res.status(404).json({ success: false, message: 'Bank account not found.' });
       }
 
       // If setting as primary
@@ -2340,7 +2165,7 @@ export async function updateBankOrUpi(req, res) {
         if (primaryAccountCount <= 1) {
           return res.status(400).json({
             success: false,
-            message: "You must have at least one primary bank account.",
+            message: 'You must have at least one primary bank account.',
           });
         }
       }
@@ -2359,7 +2184,7 @@ export async function updateBankOrUpi(req, res) {
         if (accountExists) {
           return res.status(400).json({
             success: false,
-            message: "Account number already exists.",
+            message: 'Account number already exists.',
           });
         }
       }
@@ -2379,10 +2204,10 @@ export async function updateBankOrUpi(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "Bank details updated successfully.",
+        message: 'Bank details updated successfully.',
         data: updatedBank,
       });
-    } else if (type === "upi") {
+    } else if (type === 'upi') {
       const upiAccount = await prisma.uPI.findFirst({
         where: {
           id: id,
@@ -2391,9 +2216,7 @@ export async function updateBankOrUpi(req, res) {
       });
 
       if (!upiAccount) {
-        return res
-          .status(404)
-          .json({ success: false, message: "UPI ID not found." });
+        return res.status(404).json({ success: false, message: 'UPI ID not found.' });
       }
 
       // Check if UPI ID already exists but with different ID
@@ -2408,9 +2231,7 @@ export async function updateBankOrUpi(req, res) {
         });
 
         if (upiExists) {
-          return res
-            .status(400)
-            .json({ success: false, message: "UPI ID already exists." });
+          return res.status(400).json({ success: false, message: 'UPI ID already exists.' });
         }
       }
 
@@ -2426,7 +2247,7 @@ export async function updateBankOrUpi(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "UPI details updated successfully.",
+        message: 'UPI details updated successfully.',
         data: updatedUpi,
       });
     } else {
@@ -2436,23 +2257,21 @@ export async function updateBankOrUpi(req, res) {
       });
     }
   } catch (error) {
-    console.error("Error in updating bank or upi details.", error);
+    console.error('Error in updating bank or upi details.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
 
 export async function deleteBankOrUpi(req, res) {
   try {
-    const { id, type = "bank" } = req.body;
+    const { id, type = 'bank' } = req.body;
     const user = req.user;
 
     if (!id) {
-      return res
-        .status(400)
-        .json({ success: false, message: "ID is required." });
+      return res.status(400).json({ success: false, message: 'ID is required.' });
     }
 
     const userExists = await prisma.user.findUnique({
@@ -2462,12 +2281,10 @@ export async function deleteBankOrUpi(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
-    if (type === "bank") {
+    if (type === 'bank') {
       // Find the bank account
       const bankAccount = await prisma.bankDetails.findFirst({
         where: {
@@ -2477,9 +2294,7 @@ export async function deleteBankOrUpi(req, res) {
       });
 
       if (!bankAccount) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Bank account not found." });
+        return res.status(404).json({ success: false, message: 'Bank account not found.' });
       }
 
       // Check if it's a primary account
@@ -2494,7 +2309,7 @@ export async function deleteBankOrUpi(req, res) {
         if (bankAccountsCount <= 1 || bankAccount.primary) {
           return res.status(400).json({
             success: false,
-            message: "Cannot delete the primary bank account.",
+            message: 'Cannot delete the primary bank account.',
           });
         }
 
@@ -2529,9 +2344,9 @@ export async function deleteBankOrUpi(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "Bank account deleted successfully.",
+        message: 'Bank account deleted successfully.',
       });
-    } else if (type === "upi") {
+    } else if (type === 'upi') {
       const upiAccount = await prisma.uPI.findFirst({
         where: {
           upiId: id,
@@ -2540,9 +2355,7 @@ export async function deleteBankOrUpi(req, res) {
       });
 
       if (!upiAccount) {
-        return res
-          .status(404)
-          .json({ success: false, message: "UPI ID not found." });
+        return res.status(404).json({ success: false, message: 'UPI ID not found.' });
       }
 
       // Delete the UPI
@@ -2554,7 +2367,7 @@ export async function deleteBankOrUpi(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "UPI ID deleted successfully.",
+        message: 'UPI ID deleted successfully.',
       });
     } else {
       return res.status(400).json({
@@ -2563,10 +2376,10 @@ export async function deleteBankOrUpi(req, res) {
       });
     }
   } catch (error) {
-    console.error("Error in deleting bank or upi details.", error);
+    console.error('Error in deleting bank or upi details.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -2582,9 +2395,7 @@ export async function getBankAndUpis(req, res) {
     });
 
     if (!userExist) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const bankAccountNumbers = await prisma.bankDetails.findMany({
@@ -2608,7 +2419,7 @@ export async function getBankAndUpis(req, res) {
     if (!bankAccountNumbers || !upiIds) {
       return res.status(400).json({
         success: false,
-        message: "Unable to fetch bank and upi details.",
+        message: 'Unable to fetch bank and upi details.',
       });
     }
     const responseData = {
@@ -2622,13 +2433,13 @@ export async function getBankAndUpis(req, res) {
         bankAccountNumbers: responseData.bankAccountNumbers,
         upiIds: responseData.upiIds,
       },
-      message: "Fetched bank and upi details successfully.",
+      message: 'Fetched bank and upi details successfully.',
     });
   } catch (error) {
-    console.error("Error in fetching bank and upi details.", error);
+    console.error('Error in fetching bank and upi details.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -2641,15 +2452,11 @@ export async function setMPIN(req, res) {
     const { mpin, phone } = req.body;
 
     if (!mpin || !phone) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields." });
+      return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
 
     if (mpin.trim().length !== 4) {
-      return res
-        .status(400)
-        .json({ success: false, message: "MPIN should be 4 digits." });
+      return res.status(400).json({ success: false, message: 'MPIN should be 4 digits.' });
     }
 
     const userExists = await prisma.user.findUnique({
@@ -2659,9 +2466,7 @@ export async function setMPIN(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const wallet = await prisma.wallet.findFirst({
@@ -2671,27 +2476,25 @@ export async function setMPIN(req, res) {
     });
 
     if (!wallet) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Wallet not found." });
+      return res.status(400).json({ success: false, message: 'Wallet not found.' });
     }
 
     // const otp = Math.floor(1000 + Math.random() * 9000);
     // mpinOtpMap[user.id] = { mpin, otp };
     const otp = await sendOtp(phone);
-    console.log("mpin setup otp --", otp);
+    console.log('mpin setup otp --', otp);
 
     //send otp to user using twilio, yet to implement
 
     return res.status(200).json({
       success: true,
-      message: "OTP sent successfully.",
+      message: 'OTP sent successfully.',
     });
   } catch (error) {
-    console.error("Error in setting MPIN.", error);
+    console.error('Error in setting MPIN.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -2703,9 +2506,7 @@ export async function verifyMpinOtp(req, res) {
     const { otp, phone, mpin } = req.body;
 
     if (!otp || !phone || !mpin) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields." });
+      return res.status(400).json({ success: false, message: 'Missing required fields.' });
     }
 
     const userExists = await prisma.user.findUnique({
@@ -2715,9 +2516,7 @@ export async function verifyMpinOtp(req, res) {
     });
 
     if (!userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User not found." });
+      return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
     const wallet = await prisma.wallet.findFirst({
@@ -2727,9 +2526,7 @@ export async function verifyMpinOtp(req, res) {
     });
 
     if (!wallet) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Wallet not found." });
+      return res.status(400).json({ success: false, message: 'Wallet not found.' });
     }
 
     // const mpinOtp = mpinOtpMap[user.id];
@@ -2742,14 +2539,14 @@ export async function verifyMpinOtp(req, res) {
     });
 
     if (!otpStored) {
-      return res.status(404).json({ message: "No otp found" });
+      return res.status(404).json({ message: 'No otp found' });
     }
     const otpValid = await bcrypt.compare(otp, otpStored.phoneCodeHash);
     if (!otpValid) {
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(400).json({ message: 'Invalid OTP' });
     }
     if (otpValid) {
-      console.log("otp validate", otpValid);
+      console.log('otp validate', otpValid);
     }
 
     // if (otp !== "000000") {
@@ -2767,13 +2564,13 @@ export async function verifyMpinOtp(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "MPIN set successfully.",
+      message: 'MPIN set successfully.',
     });
   } catch (error) {
-    console.error("Error in verifying MPIN OTP.", error);
+    console.error('Error in verifying MPIN OTP.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -2793,7 +2590,7 @@ export async function getAllTimeEarnings(req, res) {
     if (!userExists) {
       return res.status(400).json({
         success: false,
-        message: "User not found.",
+        message: 'User not found.',
       });
     }
 
@@ -2806,7 +2603,7 @@ export async function getAllTimeEarnings(req, res) {
     if (!wallet) {
       return res.status(400).json({
         success: false,
-        message: "Wallet not found.",
+        message: 'Wallet not found.',
       });
     }
 
@@ -2822,7 +2619,7 @@ export async function getAllTimeEarnings(req, res) {
         gte: startDate,
         lte: endDate,
       },
-      status: "COMPLETED",
+      status: 'COMPLETED',
     };
 
     if (productType) {
@@ -2840,18 +2637,18 @@ export async function getAllTimeEarnings(req, res) {
     });
 
     const defaultEr = [
-      { month: "Jan", earnings: 0 },
-      { month: "Feb", earnings: 0 },
-      { month: "Mar", earnings: 0 },
-      { month: "Apr", earnings: 0 },
-      { month: "May", earnings: 0 },
-      { month: "Jun", earnings: 0 },
-      { month: "Jul", earnings: 0 },
-      { month: "Aug", earnings: 0 },
-      { month: "Sep", earnings: 0 },
-      { month: "Oct", earnings: 0 },
-      { month: "Nov", earnings: 0 },
-      { month: "Dec", earnings: 0 },
+      { month: 'Jan', earnings: 0 },
+      { month: 'Feb', earnings: 0 },
+      { month: 'Mar', earnings: 0 },
+      { month: 'Apr', earnings: 0 },
+      { month: 'May', earnings: 0 },
+      { month: 'Jun', earnings: 0 },
+      { month: 'Jul', earnings: 0 },
+      { month: 'Aug', earnings: 0 },
+      { month: 'Sep', earnings: 0 },
+      { month: 'Oct', earnings: 0 },
+      { month: 'Nov', earnings: 0 },
+      { month: 'Dec', earnings: 0 },
     ];
 
     // Create a copy to avoid modifying the original
@@ -2874,9 +2671,7 @@ export async function getAllTimeEarnings(req, res) {
         productBreakdown[prodType] = JSON.parse(JSON.stringify(defaultEr));
       }
 
-      productBreakdown[prodType][month].earnings += Number(
-        transaction.amountAfterFee
-      );
+      productBreakdown[prodType][month].earnings += Number(transaction.amountAfterFee);
     });
 
     // Get available product types for filtering UI
@@ -2887,14 +2682,11 @@ export async function getAllTimeEarnings(req, res) {
       select: {
         productType: true,
       },
-      distinct: ["productType"],
+      distinct: ['productType'],
     });
 
     // Calculate total earnings for the year
-    const totalEarnings = monthlyEarnings.reduce(
-      (total, month) => total + month.earnings,
-      0
-    );
+    const totalEarnings = monthlyEarnings.reduce((total, month) => total + month.earnings, 0);
 
     return res.status(200).json({
       success: true,
@@ -2903,16 +2695,16 @@ export async function getAllTimeEarnings(req, res) {
         productBreakdown,
         totalEarnings,
         year: Number(year),
-        filter: productType || "All",
+        filter: productType || 'All',
         availableFilters: availableProductTypes.map((item) => item.productType),
       },
-      message: "Monthly earnings fetched successfully.",
+      message: 'Monthly earnings fetched successfully.',
     });
   } catch (error) {
-    console.error("Error in getting all time earnings:", error);
+    console.error('Error in getting all time earnings:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -2943,12 +2735,12 @@ export async function getFilterEarningsAndWithdrawal(req, res) {
       startDate = new Date(today.getFullYear() - 1, 0, 1);
       endDate = new Date(today.getFullYear() - 1, 11, 31);
     } else if (CustomRange) {
-      const [start, end] = CustomRange.split(",");
+      const [start, end] = CustomRange.split(',');
       startDate = new Date(start);
       endDate = new Date(end);
     } else if (AllTime) {
-      startDate = null
-      endDate = null
+      startDate = null;
+      endDate = null;
     }
 
     const whereClause = {
@@ -2974,7 +2766,7 @@ export async function getFilterEarningsAndWithdrawal(req, res) {
           gte: startDate,
           lte: endDate,
         },
-        status: "SUCCESS",
+        status: 'SUCCESS',
       },
 
       _sum: {
@@ -2984,7 +2776,7 @@ export async function getFilterEarningsAndWithdrawal(req, res) {
 
     const totalEarnings = totalEarningsData._sum.amountAfterFee || 0;
     const totalWithdrawals = totalWithdrawalsData._sum.amount || 0;
-    console.log("totalEarnings", totalEarnings);
+    console.log('totalEarnings', totalEarnings);
     console.log(totalWithdrawals);
     return res.status(200).json({
       success: true,
@@ -2997,7 +2789,7 @@ export async function getFilterEarningsAndWithdrawal(req, res) {
     console.error(error.meessage);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
       error: error.message,
     });
   }

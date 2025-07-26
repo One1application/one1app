@@ -52,6 +52,11 @@ enum TransactionStatus {
   FAILED
 }
 
+enum PaymentProvider {
+  Razorpay
+  PhonePay
+}
+
 // TODO: userID schema
 model User {
   chatId                      String?                   @unique
@@ -72,6 +77,7 @@ model User {
   createdPayingUps            PayingUp[]
   createdTelegrams            Telegram[]
   wallet                      Wallet?
+  paymentProvider             PaymentProvider?          @default(Razorpay)
   CoursePurchasers            CoursePurchasers[]
   businessInfo                BusinessInfo?
   kycRecords                  kycRecords?
@@ -185,22 +191,22 @@ model BusinessInfo {
 }
 
 model Transaction {
-  id              String            @id @default(uuid())
-  walletId        String
-  wallet          Wallet            @relation(fields: [walletId], references: [id])
-  amount          Float
-  amountAfterFee  Float?
-  productId       String
-  productType     ProductType
-  buyerId         String
-  buyer           User              @relation(name: "Buyer", fields: [buyerId], references: [id], onDelete: Cascade)
-  creatorId       String
-  creator         User              @relation(name: "Creator", fields: [creatorId], references: [id], onDelete: Cascade)
-  modeOfPayment   String
-  status          TransactionStatus @default(PENDING)
-  phonePayTransId String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id             String            @id @default(uuid())
+  walletId       String
+  wallet         Wallet            @relation(fields: [walletId], references: [id])
+  amount         Float
+  amountAfterFee Float?
+  productId      String
+  productType    ProductType
+  buyerId        String
+  buyer          User              @relation(name: "Buyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  creatorId      String
+  creator        User              @relation(name: "Creator", fields: [creatorId], references: [id], onDelete: Cascade)
+  modeOfPayment  String
+  status         TransactionStatus @default(PENDING)
+  txnID          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 }
 
 model Withdrawal {
@@ -358,7 +364,6 @@ model PayingUpTicket {
   orderId    String?
 }
 
-
 model Telegram {
   id                    String                 @id @unique @default(uuid())
   coverImage            String
@@ -381,21 +386,22 @@ model Telegram {
 }
 
 model TelegramSubscription {
-  id            String    @id @unique @default(uuid())
-  telegramId    String
-  telegram      Telegram  @relation(fields: [telegramId], references: [id], onDelete: Cascade)
+  id             String       @id @unique @default(uuid())
+  telegramId     String
+  telegram       Telegram     @relation(fields: [telegramId], references: [id], onDelete: Cascade)
   subscriptionId String
-  subscription  Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  boughtById    String
-  boughtBy      User      @relation(fields: [boughtById], references: [id], onDelete: Cascade)
-  validDays     Int?
-  expireDate    DateTime?
-  isLifetime    Boolean   @default(false)
-  isExpired     Boolean   @default(false)
-  paymentId     String?   @unique
-  orderId       String?   @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  boughtById     String
+  boughtBy       User         @relation(fields: [boughtById], references: [id], onDelete: Cascade)
+  validDays      Int?
+  expireDate     DateTime?
+  isLifetime     Boolean      @default(false)
+  isExpired      Boolean      @default(false)
+  paymentId      String?      @unique
+  orderId        String?      @unique
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
   @@unique([telegramId, boughtById, isExpired]) // Prevent active duplicate subscriptions
 }
 
@@ -404,25 +410,27 @@ model Discount {
   code       String
   percent    Float
   expiry     DateTime
-  plan       String?  
+  plan       String?
   telegramId String
   telegram   Telegram @relation("TelegramDiscounts", fields: [telegramId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-   @@unique([telegramId, code])
+
+  @@unique([telegramId, code])
 }
 
 model Subscription {
-  id         String   @id @unique @default(uuid())
-  type       String
-  price      Float
-  validDays  Int?
-  isLifetime Boolean  @default(false)
-  telegramId String
-  telegram   Telegram @relation("TelegramSubscriptions", fields: [telegramId], references: [id], onDelete: Cascade)
+  id                    String                 @id @unique @default(uuid())
+  type                  String
+  price                 Float
+  validDays             Int?
+  isLifetime            Boolean                @default(false)
+  telegramId            String
+  telegram              Telegram               @relation("TelegramSubscriptions", fields: [telegramId], references: [id], onDelete: Cascade)
   telegramSubscriptions TelegramSubscription[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
   @@unique([telegramId, type])
 }
 
