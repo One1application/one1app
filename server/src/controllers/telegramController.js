@@ -41,6 +41,7 @@ export async function createTelegram(req, res) {
       gstDetails,
       courseDetails,
       inviteLink,
+      sessionString, // <-- accept sessionString
     } = req.body;
     const user = req.user;
 
@@ -55,6 +56,7 @@ export async function createTelegram(req, res) {
       gstDetails,
       courseDetails,
       inviteLink,
+      sessionString, // <-- log it for now
     });
 
     // Check bot admin status
@@ -1518,68 +1520,38 @@ export async function getExpiringSubscriptions(req, res) {
 }
 
 export async function getOwnedGroups(req, res) {
+  let sessionString;
+  if (process.env.NODE_ENV === 'development') {
+    sessionString = req.headers['x-session-string'];
+  } else {
+    sessionString = req.cookies['telegramSession'];
+  }
+  if (!sessionString) {
+    return res.status(401).json({ success: false, message: "Session string missing." });
+  }
+
   try {
-    const { telegramSession: sessionString } = req.cookies;
-
-    if (!sessionString) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required. Please log in to Telegram.",
-      });
-    }
-
-    const client = new TelegramClient(
-      new StringSession(sessionString),
-      apiId,
-      apiHash,
-      { connectionRetries: 3 }
-    );
-
+    const client = new TelegramClient(new StringSession(sessionString), apiId, apiHash, { connectionRetries: 5 });
     await client.connect();
 
-    if (!(await client.isUserAuthorized())) {
-      return res.status(401).json({
-        success: false,
-        message: "Telegram session invalid. Please log in again.",
-      });
-    }
-
     const dialogs = await client.getDialogs({});
-    const ownedChats = new Map();
+    // Filter groups and map to plain objects
+    const groups = dialogs
+      .filter(d => d.isGroup)
+      .map(group => ({
+        id: group.id,
+        title: group.title,
+        username: group.username,
+        accessHash: group.accessHash,
+        // add other needed fields only
+      }));
 
-    for (const dialog of dialogs) {
-      // We're interested in groups (basic groups) and supergroups (which are channels with megagroup=true)
-      const isGroup = dialog.isGroup;
-      const isSupergroup = dialog.isChannel && dialog.entity?.megagroup;
+    await client.disconnect();
 
-      if (dialog.entity?.creator && (isGroup || isSupergroup)) {
-        const title = dialog.title;
-        const currentEntry = ownedChats.get(title);
-
-        // If we find a supergroup, it should always replace a basic group with the same title.
-        if (!currentEntry || (isSupergroup && !currentEntry.isSupergroup)) {
-          ownedChats.set(title, {
-            id: String(dialog.id),
-            title: title,
-            username: dialog.entity.username || null,
-            type: "Group",
-            isSupergroup: isSupergroup, // temp flag for deduplication
-          });
-        }
-      }
-    }
-
-    // Clean up the temporary flag before sending to the client
-    const groups = Array.from(ownedChats.values()).map(
-      ({ isSupergroup, ...rest }) => rest
-    );
-
-    return res.status(200).json({ success: true, payload: { groups: groups } });
+    return res.status(200).json({ success: true, payload: { groups } });
   } catch (error) {
     console.error("Error fetching owned groups:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Error fetching owned groups" });
+    return res.status(500).json({ success: false, message: "Internal server error." });
   }
 }
 
@@ -1726,6 +1698,7 @@ export async function signInTelegram(req, res) {
 
     return res.status(200).json({
       success: true,
+      sessionString: finalSessionString, // <-- add this
       user: {
         id: signInResult.user?.id,
         firstName: signInResult.user?.first_name,
