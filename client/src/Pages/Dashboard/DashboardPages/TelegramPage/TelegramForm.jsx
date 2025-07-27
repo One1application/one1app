@@ -180,6 +180,7 @@ const Telgrampage = () => {
   const [ownedGroups, setOwnedGroups] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(true); // Start with loading true
   const [isTelegramAuthenticated, setIsTelegramAuthenticated] = useState(false);
+  const [finalSessionString, setFinalSessionString] = useState("");
 
   // new screen states
 
@@ -423,8 +424,9 @@ const Telgrampage = () => {
   const loadGroups = async () => {
     setLoadingGroups(true);
     try {
-      const res = await fetchOwnedGroups();
-      const groups = res.data.payload.groups || [];
+            const telegramSession = localStorage.getItem('telegramSession');
+      const groupsResponse = await fetchOwnedGroups(telegramSession);
+      const groups = groupsResponse.data.payload.groups || [];
       // The backend already sends a unique list, so no client-side deduplication is needed.
       setOwnedGroups(groups);
       setIsTelegramAuthenticated(true);
@@ -482,10 +484,12 @@ const Telgrampage = () => {
             ? `https://t.me/${selectedGroup.username}`
             : inviteLink,
         discounts,
+        sessionString: finalSessionString, // <-- include session string
       };
 
       console.log("formBody==>", body);
-      await createTelegram(body);
+      const telegramSession = localStorage.getItem('telegramSession');
+      await createTelegram(body, telegramSession);
       window.location.href = "/dashboard/telegram";
       toast.success("Telegram Is in the Development Phase");
     } catch (error) {
@@ -523,12 +527,17 @@ const Telgrampage = () => {
     setVerifyingCode(true);
 
     try {
-      await signInTelegramClient({
+      const response = await signInTelegramClient({
         phoneNumber: `91 ${mobileNumber}`,
         phoneCodeHash,
         code: fullOtp,
         sessionString: loginSessionString,
       });
+      if (response.data.success && response.data.sessionString) {
+        setFinalSessionString(response.data.sessionString); // <-- store session string
+        localStorage.setItem('telegramSession', response.data.sessionString); // <-- store in localStorage
+        setIsTelegramAuthenticated(true);
+      }
       toast.success("Successfully logged in to Telegram!");
       setOwnedGroups([]); // Clear the list before fetching new groups
       loadGroups(); // Fetch groups directly after successful login

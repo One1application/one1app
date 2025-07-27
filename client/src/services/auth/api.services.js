@@ -316,8 +316,14 @@ export const verifyInviteLink = async (inviteLink) => {
   return response;
 };
 
-export const createTelegram = async (body) => {
-  const response = await servicesAxiosInstance.post('/telegram/create-telegrams', body);
+export const createTelegram = async (body, telegramSession) => {
+  const response = await servicesAxiosInstance.post(
+    "/telegram/create-telegrams",
+    body,
+    telegramSession
+      ? { headers: { 'x-telegram-session': telegramSession } }
+      : undefined
+  );
   return response;
 };
 
@@ -498,11 +504,14 @@ export const fetchFilterEarningsAndWithdrawals = async ({ fetchRange }) => {
 
 // Fetch Telegram groups owned by the user
 export const fetchOwnedGroups = async () => {
-  // The session is identified by the httpOnly cookie, so no body is needed.
-  const response = await servicesAxiosInstance.get('/telegram/get-owned-groups');
+  const sessionString = localStorage.getItem('telegramSession');
+  const response = await servicesAxiosInstance.get("/telegram/get-owned-groups", {
+    headers: {
+      'x-session-string': sessionString,
+    },
+  });
   return response;
 };
-
 // Telegram login API services
 export const sendTelegramLoginCode = async (phoneNumber) => {
   const response = await servicesAxiosInstance.post('/telegram/send-login-code', { phoneNumber });
