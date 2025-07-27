@@ -1,7 +1,24 @@
-import { Router } from "express";
-import { createTelegram, getCreatorTelegram, getTelegramById, getOwnedGroups, sendLoginCode, signInTelegram, deleteTelegram, editTelegram, editDiscount, deleteDiscount, createSubscription, editSubscription, deleteSubscription, createDiscount, applyCoupon, purchaseTelegramSubscription, verifyTelegramPaymentCallback } from "../controllers/telegramController.js";
-import { authMiddleware } from "../middlewares/authMiddleware.js";
-
+import { Router } from 'express';
+import {
+  applyCoupon,
+  createDiscount,
+  createSubscription,
+  createTelegram,
+  deleteDiscount,
+  deleteSubscription,
+  deleteTelegram,
+  editDiscount,
+  editSubscription,
+  editTelegram,
+  getCreatorTelegram,
+  getOwnedGroups,
+  getTelegramById,
+  purchaseTelegramSubscription,
+  sendLoginCode,
+  signInTelegram,
+  verifyTelegramPaymentCallback,
+} from '../controllers/telegramController.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 export const telegramRouter = Router();
 
@@ -15,16 +32,12 @@ telegramRouter.post('/:telegramId/subscriptions', authMiddleware, createSubscrip
 telegramRouter.patch('/:telegramId/subscriptions/:subscriptionId', authMiddleware, editSubscription);
 telegramRouter.delete('/:telegramId/subscriptions/:subscriptionId', authMiddleware, deleteSubscription);
 
-
 telegramRouter.get('/get-creator-telegrams', authMiddleware, getCreatorTelegram);
-telegramRouter.get('/get-telegram-by-id/:telegramId', authMiddleware, getTelegramById);
-
+telegramRouter.get('/get-telegram-by-id/:telegramId', getTelegramById);
 
 telegramRouter.post('/purchase-telegram', authMiddleware, purchaseTelegramSubscription);
 telegramRouter.post('/verify-telegram-payment', authMiddleware, verifyTelegramPaymentCallback);
 telegramRouter.post('/apply-coupon', authMiddleware, applyCoupon);
-
-
 
 // Add route to fetch owned telegram groups
 telegramRouter.get('/get-owned-groups', authMiddleware, getOwnedGroups);

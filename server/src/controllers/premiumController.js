@@ -1,14 +1,8 @@
-import prisma from "../db/dbClient.js";
-import { upload } from "../config/multer.js";
-import { uploadOnImageKit } from "../config/imagekit.js";
-import { randomUUID } from "crypto";
-import { StandardCheckoutPayRequest } from "pg-sdk-node";
-import { PhonePayClient } from "../config/phonepay.js";
-
-import { log } from "console";
-
-import { z } from "zod";
-
+import { randomUUID } from 'crypto';
+import { StandardCheckoutPayRequest } from 'pg-sdk-node';
+import { PhonePayClient } from '../config/phonepay.js';
+import { razorpay } from '../config/razorpay.js';
+import prisma from '../db/dbClient.js';
 // const discountSchema = z.array(
 //   z.object({
 //     id: z.number().or(z.string().regex(/^\d+$/, "ID must be a numeric string")),
@@ -21,23 +15,21 @@ import { z } from "zod";
 // ).optional();
 
 export async function createContent(req, res) {
-  const { title, category, unlockPrice, discount, expiryDate, content } =
-    req.body;
+  const { title, category, unlockPrice, discount, expiryDate, content } = req.body;
   const user = req.user;
 
   try {
     if (!title || !category || !unlockPrice || !content) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields.",
+        message: 'Missing required fields.',
       });
     }
 
-    if (typeof content !== "object") {
+    if (typeof content !== 'object') {
       return res.status(400).json({
         success: false,
-        message:
-          "Content must be an object with text, file, or image properties.",
+        message: 'Content must be an object with text, file, or image properties.',
       });
     }
 
@@ -45,22 +37,22 @@ export async function createContent(req, res) {
     if (!text && !file && !image) {
       return res.status(400).json({
         success: false,
-        message: "Content must include at least one of: text, file, or image.",
+        message: 'Content must include at least one of: text, file, or image.',
       });
     }
 
     if (isNaN(parseFloat(unlockPrice)) || parseFloat(unlockPrice) <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Invalid unlock price. Price must be greater than zero.",
+        message: 'Invalid unlock price. Price must be greater than zero.',
       });
     }
 
     if (discount) {
-      if (typeof discount !== "object") {
+      if (typeof discount !== 'object') {
         return res.status(400).json({
           success: false,
-          message: "Discount must be an object.",
+          message: 'Discount must be an object.',
         });
       }
 
@@ -76,13 +68,11 @@ export async function createContent(req, res) {
       }
       if (
         discount.percentage &&
-        (isNaN(parseFloat(discount.percentage)) ||
-          parseFloat(discount.percentage) < 0 ||
-          parseFloat(discount.percentage) > 100)
+        (isNaN(parseFloat(discount.percentage)) || parseFloat(discount.percentage) < 0 || parseFloat(discount.percentage) > 100)
       ) {
         return res.status(400).json({
           success: false,
-          message: "Invalid discount percentage. Should be between 0 and 100.",
+          message: 'Invalid discount percentage. Should be between 0 and 100.',
         });
       }
     }
@@ -92,8 +82,8 @@ export async function createContent(req, res) {
     if (discount.expiry) {
       const expDate = new Date(discount.expiry);
       const today = new Date();
-      console.log("expiry date:", expDate);
-      console.log("today date:", today);
+      console.log('expiry date:', expDate);
+      console.log('today date:', today);
 
       // Clear time portion for date comparison
       today.setHours(0, 0, 0, 0);
@@ -102,15 +92,14 @@ export async function createContent(req, res) {
       if (isNaN(expDate.getTime())) {
         return res.status(400).json({
           success: false,
-          message: "Invalid expiry date format.",
+          message: 'Invalid expiry date format.',
         });
       }
 
       if (expDate < today) {
         return res.status(400).json({
           success: false,
-          message:
-            "Expiry date of coupon date must be greater than or equal to today's date.",
+          message: "Expiry date of coupon date must be greater than or equal to today's date.",
         });
       }
 
@@ -131,16 +120,16 @@ export async function createContent(req, res) {
 
     return res.status(201).json({
       success: true,
-      message: "Content created successfully.",
+      message: 'Content created successfully.',
       contentId: premiumContent.id,
     });
   } catch (error) {
-    console.error("Error in creating content:", error);
+    console.error('Error in creating content:', error);
 
     return res.status(500).json({
       success: false,
-      message: "Error in creating content.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      message: 'Error in creating content.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 }
@@ -148,15 +137,14 @@ export async function createContent(req, res) {
 // edit premium content
 export async function editContent(req, res) {
   const { contentId } = req.params;
-  const { title, category, unlockPrice, discount, expiryDate, content } =
-    req.body;
+  const { title, category, unlockPrice, discount, expiryDate, content } = req.body;
   const user = req.user;
 
   try {
     if (!contentId) {
       return res.status(400).json({
         success: false,
-        message: "Content ID is required.",
+        message: 'Content ID is required.',
       });
     }
 
@@ -169,14 +157,14 @@ export async function editContent(req, res) {
     if (!existingContent) {
       return res.status(404).json({
         success: false,
-        message: "Premium content not found.",
+        message: 'Premium content not found.',
       });
     }
 
     if (existingContent.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to edit this content.",
+        message: 'You are not authorized to edit this content.',
       });
     }
 
@@ -194,18 +182,17 @@ export async function editContent(req, res) {
       if (isNaN(parseFloat(unlockPrice)) || parseFloat(unlockPrice) <= 0) {
         return res.status(400).json({
           success: false,
-          message: "Invalid unlock price. Price must be greater than zero.",
+          message: 'Invalid unlock price. Price must be greater than zero.',
         });
       }
       updateData.unlockPrice = parseFloat(unlockPrice);
     }
 
     if (content !== undefined) {
-      if (typeof content !== "object") {
+      if (typeof content !== 'object') {
         return res.status(400).json({
           success: false,
-          message:
-            "Content must be an object with text, file, or image properties.",
+          message: 'Content must be an object with text, file, or image properties.',
         });
       }
 
@@ -213,8 +200,7 @@ export async function editContent(req, res) {
       if (!text && !file && !image) {
         return res.status(400).json({
           success: false,
-          message:
-            "Content must include at least one of: text, file, or image.",
+          message: 'Content must include at least one of: text, file, or image.',
         });
       }
 
@@ -224,7 +210,7 @@ export async function editContent(req, res) {
     if (discount !== undefined) {
       if (discount === null) {
         updateData.discount = null;
-      } else if (typeof discount === "object") {
+      } else if (typeof discount === 'object') {
         // Validate discount code contains only uppercase letters and numbers
         if (d.code) {
           const codeRegex = /^[A-Z0-9]+$/; // Regex for only uppercase letters and numbers
@@ -238,21 +224,18 @@ export async function editContent(req, res) {
         if (
           d.percent !== undefined &&
           d.percent !== null &&
-          (isNaN(parseFloat(discount.percentage)) ||
-            parseFloat(discount.percentage) < 1 ||
-            parseFloat(discount.percentage) > 100)
+          (isNaN(parseFloat(discount.percentage)) || parseFloat(discount.percentage) < 1 || parseFloat(discount.percentage) > 100)
         ) {
           return res.status(400).json({
             success: false,
-            message:
-              "Invalid discount percentage. Should be between 1 and 100.",
+            message: 'Invalid discount percentage. Should be between 1 and 100.',
           });
         }
         updateData.discount = discount;
       } else {
         return res.status(400).json({
           success: false,
-          message: "Discount must be an object or null.",
+          message: 'Discount must be an object or null.',
         });
       }
     }
@@ -270,15 +253,14 @@ export async function editContent(req, res) {
         if (isNaN(expDate.getTime())) {
           return res.status(400).json({
             success: false,
-            message: "Invalid expiry date format.",
+            message: 'Invalid expiry date format.',
           });
         }
 
         if (expDate < today) {
           return res.status(400).json({
             success: false,
-            message:
-              "Expiry date must be greater than or equal to today's date.",
+            message: "Expiry date must be greater than or equal to today's date.",
           });
         }
 
@@ -289,7 +271,7 @@ export async function editContent(req, res) {
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         success: false,
-        message: "No valid fields provided for update.",
+        message: 'No valid fields provided for update.',
       });
     }
 
@@ -303,7 +285,7 @@ export async function editContent(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Content updated successfully.",
+      message: 'Content updated successfully.',
       content: {
         id: updatedContent.id,
         title: updatedContent.title,
@@ -312,12 +294,12 @@ export async function editContent(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error in updating content:", error);
+    console.error('Error in updating content:', error);
 
     return res.status(500).json({
       success: false,
-      message: "Error in updating content.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      message: 'Error in updating content.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 }
@@ -330,7 +312,7 @@ export async function getCreatorContents(req, res) {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: 'User not found',
       });
     }
 
@@ -345,35 +327,35 @@ export async function getCreatorContents(req, res) {
               },
             },
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
         },
       },
     });
 
     return res.status(200).json({
       success: true,
-      message: "Fetched premium contents successfully.",
+      message: 'Fetched premium contents successfully.',
       payload: contents,
     });
   } catch (error) {
-    console.error("Error in fetching premium contents.", error);
+    console.error('Error in fetching premium contents.', error);
     return res.status(500).json({
       success: false,
-      message: "Error in fetching premium contetnts.",
+      message: 'Error in fetching premium contetnts.',
     });
   }
 }
 
 export async function deleteContent(req, res) {
   const { contentId } = req.params;
-   
+
   const user = req.user;
 
   try {
     if (!contentId) {
       return res.status(400).json({
         success: false,
-        message: "Content ID is required.",
+        message: 'Content ID is required.',
       });
     }
 
@@ -383,19 +365,19 @@ export async function deleteContent(req, res) {
       },
     });
 
-    console.log(existingContent)
+    console.log(existingContent);
 
     if (!existingContent) {
       return res.status(404).json({
         success: false,
-        message: "Premium content not found.",
+        message: 'Premium content not found.',
       });
     }
 
     if (existingContent.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to delete this content.",
+        message: 'You are not authorized to delete this content.',
       });
     }
 
@@ -409,7 +391,7 @@ export async function deleteContent(req, res) {
     if (accessCount > 0) {
       return res.status(400).json({
         success: false,
-        message: "Cannot delete content that has been purchased by users.",
+        message: 'Cannot delete content that has been purchased by users.',
       });
     }
 
@@ -422,15 +404,15 @@ export async function deleteContent(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Content deleted successfully.",
+      message: 'Content deleted successfully.',
     });
   } catch (error) {
-    console.error("Error in deleting content:", error);
+    console.error('Error in deleting content:', error);
 
     return res.status(500).json({
       success: false,
-      message: "Error in deleting content.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      message: 'Error in deleting content.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 }
@@ -443,7 +425,7 @@ export const getPremiumContentById = async (req, res) => {
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: 'User not found',
       });
     }
 
@@ -459,12 +441,11 @@ export const getPremiumContentById = async (req, res) => {
         },
       },
     });
-    
 
     if (!content) {
       return res.status(404).json({
         success: false,
-        message: "Premium content not found.",
+        message: 'Premium content not found.',
       });
     }
 
@@ -478,7 +459,7 @@ export const getPremiumContentById = async (req, res) => {
         },
       },
     });
-    console.log("access", access);
+    console.log('access', access);
 
     //
 
@@ -486,7 +467,7 @@ export const getPremiumContentById = async (req, res) => {
     if (content.createdById === userId || access) {
       return res.status(200).json({
         success: true,
-        message: "premium content fetch successfully.",
+        message: 'premium content fetch successfully.',
         content: content,
       });
     }
@@ -506,15 +487,15 @@ export const getPremiumContentById = async (req, res) => {
       });
       return res.status(200).json({
         success: true,
-        message: "You have limited access to this premium content.",
+        message: 'You have limited access to this premium content.',
         content: content,
       });
     }
   } catch (error) {
-    console.error("Error fetching content:", error);
+    console.error('Error fetching content:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to retrieve premium content",
+      message: 'Failed to retrieve premium content',
       error: error.message,
     });
   }
@@ -529,7 +510,7 @@ export const purchasePremiumContent = async (req, res) => {
     if (!contentId) {
       return res.status(400).json({
         success: false,
-        message: "Content id is required.",
+        message: 'Content id is required.',
       });
     }
 
@@ -544,6 +525,7 @@ export const purchasePremiumContent = async (req, res) => {
         createdBy: {
           select: {
             name: true,
+            paymentProvider: true,
           },
         },
         access: user
@@ -556,13 +538,13 @@ export const purchasePremiumContent = async (req, res) => {
       },
     });
 
-    console.log(content, "content");
-    console.log("discount", content.discount);
+    console.log(content, 'content');
+    console.log('discount', content.discount);
 
     if (!content) {
       return res.status(400).json({
         success: false,
-        message: "Content not found.",
+        message: 'Content not found.',
       });
     }
 
@@ -570,14 +552,14 @@ export const purchasePremiumContent = async (req, res) => {
       if (content.access.length > 0) {
         return res.status(400).json({
           success: false,
-          message: "You already have access to this content.",
+          message: 'You already have access to this content.',
         });
       }
 
       if (content.createdById == user.id) {
         return res.status(400).json({
           success: false,
-          message: "You cannot buy your own content.",
+          message: 'You cannot buy your own content.',
         });
       }
     }
@@ -589,7 +571,7 @@ export const purchasePremiumContent = async (req, res) => {
       if (!matchingDiscount) {
         return res.status(400).json({
           success: false,
-          message: "Invalid discount code.",
+          message: 'Invalid discount code.',
         });
       }
       const expiryDate = new Date(discountData.expiry);
@@ -597,17 +579,15 @@ export const purchasePremiumContent = async (req, res) => {
       if (currentDate > expiryDate) {
         return res.status(400).json({
           success: false,
-          message: "Coupon code has expired.",
+          message: 'Coupon code has expired.',
         });
       }
-      discountPrice = parseInt(
-        content.unlockPrice * Number(discountData.percent / 100).toFixed(2)
-      );
+      discountPrice = parseInt(content.unlockPrice * Number(discountData.percent / 100).toFixed(2));
     }
 
     let totalAmount = Math.round(content.unlockPrice - discountPrice);
     if (totalAmount < 0) totalAmount = 0;
-    console.log("totalAmount", totalAmount);
+    console.log('totalAmount', totalAmount);
     if (validateOnly) {
       return res.status(200).json({
         success: true,
@@ -619,30 +599,68 @@ export const purchasePremiumContent = async (req, res) => {
       });
     }
 
-    const orderId = randomUUID();
+    if (content.createdBy.paymentProvider === 'PhonePay') {
+      const orderId = randomUUID();
+      console.log('orderId', orderId);
+      const request = StandardCheckoutPayRequest.builder()
+        .merchantOrderId(orderId)
+        .amount(totalAmount * 100)
+        .redirectUrl(`${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&contentId=${content.id}&discountedPrice=${totalAmount}`)
+        .build();
 
-    const request = StandardCheckoutPayRequest.builder()
-      .merchantOrderId(orderId)
-      .amount(totalAmount * 100)
-      .redirectUrl(
-        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&contentId=${contentId}&discountedPrice=${totalAmount}`
-      )
-      .build();
+      const response = await PhonePayClient.pay(request);
+      console.log('response from paying up', response);
+      return res.status(200).json({
+        success: true,
+        payload: {
+          redirectUrl: response.redirectUrl,
+          paymentProvider: 'PhonePay',
+          content: content.id,
+          totalAmount,
+          discountPrice,
+        },
+      });
+    } else if (content.createdBy.paymentProvider === 'Razorpay') {
+      console.log('INSISE razorPay', process.env.RAZORPAY_KEY_ID);
 
-    const response = await PhonePayClient.pay(request);
-    return res.status(200).json({
-      success: true,
-      payload: {
-        redirectUrl: response.redirectUrl,
-        totalAmount,
-        discountPrice,
-      },
-    });
+      const razorpayOrder = await razorpay.orders.create({
+        amount: totalAmount * 100,
+        currency: 'INR',
+
+        notes: {
+          content: contentId,
+          userId: user.id,
+          discountedPrice: totalAmount,
+        },
+      });
+
+      console.log('Razorpay order created', razorpayOrder);
+
+      return res.status(200).json({
+        success: true,
+        payload: {
+          razorpayOrderId: razorpayOrder.id,
+          redirectUrl: `${process.env.FRONTEND_URL}payment/verify`,
+          amount: totalAmount * 100, // Amount in paise for frontend
+          currency: 'INR',
+          paymentProvider: 'Razorpay',
+          content: content.id,
+          totalAmount,
+          discountPrice,
+          key: process.env.RAZORPAY_KEY_ID,
+        },
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment provider.',
+      });
+    }
   } catch (error) {
-    console.error("Error in purchasing premium content.", error);
+    console.error('Error in purchasing premium content.', error);
     return res.status(500).json({
       success: false,
-      message: "Error in purchasing premium content. Please try again later",
+      message: 'Error in purchasing premium content. Please try again later',
     });
   }
 };

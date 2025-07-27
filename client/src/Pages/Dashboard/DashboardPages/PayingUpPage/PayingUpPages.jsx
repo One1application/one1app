@@ -1,24 +1,21 @@
-import * as Icons from "lucide-react";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useSearchParams } from "react-router-dom";
-import oneApp from "../../../../assets/oneapp.jpeg";
-import PaymentSignUpModel from "../../../../components/Modal/PaymentSignUpModel";
-import SigninModal from "../../../../components/Modal/SigninModal";
-import { useAuth } from "../../../../context/AuthContext";
-import {
-  fetchPayingUp,
-  purchasePayingUp,
-} from "../../../../services/auth/api.services";
-import PageFooter from "./PageFooter";
-import { payingUpConfig } from "./payingUpConfig";
+import * as Icons from 'lucide-react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
+import oneApp from '../../../../assets/oneapp.jpeg';
+import PaymentSignUpModel from '../../../../components/Modal/PaymentSignUpModel';
+import SigninModal from '../../../../components/Modal/SigninModal';
+import { useAuth } from '../../../../context/AuthContext';
+import { fetchPayingUp } from '../../../../services/auth/api.services';
+import PageFooter from './PageFooter';
+import { payingUpConfig } from './payingUpConfig';
 
-import OverView from "../../../../components/SellingPageShare/OverView";
-import TestiMonials from "../../../../components/SellingPageShare/TestiMonials";
+import OverView from '../../../../components/SellingPageShare/OverView';
+import TestiMonials from '../../../../components/SellingPageShare/TestiMonials';
 
-import { useNavigate } from "react-router-dom";
-import InfoSections from "../../../../components/InfoSections";
-import { getInitials } from "../../../../utils/constants/nameCutter";
+import { useNavigate } from 'react-router-dom';
+import InfoSections from '../../../../components/InfoSections';
+import { getInitials } from '../../../../utils/constants/nameCutter';
 
 const PayingUpPages = () => {
   const navigate = useNavigate();
@@ -30,14 +27,13 @@ const PayingUpPages = () => {
   const itemsPerView = 3;
   const CurrencyIcon = Icons[payingUpConfig.paymentDetails.currencySymbol];
   const [params] = useSearchParams();
-  const payingUpId = params.get("id");
-  const token = localStorage.getItem("AuthToken");
+  const payingUpId = params.get('id');
+  const token = localStorage.getItem('AuthToken');
   const [payingUpDetails, setPayingUpDetails] = useState(null);
   const [isPurchased, setIsPurchased] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showSigninModal, setShowSigninModal] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
-
+  const [userEmail, setUserEmail] = useState('');
   const { currentUserId, userDetails } = useAuth();
 
   useEffect(() => {
@@ -45,6 +41,8 @@ const PayingUpPages = () => {
       setIsLoading(true);
       try {
         const response = await fetchPayingUp(payingUpId);
+        console.log('response', response);
+       
         setPayingUpDetails(response.data.payload.payingUp);
 
         // Check if files exists in the response to determine if already purchased
@@ -59,9 +57,9 @@ const PayingUpPages = () => {
           }
         }
       } catch (error) {
-        console.error("Error while fetching paying up.", error);
+        console.error('Error while fetching paying up.', error);
         if (!handleAuthError(error)) {
-          toast("Please try later.");
+          toast('Please try later.');
         }
       } finally {
         setIsLoading(false);
@@ -91,10 +89,7 @@ const PayingUpPages = () => {
   // };
 
   const handleAuthError = (error) => {
-    if (
-      error?.response?.data?.message === "Token not found, Access Denied!" ||
-      error?.message === "Token not found, Access Denied!"
-    ) {
+    if (error?.response?.data?.message === 'Token not found, Access Denied!' || error?.message === 'Token not found, Access Denied!') {
       setShowSignupModal(true);
       return true;
     }
@@ -103,20 +98,20 @@ const PayingUpPages = () => {
 
   const handleSaveEmail = (email) => {
     setUserEmail(email);
-    toast.success("Email updated successfully!");
+    toast.success('Email updated successfully!');
   };
 
   const handleSuccessfulSignup = (data) => {
     if (data.token) {
-      localStorage.setItem("AuthToken", data.token);
+      localStorage.setItem('AuthToken', data.token);
       setShowSignupModal(false);
-      toast.success("Signup successful!");
-      navigate("/app/payment", {
+      toast.success('Signup successful!');
+      navigate('/app/payment', {
         state: {
           id: payingUpId,
           title: payingUpDetails.title,
           baseAmount: payingUpDetails.paymentDetails.totalAmount,
-          courseType: "payingUp",
+          courseType: 'payingUp',
           createdBy: payingUpDetails.createdBy.name,
         },
       });
@@ -125,15 +120,15 @@ const PayingUpPages = () => {
 
   const handleSuccessfulSignIn = (data) => {
     if (data.token) {
-      localStorage.setItem("AuthToken", data.token);
+      localStorage.setItem('AuthToken', data.token);
       setShowSigninModal(false);
-      toast.success("SignIn successful!");
-      navigate("/app/payment", {
+      toast.success('SignIn successful!');
+      navigate('/app/payment', {
         state: {
           id: payingUpId,
           title: payingUpDetails.title,
           baseAmount: payingUpDetails.paymentDetails.totalAmount,
-          courseType: "payingUp",
+          courseType: 'payingUp',
           createdBy: payingUpDetails.createdBy.name,
         },
       });
@@ -150,67 +145,7 @@ const PayingUpPages = () => {
     setShowSignupModal(true);
   };
 
-  // const handlePayment = async () => {
-  //   try {
-  //     const response = await purchasePayingUp(payingUpId);
-  //     window.location.href = response.data.payload.redirectUrl;
-  //     // var options = {
-  //     //   key: import.meta.env.VITE_RAZORPAY_KEY,
-  //     //   amount: orderDetails.amount,
-  //     //   currency: orderDetails.currency,
-  //     //   name: "One App",
-  //     //   description: "Complete Your Purchase",
-  //     //   order_id: orderDetails.orderId,
-  //     //   handler: async function (response) {
-  //     //     console.log("payment");
-  //     //     const body = {
-  //     //       razorpay_order_id: response.razorpay_order_id,
-  //     //       razorpay_payment_id: response.razorpay_payment_id,
-  //     //       razorpay_signature: response.razorpay_signature,
-  //     //       webinarId: orderDetails.webinarId ? orderDetails.webinarId : null,
-  //     //       courseId: orderDetails.courseId ? orderDetails.courseId : null,
-  //     //       payingUpId: orderDetails.payingUpId
-  //     //         ? orderDetails.payingUpId
-  //     //         : null,
-  //     //     };
-
-  //     //     try {
-  //     //       setIsPaymentVerifying(true);
-  //     //       const response = await verifyPayment(body);
-  //     //       if (
-  //     //         response.data &&
-  //     //         response.data.payload &&
-  //     //         response.data.payload.urls
-  //     //       ) {
-  //     //         setPaymentUrl(response.data.payload.urls);
-  //     //         setIsPurchased(true);
-  //     //         toast.success("Payment successful!");
-  //     //       }
-  //     //     } catch (error) {
-  //     //       console.error("Error while verifying payment.", error);
-  //     //       toast("Payment Failed");
-  //     //     } finally {
-  //     //       setIsPaymentVerifying(false);
-  //     //     }
-  //     //   },
-  //     //   prefill: {
-  //     //     name: "John Doe",
-  //     //     email: "john.doe@example.com",
-  //     //     contact: "9999999999",
-  //     //   },
-  //     //   theme: {
-  //     //     color: "#F37254",
-  //     //   },
-  //     // };
-
-  //     // const rzp1 = new window.Razorpay(options);
-  //     // rzp1.open();
-  //   } catch (error) {
-  //     if (!handleAuthError(error)) {
-  //       toast.error("Error during payment of paying up.", error);
-  //     }
-  //   }
-  // };
+ 
 
   if (isLoading) {
     return (
@@ -221,14 +156,8 @@ const PayingUpPages = () => {
   }
 
   if (!payingUpDetails) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        No data available
-      </div>
-    );
+    return <div className="min-h-screen bg-black text-white flex items-center justify-center">No data available</div>;
   }
-
-  console.log(payingUpDetails);
 
   return (
     <div className="min-h-screen bg-gray-950 scrollbar-hide overflow-y-scroll ">
@@ -284,30 +213,20 @@ const PayingUpPages = () => {
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-indigo-600/90 flex items-center justify-center border-2 border-white/80">
-                      <span className="text-lg font-bold text-white">
-                        {getInitials(payingUpDetails?.createdBy?.name)}
-                      </span>
+                      <span className="text-lg font-bold text-white">{getInitials(payingUpDetails?.createdBy?.name)}</span>
                     </div>
                   )}
 
                   <div>
-                    <p className="text-xs text-gray-300 uppercase tracking-wider">
-                      Created by
-                    </p>
-                    <h2 className="text-base font-semibold text-white">
-                      {payingUpDetails.createdBy.name}
-                    </h2>
+                    <p className="text-xs text-gray-300 uppercase tracking-wider">Created by</p>
+                    <h2 className="text-base font-semibold text-white">{payingUpDetails.createdBy.name}</h2>
                   </div>
                 </div>
 
                 {/* Title & Badge */}
                 <div className="text-right flex flex-col items-center">
-                  <h1 className="text-xl font-bold text-white truncate max-w-[180px]">
-                    {payingUpDetails.title}
-                  </h1>
-                  <span className="inline-block px-2 py-1 text-xs font-bold bg-orange-500/90 text-white rounded-full">
-                    PAYING UP
-                  </span>
+                  <h1 className="text-xl font-bold text-white truncate max-w-[180px]">{payingUpDetails.title}</h1>
+                  <span className="inline-block px-2 py-1 text-xs font-bold bg-orange-500/90 text-white rounded-full">PAYING UP</span>
                 </div>
               </div>
             </div>
@@ -319,9 +238,7 @@ const PayingUpPages = () => {
       {isPurchased && paymentUrl && (
         <section className="py-10 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
-              Your Files
-            </h2>
+            <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">Your Files</h2>
             <div className="p-8 bg-gray-900 rounded-2xl shadow-2xl border border-orange-500">
               <div className="space-y-4">
                 {Array.isArray(paymentUrl) ? (
@@ -361,16 +278,9 @@ const PayingUpPages = () => {
       {/* Description Section */}
       <section className="py-10 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">
-            Overview
-          </h2>
+          <h2 className="text-3xl font-bold mb-8  text-orange-500 text-center">Overview</h2>
 
-          <OverView
-            category={payingUpDetails.category.categoryMetaData.map(
-              (category) => category
-            )}
-            description={payingUpDetails.description}
-          />
+          <OverView category={payingUpDetails.category.categoryMetaData.map((category) => category)} description={payingUpDetails.description} />
         </div>
       </section>
 
@@ -397,13 +307,14 @@ const PayingUpPages = () => {
                   if (!currentUserId) {
                     setShowSignupModal(true);
                   } else {
-                    navigate("/app/payment", {
+                    navigate('/app/payment', {
                       state: {
                         id: payingUpId,
                         title: payingUpDetails.title,
                         baseAmount: payingUpDetails.paymentDetails.totalAmount,
-                        courseType: "payingUp",
+                        courseType: 'payingUp',
                         createdBy: payingUpDetails.createdBy.name,
+                        paymentProvider:payingUpDetails.createdBy.paymentProvider
                       },
                     });
                   }

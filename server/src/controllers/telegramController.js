@@ -1,28 +1,28 @@
-import { randomUUID } from "crypto";
-import prisma from "../db/dbClient.js";
-import { SchemaValidator } from "../utils/validator.js";
-import axios from "axios";
-import { sendOtp } from "../utils/sendOtp.js";
-import { TelegramClient } from "telegram";
-import { StringSession } from "telegram/sessions/index.js";
-import { Api } from "telegram";
+import axios from 'axios';
+import { randomUUID } from 'crypto';
+import { Api, TelegramClient } from 'telegram';
+import { StringSession } from 'telegram/sessions/index.js';
+import { razorpay } from '../config/razorpay.js';
+import prisma from '../db/dbClient.js';
 import {
-  createTelegramSchema,
-  editTelegramSchema,
-  createDiscountSchema,
-  editDiscountSchema,
-  createSubscriptionSchema,
-  editSubscriptionSchema,
-  getTelegramByIdSchema,
   applyCouponSchema,
+  createDiscountSchema,
+  createSubscriptionSchema,
+  createTelegramSchema,
+  editDiscountSchema,
+  editSubscriptionSchema,
+  editTelegramSchema,
+  getTelegramByIdSchema,
   purchaseSubscriptionSchema,
-} from "../types/telegramValidation.js";
+} from '../types/telegramValidation.js';
+import { sendOtp } from '../utils/sendOtp.js';
+import { SchemaValidator } from '../utils/validator.js';
 
-import { StandardCheckoutPayRequest } from "pg-sdk-node";
-import { PhonePayClient } from "../config/phonepay.js";
+import { StandardCheckoutPayRequest } from 'pg-sdk-node';
+import { PhonePayClient } from '../config/phonepay.js';
 // API credentials loaded by index.js via dotenv.config()
-const apiId = parseInt(process.env.TELEGRAM_API_ID, 10);
-const apiHash = process.env.TELEGRAM_API_HASH;
+const apiId = parseInt(process.env.API_ID, 10);
+const apiHash = process.env.API_HASH;
 
 // Create Telegram
 export async function createTelegram(req, res) {
@@ -30,18 +30,7 @@ export async function createTelegram(req, res) {
     const isValid = await SchemaValidator(createTelegramSchema, req.body, res);
     if (!isValid) return;
 
-    const {
-      coverImage,
-      title,
-      description,
-      chatId,
-      discounts,
-      subscriptions,
-      genre,
-      gstDetails,
-      courseDetails,
-      inviteLink,
-    } = req.body;
+    const { coverImage, title, description, chatId, discounts, subscriptions, genre, gstDetails, courseDetails, inviteLink } = req.body;
     const user = req.user;
 
     console.log({
@@ -62,16 +51,13 @@ export async function createTelegram(req, res) {
     let isGroupMonitored = false;
     if (chatId) {
       try {
-        const adminCheckResponse = await axios.post(
-          `${process.env.BOT_SERVER_URL}/check-admin-status`,
-          { chatId }
-        );
+        const adminCheckResponse = await axios.post(`${process.env.BOT_SERVER_URL}/check-admin-status`, { chatId });
         if (adminCheckResponse.data.success) {
           botHaveAdmin = adminCheckResponse.data.isAdmin;
           isGroupMonitored = botHaveAdmin;
         }
       } catch (error) {
-        console.error("Error checking bot admin status:");
+        console.error('Error checking bot admin status:');
       }
     }
 
@@ -79,7 +65,7 @@ export async function createTelegram(req, res) {
     const telegram = await prisma.$transaction(async (tx) => {
       const newTelegram = await tx.telegram.create({
         data: {
-          coverImage: coverImage || "https://default-cover.com",
+          coverImage: coverImage || 'https://default-cover.com',
           title,
           description,
           chatId,
@@ -119,35 +105,33 @@ export async function createTelegram(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Telegram created successfully.",
+      message: 'Telegram created successfully.',
       payload: {
         telegramId: telegram.id,
         isGroupMonitored,
         botHaveAdmin,
-        warning: !botHaveAdmin
-          ? "Bot doesn't have admin permissions. Group will not be monitored until bot is made admin."
-          : null,
+        warning: !botHaveAdmin ? "Bot doesn't have admin permissions. Group will not be monitored until bot is made admin." : null,
       },
     });
   } catch (error) {
     // console.error("Error in creating telegram:", error);
-    if (error.code === "P2002" && error.meta?.target?.includes("chatId")) {
+    if (error.code === 'P2002' && error.meta?.target?.includes('chatId')) {
       return res.status(400).json({
         success: false,
-        message: "Chat ID already exists.",
+        message: 'Chat ID already exists.',
       });
     }
-    if (error.code === "P2002" && error.meta?.target?.includes("type")) {
+    if (error.code === 'P2002' && error.meta?.target?.includes('type')) {
       return res.status(400).json({
         success: false,
-        message: "Duplicate subscription type for this Telegram.",
+        message: 'Duplicate subscription type for this Telegram.',
       });
     }
     console.log(error?.message);
 
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -161,15 +145,7 @@ export async function editTelegram(req, res) {
     const isValid = await SchemaValidator(editTelegramSchema, req.body, res);
     if (!isValid) return;
 
-    const {
-      coverImage,
-      title,
-      description,
-      genre,
-      gstDetails,
-      courseDetails,
-      inviteLink,
-    } = req.body;
+    const { coverImage, title, description, genre, gstDetails, courseDetails, inviteLink } = req.body;
 
     const telegram = await prisma.telegram.findUnique({
       where: { id: telegramId },
@@ -179,14 +155,14 @@ export async function editTelegram(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to edit this Telegram.",
+        message: 'You are not authorized to edit this Telegram.',
       });
     }
 
@@ -205,22 +181,22 @@ export async function editTelegram(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Telegram updated successfully.",
+      message: 'Telegram updated successfully.',
       payload: {
         telegramId: updatedTelegram.id,
       },
     });
   } catch (error) {
-    console.error("Error in editing telegram:", error);
-    if (error.code === "P2002" && error.meta?.target?.includes("chatId")) {
+    console.error('Error in editing telegram:', error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('chatId')) {
       return res.status(400).json({
         success: false,
-        message: "Chat ID already exists.",
+        message: 'Chat ID already exists.',
       });
     }
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -239,14 +215,14 @@ export async function deleteTelegram(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to delete this Telegram.",
+        message: 'You are not authorized to delete this Telegram.',
       });
     }
 
@@ -256,13 +232,13 @@ export async function deleteTelegram(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Telegram deleted successfully.",
+      message: 'Telegram deleted successfully.',
     });
   } catch (error) {
-    console.error("Error in deleting telegram:", error);
+    console.error('Error in deleting telegram:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -277,14 +253,10 @@ export async function createDiscount(req, res) {
     const isValid = await SchemaValidator(createDiscountSchema, req.body, res);
     if (!isValid) return;
 
-    if (
-      !telegramId.match(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-      )
-    ) {
+    if (!telegramId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid Telegram ID format.",
+        message: 'Invalid Telegram ID format.',
       });
     }
 
@@ -298,14 +270,14 @@ export async function createDiscount(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to add discounts to this Telegram.",
+        message: 'You are not authorized to add discounts to this Telegram.',
       });
     }
 
@@ -313,7 +285,7 @@ export async function createDiscount(req, res) {
       const subscription = await prisma.subscription.findFirst({
         where: {
           telegramId,
-          type: { equals: plan, mode: "insensitive" },
+          type: { equals: plan, mode: 'insensitive' },
         },
       });
       if (!subscription) {
@@ -347,14 +319,14 @@ export async function createDiscount(req, res) {
 
     return res.status(201).json({
       success: true,
-      message: "Discount created successfully.",
+      message: 'Discount created successfully.',
       payload: { discountId: discount.id },
     });
   } catch (error) {
-    console.error("Error in creating discount:", error.message);
+    console.error('Error in creating discount:', error.message);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -378,14 +350,14 @@ export async function editDiscount(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to edit discounts for this Telegram.",
+        message: 'You are not authorized to edit discounts for this Telegram.',
       });
     }
 
@@ -396,7 +368,7 @@ export async function editDiscount(req, res) {
     if (!discount) {
       return res.status(404).json({
         success: false,
-        message: "Discount not found.",
+        message: 'Discount not found.',
       });
     }
 
@@ -404,7 +376,7 @@ export async function editDiscount(req, res) {
       const subscription = await prisma.subscription.findFirst({
         where: {
           telegramId,
-          type: { equals: plan, mode: "insensitive" },
+          type: { equals: plan, mode: 'insensitive' },
         },
       });
       if (!subscription) {
@@ -443,14 +415,14 @@ export async function editDiscount(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Discount updated successfully.",
+      message: 'Discount updated successfully.',
       payload: { discountId: updatedDiscount.id },
     });
   } catch (error) {
-    console.error("Error in editing discount:", error);
+    console.error('Error in editing discount:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -469,15 +441,14 @@ export async function deleteDiscount(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message:
-          "You are not authorized to delete discounts for this Telegram.",
+        message: 'You are not authorized to delete discounts for this Telegram.',
       });
     }
 
@@ -488,7 +459,7 @@ export async function deleteDiscount(req, res) {
     if (!discount) {
       return res.status(404).json({
         success: false,
-        message: "Discount not found.",
+        message: 'Discount not found.',
       });
     }
 
@@ -498,13 +469,13 @@ export async function deleteDiscount(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Discount deleted successfully.",
+      message: 'Discount deleted successfully.',
     });
   } catch (error) {
-    console.error("Error in deleting discount:", error);
+    console.error('Error in deleting discount:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -516,11 +487,7 @@ export async function createSubscription(req, res) {
     const { telegramId } = req.params;
     const user = req.user;
 
-    const isValid = await SchemaValidator(
-      createSubscriptionSchema,
-      req.body,
-      res
-    );
+    const isValid = await SchemaValidator(createSubscriptionSchema, req.body, res);
     if (!isValid) return;
 
     const { type, cost, days, isLifetime } = req.body;
@@ -533,15 +500,14 @@ export async function createSubscription(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message:
-          "You are not authorized to add subscriptions to this Telegram.",
+        message: 'You are not authorized to add subscriptions to this Telegram.',
       });
     }
 
@@ -568,12 +534,12 @@ export async function createSubscription(req, res) {
 
     return res.status(201).json({
       success: true,
-      message: "Subscription created successfully.",
+      message: 'Subscription created successfully.',
       payload: { subscriptionId: subscription.id },
     });
   } catch (error) {
-    console.error("Error in creating subscription:", error);
-    if (error.code === "P2002" && error.meta?.target?.includes("type")) {
+    console.error('Error in creating subscription:', error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('type')) {
       return res.status(400).json({
         success: false,
         message: `Subscription type '${type}' already exists for this Telegram.`,
@@ -581,7 +547,7 @@ export async function createSubscription(req, res) {
     }
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -591,11 +557,7 @@ export async function editSubscription(req, res) {
     const { telegramId, subscriptionId } = req.params;
     const user = req.user;
 
-    const isValid = await SchemaValidator(
-      editSubscriptionSchema,
-      req.body,
-      res
-    );
+    const isValid = await SchemaValidator(editSubscriptionSchema, req.body, res);
     if (!isValid) return;
 
     const { type, cost, days, isLifetime } = req.body;
@@ -608,15 +570,14 @@ export async function editSubscription(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message:
-          "You are not authorized to edit subscriptions for this Telegram.",
+        message: 'You are not authorized to edit subscriptions for this Telegram.',
       });
     }
 
@@ -627,7 +588,7 @@ export async function editSubscription(req, res) {
     if (!subscription) {
       return res.status(404).json({
         success: false,
-        message: "Subscription not found.",
+        message: 'Subscription not found.',
       });
     }
 
@@ -655,12 +616,12 @@ export async function editSubscription(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Subscription updated successfully.",
+      message: 'Subscription updated successfully.',
       payload: { subscriptionId: updatedSubscription.id },
     });
   } catch (error) {
-    console.error("Error in editing subscription:", error);
-    if (error.code === "P2002" && error.meta?.target?.includes("type")) {
+    console.error('Error in editing subscription:', error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('type')) {
       return res.status(400).json({
         success: false,
         message: `Subscription type '${type}' already exists for this Telegram.`,
@@ -668,7 +629,7 @@ export async function editSubscription(req, res) {
     }
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -686,15 +647,14 @@ export async function deleteSubscription(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById !== user.id) {
       return res.status(403).json({
         success: false,
-        message:
-          "You are not authorized to delete subscriptions for this Telegram.",
+        message: 'You are not authorized to delete subscriptions for this Telegram.',
       });
     }
 
@@ -705,7 +665,7 @@ export async function deleteSubscription(req, res) {
     if (!subscription) {
       return res.status(404).json({
         success: false,
-        message: "Subscription not found.",
+        message: 'Subscription not found.',
       });
     }
 
@@ -727,13 +687,13 @@ export async function deleteSubscription(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Subscription deleted successfully.",
+      message: 'Subscription deleted successfully.',
     });
   } catch (error) {
-    console.error("Error in deleting subscription:", error);
+    console.error('Error in deleting subscription:', error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -774,22 +734,22 @@ export async function getCreatorTelegram(req, res) {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
     return res.status(200).json({
       success: true,
-      message: "Telegrams fetched successfully.",
+      message: 'Telegrams fetched successfully.',
       payload: {
         telegrams,
       },
     });
   } catch (error) {
-    console.error("Error in fetching creator telegrams:", error.message);
+    console.error('Error in fetching creator telegrams:', error.message);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -798,11 +758,7 @@ export async function getTelegramById(req, res) {
   try {
     const { telegramId } = req.params;
 
-    const isValid = await SchemaValidator(
-      getTelegramByIdSchema,
-      { telegramId },
-      res
-    );
+    const isValid = await SchemaValidator(getTelegramByIdSchema, { telegramId }, res);
     if (!isValid) return;
 
     const telegram = await prisma.telegram.findUnique({
@@ -843,22 +799,22 @@ export async function getTelegramById(req, res) {
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Telegram fetched successfully.",
+      message: 'Telegram fetched successfully.',
       payload: {
         telegram,
       },
     });
   } catch (error) {
-    console.error("Error in fetching telegram by ID:", error.message);
+    console.error('Error in fetching telegram by ID:', error.message);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -878,7 +834,7 @@ export async function applyCoupon(req, res) {
     if (!subscription) {
       return res.status(404).json({
         success: false,
-        message: "Subscription not found.",
+        message: 'Subscription not found.',
       });
     }
 
@@ -891,17 +847,14 @@ export async function applyCoupon(req, res) {
           telegramId,
           code: couponCode,
           expiry: { gte: new Date() },
-          OR: [
-            { plan: null },
-            { plan: { equals: subscription.type, mode: "insensitive" } },
-          ],
+          OR: [{ plan: null }, { plan: { equals: subscription.type, mode: 'insensitive' } }],
         },
       });
 
       if (!discount) {
         return res.status(400).json({
           success: false,
-          message: "Invalid or expired coupon code.",
+          message: 'Invalid or expired coupon code.',
         });
       }
 
@@ -912,7 +865,7 @@ export async function applyCoupon(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Coupon applied successfully.",
+      message: 'Coupon applied successfully.',
       payload: {
         originalPrice: subscription.price,
         discountPrice,
@@ -921,13 +874,13 @@ export async function applyCoupon(req, res) {
       },
     });
   } catch (error) {
-    console.log("Error in applyCoupon:", {
+    console.log('Error in applyCoupon:', {
       error: error.message,
       stack: error.stack,
     });
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -935,7 +888,7 @@ export async function applyCoupon(req, res) {
 const GST_RATE = 0.18; // 18% GST on commission
 
 // Helper: Calculate expiry date
-const calculateExpiryDate = (validDays) => {
+export const calculateExpiryDate = (validDays) => {
   if (!validDays) return null;
   const expireDate = new Date();
   expireDate.setDate(expireDate.getDate() + validDays);
@@ -944,11 +897,8 @@ const calculateExpiryDate = (validDays) => {
 
 // Helper: Check if subscription is renewable/upgradable
 const isSubscriptionRenewable = (subscription) => {
-  if (!subscription || subscription.isLifetime || subscription.isExpired)
-    return false;
-  const daysRemaining = Math.ceil(
-    (new Date(subscription.expireDate) - new Date()) / (1000 * 60 * 60 * 24)
-  );
+  if (!subscription || subscription.isLifetime || subscription.isExpired) return false;
+  const daysRemaining = Math.ceil((new Date(subscription.expireDate) - new Date()) / (1000 * 60 * 60 * 24));
   return daysRemaining <= 5;
 };
 
@@ -962,32 +912,33 @@ const getRemainingDays = (expireDate) => {
 // Helper: Calculate commission and GST
 const calculateCommissionAndGST = (amount, commissionRate) => {
   const commissionPercent = commissionRate || 8; // Default 8%
-  const commissionAmount =
-    Math.round(((commissionPercent * amount) / 100) * 100) / 100;
+  const commissionAmount = Math.round(((commissionPercent * amount) / 100) * 100) / 100;
   const gstOnCommission = Math.round(commissionAmount * GST_RATE * 100) / 100;
-  const amountAfterFee =
-    Math.round((amount - commissionAmount - gstOnCommission) * 100) / 100;
+  const amountAfterFee = Math.round((amount - commissionAmount - gstOnCommission) * 100) / 100;
   return { commissionAmount, gstOnCommission, amountAfterFee };
 };
 
 export async function purchaseTelegramSubscription(req, res) {
   try {
-    const isValid = await SchemaValidator(
-      purchaseSubscriptionSchema,
-      req.body,
-      res
-    );
+    const isValid = await SchemaValidator(purchaseSubscriptionSchema, req.body, res);
     if (!isValid) return;
 
     const { telegramId, subscriptionId, couponCode, validateOnly } = req.body;
     const user = req.user;
+    console.log(req.body);
+    if (!telegramId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Telegram ID is required.',
+      });
+    }
 
     // Fetch Telegram and Subscription
     const telegram = await prisma.telegram.findUnique({
       where: { id: telegramId },
       select: {
         createdById: true,
-        createdBy: { select: { creatorComission: true } },
+        createdBy: { select: { creatorComission: true, paymentProvider: true } },
       },
     });
 
@@ -1000,35 +951,39 @@ export async function purchaseTelegramSubscription(req, res) {
         createdBy: true,
       },
     });
+
     if (!creator) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Creator not found." });
+      return res.status(400).json({ success: false, message: 'Creator not found.' });
     }
 
     if (!telegram) {
       return res.status(404).json({
         success: false,
-        message: "Telegram not found.",
+        message: 'Telegram not found.',
       });
     }
 
     if (telegram.createdById === user.id) {
       return res.status(400).json({
         success: false,
-        message: "You cannot purchase your own Telegram subscription.",
+        message: 'You cannot purchase your own Telegram subscription.',
       });
     }
-
+    console.log('telegramId', telegramId);
+    console.log('subscriptionId', subscriptionId);
+    // Fix the subscription query - use findFirst instead of findUnique
     const subscription = await prisma.subscription.findUnique({
-      where: { id: subscriptionId, telegramId },
+      where: {
+        id: subscriptionId,
+        telegramId: telegramId,
+      },
       select: { price: true, type: true, isLifetime: true, validDays: true },
     });
-
+    console.log('subscription', subscription);
     if (!subscription) {
       return res.status(404).json({
         success: false,
-        message: "Subscription not found.",
+        message: 'Subscription not found for this telegram.',
       });
     }
 
@@ -1045,19 +1000,16 @@ export async function purchaseTelegramSubscription(req, res) {
         },
       },
     });
+
     let CheckExistingSubcriptionTransactionStatus = null;
     if (existingSubscription) {
-      CheckExistingSubcriptionTransactionStatus =
-        await prisma.transaction.findUnique({
-          where: {
-            id: existingSubscription.paymentId,
-          },
-        });
+      CheckExistingSubcriptionTransactionStatus = await prisma.transaction.findUnique({
+        where: {
+          id: existingSubscription.paymentId,
+        },
+      });
 
-      if (
-        CheckExistingSubcriptionTransactionStatus !== null &&
-        CheckExistingSubcriptionTransactionStatus.status === "PENDING"
-      ) {
+      if (CheckExistingSubcriptionTransactionStatus !== null && CheckExistingSubcriptionTransactionStatus.status === 'PENDING') {
         await prisma.telegramSubscription.delete({
           where: {
             id: existingSubscription.id,
@@ -1069,7 +1021,7 @@ export async function purchaseTelegramSubscription(req, res) {
             id: CheckExistingSubcriptionTransactionStatus.id,
           },
           data: {
-            status: "FAILED",
+            status: 'FAILED',
           },
         });
       }
@@ -1082,13 +1034,12 @@ export async function purchaseTelegramSubscription(req, res) {
     if (
       existingSubscription &&
       CheckExistingSubcriptionTransactionStatus !== null &&
-      CheckExistingSubcriptionTransactionStatus?.status === "COMPLETED"
+      CheckExistingSubcriptionTransactionStatus?.status === 'COMPLETED'
     ) {
       if (!isSubscriptionRenewable(existingSubscription)) {
         return res.status(400).json({
           success: false,
-          message:
-            "You already have an active subscription. Renewal or upgrade is only allowed within 5 days of expiry.",
+          message: 'You already have an active subscription. Renewal or upgrade is only allowed within 5 days of expiry.',
         });
       }
 
@@ -1115,37 +1066,29 @@ export async function purchaseTelegramSubscription(req, res) {
           telegramId,
           code: couponCode,
           expiry: { gte: new Date() },
-          OR: [
-            { plan: null },
-            { plan: { equals: subscription.type, mode: "insensitive" } },
-          ],
+          OR: [{ plan: null }, { plan: { equals: subscription.type, mode: 'insensitive' } }],
         },
       });
 
       if (!discount) {
         return res.status(400).json({
           success: false,
-          message: "Invalid or expired coupon code.",
+          message: 'Invalid or expired coupon code.',
         });
       }
 
-      discountPrice =
-        Math.round(subscription.price * (discount.percent / 100) * 100) / 100;
+      discountPrice = Math.round(subscription.price * (discount.percent / 100) * 100) / 100;
     }
 
     const totalAmount = Math.max(0, subscription.price - discountPrice);
 
     // Calculate commission and GST
-    const { commissionAmount, gstOnCommission, amountAfterFee } =
-      calculateCommissionAndGST(
-        totalAmount,
-        telegram.createdBy.creatorComission || 8
-      );
+    const { commissionAmount, gstOnCommission, amountAfterFee } = calculateCommissionAndGST(totalAmount, telegram.createdBy.creatorComission || 8);
 
     if (validateOnly) {
       return res.status(200).json({
         success: true,
-        message: "Price validated successfully.",
+        message: 'Price validated successfully.',
         payload: {
           originalPrice: subscription.price,
           discountPrice,
@@ -1159,107 +1102,167 @@ export async function purchaseTelegramSubscription(req, res) {
       });
     }
 
-    // Create order and initiate payment
+    // Generate unique IDs for the transaction
     const orderId = randomUUID();
     const paymentId = randomUUID();
-    let transactionId = null;
 
-    const request = StandardCheckoutPayRequest.builder()
-      .merchantOrderId(orderId)
-      .amount(totalAmount * 100) // PhonePe expects amount in paise
-      .redirectUrl(
-        `${process.env.FRONTEND_URL}/payment/verify?orderId=${orderId}&telegramId=${telegramId}&subscriptionId=${subscriptionId}`
-      )
-      .build();
-
-    const paymentResponse = await PhonePayClient.pay(request);
-
-    if (!paymentResponse.redirectUrl) {
-      throw new Error("Failed to initiate payment.");
-    }
-
+    // Get creator wallet
     const creatorWallet = await prisma.wallet.findUnique({
       where: {
         userId: creator.createdById,
       },
     });
 
-    // Create transaction and subscription in a Prisma transaction
-    await prisma.$transaction(async (tx) => {
-      // Create Transaction
-      await tx.transaction.create({
-        data: {
-          id: paymentId,
-          walletId: creatorWallet.id,
-          amount: totalAmount,
-          amountAfterFee,
-          productId: telegramId,
-          productType: "TELEGRAM",
-          buyerId: user.id,
-          creatorId: telegram.createdById,
-          modeOfPayment: "UPI",
-          status: "PENDING",
-          phonePayTransId: paymentResponse.orderId,
-        },
+    if (!creatorWallet) {
+      return res.status(400).json({
+        success: false,
+        message: 'Creator wallet not found.',
       });
+    }
 
-      // Mark existing subscription as expired if applicable
-      if (markExistingAsExpired && existingSubscription) {
-        await tx.telegramSubscription.update({
-          where: { id: existingSubscription.id },
-          data: { isExpired: true, updatedAt: new Date() },
-        });
-      }
+    // Create order and initiate payment
+    if (telegram.createdBy.paymentProvider === 'PhonePay') {
+      console.log('orderId', subscriptionId);
 
-      // Create new TelegramSubscription
-      await tx.telegramSubscription.create({
-        data: {
-          telegramId,
-          subscriptionId,
-          boughtById: user.id,
-          validDays: subscription.isLifetime ? null : newValidDays,
-          expireDate: subscription.isLifetime
-            ? null
-            : calculateExpiryDate(newValidDays),
-          isLifetime: subscription.isLifetime,
-          isExpired: false,
-          paymentId,
+      const request = StandardCheckoutPayRequest.builder()
+        .merchantOrderId(orderId)
+        .amount(totalAmount * 100)
+        .redirectUrl(
+          `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&telegramId=${telegramId}&subscriptionId=${subscriptionId}&discountedPrice=${totalAmount}`
+        )
+        .build();
+      console.log(
+        `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&telegramId=${telegramId}&subscriptionId=${subscriptionId}&discountedPrice=${totalAmount}`
+      );
+      const paymentResponse = await PhonePayClient.pay(request);
+      console.log('response from phonepe', paymentResponse.orderId);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Payment initiated successfully.',
+        payload: {
+          redirectUrl: paymentResponse.redirectUrl,
+          paymentProvider: 'PhonePay',
           orderId,
+          transactionId: orderId,
+          paymentId,
+          totalAmount,
+          discountPrice,
+          commissionAmount,
+        },
+      });
+    } else if (telegram.createdBy.paymentProvider === 'Razorpay') {
+      console.log('INSIDE razorPay', process.env.RAZORPAY_KEY_ID);
+
+      const razorpayOrder = await razorpay.orders.create({
+        amount: totalAmount * 100,
+        currency: 'INR',
+        notes: {
+          telegramId: telegramId,
+          subscriptionId: subscriptionId,
+          userId: user.id,
+          discountedPrice: totalAmount,
+          paymentId: paymentId,
         },
       });
 
-      transactionId = paymentResponse.orderId;
-    });
+      console.log('Razorpay order created', razorpayOrder);
 
-    return res.status(200).json({
-      success: true,
-      message: "Payment initiated successfully.",
-      payload: {
-        redirectUrl: paymentResponse.redirectUrl,
-        orderId,
-        transactionId,
-        paymentId,
-        totalAmount,
-        discountPrice,
-        commissionAmount,
-        gstOnCommission,
-        amountAfterFee,
-        validDays: newValidDays,
-        isLifetime: subscription.isLifetime,
-      },
-    });
+      return res.status(200).json({
+        success: true,
+        message: 'Payment initiated successfully.',
+        payload: {
+          razorpayOrderId: razorpayOrder.id,
+          redirectUrl: `${process.env.FRONTEND_URL}payment/verify`,
+          amount: totalAmount * 100, // Amount in paise for frontend
+          currency: 'INR',
+          paymentProvider: 'Razorpay',
+          orderId: razorpayOrder.id,
+          transactionId: razorpayOrder.id,
+          paymentId,
+          totalAmount,
+          discountPrice,
+          key: process.env.RAZORPAY_KEY_ID,
+          commissionAmount,
+          gstOnCommission,
+          amountAfterFee,
+          validDays: newValidDays,
+          isLifetime: subscription.isLifetime,
+        },
+      });
+    } else {
+      // Default payment method or direct wallet payment
+      await prisma.$transaction(async (tx) => {
+        // Create Transaction
+        await tx.transaction.create({
+          data: {
+            id: paymentId,
+            walletId: creatorWallet.id,
+            amount: totalAmount,
+            amountAfterFee,
+            productId: telegramId,
+            productType: 'TELEGRAM',
+            buyerId: user.id,
+            creatorId: telegram.createdById,
+            modeOfPayment: 'WALLET',
+            status: 'COMPLETED',
+          },
+        });
+
+        // Mark existing subscription as expired if applicable
+        if (markExistingAsExpired && existingSubscription) {
+          await tx.telegramSubscription.update({
+            where: { id: existingSubscription.id },
+            data: { isExpired: true, updatedAt: new Date() },
+          });
+        }
+
+        // Create new TelegramSubscription
+        await tx.telegramSubscription.create({
+          data: {
+            telegramId,
+            subscriptionId,
+            boughtById: user.id,
+            validDays: subscription.isLifetime ? null : newValidDays,
+            expireDate: subscription.isLifetime ? null : calculateExpiryDate(newValidDays),
+            isLifetime: subscription.isLifetime,
+            isExpired: false,
+            paymentId,
+            orderId,
+          },
+        });
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Subscription purchased successfully.',
+        payload: {
+          paymentProvider: 'WALLET',
+          orderId,
+          transactionId: paymentId,
+          paymentId,
+          totalAmount,
+          discountPrice,
+          commissionAmount,
+          gstOnCommission,
+          amountAfterFee,
+          validDays: newValidDays,
+          isLifetime: subscription.isLifetime,
+        },
+      });
+    }
   } catch (error) {
-    console.log("Error in purchaseTelegramSubscription:", {
+    console.log('Error in purchaseTelegramSubscription:', {
       error: error.message,
       stack: error.stack,
+      requestBody: req.body,
     });
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
-
 export async function verifyTelegramPaymentCallback(req, res) {
   try {
     const { paymentId, transactionId } = req.body;
@@ -1267,7 +1270,7 @@ export async function verifyTelegramPaymentCallback(req, res) {
     if (!paymentId || !transactionId) {
       return res.status(400).json({
         success: false,
-        message: "Invalid callback data.",
+        message: 'Invalid callback data.',
       });
     }
 
@@ -1282,29 +1285,27 @@ export async function verifyTelegramPaymentCallback(req, res) {
     if (!transaction) {
       return res.status(404).json({
         success: false,
-        message: "Transaction not found.",
+        message: 'Transaction not found.',
       });
     }
 
-    if (transaction.status !== "PENDING") {
+    if (transaction.status !== 'PENDING') {
       return res.status(400).json({
         success: false,
-        message: "Transaction already processed.",
+        message: 'Transaction already processed.',
       });
     }
 
     // Verify payment with PhonePe
-    const paymentDetails = await PhonePayClient.getOrderStatus(
-      transaction.phonePayTransId
-    );
+    const paymentDetails = await PhonePayClient.getOrderStatus(transaction.phonePayTransId);
 
-    if (!paymentDetails || paymentDetails.state === "FAILED") {
+    if (!paymentDetails || paymentDetails.state === 'FAILED') {
       // Handle failed payment
       await prisma.$transaction(async (tx) => {
         // Update transaction to FAILED
         await tx.transaction.update({
           where: { id: transaction.id },
-          data: { status: "FAILED", updatedAt: new Date() },
+          data: { status: 'FAILED', updatedAt: new Date() },
         });
 
         // Mark subscription as expired
@@ -1316,7 +1317,7 @@ export async function verifyTelegramPaymentCallback(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: "Payment callback processed successfully (failed payment).",
+        message: 'Payment callback processed successfully (failed payment).',
       });
     }
 
@@ -1325,7 +1326,7 @@ export async function verifyTelegramPaymentCallback(req, res) {
       // Update transaction to COMPLETED
       await tx.transaction.update({
         where: { id: transaction.id },
-        data: { status: "COMPLETED", updatedAt: new Date() },
+        data: { status: 'COMPLETED', updatedAt: new Date() },
       });
 
       // Update creator's wallet
@@ -1360,19 +1361,19 @@ export async function verifyTelegramPaymentCallback(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Payment callback processed successfully.",
+      message: 'Payment callback processed successfully.',
       payload: {
         telegramId: transaction.productId,
       },
     });
   } catch (error) {
-    console.log("Error in verifyTelegramPaymentCallback:", {
+    console.log('Error in verifyTelegramPaymentCallback:', {
       error: error.message,
       stack: error.stack,
     });
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: 'Internal server error.',
     });
   }
 }
@@ -1484,11 +1485,10 @@ export async function sendOtpToTelegramUser(req, res) {
 
     return res.status(200).json({
       success: true,
-      message:
-        "Otp sent successfully, please DM the otp to @TelegramBotSupport",
+      message: 'Otp sent successfully, please DM the otp to @TelegramBotSupport',
     });
   } catch (err) {
-    console.log("erorr in sending otp", err);
+    console.log('erorr in sending otp', err);
   }
 }
 
@@ -1510,10 +1510,8 @@ export async function getExpiringSubscriptions(req, res) {
     });
     return res.status(200).json({ success: true, payload: expiring });
   } catch (error) {
-    console.error("Error fetching expiring subscriptions", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error." });
+    console.error('Error fetching expiring subscriptions', error);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 }
 
@@ -1521,15 +1519,17 @@ export async function getOwnedGroups(req, res) {
   try {
     const { telegramSession: sessionString } = req.cookies;
 
-    if (!sessionString) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required. Please log in to Telegram.",
-      });
-    }
+    // if (!sessionString) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     message: 'Authentication required. Please log in to Telegram.',
+    //   });
+    // }
 
     const client = new TelegramClient(
-      new StringSession(sessionString),
+      new StringSession(
+        '1BQANOTEuMTA4LjU2LjExMQG7ICpUxHWavxhjO6qvldmYJTDamarbxKqr40kcsdOl8sArbNAaHPaksTgEjOn9J1JKNWdEuNPJ1V8k1dWcu/emhCcJYCxqrr4u0FQ/dZ1jbY2rmdTek3Br46H9BnwyqGLuEwZ6GAohskIZbTvoRd/cLdCvomyRQNgyhDIbJrbxtnCopdnvQUFjqA5eeg+a0Tg0G4DiBr7iopz1vgiLR8Hhq1Lnl6y+yRNgPIpEBAGi9Q7AqOq6BJyE1Ikg/9Db1ZgQ7jWuyZH6Ax7M1VM4R4neCmBFsGAzV6eP/xWk8+TOD6qxqDjB+37gXmyVKWXbDlWDZjKRsrlcTjljuh6oFDV6kg=='
+      ),
       apiId,
       apiHash,
       { connectionRetries: 3 }
@@ -1540,7 +1540,7 @@ export async function getOwnedGroups(req, res) {
     if (!(await client.isUserAuthorized())) {
       return res.status(401).json({
         success: false,
-        message: "Telegram session invalid. Please log in again.",
+        message: 'Telegram session invalid. Please log in again.',
       });
     }
 
@@ -1562,7 +1562,7 @@ export async function getOwnedGroups(req, res) {
             id: String(dialog.id),
             title: title,
             username: dialog.entity.username || null,
-            type: "Group",
+            type: 'Group',
             isSupergroup: isSupergroup, // temp flag for deduplication
           });
         }
@@ -1570,71 +1570,58 @@ export async function getOwnedGroups(req, res) {
     }
 
     // Clean up the temporary flag before sending to the client
-    const groups = Array.from(ownedChats.values()).map(
-      ({ isSupergroup, ...rest }) => rest
-    );
+    const groups = Array.from(ownedChats.values()).map(({ isSupergroup, ...rest }) => rest);
 
     return res.status(200).json({ success: true, payload: { groups: groups } });
   } catch (error) {
-    console.error("Error fetching owned groups:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Error fetching owned groups" });
+    console.error('Error fetching owned groups:', error);
+    return res.status(500).json({ success: false, message: 'Error fetching owned groups' });
   }
 }
 
 // Send login code to user's phone to obtain phoneCodeHash
 export async function sendLoginCode(req, res) {
   try {
-    console.log("sendLoginCode body:", req.body);
-    if (!req.body || typeof req.body.phoneNumber !== "string") {
-      console.error("Invalid or missing phoneNumber in request body");
+    console.log('sendLoginCode body:', req.body);
+    if (!req.body || typeof req.body.phoneNumber !== 'string') {
+      console.error('Invalid or missing phoneNumber in request body');
       return res.status(400).json({
         success: false,
-        message: "phoneNumber is required and must be a string",
+        message: 'phoneNumber is required and must be a string',
       });
     }
+    const apiId = process.env.API_ID;
+    const apiHash = process.env.API_HASH;
     // Ensure API credentials
     if (!apiId || !apiHash) {
-      console.error("Missing Telegram API credentials:", { apiId, apiHash });
+      console.error('Missing Telegram API credentials:', { apiId, apiHash });
       return res.status(500).json({
         success: false,
-        message:
-          "Telegram API ID or Hash is not configured. Please set TELEGRAM_API_ID and TELEGRAM_API_HASH in your environment.",
+        message: 'Telegram API ID or Hash is not configured. Please set TELEGRAM_API_ID and TELEGRAM_API_HASH in your environment.',
       });
     }
 
     const { phoneNumber } = req.body;
-    console.log(
-      "phoneNumber before sendCode:",
-      phoneNumber,
-      typeof phoneNumber
-    );
+    console.log('phoneNumber before sendCode:', phoneNumber, typeof phoneNumber);
     // Sanitize phone number: remove spaces and non-digit/plus characters
-    const sanitizedNumber = phoneNumber.replace(/[^\d+]/g, "");
-    console.log("Sanitized phoneNumber:", sanitizedNumber);
-    const session = new StringSession("");
+    const sanitizedNumber = phoneNumber.replace(/[^\d+]/g, '');
+    console.log('Sanitized phoneNumber:', sanitizedNumber);
+    const session = new StringSession('');
     const client = new TelegramClient(session, apiId, apiHash, {
       connectionRetries: 3,
     });
     await client.connect();
     // Send login code via client helper
-    const sendCodeResult = await client.sendCode(
-      { apiId, apiHash },
-      sanitizedNumber
-    );
-    console.log("sendCodeResult:", sendCodeResult);
-    const phoneCodeHash =
-      sendCodeResult.phoneCodeHash || sendCodeResult.phone_code_hash;
+    const sendCodeResult = await client.sendCode({ apiId, apiHash }, sanitizedNumber);
+    console.log('sendCodeResult:', sendCodeResult);
+    const phoneCodeHash = sendCodeResult.phoneCodeHash || sendCodeResult.phone_code_hash;
     const sessionString = session.save();
-    return res
-      .status(200)
-      .json({ success: true, payload: { phoneCodeHash, sessionString } });
+    return res.status(200).json({ success: true, payload: { phoneCodeHash, sessionString } });
   } catch (error) {
-    console.error("Error sending login code:", error);
+    console.error('Error sending login code:', error);
     return res.status(500).json({
       success: false,
-      message: "Failed to send login code",
+      message: 'Failed to send login code',
       error: error.message,
     });
   }
@@ -1643,20 +1630,17 @@ export async function sendLoginCode(req, res) {
 // Sign in with phoneNumber, code and phoneCodeHash, then store session string in cookie
 export async function signInTelegram(req, res) {
   try {
-    console.log("signInTelegram body:", req.body);
-    console.log("Request body keys:", Object.keys(req.body));
-    console.log("Request body values:", req.body);
+    console.log('signInTelegram body:', req.body);
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body values:', req.body);
 
     // Support multiple possible field names
-    let phoneNumber =
-      req.body.phoneNumber || req.body.phone_number || req.body.phone;
-    let phoneCodeHash =
-      req.body.phoneCodeHash || req.body.phone_code_hash || req.body.phoneHash;
-    let code =
-      req.body.code || req.body.phone_code || req.body.verificationCode;
+    let phoneNumber = req.body.phoneNumber || req.body.phone_number || req.body.phone;
+    let phoneCodeHash = req.body.phoneCodeHash || req.body.phone_code_hash || req.body.phoneHash;
+    let code = req.body.code || req.body.phone_code || req.body.verificationCode;
     let sessionString = req.body.sessionString;
 
-    console.log("Extracted values:", {
+    console.log('Extracted values:', {
       phoneNumber,
       phoneCodeHash,
       code,
@@ -1666,20 +1650,15 @@ export async function signInTelegram(req, res) {
     if (!phoneNumber || !phoneCodeHash || !code || !sessionString) {
       return res.status(400).json({
         success: false,
-        message:
-          "phoneNumber, phoneCodeHash, code, and sessionString are required",
+        message: 'phoneNumber, phoneCodeHash, code, and sessionString are required',
         received: { phoneNumber, phoneCodeHash, code, sessionString },
       });
     }
 
-    if (
-      typeof phoneNumber !== "string" ||
-      typeof phoneCodeHash !== "string" ||
-      typeof code !== "string"
-    ) {
+    if (typeof phoneNumber !== 'string' || typeof phoneCodeHash !== 'string' || typeof code !== 'string') {
       return res.status(400).json({
         success: false,
-        message: "phoneNumber, phoneCodeHash, and code must be strings",
+        message: 'phoneNumber, phoneCodeHash, and code must be strings',
         types: {
           phoneNumber: typeof phoneNumber,
           phoneCodeHash: typeof phoneCodeHash,
@@ -1688,7 +1667,7 @@ export async function signInTelegram(req, res) {
       });
     }
 
-    const sanitizedNumber = phoneNumber.replace(/[^\d+]/g, "");
+    const sanitizedNumber = phoneNumber.replace(/[^\d+]/g, '');
     const session = new StringSession(sessionString);
     const client = new TelegramClient(session, apiId, apiHash, {
       connectionRetries: 3,
@@ -1696,8 +1675,8 @@ export async function signInTelegram(req, res) {
 
     await client.connect();
 
-    console.log("Inspecting Api.auth.SignIn constructor:", Api.auth.SignIn);
-    console.log("About to call SignIn with:", {
+    console.log('Inspecting Api.auth.SignIn constructor:', Api.auth.SignIn);
+    console.log('About to call SignIn with:', {
       phoneNumber: sanitizedNumber,
       phoneCodeHash: phoneCodeHash,
       phoneCode: code,
@@ -1711,16 +1690,16 @@ export async function signInTelegram(req, res) {
       })
     );
 
-    console.log("Sign in successful:", signInResult);
+    console.log('Sign in successful:', signInResult);
 
     // Get the session string
     const finalSessionString = session.save();
-
+    console.log('FINAL SESSION', finalSessionString);
     // Set cookie with proper options
-    res.cookie("telegramSession", finalSessionString, {
+    res.cookie('telegramSession', finalSessionString, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
@@ -1735,37 +1714,37 @@ export async function signInTelegram(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error signing in Telegram:", error);
+    console.error('Error signing in Telegram:', error);
 
     // Handle specific Telegram errors
-    if (error.message?.includes("PHONE_CODE_INVALID")) {
+    if (error.message?.includes('PHONE_CODE_INVALID')) {
       return res.status(400).json({
         success: false,
-        message: "Invalid verification code",
-        error: "PHONE_CODE_INVALID",
+        message: 'Invalid verification code',
+        error: 'PHONE_CODE_INVALID',
       });
     }
 
-    if (error.message?.includes("PHONE_CODE_EXPIRED")) {
+    if (error.message?.includes('PHONE_CODE_EXPIRED')) {
       return res.status(400).json({
         success: false,
-        message: "Verification code has expired",
-        error: "PHONE_CODE_EXPIRED",
+        message: 'Verification code has expired',
+        error: 'PHONE_CODE_EXPIRED',
       });
     }
 
-    if (error.message?.includes("SESSION_PASSWORD_NEEDED")) {
+    if (error.message?.includes('SESSION_PASSWORD_NEEDED')) {
       return res.status(200).json({
         success: false,
         requiresPassword: true,
-        message: "Two-factor authentication is enabled. Password required.",
-        error: "SESSION_PASSWORD_NEEDED",
+        message: 'Two-factor authentication is enabled. Password required.',
+        error: 'SESSION_PASSWORD_NEEDED',
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: "Telegram sign-in failed",
+      message: 'Telegram sign-in failed',
       error: error.message,
     });
   }
