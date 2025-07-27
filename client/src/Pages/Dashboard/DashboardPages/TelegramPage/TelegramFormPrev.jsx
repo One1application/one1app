@@ -1,203 +1,232 @@
 // import React from 'react';
-import { Antenna, CreditCard, Wallet } from "lucide-react";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useSearchParams } from "react-router-dom";
-import ProfileImg from "../../../../assets/oneapp.jpeg";
-import SigninModal from "../../../../components/Modal/SigninModal";
-import SignupModal from "../../../../components/Modal/SignupModal";
-import {
-  fetchTelegram,
-  purchaseTelegram,
-} from "../../../../services/auth/api.services";
+import { Antenna, CreditCard, Wallet } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
+import ProfileImg from '../../../../assets/oneapp.jpeg';
+import SigninModal from '../../../../components/Modal/SigninModal';
+import SignupModal from '../../../../components/Modal/SignupModal';
+import { fetchTelegram, purchaseTelegram } from '../../../../services/auth/api.services';
 
 const TelegramFormPrev = () => {
   // Mock Data
   const channelData = {
-    channelName: "One1App",
-    description: "You get daily sureshoot tips of stock market",
-    genre: "Education",
+    channelName: 'One1App',
+    description: 'You get daily sureshoot tips of stock market',
+    genre: 'Education',
     numberOfPlans: 10,
     plans: [
       {
-        cost: "2000",
-        totalCost: "2055",
-        duration: "1 Month",
-        features: ["Daily Market Updates", "Premium Signals", "24/7 Support"],
+        cost: '2000',
+        totalCost: '2055',
+        duration: '1 Month',
+        features: ['Daily Market Updates', 'Premium Signals', '24/7 Support'],
       },
       {
-        cost: "3000",
-        totalCost: "3079",
-        duration: "3 Months",
-        features: [
-          "Everything in Basic",
-          "Weekly Analysis",
-          "Priority Support",
-        ],
+        cost: '3000',
+        totalCost: '3079',
+        duration: '3 Months',
+        features: ['Everything in Basic', 'Weekly Analysis', 'Priority Support'],
       },
       {
-        cost: "4000",
-        totalCost: "4109",
-        duration: "6 Months",
-        features: [
-          "Everything in Standard",
-          "Personal Consultation",
-          "VIP Access",
-        ],
+        cost: '4000',
+        totalCost: '4109',
+        duration: '6 Months',
+        features: ['Everything in Standard', 'Personal Consultation', 'VIP Access'],
       },
     ],
     channelOwner: {
-      name: "Sumit Kumar",
+      name: 'Sumit Kumar',
       avatar: ProfileImg,
-      experience: "10+ years",
-      qualification: "Certified Financial Analyst",
+      experience: '10+ years',
+      qualification: 'Certified Financial Analyst',
     },
     statistics: {
-      members: "50K+",
-      accuracy: "92%",
-      reviews: "4.8/5",
+      members: '50K+',
+      accuracy: '92%',
+      reviews: '4.8/5',
     },
     paymentMethods: [
       {
-        name: "PhonePe",
-        icon: "Wallet",
-        color: "purple-600",
+        name: 'PhonePe',
+        icon: 'Wallet',
+        color: 'purple-600',
       },
       {
-        name: "GPay",
-        icon: "CreditCard",
-        color: "green-600",
+        name: 'GPay',
+        icon: 'CreditCard',
+        color: 'green-600',
       },
     ],
     disclaimers: {
       general:
-        "CosmicFeed Technologies Pvt. Ltd. shall not be held liable for any content or materials published, sold, or distributed by content creators on our associated apps or websites. We do not endorse or take responsibility for the accuracy, legality, or quality of their content. Users must exercise their own judgment and discretion when relying on such content.",
-      riskWarning:
-        "Trading in financial markets involves substantial risks. Past performance is not indicative of future results.",
+        'CosmicFeed Technologies Pvt. Ltd. shall not be held liable for any content or materials published, sold, or distributed by content creators on our associated apps or websites. We do not endorse or take responsibility for the accuracy, legality, or quality of their content. Users must exercise their own judgment and discretion when relying on such content.',
+      riskWarning: 'Trading in financial markets involves substantial risks. Past performance is not indicative of future results.',
     },
   };
 
   const [params] = useSearchParams();
-  const telegramId = params.get("id");
+  const telegramId = params.get('id');
   const [data, setdata] = useState(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showSigninModal, setShowSigninModal] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
+  const [userEmail, setUserEmail] = useState('');
 
   const footerLinks = [
-    { title: "Privacy", path: "/publicpolicy" },
-    { title: "Terms", path: "/terms" },
-    { title: "Refund", path: "/refund-cancellation" },
-    { title: "Disclaimer", path: "/disclaimer" },
+    { title: 'Privacy', path: '/publicpolicy' },
+    { title: 'Terms', path: '/terms' },
+    { title: 'Refund', path: '/refund-cancellation' },
+    { title: 'Disclaimer', path: '/disclaimer' },
   ];
 
   const handleAuthError = (error) => {
-    if (
-      error?.response?.data?.message === "Token not found, Access Denied!" ||
-      error?.message === "Token not found, Access Denied!"
-    ) {
+    if (error?.response?.data?.message === 'Token not found, Access Denied!' || error?.message === 'Token not found, Access Denied!') {
       setShowSignupModal(true);
       return true;
     }
     return false;
   };
-
   useEffect(() => {
-    console.log("aaya");
+    const loadRazorpayScript = () => {
+      return new Promise((resolve) => {
+        // Check if script already exists
+        const existingScript = document.getElementById('razorpay-script');
+        if (existingScript) {
+          existingScript.remove();
+        }
+
+        const script = document.createElement('script');
+        script.id = 'razorpay-script';
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+
+        script.onload = () => {
+          console.log('Razorpay script loaded successfully');
+
+          resolve(true);
+        };
+
+        script.onerror = () => {
+          console.error('Failed to load Razorpay script');
+          setIsRazorpayLoaded(false);
+          resolve(false);
+        };
+
+        document.body.appendChild(script);
+      });
+    };
+
+    loadRazorpayScript();
+
+    // Cleanup function
+    return () => {
+      const script = document.getElementById('razorpay-script');
+      if (script) {
+        script.remove();
+      }
+    };
+  }, []);
+  useEffect(() => {
+    console.log('aaya');
 
     if (!telegramId) return;
     const telegramDetails = async () => {
       try {
         const response = await fetchTelegram(telegramId);
-        console.log("prevForm==>", response);
+        console.log('prevForm==>', response);
         setdata(response.data.payload.telegram);
       } catch (error) {
-        console.error("Error while fetching telegram.", error);
+        console.error('Error while fetching telegram.', error);
         if (!handleAuthError(error)) {
-          toast("Please try later.");
+          toast('Please try later.');
         }
       }
     };
     telegramDetails();
   }, []);
 
-  console.log("subs==?", data?.subscriptions);
-
-  // useEffect(() => {
-  //   const script = document.createElement("script");
-  //   script.src = "https://checkout.razorpay.com/v1/checkout.js";
-  //   script.async = true;
-  //   document.body.appendChild(script);
-  // }, []);
+  console.log('subs==?', data?.subscriptions);
 
   const handlePayment = async (plan) => {
+    console.log('PLAN', plan);
     try {
-      const response = await purchaseTelegram({
+      const res = await purchaseTelegram({
         telegramId: data.id,
         days: plan.days,
+        subscriptionId: plan.id,
       });
-      //   const orderDetails = response.data.payload;
+      console.log('TESTTTTTT', res);
+      if (res?.data?.success) {
+        if (res.data.payload.paymentProvider === 'Phonepay') {
+          setTimeout(() => {
+            window.location.href = res.data.payload.redirectUrl;
+          }, 500);
+        } else if (res.data.payload.paymentProvider === 'Razorpay') {
+          const options = {
+            key: res.data.payload.key, // Replace with your Razorpay key ID
+            amount: res.data.payload.amount, // Amount in paise (e.g., 50000 = ₹500)
+            currency: 'INR',
+            name: 'One App',
+            description: 'Purchase Description',
 
-      //   var options = {
-      //     "key": import.meta.env.VITE_RAZORPAY_KEY,
-      //     "amount": orderDetails.amount,
-      //     "currency": orderDetails.currency,
-      //     "name": "One App",
-      //     "description": "Complete Your Purchase",
-      //     "order_id": orderDetails.orderId,
-      //     "handler": async function (response) {
-      //       const body = {
-      //         razorpay_order_id: response.razorpay_order_id,
-      //         razorpay_payment_id: response.razorpay_payment_id,
-      //         razorpay_signature: response.razorpay_signature,
-      //         telegramId: orderDetails.telegramId,
-      //         channelId: data.channelId,
-      //         days: plan.days
-      //       };
+            order_id: res.data.payload.razorpayOrderId, // Received from backend
+            handler: function (response) {
+              console.log('inside REDIRECT');
+              const params = new URLSearchParams();
 
-      //       try {
-      //         const response = await verifyPayment(body);
-      //         if(response.data.payload.telegramInvitelink) {
-      //           window.location.href = `${response.data.payload.telegramInvitelink}`;
-      //         }
-      //       } catch (error) {
-      //         console.error("Error while verifying payment.", error);
-      //         if (!handleAuthError(error)) {
-      //           toast("Payment Failed");
-      //         }
-      //       }
-      //     },
-      //     "prefill": {
-      //         "name": "John Doe",
-      //         "email": "john.doe@example.com",
-      //         "contact": "9999999999"
-      //     },
-      //     "theme": {
-      //         "color": "#F37254"
-      //     }
-      // };
+              params.append('discountedPrice', plan.price.toString());
+              params.append('paymentProvider', 'Razorpay');
 
-      // const rzp1 = new window.Razorpay(options);
-      // rzp1.open()
-      window.location.href = response.data.payload.redirectUrl;
+              if (response?.razorpay_signature) {
+                params.append('razorpay_signature', response.razorpay_signature);
+              }
+              if (response?.razorpay_payment_id) {
+                params.append('razorpay_payment_id', response.razorpay_payment_id);
+              }
+              if (response?.razorpay_order_id) {
+                params.append('razorpay_order_id', response.razorpay_order_id);
+              }
+              params.append('telegramId', telegramId);
+              params.append('subscriptionId', plan.id);
+
+              window.location.href = `${res.data.payload.redirectUrl}?${params.toString()}`;
+            },
+            prefill: {
+              name: res.data.payload.customerName || '',
+              email: res.data.payload.customerEmail || '',
+              contact: res.data.payload.customerPhone || '',
+            },
+
+            theme: {
+              color: '#3399cc',
+            },
+          };
+          console.log('options', options);
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        }
+      } else {
+        toast.error('Payment initialization failed');
+        throw new Error('Payment initialization failed');
+      }
     } catch (error) {
-      console.log("Error during payment of telegram.", error);
+      console.log('Error during payment of telegram.', error);
       if (!handleAuthError(error)) {
-        toast("Payment initiation failed");
+        toast('Payment initiation failed');
       }
     }
   };
 
   const handleSaveEmail = (email) => {
     setUserEmail(email);
-    toast.success("Email updated successfully!");
+    toast.success('Email updated successfully!');
   };
 
   const handleSuccessfulSignup = (data) => {
     if (data.token) {
-      localStorage.setItem("AuthToken", data.token);
+      localStorage.setItem('AuthToken', data.token);
       setShowSignupModal(false);
-      toast.success("Signup successful!");
+      toast.success('Signup successful!');
     }
   };
 
@@ -253,44 +282,30 @@ const TelegramFormPrev = () => {
                   alt={`${data?.channelName}'s avatar`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.src = "/api/placeholder/40/40";
+                    e.target.src = '/api/placeholder/40/40';
                   }}
                 />
               </div>
               <div>
                 <div className="text-gray-400 text-sm">Channel Name</div>
-                <div className="text-white font-medium">
-                  {data?.channelName}
-                </div>
+                <div className="text-white font-medium">{data?.channelName}</div>
               </div>
             </div>
 
             <div className="space-y-6 ">
               <div>
-                <h2 className="text-white text-lg font-semibold mb-4">
-                  About the channel
-                </h2>
+                <h2 className="text-white text-lg font-semibold mb-4">About the channel</h2>
                 <div className="flex gap-2 mb-4">
-                  <span className="px-3 py-1 bg-gray-800/60 rounded-full text-sm text-gray-300">
-                    {data?.genre}
-                  </span>
-                  <span className="px-3 py-1 bg-gray-800/60 rounded-full text-sm text-orange-400">
-                    + {data?.subscription?.length} Plans
-                  </span>
+                  <span className="px-3 py-1 bg-gray-800/60 rounded-full text-sm text-gray-300">{data?.genre}</span>
+                  <span className="px-3 py-1 bg-gray-800/60 rounded-full text-sm text-orange-400">+ {data?.subscription?.length} Plans</span>
                 </div>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  {data?.description}
-                </p>
+                <p className="text-gray-400 text-sm leading-relaxed">{data?.description}</p>
               </div>
 
               <div className="justify-end">
                 <h3 className="text-gray-400 font-medium mb-2">Disclaimer</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  {channelData?.disclaimers?.general}
-                </p>
-                <p className="text-xs text-gray-500 leading-relaxed mt-2">
-                  {channelData?.disclaimers?.riskWarning}
-                </p>
+                <p className="text-xs text-gray-500 leading-relaxed">{channelData?.disclaimers?.general}</p>
+                <p className="text-xs text-gray-500 leading-relaxed mt-2">{channelData?.disclaimers?.riskWarning}</p>
               </div>
             </div>
           </div>
@@ -302,16 +317,12 @@ const TelegramFormPrev = () => {
                 <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Antenna className="w-8 h-8 text-orange-400" />
                 </div>
-                <h2 className="text-white text-xl font-semibold">
-                  {channelData.channelName} payment
-                </h2>
+                <h2 className="text-white text-xl font-semibold">{channelData.channelName} payment</h2>
               </div>
             </div>
 
             <div className="space-y-4">
-              <div className="text-gray-400 mb-2 font-medium">
-                Select a plan and continue
-              </div>
+              <div className="text-gray-400 mb-2 font-medium">Select a plan and continue</div>
 
               {data?.subscriptions?.map((plan, index) => (
                 <button
@@ -321,9 +332,7 @@ const TelegramFormPrev = () => {
                 >
                   <div className="flex flex-col items-start">
                     <span className="font-medium">₹{plan?.price}</span>
-                    <span className="text-xs text-orange-200">
-                      {plan?.type}
-                    </span>
+                    <span className="text-xs text-orange-200">{plan?.type}</span>
                   </div>
                   <span className="font-semibold">₹{plan?.price}</span>
                 </button>
@@ -331,24 +340,16 @@ const TelegramFormPrev = () => {
             </div>
 
             <div className="mt-8 text-center">
-              <div className="text-sm text-gray-400 mb-4 font-medium">
-                Guaranteed safe & secure payment
-              </div>
+              <div className="text-sm text-gray-400 mb-4 font-medium">Guaranteed safe & secure payment</div>
               <div className="flex justify-center items-center gap-6">
                 {channelData?.paymentMethods?.map((method, index) => (
                   <div key={index} className="flex flex-col items-center group">
                     <div
                       className={`w-12 h-12 bg-${method.color} rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300`}
                     >
-                      {method.icon === "Wallet" ? (
-                        <Wallet className="w-6 h-6 text-white" />
-                      ) : (
-                        <CreditCard className="w-6 h-6 text-white" />
-                      )}
+                      {method.icon === 'Wallet' ? <Wallet className="w-6 h-6 text-white" /> : <CreditCard className="w-6 h-6 text-white" />}
                     </div>
-                    <span className="text-sm text-gray-400 mt-2 group-hover:text-white transition-colors duration-300">
-                      {method?.name}
-                    </span>
+                    <span className="text-sm text-gray-400 mt-2 group-hover:text-white transition-colors duration-300">{method?.name}</span>
                   </div>
                 ))}
               </div>
@@ -360,13 +361,9 @@ const TelegramFormPrev = () => {
         <div className="mt-10 pt-6 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center space-x-2">
-              <span className="text-gray-400 text-sm font-medium">
-                Made with
-              </span>
+              <span className="text-gray-400 text-sm font-medium">Made with</span>
               <span className="text-red-500 animate-pulse">❤️</span>
-              <span className="text-gray-400 text-sm font-medium">
-                in Bharat
-              </span>
+              <span className="text-gray-400 text-sm font-medium">in Bharat</span>
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-end gap-x-6">
