@@ -1,4 +1,4 @@
-import prisma from "../db/dbClient.js";
+import prisma from '../db/dbClient.js';
 
 export const adminSelfIdentification = async (req, res) => {
   try {
@@ -8,7 +8,7 @@ export const adminSelfIdentification = async (req, res) => {
       where: {
         id: user.id,
         role: {
-          in: ["Admin", "SuperAdmin"],
+          in: ['Admin', 'SuperAdmin'],
         },
       },
       select: {
@@ -23,7 +23,7 @@ export const adminSelfIdentification = async (req, res) => {
     if (!userDetails) {
       return res.status(400).json({
         success: false,
-        message: "USer not found.",
+        message: 'USer not found.',
       });
     }
 
@@ -32,10 +32,10 @@ export const adminSelfIdentification = async (req, res) => {
       userDetails,
     });
   } catch (error) {
-    console.error("Error in self identifying.", error);
+    console.error('Error in self identifying.', error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server error.",
+      message: 'Internal Server error.',
     });
   }
 };
@@ -45,10 +45,8 @@ export const createAdmin = async (req, res) => {
   try {
     const { email, phoneNumber, name, role } = req.body;
 
-    if (!["Admin", "SuperAdmin"].includes(role)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid role. Must be Admin or SuperAdmin." });
+    if (!['Admin', 'SuperAdmin'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role. Must be Admin or SuperAdmin.' });
     }
 
     const existingUserByEmail = await prisma.user.findFirst({
@@ -56,9 +54,7 @@ export const createAdmin = async (req, res) => {
     });
 
     if (existingUserByEmail) {
-      return res
-        .status(400)
-        .json({ message: "A user with this email already exists." });
+      return res.status(400).json({ message: 'A user with this email already exists.' });
     }
 
     const existingUserByPhone = await prisma.user.findFirst({
@@ -66,9 +62,7 @@ export const createAdmin = async (req, res) => {
     });
 
     if (existingUserByPhone) {
-      return res
-        .status(400)
-        .json({ message: "A user with this phone number already exists." });
+      return res.status(400).json({ message: 'A user with this phone number already exists.' });
     }
 
     const newUser = await prisma.user.create({
@@ -79,18 +73,16 @@ export const createAdmin = async (req, res) => {
         role,
         verified: false,
         goals: [],
-        heardAboutUs: "",
-        socialMedia: "",
+        heardAboutUs: '',
+        socialMedia: '',
         wallet: { create: {} },
       },
     });
 
-    return res
-      .status(201)
-      .json({ message: "User created successfully", newUser });
+    return res.status(201).json({ message: 'User created successfully', newUser });
   } catch (error) {
-    console.error("Error creating user:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error creating user:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -102,7 +94,7 @@ export const getAdmins = async (req, res) => {
 
     const [admins, total] = await Promise.all([
       prisma.user.findMany({
-        where: { role: { in: ["Admin", "SuperAdmin"] } },
+        where: { role: { in: ['Admin', 'SuperAdmin'] } },
         skip,
         take: limit,
         select: {
@@ -113,7 +105,7 @@ export const getAdmins = async (req, res) => {
           role: true,
         },
       }),
-      prisma.user.count({ where: { role: { in: ["Admin", "SuperAdmin"] } } }),
+      prisma.user.count({ where: { role: { in: ['Admin', 'SuperAdmin'] } } }),
     ]);
 
     return res.status(200).json({
@@ -126,8 +118,8 @@ export const getAdmins = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error getting admins:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error getting admins:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -136,10 +128,8 @@ export const updateAdmin = async (req, res) => {
     const { id } = req.params;
     const { email, phoneNumber, name, role } = req.body;
 
-    if (role && !["Admin", "SuperAdmin"].includes(role)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid role. Must be Admin or SuperAdmin." });
+    if (role && !['Admin', 'SuperAdmin'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role. Must be Admin or SuperAdmin.' });
     }
 
     const updatedAdmin = await prisma.user.update({
@@ -152,12 +142,10 @@ export const updateAdmin = async (req, res) => {
       },
     });
 
-    return res
-      .status(200)
-      .json({ message: "Admin updated successfully", updatedAdmin });
+    return res.status(200).json({ message: 'Admin updated successfully', updatedAdmin });
   } catch (error) {
-    console.error("Error updating admin:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error updating admin:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -171,11 +159,11 @@ export const deleteAdmin = async (req, res) => {
     });
 
     if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
+      return res.status(404).json({ message: 'Admin not found' });
     }
 
-    if (admin.role === "SuperAdmin") {
-      return res.status(403).json({ message: "SuperAdmin cannot be deleted" });
+    if (admin.role === 'SuperAdmin') {
+      return res.status(403).json({ message: 'SuperAdmin cannot be deleted' });
     }
 
     // Delete the associated wallet if it exists
@@ -190,10 +178,10 @@ export const deleteAdmin = async (req, res) => {
       where: { id },
     });
 
-    return res.status(200).json({ message: "Admin deleted successfully" });
+    return res.status(200).json({ message: 'Admin deleted successfully' });
   } catch (error) {
-    console.error("Error deleting admin:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error deleting admin:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 // ADMIN CRUD ROUTES END
@@ -201,26 +189,21 @@ export const deleteAdmin = async (req, res) => {
 // USER / CREATOR Routes
 export const createUser = async (req, res) => {
   try {
-    const { email, phoneNumber, name, goals, heardAboutUs, socialMedia, role } =
-      req.body;
+    const { email, phoneNumber, name, goals, heardAboutUs, socialMedia, role } = req.body;
 
     // Validate role
-    if (!["User", "Creator"].includes(role)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid role. Only User or Creator allowed." });
+    if (!['User', 'Creator'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role. Only User or Creator allowed.' });
     }
 
-    const goalsData = Array.isArray(goals) ? goals.map((goal) => goal.trim()) : (goals ? [goals.trim()] : []);
+    const goalsData = Array.isArray(goals) ? goals.map((goal) => goal.trim()) : goals ? [goals.trim()] : [];
 
     const existingUserByEmail = await prisma.user.findFirst({
       where: { email },
     });
 
     if (existingUserByEmail) {
-      return res
-        .status(400)
-        .json({ message: "A user with this email already exists." });
+      return res.status(400).json({ message: 'A user with this email already exists.' });
     }
 
     const existingUserByPhone = await prisma.user.findFirst({
@@ -228,9 +211,7 @@ export const createUser = async (req, res) => {
     });
 
     if (existingUserByPhone) {
-      return res
-        .status(400)
-        .json({ message: "A user with this phone number already exists." });
+      return res.status(400).json({ message: 'A user with this phone number already exists.' });
     }
 
     const newUser = await prisma.user.create({
@@ -247,29 +228,24 @@ export const createUser = async (req, res) => {
       },
     });
 
-    return res
-      .status(201)
-      .json({ message: "User created successfully", newUser });
+    return res.status(201).json({ message: 'User created successfully', newUser });
   } catch (error) {
-    console.error("Error creating user:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error creating user:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, phoneNumber, name, goals, heardAboutUs, socialMedia, role } =
-      req.body;
+    const { email, phoneNumber, name, goals, heardAboutUs, socialMedia, role, paymentProvider } = req.body;
 
     // Validate role
-    if (!["User", "Creator"].includes(role)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid role. Only User or Creator allowed." });
+    if (!['User', 'Creator'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role. Only User or Creator allowed.' });
     }
 
-    const goalsData = goals ? goals.split(",").map((goal) => goal.trim()) : [];
+    const goalsData = goals ? goals.split(',').map((goal) => goal.trim()) : [];
 
     const updatedUser = await prisma.user.update({
       where: { id },
@@ -281,15 +257,14 @@ export const updateUser = async (req, res) => {
         goals: goalsData,
         heardAboutUs,
         socialMedia,
+        paymentProvider,
       },
     });
 
-    return res
-      .status(200)
-      .json({ message: "User updated successfully", updatedUser });
+    return res.status(200).json({ message: 'User updated successfully', updatedUser });
   } catch (error) {
-    console.error("Error updating user:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error updating user:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -301,10 +276,10 @@ export const deleteUser = async (req, res) => {
       where: { id },
     });
 
-    return res.status(200).json({ message: "User deleted successfully" });
+    return res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error("Error deleting user:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error deleting user:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -313,9 +288,7 @@ export const getUsers = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const roleFilter = req.query.role
-      ? { role: req.query.role }
-      : { role: { in: ["User", "Creator"] } };
+    const roleFilter = req.query.role ? { role: req.query.role } : { role: { in: ['User', 'Creator'] } };
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -349,8 +322,8 @@ export const getUsers = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error getting users:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error getting users:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 // USER / CREATOR Routes
@@ -363,11 +336,11 @@ export const getProducts = async (req, res) => {
     const skip = (page - 1) * limit;
     const productType = req.query.productType;
 
-    const courseFilter = productType && productType !== "Course" ? { id: "" } : {};
-    const webinarFilter = productType && productType !== "Webinar" ? { id: "" } : {};
-    const telegramFilter = productType && productType !== "Telegram" ? { id: "" } : {};
-    const payingUpFilter = productType && productType !== "PayingUp" ? { id: "" } : {};
-    const premiumContentFilter = productType && productType !== "PremiumContent" ? { id: "" } : {};
+    const courseFilter = productType && productType !== 'Course' ? { id: '' } : {};
+    const webinarFilter = productType && productType !== 'Webinar' ? { id: '' } : {};
+    const telegramFilter = productType && productType !== 'Telegram' ? { id: '' } : {};
+    const payingUpFilter = productType && productType !== 'PayingUp' ? { id: '' } : {};
+    const premiumContentFilter = productType && productType !== 'PremiumContent' ? { id: '' } : {};
 
     const [
       [courses, coursesCount],
@@ -535,7 +508,7 @@ export const getProducts = async (req, res) => {
     const products = [
       ...courses.map((course) => ({
         ProductID: course.id,
-        ProductType: "Course",
+        ProductType: 'Course',
         Title: course.title,
         Creator: {
           ID: course.creator.id,
@@ -570,7 +543,7 @@ export const getProducts = async (req, res) => {
       })),
       ...webinars.map((webinar) => ({
         ProductID: webinar.id,
-        ProductType: "Webinar",
+        ProductType: 'Webinar',
         Title: webinar.title,
         Creator: {
           ID: webinar.createdBy.id,
@@ -602,7 +575,7 @@ export const getProducts = async (req, res) => {
       })),
       ...telegrams.map((telegram) => ({
         ProductID: telegram.id,
-        ProductType: "Telegram",
+        ProductType: 'Telegram',
         Title: telegram.title,
         Creator: {
           ID: telegram.createdBy.id,
@@ -628,7 +601,7 @@ export const getProducts = async (req, res) => {
       })),
       ...payingUps.map((payingUp) => ({
         ProductID: payingUp.id,
-        ProductType: "PayingUp",
+        ProductType: 'PayingUp',
         Title: payingUp.title,
         Creator: {
           ID: payingUp.createdBy.id,
@@ -658,7 +631,7 @@ export const getProducts = async (req, res) => {
       })),
       ...premiumContents.map((premiumContent) => ({
         ProductID: premiumContent.id,
-        ProductType: "PremiumContent",
+        ProductType: 'PremiumContent',
         Title: premiumContent.title,
         Creator: {
           ID: premiumContent.createdBy.id,
@@ -683,15 +656,15 @@ export const getProducts = async (req, res) => {
     ];
 
     const total = productType
-      ? productType === "Course"
+      ? productType === 'Course'
         ? coursesCount
-        : productType === "Webinar"
-          ? webinarsCount
-          : productType === "Telegram"
-            ? telegramsCount
-            : productType === "PayingUp"
-              ? payingUpsCount
-              : premiumContentsCount
+        : productType === 'Webinar'
+        ? webinarsCount
+        : productType === 'Telegram'
+        ? telegramsCount
+        : productType === 'PayingUp'
+        ? payingUpsCount
+        : premiumContentsCount
       : coursesCount + webinarsCount + telegramsCount + payingUpsCount + premiumContentsCount;
 
     return res.status(200).json({
@@ -704,8 +677,8 @@ export const getProducts = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching products:", error);
-    return res.status(500).json({ message: "Failed to fetch products" });
+    console.error('Error fetching products:', error);
+    return res.status(500).json({ message: 'Failed to fetch products' });
   }
 };
 
@@ -715,20 +688,18 @@ export const toggleProductVerification = async (req, res) => {
     console.log(productType, id);
 
     if (!id || !productType) {
-      return res
-        .status(400)
-        .json({ message: "Product ID and type are required" });
+      return res.status(400).json({ message: 'Product ID and type are required' });
     }
 
     let updatedProduct;
     switch (productType) {
-      case "Course":
+      case 'Course':
         const course = await prisma.course.findUnique({
           where: { id },
           select: { isVerified: true },
         });
         if (!course) {
-          return res.status(404).json({ message: "Course not found" });
+          return res.status(404).json({ message: 'Course not found' });
         }
         updatedProduct = await prisma.course.update({
           where: { id },
@@ -736,13 +707,13 @@ export const toggleProductVerification = async (req, res) => {
           select: { id: true, isVerified: true },
         });
         break;
-      case "Webinar":
+      case 'Webinar':
         const webinar = await prisma.webinar.findUnique({
           where: { id },
           select: { isVerified: true },
         });
         if (!webinar) {
-          return res.status(404).json({ message: "Webinar not found" });
+          return res.status(404).json({ message: 'Webinar not found' });
         }
         updatedProduct = await prisma.webinar.update({
           where: { id },
@@ -750,13 +721,13 @@ export const toggleProductVerification = async (req, res) => {
           select: { id: true, isVerified: true },
         });
         break;
-      case "Telegram":
+      case 'Telegram':
         const telegram = await prisma.telegram.findUnique({
           where: { id },
           select: { isVerified: true },
         });
         if (!telegram) {
-          return res.status(404).json({ message: "Telegram not found" });
+          return res.status(404).json({ message: 'Telegram not found' });
         }
         updatedProduct = await prisma.telegram.update({
           where: { id },
@@ -764,13 +735,13 @@ export const toggleProductVerification = async (req, res) => {
           select: { id: true, isVerified: true },
         });
         break;
-      case "PayingUp":
+      case 'PayingUp':
         const payingUp = await prisma.payingUp.findUnique({
           where: { id },
           select: { isVerified: true },
         });
         if (!payingUp) {
-          return res.status(404).json({ message: "PayingUp not found" });
+          return res.status(404).json({ message: 'PayingUp not found' });
         }
         updatedProduct = await prisma.payingUp.update({
           where: { id },
@@ -778,13 +749,13 @@ export const toggleProductVerification = async (req, res) => {
           select: { id: true, isVerified: true },
         });
         break;
-      case "PremiumContent":
+      case 'PremiumContent':
         const premiumContent = await prisma.premiumContent.findUnique({
           where: { id },
           select: { isVerified: true },
         });
         if (!premiumContent) {
-          return res.status(404).json({ message: "PremiumContent not found" });
+          return res.status(404).json({ message: 'PremiumContent not found' });
         }
         updatedProduct = await prisma.premiumContent.update({
           where: { id },
@@ -793,18 +764,16 @@ export const toggleProductVerification = async (req, res) => {
         });
         break;
       default:
-        return res.status(400).json({ message: "Invalid product type" });
+        return res.status(400).json({ message: 'Invalid product type' });
     }
 
     return res.status(200).json({
-      message: "Verification status toggled successfully",
+      message: 'Verification status toggled successfully',
       product: updatedProduct,
     });
   } catch (error) {
-    console.error("Error toggling product verification:", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to toggle verification status" });
+    console.error('Error toggling product verification:', error);
+    return res.status(500).json({ message: 'Failed to toggle verification status' });
   }
 };
 
@@ -812,7 +781,7 @@ export const toggleProductVerification = async (req, res) => {
 
 export const getDashboardData = async (req, res) => {
   try {
-    const { period = "today" } = req.query; // Filter by period: today, thisWeek, thisMonth, thisYear
+    const { period = 'today' } = req.query; // Filter by period: today, thisWeek, thisMonth, thisYear
 
     // Define the time range for the current period
     const now = new Date();
@@ -821,34 +790,22 @@ export const getDashboardData = async (req, res) => {
     let prevStartDate, prevEndDate;
 
     switch (period.toLowerCase()) {
-      case "today":
+      case 'today':
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         prevEndDate = new Date(startDate);
-        prevStartDate = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate() - 1
-        );
+        prevStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
         break;
-      case "thisweek":
-        startDate = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate() - now.getDay()
-        );
+      case 'thisweek':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
         prevEndDate = new Date(startDate);
-        prevStartDate = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate() - now.getDay() - 7
-        );
+        prevStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
         break;
-      case "thismonth":
+      case 'thismonth':
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         prevEndDate = new Date(startDate);
         prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         break;
-      case "thisyear":
+      case 'thisyear':
         startDate = new Date(now.getFullYear(), 0, 1);
         prevEndDate = new Date(startDate);
         prevStartDate = new Date(now.getFullYear() - 1, 0, 1);
@@ -856,16 +813,12 @@ export const getDashboardData = async (req, res) => {
       default:
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         prevEndDate = new Date(startDate);
-        prevStartDate = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate() - 1
-        );
+        prevStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
     }
 
     // Fetch creators (Role: Creator)
     const creators = await prisma.user.findMany({
-      where: { role: "Creator" },
+      where: { role: 'Creator' },
       include: {
         wallet: {
           include: {
@@ -886,7 +839,7 @@ export const getDashboardData = async (req, res) => {
           gte: startDate,
           lte: endDate,
         },
-        status: "COMPLETED",
+        status: 'COMPLETED',
       },
       include: {
         wallet: {
@@ -907,7 +860,7 @@ export const getDashboardData = async (req, res) => {
           gte: prevStartDate,
           lte: prevEndDate,
         },
-        status: "COMPLETED",
+        status: 'COMPLETED',
       },
       include: {
         wallet: {
@@ -919,18 +872,9 @@ export const getDashboardData = async (req, res) => {
     });
 
     // Calculate Today's Revenue
-    const todayStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
-    const todayTransactions = transactions.filter(
-      (tx) => new Date(tx.createdAt) >= todayStart
-    );
-    const todaysRevenue = todayTransactions.reduce(
-      (sum, tx) => sum + Number(tx.amount),
-      0
-    );
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayTransactions = transactions.filter((tx) => new Date(tx.createdAt) >= todayStart);
+    const todaysRevenue = todayTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
 
     // Calculate Metrics for Current Period
     const transactionChargeRate = 0.0195; // 1.95%
@@ -940,19 +884,13 @@ export const getDashboardData = async (req, res) => {
     let totalSpend = 0;
     let totalGST = 0;
 
-    const creatorMap = new Map(
-      creators.map((creator) => [
-        creator.id,
-        { commissionRate: (creator.creatorComission || 8) / 100 },
-      ])
-    );
+    const creatorMap = new Map(creators.map((creator) => [creator.id, { commissionRate: (creator.creatorComission || 8) / 100 }]));
 
     for (const tx of transactions) {
       const amount = Number(tx.amount);
       totalRevenue += amount;
 
-      const commissionRate =
-        creatorMap.get(tx.wallet.userId)?.commissionRate || 0.08;
+      const commissionRate = creatorMap.get(tx.wallet.userId)?.commissionRate || 0.08;
       const commission = amount * commissionRate;
       totalCommission += commission;
 
@@ -975,8 +913,7 @@ export const getDashboardData = async (req, res) => {
       const amount = Number(tx.amount);
       prevTotalRevenue += amount;
 
-      const commissionRate =
-        creatorMap.get(tx.wallet.userId)?.commissionRate || 0.08;
+      const commissionRate = creatorMap.get(tx.wallet.userId)?.commissionRate || 0.08;
       const commission = amount * commissionRate;
       prevTotalCommission += commission;
 
@@ -995,24 +932,16 @@ export const getDashboardData = async (req, res) => {
       const createdAt = new Date(creator.createdAt || creator.updatedAt);
       return createdAt >= startDate && createdAt <= endDate;
     }).length;
-    const activeCreatorIds = new Set(
-      transactions.map((tx) => tx.wallet.userId)
-    );
-    const deactiveCreators = creators.filter(
-      (creator) => !activeCreatorIds.has(creator.id)
-    ).length;
+    const activeCreatorIds = new Set(transactions.map((tx) => tx.wallet.userId));
+    const deactiveCreators = creators.filter((creator) => !activeCreatorIds.has(creator.id)).length;
 
     // Calculate Creator Metrics (Previous Period)
     const prevNewCreators = creators.filter((creator) => {
       const createdAt = new Date(creator.createdAt || creator.updatedAt);
       return createdAt >= prevStartDate && createdAt <= prevEndDate;
     }).length;
-    const prevActiveCreatorIds = new Set(
-      prevTransactions.map((tx) => tx.wallet.userId)
-    );
-    const prevDeactiveCreators = creators.filter(
-      (creator) => !prevActiveCreatorIds.has(creator.id)
-    ).length;
+    const prevActiveCreatorIds = new Set(prevTransactions.map((tx) => tx.wallet.userId));
+    const prevDeactiveCreators = creators.filter((creator) => !prevActiveCreatorIds.has(creator.id)).length;
 
     // Calculate Percentage Changes
     const calculatePercentageChange = (current, previous) => {
@@ -1021,36 +950,18 @@ export const getDashboardData = async (req, res) => {
       return ((current - previous) / previous) * 100;
     };
 
-    const revenuePercentage = calculatePercentageChange(
-      totalRevenue,
-      prevTotalRevenue
-    );
-    const spendPercentage = calculatePercentageChange(
-      totalSpend,
-      prevTotalSpend
-    );
-    const savingPercentage = calculatePercentageChange(
-      totalSaving,
-      prevTotalSaving
-    );
+    const revenuePercentage = calculatePercentageChange(totalRevenue, prevTotalRevenue);
+    const spendPercentage = calculatePercentageChange(totalSpend, prevTotalSpend);
+    const savingPercentage = calculatePercentageChange(totalSaving, prevTotalSaving);
     const gstPercentage = calculatePercentageChange(totalGST, prevTotalGST);
-    const newCreatorsPercentage = calculatePercentageChange(
-      newCreators,
-      prevNewCreators
-    );
-    const deactiveCreatorsPercentage = calculatePercentageChange(
-      deactiveCreators,
-      prevDeactiveCreators
-    );
+    const newCreatorsPercentage = calculatePercentageChange(newCreators, prevNewCreators);
+    const deactiveCreatorsPercentage = calculatePercentageChange(deactiveCreators, prevDeactiveCreators);
 
     // Creators Leaderboard
     const leaderboardData = creators
       .map((creator) => {
-        const creatorTransactions = transactions.filter(
-          (tx) => tx.wallet.userId === creator.id
-        );
-        const commissionRate =
-          creatorMap.get(creator.id)?.commissionRate || 0.08;
+        const creatorTransactions = transactions.filter((tx) => tx.wallet.userId === creator.id);
+        const commissionRate = creatorMap.get(creator.id)?.commissionRate || 0.08;
         const transactionChargeRate = 0.0195; // 1.95%
         const gstRate = 0.18; // 18%
         const earnings = creatorTransactions.reduce((sum, tx) => {
@@ -1071,27 +982,27 @@ export const getDashboardData = async (req, res) => {
 
     // Pie Chart Data: Spending Distribution
     const spendingData = [
-      { name: "Transaction Charges", value: Number(totalSpend.toFixed(5)) },
+      { name: 'Transaction Charges', value: Number(totalSpend.toFixed(5)) },
       {
-        name: "Creator Commissions",
+        name: 'Creator Commissions',
         value: Number(totalCommission.toFixed(5)),
       },
-      { name: "GST", value: Number(totalGST.toFixed(5)) },
+      { name: 'GST', value: Number(totalGST.toFixed(5)) },
     ];
 
     // Pie Chart Data: Creator Distribution
     const creatorDistribution = [
-      { name: "Active Creators", value: totalCreators - deactiveCreators },
-      { name: "Inactive Creators", value: deactiveCreators },
+      { name: 'Active Creators', value: totalCreators - deactiveCreators },
+      { name: 'Inactive Creators', value: deactiveCreators },
     ];
 
     // Last Updated
-    const lastUpdated = now.toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    const lastUpdated = now.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
       hour12: true,
     });
 
@@ -1100,60 +1011,52 @@ export const getDashboardData = async (req, res) => {
       lastUpdated,
       stats: [
         {
-          title: "Total Revenue",
+          title: 'Total Revenue',
           value: `₹${totalRevenue.toFixed(5)}`,
-          trend: revenuePercentage >= 0 ? "positive" : "negative",
-          percentage: `${revenuePercentage >= 0 ? "+" : ""
-            }${revenuePercentage.toFixed(5)}%`,
+          trend: revenuePercentage >= 0 ? 'positive' : 'negative',
+          percentage: `${revenuePercentage >= 0 ? '+' : ''}${revenuePercentage.toFixed(5)}%`,
         },
         {
-          title: "Total Commission",
+          title: 'Total Commission',
           value: `₹${totalCommission.toFixed(5)}`,
-          trend: revenuePercentage >= 0 ? "positive" : "negative",
-          percentage: `${revenuePercentage >= 0 ? "+" : ""
-            }${revenuePercentage.toFixed(5)}%`,
+          trend: revenuePercentage >= 0 ? 'positive' : 'negative',
+          percentage: `${revenuePercentage >= 0 ? '+' : ''}${revenuePercentage.toFixed(5)}%`,
         },
         {
-          title: "Total Spend",
+          title: 'Total Spend',
           value: `₹${totalSpend.toFixed(5)}`,
-          trend: spendPercentage >= 0 ? "positive" : "negative",
-          percentage: `${spendPercentage >= 0 ? "+" : ""
-            }${spendPercentage.toFixed(5)}%`,
+          trend: spendPercentage >= 0 ? 'positive' : 'negative',
+          percentage: `${spendPercentage >= 0 ? '+' : ''}${spendPercentage.toFixed(5)}%`,
         },
         {
-          title: "Total Saving",
+          title: 'Total Saving',
           value: `₹${totalSaving.toFixed(5)}`,
-          trend: savingPercentage >= 0 ? "positive" : "negative",
-          percentage: `${savingPercentage >= 0 ? "+" : ""
-            }${savingPercentage.toFixed(5)}%`,
+          trend: savingPercentage >= 0 ? 'positive' : 'negative',
+          percentage: `${savingPercentage >= 0 ? '+' : ''}${savingPercentage.toFixed(5)}%`,
         },
         {
-          title: "Total GST",
+          title: 'Total GST',
           value: `₹${totalGST.toFixed(5)}`,
-          trend: gstPercentage >= 0 ? "positive" : "negative",
-          percentage: `${gstPercentage >= 0 ? "+" : ""}${gstPercentage.toFixed(
-            2
-          )}%`,
+          trend: gstPercentage >= 0 ? 'positive' : 'negative',
+          percentage: `${gstPercentage >= 0 ? '+' : ''}${gstPercentage.toFixed(2)}%`,
         },
         {
-          title: "Total Creators",
+          title: 'Total Creators',
           value: totalCreators.toString(),
-          trend: "positive",
-          percentage: "+0%",
+          trend: 'positive',
+          percentage: '+0%',
         },
         {
-          title: "New Creators",
+          title: 'New Creators',
           value: newCreators.toString(),
-          trend: newCreatorsPercentage >= 0 ? "positive" : "negative",
-          percentage: `${newCreatorsPercentage >= 0 ? "+" : ""
-            }${newCreatorsPercentage.toFixed(5)}%`,
+          trend: newCreatorsPercentage >= 0 ? 'positive' : 'negative',
+          percentage: `${newCreatorsPercentage >= 0 ? '+' : ''}${newCreatorsPercentage.toFixed(5)}%`,
         },
         {
-          title: "Deactive Creators",
+          title: 'Deactive Creators',
           value: deactiveCreators.toString(),
-          trend: deactiveCreatorsPercentage >= 0 ? "negative" : "positive",
-          percentage: `${deactiveCreatorsPercentage >= 0 ? "+" : ""
-            }${deactiveCreatorsPercentage.toFixed(5)}%`,
+          trend: deactiveCreatorsPercentage >= 0 ? 'negative' : 'positive',
+          percentage: `${deactiveCreatorsPercentage >= 0 ? '+' : ''}${deactiveCreatorsPercentage.toFixed(5)}%`,
         },
       ],
       leaderboard: {
@@ -1166,8 +1069,8 @@ export const getDashboardData = async (req, res) => {
       creatorPieChart: creatorDistribution,
     });
   } catch (error) {
-    console.error("Error fetching dashboard data:", error);
-    return res.status(500).json({ message: "Failed to fetch dashboard data" });
+    console.error('Error fetching dashboard data:', error);
+    return res.status(500).json({ message: 'Failed to fetch dashboard data' });
   }
 };
 
@@ -1178,31 +1081,30 @@ export const getCreatorReport = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const searchTerm = req.query.search || "";
-    const kycStatus = req.query.kycStatus || "";
-    const verifiedStatus = req.query.verifiedStatus || "";
+    const searchTerm = req.query.search || '';
+    const kycStatus = req.query.kycStatus || '';
+    const verifiedStatus = req.query.verifiedStatus || '';
 
     // Build where clause for filtering
     const where = {
-      role: "Creator",
+      role: 'Creator',
       OR: searchTerm
         ? [
-          { name: { contains: searchTerm, mode: "insensitive" } },
-          { email: { contains: searchTerm, mode: "insensitive" } },
-          { phone: { contains: searchTerm, mode: "insensitive" } },
-        ]
+            { name: { contains: searchTerm, mode: 'insensitive' } },
+            { email: { contains: searchTerm, mode: 'insensitive' } },
+            { phone: { contains: searchTerm, mode: 'insensitive' } },
+          ]
         : undefined,
       kycRecords: kycStatus ? { status: kycStatus.toUpperCase() } : undefined,
-      verified: verifiedStatus ? verifiedStatus === "true" : undefined,
+      verified: verifiedStatus ? verifiedStatus === 'true' : undefined,
     };
 
     // Get statistics
-    const [totalCreators, verifiedCreators, unverifiedCreators] =
-      await Promise.all([
-        prisma.user.count({ where: { role: "Creator" } }),
-        prisma.user.count({ where: { role: "Creator", verified: true } }),
-        prisma.user.count({ where: { role: "Creator", verified: false } }),
-      ]);
+    const [totalCreators, verifiedCreators, unverifiedCreators] = await Promise.all([
+      prisma.user.count({ where: { role: 'Creator' } }),
+      prisma.user.count({ where: { role: 'Creator', verified: true } }),
+      prisma.user.count({ where: { role: 'Creator', verified: false } }),
+    ]);
 
     // Get paginated creators
     const [creators, total] = await Promise.all([
@@ -1218,7 +1120,7 @@ export const getCreatorReport = async (req, res) => {
           verified: true,
           kycRecords: { select: { status: true } },
         },
-        orderBy: { name: "asc" },
+        orderBy: { name: 'asc' },
       }),
       prisma.user.count({ where }),
     ]);
@@ -1230,7 +1132,7 @@ export const getCreatorReport = async (req, res) => {
       email: creator.email,
       phone: creator.phone,
       verified: creator.verified,
-      kycStatus: creator.kycRecords?.status || "PENDING",
+      kycStatus: creator.kycRecords?.status || 'PENDING',
     }));
 
     res.status(200).json({
@@ -1250,8 +1152,8 @@ export const getCreatorReport = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching creator report:", error);
-    res.status(500).json({ message: "Failed to fetch creator report" });
+    console.error('Error fetching creator report:', error);
+    res.status(500).json({ message: 'Failed to fetch creator report' });
   }
 };
 
@@ -1260,7 +1162,7 @@ export const getCreatorDetails = async (req, res) => {
     const { id } = req.params;
 
     const creator = await prisma.user.findUnique({
-      where: { id, role: "Creator" },
+      where: { id, role: 'Creator' },
       select: {
         id: true,
         name: true,
@@ -1271,6 +1173,7 @@ export const getCreatorDetails = async (req, res) => {
         heardAboutUs: true,
         verified: true,
         creatorComission: true,
+        paymentProvider: true,
         kycRecords: {
           select: {
             status: true,
@@ -1323,7 +1226,7 @@ export const getCreatorDetails = async (req, res) => {
     });
 
     if (!creator) {
-      return res.status(404).json({ message: "Creator not found" });
+      return res.status(404).json({ message: 'Creator not found' });
     }
 
     // Add availability flags
@@ -1331,15 +1234,14 @@ export const getCreatorDetails = async (req, res) => {
       ...creator,
       hasKyc: !!creator.kycRecords,
       hasBusinessInfo: !!creator.businessInfo,
-      hasBankDetails:
-        creator.BankAccounts.length > 0 || creator.upiIds.length > 0,
+      hasBankDetails: creator.BankAccounts.length > 0 || creator.upiIds.length > 0,
       hasWallet: !!creator.wallet,
     };
 
     res.status(200).json(response);
   } catch (error) {
-    console.error("Error fetching creator details:", error);
-    res.status(500).json({ message: "Failed to fetch creator details" });
+    console.error('Error fetching creator details:', error);
+    res.status(500).json({ message: 'Failed to fetch creator details' });
   }
 };
 
@@ -1348,15 +1250,15 @@ export const toggleCreatorKycStatus = async (req, res) => {
     const { id } = req.params;
     const { status, rejectionReason } = req.body;
 
-    if (!["PENDING", "VERIFIED", "REJECTED"].includes(status)) {
-      return res.status(400).json({ message: "Invalid KYC status" });
+    if (!['PENDING', 'VERIFIED', 'REJECTED'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid KYC status' });
     }
 
     const updatedKyc = await prisma.kycRecords.update({
       where: { userId: id },
       data: {
         status,
-        rejectionReason: status === "REJECTED" ? rejectionReason : null,
+        rejectionReason: status === 'REJECTED' ? rejectionReason : null,
       },
     });
 
@@ -1366,46 +1268,34 @@ export const toggleCreatorKycStatus = async (req, res) => {
         userId: updatedKyc.userId,
       },
       data: {
-        isKycVerified: status === "VERIFIED",
+        isKycVerified: status === 'VERIFIED',
       },
     });
 
     await prisma.user.update({
       where: { id },
-      data: { verified: status === "VERIFIED" },
+      data: { verified: status === 'VERIFIED' },
     });
 
-    res
-      .status(200)
-      .json({ message: "KYC status updated", kycStatus: updatedKyc.status });
+    res.status(200).json({ message: 'KYC status updated', kycStatus: updatedKyc.status });
   } catch (error) {
-    console.error("Error updating KYC status:", error);
-    res.status(500).json({ message: "Failed to update KYC status" });
+    console.error('Error updating KYC status:', error);
+    res.status(500).json({ message: 'Failed to update KYC status' });
   }
 };
 
 export const updateCreatorPersonalDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      email,
-      phone,
-      socialMedia,
-      goals,
-      heardAboutUs,
-      creatorComission = 8,
-    } = req.body;
-
+    const { name, email, phone, socialMedia, goals, heardAboutUs, creatorComission = 8, paymentProvider } = req.body;
+    console.log('INSIDe', req.body);
     // Validate inputs
     if (!name || !email || !phone) {
-      return res
-        .status(400)
-        .json({ message: "Name, email, and phone are required" });
+      return res.status(400).json({ message: 'Name, email, and phone are required' });
     }
 
     const updatedCreator = await prisma.user.update({
-      where: { id, role: "Creator" },
+      where: { id, role: 'Creator' },
       data: {
         name,
         email,
@@ -1414,6 +1304,7 @@ export const updateCreatorPersonalDetails = async (req, res) => {
         goals,
         heardAboutUs,
         creatorComission: parseInt(creatorComission),
+        paymentProvider: paymentProvider,
       },
       select: {
         id: true,
@@ -1427,12 +1318,10 @@ export const updateCreatorPersonalDetails = async (req, res) => {
       },
     });
 
-    res
-      .status(200)
-      .json({ message: "Personal details updated", creator: updatedCreator });
+    res.status(200).json({ message: 'Personal details updated', creator: updatedCreator });
   } catch (error) {
-    console.error("Error updating personal details:", error);
-    res.status(500).json({ message: "Failed to update personal details" });
+    console.error('Error updating personal details:', error);
+    res.status(500).json({ message: 'Failed to update personal details' });
   }
 };
 
@@ -1443,7 +1332,7 @@ export const getCreatoreWithDrawls = async (req, res) => {
     if (!creatorId) {
       return res.status(400).send({
         success: false,
-        message: "Creator Id Required",
+        message: 'Creator Id Required',
       });
     }
 
@@ -1452,7 +1341,7 @@ export const getCreatoreWithDrawls = async (req, res) => {
         wallet: {
           userId: creatorId,
           user: {
-            role: "Creator",
+            role: 'Creator',
           },
         },
       },
@@ -1483,21 +1372,21 @@ export const getCreatoreWithDrawls = async (req, res) => {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
     return res.status(200).send({
       success: true,
-      message: "Creator WithDrawls True",
+      message: 'Creator WithDrawls True',
       withdrawalsDetails,
     });
   } catch (error) {
-    console.log("ERROR: GetWithDrawls Fails", error);
+    console.log('ERROR: GetWithDrawls Fails', error);
     return res.status(500).send({
       success: false,
-      message: "Error in Getting WithDrawls",
-      error: "Internal Server Error",
+      message: 'Error in Getting WithDrawls',
+      error: 'Internal Server Error',
     });
   }
 };
@@ -1510,14 +1399,14 @@ export const updateWithDrawlsStatus = async (req, res) => {
     if (!withdrawalId || !status) {
       return res.status(400).json({
         success: false,
-        message: "Withdrawal ID and status are required",
+        message: 'Withdrawal ID and status are required',
       });
     }
 
-    if (!["PENDING", "SUCCESS", "FAILED"].includes(status)) {
+    if (!['PENDING', 'SUCCESS', 'FAILED'].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status value",
+        message: 'Invalid status value',
       });
     }
 
@@ -1529,28 +1418,28 @@ export const updateWithDrawlsStatus = async (req, res) => {
     if (!withdrawal) {
       return res.status(404).json({
         success: false,
-        message: "Withdrawal not found",
+        message: 'Withdrawal not found',
       });
     }
 
-    if (withdrawal.status !== "PENDING") {
+    if (withdrawal.status !== 'PENDING') {
       return res.status(400).json({
         success: false,
-        message: "Only pending withdrawals can be updated",
+        message: 'Only pending withdrawals can be updated',
       });
     }
 
     let updateData = { status };
 
-    if (status === "FAILED") {
-      updateData.failedReason = failedReason || "No reason provided";
+    if (status === 'FAILED') {
+      updateData.failedReason = failedReason || 'No reason provided';
     }
 
-    if (status === "SUCCESS") {
+    if (status === 'SUCCESS') {
       if (withdrawal.wallet.balance < withdrawal.amount) {
         return res.status(400).json({
           success: false,
-          message: "Insufficient wallet balance",
+          message: 'Insufficient wallet balance',
         });
       }
 
@@ -1581,29 +1470,21 @@ export const updateWithDrawlsStatus = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Withdrawal status updated successfully",
+      message: 'Withdrawal status updated successfully',
     });
   } catch (error) {
-    console.error("ERROR: Update Withdrawal Status Failed", error);
+    console.error('ERROR: Update Withdrawal Status Failed', error);
     return res.status(500).json({
       success: false,
-      message: "Error updating withdrawal status",
-      error: "Internal Server Error",
+      message: 'Error updating withdrawal status',
+      error: 'Internal Server Error',
     });
   }
 };
 //User Payment Transaction Report
 export const getPayments = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      status,
-      productType,
-      sortBy = "createdAt",
-      sortOrder = "desc",
-    } = req.query;
+    const { page = 1, limit = 10, search, status, productType, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
@@ -1612,12 +1493,12 @@ export const getPayments = async (req, res) => {
     const where = {};
     if (search) {
       where.OR = [
-        { id: { contains: search, mode: "insensitive" } },
-        { productId: { contains: search, mode: "insensitive" } },
-        { buyer: { name: { contains: search, mode: "insensitive" } } },
-        { buyer: { email: { contains: search, mode: "insensitive" } } },
-        { creator: { name: { contains: search, mode: "insensitive" } } },
-        { creator: { email: { contains: search, mode: "insensitive" } } },
+        { id: { contains: search, mode: 'insensitive' } },
+        { productId: { contains: search, mode: 'insensitive' } },
+        { buyer: { name: { contains: search, mode: 'insensitive' } } },
+        { buyer: { email: { contains: search, mode: 'insensitive' } } },
+        { creator: { name: { contains: search, mode: 'insensitive' } } },
+        { creator: { email: { contains: search, mode: 'insensitive' } } },
       ];
     }
     if (status) {
@@ -1682,11 +1563,11 @@ export const getPayments = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching payments:", error);
+    console.error('Error fetching payments:', error);
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch payments",
-      error: "Internal Server Error",
+      message: 'Failed to fetch payments',
+      error: 'Internal Server Error',
     });
   }
 };
