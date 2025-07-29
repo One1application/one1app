@@ -87,7 +87,7 @@ model User {
   transactionsAsCreator       Transaction[]             @relation("Creator")
   premiumContent              PremiumContent[]
   premiumAccess               PremiumContentAccess[]
-  creatorComission            Int?                      @default(8)
+  creatorComission            Float?                    @default(8)
   review                      Review[]
   inviteLinks                 String[]
   otpStore                    OTPStore?
