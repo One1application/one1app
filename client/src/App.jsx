@@ -49,9 +49,7 @@ import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedCon
 import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
 import PaymentInterface from "./newPurchase/PaymentInterface.jsx";
 import HelpCenterBanner from "./Pages/HelpCenter/HelpCenterComingSoon.jsx";
-import ConnectPage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram1.jsx";
-import TelegramsPages2 from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramCreate2.jsx";
-import WelcomePage from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram3.jsx";
+import ConnectPage from "./Pages/Dashboard/DashboardPages/TelegramPage/ConnectTelegramPage.jsx";
 import CreatorProductsShowcase from "./Pages/Dashboard/DashboardPages/ProfilePage/components/CreatorProductsShowcase.jsx";
 import EditTelegram from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramEditForm.jsx";
 
@@ -101,7 +99,6 @@ const App = () => {
             <Route path="payingup" element={<PayingUpPage />} />
             <Route path="appointment" element={<AppointementPage />} />
             <Route path="all-products" element={<CreatorProductsShowcase />} />
-            <Route path="telegram-interface" element={<ConnectPage />} />
 
             <Route path="webinar" element={<WebinarPage />} />
             <Route path="courses" element={<CoursesPage />} />
@@ -122,20 +119,24 @@ const App = () => {
           {/* Sub-Pages for App-Specific Routes */}
           <Route path="app" element={<Outlet />}>
             <Route path="create-webinar" element={<CreateWebinarPage />} />
+            <Route path="edit-webinar" element={<CreateWebinarPage />} />
+
             <Route path="create-course" element={<CreateCoursePage />} />
-            <Route path="create-course" element={<NewCourse />} />
+            <Route path="edit-course" element={<CreateCoursePage />} />
+            {/* <Route path="create-course" element={<NewCourse />} /> */}
+
             <Route path="create-pay-up" element={<CreatePayUp />} />
+            <Route path="edit-payingup" element={<CreatePayUp />} />
+
+
             <Route path="create-telegram" element={<TelegramForm />} />
             <Route path="edit-telegram" element={<EditTelegram />} />
+
             <Route
               path="create-premium-content"
               element={<CreateLockedContentPage />}
             />
-            <Route path="telegram-page2" element={<TelegramsPages2 />} />
-            <Route path="telegram-page3" element={<WelcomePage />} />
-            <Route path="edit-course" element={<CreateCoursePage />} />
-            <Route path="edit-webinar" element={<CreateWebinarPage />} />
-            <Route path="edit-payingup" element={<CreatePayUp />} />
+
             <Route
               path="edit-premium-content"
               element={<CreateLockedContentPage />}
@@ -157,6 +158,9 @@ const App = () => {
 
           <Route path="course/lessons" element={<LessonsPage />} />
         </Route>
+
+
+
         <Route path="/unsubscribe/:email" element={<Unsubscribe />} />
       </Routes>
     </>

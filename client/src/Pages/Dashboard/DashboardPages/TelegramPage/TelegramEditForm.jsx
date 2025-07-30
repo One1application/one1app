@@ -1,22 +1,11 @@
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable react/prop-types */
-/* eslint-disable no-unused-vars */
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   PlusCircle,
-  Upload,
   X,
   ChevronDown,
   Loader2,
-  Shield,
-  Key,
-  MessageSquare,
-  Lock,
-  Zap,
-  Phone,
-  AlertCircle,
-  Mail,
-  RotateCw,
+
 } from "lucide-react";
 import {
   createTelegram,
@@ -25,12 +14,7 @@ import {
   fetchOwnedGroups,
 } from "../../../../services/auth/api.services.js";
 import toast from "react-hot-toast";
-import { motion } from "framer-motion";
 
-import {
-  sendTelegramLoginCode,
-  signInTelegramClient,
-} from "../../../../services/auth/api.services.js";
 // Discount Form Component
 const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
   const [discountCode, setDiscountCode] = useState("");
@@ -138,8 +122,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
 
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../../context/AuthContext.jsx";
-import ConnectPage from "./Telegram1.jsx";
-import TelegramHeader from "./TelegramHeader.jsx";
+
 
 // Main TelegramsPages Component
 const TelegramsPages = () => {
@@ -459,26 +442,9 @@ const TelegramsPages = () => {
   };
 
   useEffect(() => {
-    // On initial mount, try to load groups to check for an existing session.
     loadGroups();
   }, []);
 
-  // const body = {
-  //   title: telegramTitle,
-  //   description: telegramDescription,
-  //   subscriptions,
-  //   coverImage: response?.data?.url || "",
-  //   genre,
-  //   chatId: selectedGroup ? selectedGroup.id : inviteLinkData?.chatId || "",
-  //   channelName: selectedGroup
-  //     ? selectedGroup.title
-  //     : inviteLinkData?.title || "",
-  //   channelLink:
-  //     selectedGroup && selectedGroup.username
-  //       ? `https://t.me/${selectedGroup.username}`
-  //       : inviteLink,
-  //   discount: discounts,
-  // };
 
   const handleSubmit = async () => {
     try {
@@ -804,9 +770,8 @@ const TelegramsPages = () => {
                         className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white pr-8"
                       />
                       <ChevronDown
-                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                          sub.showDropdown ? "transform rotate-180" : ""
-                        }`}
+                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${sub.showDropdown ? "transform rotate-180" : ""
+                          }`}
                       />
                     </div>
 
@@ -824,26 +789,26 @@ const TelegramsPages = () => {
                         {predefinedTypes.filter((type) =>
                           type.toLowerCase().includes(sub?.type.toLowerCase())
                         ).length > 0 && (
-                          <div className="max-h-48 overflow-auto">
-                            {predefinedTypes
-                              .filter((type) =>
-                                type
-                                  .toLowerCase()
-                                  .includes(sub?.type.toLowerCase())
-                              )
-                              .map((option) => (
-                                <div
-                                  key={option}
-                                  className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                                  onClick={() => {
-                                    handleOptionClick(option, index);
-                                  }}
-                                >
-                                  {option}
-                                </div>
-                              ))}
-                          </div>
-                        )}
+                            <div className="max-h-48 overflow-auto">
+                              {predefinedTypes
+                                .filter((type) =>
+                                  type
+                                    .toLowerCase()
+                                    .includes(sub?.type.toLowerCase())
+                                )
+                                .map((option) => (
+                                  <div
+                                    key={option}
+                                    className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                                    onClick={() => {
+                                      handleOptionClick(option, index);
+                                    }}
+                                  >
+                                    {option}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
@@ -880,29 +845,29 @@ const TelegramsPages = () => {
                     (type) => type.toLowerCase() === sub?.type.toLowerCase()
                   ) ||
                     sub?.type === "") && (
-                    <input
-                      type="number"
-                      placeholder="Number of Days"
-                      value={sub?.validDays}
-                      onChange={(e) => {
-                        setUserData((prev) => {
-                          const updatedData = prev?.subscriptions?.map(
-                            (data, i) => {
-                              if (index == i) {
-                                return {
-                                  ...data,
-                                  validDays: parseInt(e.target.value),
-                                };
+                      <input
+                        type="number"
+                        placeholder="Number of Days"
+                        value={sub?.validDays}
+                        onChange={(e) => {
+                          setUserData((prev) => {
+                            const updatedData = prev?.subscriptions?.map(
+                              (data, i) => {
+                                if (index == i) {
+                                  return {
+                                    ...data,
+                                    validDays: parseInt(e.target.value),
+                                  };
+                                }
+                                return data;
                               }
-                              return data;
-                            }
-                          );
-                          return { ...prev, subscriptions: updatedData };
-                        });
-                      }}
-                      className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                    />
-                  )}
+                            );
+                            return { ...prev, subscriptions: updatedData };
+                          });
+                        }}
+                        className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
+                      />
+                    )}
 
                   <button
                     onClick={() => deleteSubscription(index)}

@@ -138,7 +138,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
 
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../../context/AuthContext.jsx";
-import ConnectPage from "./Telegram1.jsx";
+import ConnectPage from "./ConnectTelegramPage.jsx"
 import TelegramHeader from "./TelegramHeader.jsx";
 
 // Main TelegramsPages Component
@@ -424,7 +424,7 @@ const Telgrampage = () => {
   const loadGroups = async () => {
     setLoadingGroups(true);
     try {
-            const telegramSession = localStorage.getItem('telegramSession');
+      const telegramSession = localStorage.getItem('telegramSession');
       const groupsResponse = await fetchOwnedGroups(telegramSession);
       const groups = groupsResponse.data.payload.groups || [];
       // The backend already sends a unique list, so no client-side deduplication is needed.
@@ -572,44 +572,8 @@ const Telgrampage = () => {
         <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 sm:p-6">
           {/* Main Card */}
           <div className="w-2/3 h-full bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-700 relative z-10">
-            {/* Card Header */}
-            {/* <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-orange-700 py-6 px-4 sm:px-8 text-center relative">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-          <div className="relative">
-            <div className="flex justify-center items-center space-x-4 sm:space-x-8 mb-4">
-              <div className="bg-gray-900 p-2 rounded-lg border border-gray-700">
-                <img 
-                  src="https://www.celsoazevedo.com/files/android/f/telegram-img.png" 
-                  alt="Telegram Logo"
-                  className="w-12 h-12 object-contain"
-                />
-              </div>
-              
-             <Lottie
-          animationData={animation}
-          loop={true}
-          autoplay={true}
-          className="w-1/4"
-        />
-              
-              <div className="bg-gray-900 p-2 rounded-lg border border-gray-700">
-                <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-sm px-2 py-1 rounded">
-                  OneApp
-                </div>
-              </div>
-            </div>
-            
-            <h1 className="text-xl font-bold text-white tracking-tight">
-              {step === 0 
-                ? "Connect Telegram with OneApp" 
-                : step === 1 
-                  ? "Verify Your Identity" 
-                  : "Enter Verification Code"}
-            </h1>
-          </div>
-        </div> */}
+
             <TelegramHeader />
-            {/* Card Content */}
 
             <div className="py-8 px-4 sm:px-8 max-w-md mx-auto relative overflow-hidden">
               {/* Floating decorative icons */}
@@ -820,8 +784,8 @@ const Telgrampage = () => {
                           isSubmitting || otp.some((digit) => digit === "")
                         }
                         className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${isSubmitting || otp.some((digit) => digit === "")
-                            ? "bg-gray-700 cursor-not-allowed"
-                            : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
+                          ? "bg-gray-700 cursor-not-allowed"
+                          : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
                           }`}
                         variants={item}
                         whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
@@ -894,53 +858,12 @@ const Telgrampage = () => {
             </div>
           </div>
         </div>
-        {/* <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-          <div className="bg-gray-800 p-6 rounded-lg w-full  space-y-4">
-            {loginStage === "enterPhone" && (
-              <>
-                <label className="block text-sm text-white">Phone Number</label>
-                <input
-                  type="text"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded"
-                  placeholder="e.g. +123456789"
-                />
-                <button
-                  //  onClick={handleSendCode}
-                  disabled={sendingCode}
-                  className="w-full bg-orange-600 py-2 rounded text-white"
-                >
-                  {sendingCode ? "Sending..." : "Send Login Code"}
-                </button>
 
-               
-              </>
-            )} */}
-        {/* {loginStage === "enterCode" && (
-              <>
-                <label className="block text-sm text-white">Enter Code</label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded"
-                  placeholder="Code from Telegram"
-                />
-                <button
-                  onClick={handleVerifyCode}
-                  disabled={verifyingCode}
-                  className="w-full bg-orange-600 py-2 rounded text-white"
-                >
-                  {verifyingCode ? "Verifying..." : "Verify Code"}
-                </button>
-              </>
-            )} */}
-        {/* </div>
-        </div> */}
       </>
     );
   }
+
+
 
   return (
     <div className="min-h-screen bg-gray-900">

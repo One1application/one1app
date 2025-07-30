@@ -15,7 +15,7 @@ import {
   RotateCw,
 } from "lucide-react";
 
-const ConnectPage = () => {
+const ConnectTelegramPage = () => {
   const [step, setStep] = useState(0);
   const [mobileNumber, setMobileNumber] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -386,11 +386,10 @@ const ConnectPage = () => {
                   <motion.button
                     onClick={handleOtpSubmit}
                     disabled={isSubmitting || otp.some((digit) => digit === "")}
-                    className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${
-                      isSubmitting || otp.some((digit) => digit === "")
-                        ? "bg-gray-700 cursor-not-allowed"
-                        : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
-                    }`}
+                    className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${isSubmitting || otp.some((digit) => digit === "")
+                      ? "bg-gray-700 cursor-not-allowed"
+                      : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
+                      }`}
                     variants={item}
                     whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                   >
@@ -463,4 +462,4 @@ const ConnectPage = () => {
   );
 };
 
-export default ConnectPage;
+export default ConnectTelegramPage;

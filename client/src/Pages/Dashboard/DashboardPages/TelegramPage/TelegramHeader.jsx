@@ -15,7 +15,6 @@ import { Telegram } from "developer-icons";
 const TelegramHeader = () => {
   return (
     <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-orange-600 py-8 px-4 sm:px-8 text-center relative overflow-hidden">
-   
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute -top-4 -left-4 w-24 h-24 bg-white/10 rounded-full"
@@ -45,7 +44,7 @@ const TelegramHeader = () => {
       </div>
 
       <div className="relative z-10">
-       
+
         <motion.div
           className="flex justify-center items-center mb-6"
           initial={{ opacity: 0, y: -20 }}
@@ -74,7 +73,7 @@ const TelegramHeader = () => {
                 }}
               />
             </motion.div>
- 
+
             <motion.div
               className="flex items-center space-x-3"
               initial={{ opacity: 0, x: -10 }}
@@ -124,7 +123,7 @@ const TelegramHeader = () => {
               </div>
             </motion.div>
 
-            
+
             <motion.div
               className="relative"
               whileHover={{ scale: 1.05 }}
@@ -145,7 +144,7 @@ const TelegramHeader = () => {
           </div>
         </motion.div>
 
-      
+
         <motion.div
           className="text-center mb-2"
           initial={{ opacity: 0, y: 10 }}
@@ -191,7 +190,7 @@ const TelegramHeader = () => {
           </motion.div>
         </motion.div>
 
-      
+
         <div className="absolute inset-0 pointer-events-none">
           {[...Array(6)].map((_, i) => (
             <motion.div
