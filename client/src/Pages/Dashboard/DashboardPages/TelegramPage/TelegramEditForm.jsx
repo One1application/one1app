@@ -531,7 +531,7 @@ const TelegramsPages = () => {
       loadTelegramData()
     } catch (error) {
       console.error("Error with discount:", error);
-      toast.error(discountData.id ? "Failed to update discount" : "Failed to create discount");
+      toast.error(discountData.id ? error?.response?.data?.message || `Failed to update discount` : error?.response?.data?.message || "Failed to create discount");
     }
   };
 

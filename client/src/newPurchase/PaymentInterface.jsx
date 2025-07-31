@@ -3,7 +3,7 @@ import { ArrowLeft, Check, ChevronRight, ShieldCheck, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { purchaseCourse, purchasePayingUp, purchasePremiumContent, purchaseWebinar } from '../services/auth/api.services';
+import { purchaseCourse, purchasePayingUp, purchasePremiumContent, purchaseWebinar, purchaseTelegramSubscription, applyTelegramCoupon } from '../services/auth/api.services';
 
 export default function PaymentInterface() {
   // const [selectedPlan, setSelectedPlan] = useState("2000");
@@ -23,6 +23,7 @@ export default function PaymentInterface() {
   const [courseType, setCourseType] = useState(productData.courseType || '');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [isVerifyingCoupon, setIsVerifyingCoupon] = useState(false);
+  const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
   useEffect(() => {
     const loadRazorpayScript = () => {
       return new Promise((resolve) => {
@@ -39,7 +40,7 @@ export default function PaymentInterface() {
 
         script.onload = () => {
           console.log('Razorpay script loaded successfully');
-
+          setIsRazorpayLoaded(true);
           resolve(true);
         };
 
@@ -70,6 +71,13 @@ export default function PaymentInterface() {
       setProductId(location.state.id || '');
       setCourseType(location.state.courseType || '');
       setCreatedBy(location.state.createdBy || 'sumit');
+
+      // For telegram, if coupon was already applied in TelegramFormPrev
+      if (location.state.courseType === 'telegram' && location.state.appliedCoupon) {
+        setCouponCode(location.state.appliedCoupon.couponCode);
+        setDiscountAmount(location.state.appliedCoupon.discountPrice || 0);
+        setDiscountApplied(true);
+      }
     }
   }, [location.state]);
 
@@ -171,6 +179,21 @@ export default function PaymentInterface() {
           }
           break;
 
+        case 'telegram':
+          res = await applyTelegramCoupon({
+            telegramId: productData.telegramId || productId,
+            subscriptionId: productData.subscriptionId,
+            couponCode,
+          });
+          if (res?.data?.success) {
+
+            setDiscountAmount(parseFloat((res.data.payload.discountPrice || 0).toFixed(2)));
+            setDiscountApplied(true);
+            setShowCoupon(false);
+            toast.success('Coupon applied successfully');
+          }
+          break;
+
         default:
           toast.error('Invalid Product type');
           break;
@@ -225,6 +248,14 @@ export default function PaymentInterface() {
           });
           break;
 
+        case 'telegram':
+          res = await purchaseTelegramSubscription({
+            telegramId: productData.telegramId || productId,
+            subscriptionId: productData.subscriptionId,
+            couponCode: discountApplied ? couponCode : null,
+          });
+          break;
+
         default:
           toast.error('Invalid product type');
           throw new Error('Invalid product type');
@@ -254,8 +285,11 @@ export default function PaymentInterface() {
               if (courseType === 'webinar') params.append('webinarId', productId);
               if (courseType === 'premiumcontent') params.append('contentId', productId);
 
-              // Always add telegramId (if valid)
-              if (courseType === 'telegram') params.append('telegramId', productId);
+              // Add telegram specific parameters
+              if (courseType === 'telegram') {
+                params.append('telegramId', productData.telegramId || productId);
+                params.append('subscriptionId', productData.subscriptionId);
+              }
 
               // Add payment-related fields only if present
               if (baseAmount) params.append('discountedPrice', baseAmount.toString());
@@ -429,6 +463,7 @@ export default function PaymentInterface() {
                     {courseType === 'webinar' && 'Webinar'}
                     {courseType === 'payingUp' && 'Paying Up'}
                     {courseType === 'premiumcontent' && 'Premium Content'}
+                    {courseType === 'telegram' && 'Telegram Subscription'}
                   </span>
 
                   <motion.div

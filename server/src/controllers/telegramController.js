@@ -1027,7 +1027,6 @@ export async function purchaseTelegramSubscription(req, res) {
       });
     }
 
-    // Fetch Telegram and Subscription
     const telegram = await prisma.telegram.findUnique({
       where: { id: telegramId },
       select: {
@@ -1035,6 +1034,8 @@ export async function purchaseTelegramSubscription(req, res) {
         createdBy: { select: { creatorComission: true, paymentProvider: true } },
       },
     });
+    console.log("TELEGRAM IS", telegram);
+
 
     const creator = await prisma.telegram.findFirst({
       where: {
@@ -1346,6 +1347,8 @@ export async function purchaseTelegramSubscription(req, res) {
       });
     }
   } catch (error) {
+    console.log(error);
+
     console.log('Error in purchaseTelegramSubscription:', {
       error: error.message,
       stack: error.stack,
@@ -1472,101 +1475,6 @@ export async function verifyTelegramPaymentCallback(req, res) {
   }
 }
 
-// Purchase
-// export async function purchaseTelegram(req, res) {
-//   try {
-//     const { telegramId, days } = req.body;
-//     const user = req.user;
-
-//     if (!user) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "User not found.",
-//       });
-//     }
-
-//     if (!telegramId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Telegram Id required.",
-//       });
-//     }
-
-//     const telegram = await prisma.telegram.findUnique({
-//       where: {
-//         id: telegramId,
-//       },
-//       select: {
-//         createdBy: true,
-//         subscription: true,
-//         discount: true,
-//         isGroupMonitored: true,
-//         botHaveAdmin: true,
-//       },
-//     });
-
-//     if (!telegram) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Telegram not found.",
-//       });
-//     }
-
-//     // if (telegram.createdById === user.id) {
-//     //     return res.status(400).json({
-//     //         success: false,
-//     //         message: "You cannot purchase your own channel."
-//     //     })
-//     // }
-
-//     if (!telegram.isGroupMonitored || !telegram.botHaveAdmin) {
-//       return res.status(400).json({
-//         success: false,
-//         message:
-//           "This channel is not available for subscription. Bot doesn't have admin permissions.",
-//       });
-//     }
-
-//     const subscriptionDetails = telegram.subscription.find(
-//       (sub) => sub.days == days
-//     );
-
-//     if (!subscriptionDetails) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "No subscription found.",
-//       });
-//     }
-//     // let discountData = telegram?.discount || null;
-//     // console.log("discountData", discountData);
-//     let totalAmount = subscriptionDetails.cost;
-
-//     const orderId = randomUUID();
-
-//     const request = StandardCheckoutPayRequest.builder()
-//       .merchantOrderId(orderId)
-//       .amount(totalAmount * 100)
-//       .redirectUrl(
-//         `${process.env.FRONTEND_URL}payment/verify?merchantOrderId=${orderId}&telegramId=${telegramId}`
-//       )
-//       .build();
-
-//     const response = await PhonePayClient.pay(request);
-//     return res.status(200).json({
-//       success: true,
-//       payload: {
-//         redirectUrl: response.redirectUrl,
-//         telegramId: telegramId,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error while purchasing telegram.", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Please try again later.",
-//     });
-//   }
-// }
 
 // ******************* Telegram Bot Related API************************
 //subscription record and invitekink  created at walletController
