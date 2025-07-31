@@ -72,10 +72,16 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
             <input
               type="number"
               value={discountPercent}
-              onChange={(e) => setDiscountPercent(e.target.value)}
-              min="0"
-              max="100"
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || (parseFloat(value) >= 1 && parseFloat(value) <= 99)) {
+                  setDiscountPercent(value);
+                }
+              }}
+              min="1"
+              max="99"
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
+              placeholder="Enter percentage (1-99)"
             />
           </div>
 
@@ -87,6 +93,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
               type="date"
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
             />
           </div>
@@ -118,9 +125,27 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
           </button>
           <button
             onClick={() => {
+              // Validation
+              if (!discountCode.trim()) {
+                toast.error("Please enter a discount code");
+                return;
+              }
+              if (!discountPercent || parseFloat(discountPercent) < 1 || parseFloat(discountPercent) > 99) {
+                toast.error("Please enter a valid discount percentage (1-99%)");
+                return;
+              }
+              if (!expiryDate) {
+                toast.error("Please select an expiry date");
+                return;
+              }
+              if (new Date(expiryDate) <= new Date()) {
+                toast.error("Expiry date must be in the future");
+                return;
+              }
+              
               onSubmit({
                 code: discountCode,
-                percent: parseInt(discountPercent),
+                percent: parseFloat(discountPercent),
                 expiry: expiryDate,
                 plan: selectedPlan,
               });
@@ -181,6 +206,7 @@ const Telgrampage = () => {
   const [loadingGroups, setLoadingGroups] = useState(true); // Start with loading true
   const [isTelegramAuthenticated, setIsTelegramAuthenticated] = useState(false);
   const [finalSessionString, setFinalSessionString] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // new screen states
 
@@ -373,15 +399,39 @@ const Telgrampage = () => {
     setSubscriptions(updatedSubscriptions);
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    setImageFile(file);
     if (file) {
+      setImageFile(file);
+      setIsUploadingImage(true);
+      
+      // Show preview immediately
       const reader = new FileReader();
       reader.onload = () => {
         setUploadedImage(reader.result);
       };
       reader.readAsDataURL(file);
+
+      // Upload image directly
+      try {
+        const imagePic = new FormData();
+        imagePic.append("file", file);
+        const response = await handelUplaodFile(imagePic);
+        
+        if (response?.data?.url) {
+          // Store the uploaded URL for later use
+          setImageFile({ url: response.data.url, uploaded: true });
+          toast.success("Image uploaded successfully");
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast.error("Failed to upload image");
+        // Reset the file input on error
+        setImageFile(null);
+        setUploadedImage(null);
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
   };
 
@@ -400,26 +450,6 @@ const Telgrampage = () => {
     }
   };
 
-  const handleInviteLinkBlur = async () => {
-    try {
-      if (inviteLink === "") return;
-      const match = inviteLink.match(
-        /^(https?:\/\/t\.me\/(\+?[a-zA-Z0-9_-]+))$/
-      );
-
-      if (!match) {
-        toast("Invalid Invite Link.");
-        return;
-      }
-
-      if (inviteLink === "") return;
-      const response = await verifyInviteLink(inviteLink);
-      setInviteLinkData(response.data.channelDetails);
-      console.log(response);
-    } catch (error) {
-      console.error("Error in verify invite link.", error);
-    }
-  };
 
   const loadGroups = async () => {
     setLoadingGroups(true);
@@ -451,6 +481,19 @@ const Telgrampage = () => {
     try {
       setIsSubmitting(true);
 
+      // Validation
+      if (!telegramTitle.trim()) {
+        toast.error("Please enter a title for your Telegram channel.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!telegramDescription.trim()) {
+        toast.error("Please enter a description for your Telegram channel.");
+        setIsSubmitting(false);
+        return;
+      }
+
       if (selectedGroup) {
         console.log("Selected Group Details:", selectedGroup);
       } else if (inviteLink) {
@@ -461,19 +504,53 @@ const Telgrampage = () => {
         return;
       }
 
-      let response;
+      // Validate subscriptions
+      for (let i = 0; i < subscriptions.length; i++) {
+        const sub = subscriptions[i];
+        if (!sub.selectedValue && !sub.inputValue) {
+          toast.error(`Please select a type for subscription ${i + 1}.`);
+          setIsSubmitting(false);
+          return;
+        }
+        if (!sub.cost || sub.cost === '' || sub.cost <= 0) {
+          toast.error(`Please enter a valid cost for subscription ${i + 1}.`);
+          setIsSubmitting(false);
+          return;
+        }
+        if (sub.hasThirdBox && !sub.isLifetime && (!sub.days || sub.days === '' || sub.days <= 0)) {
+          toast.error(`Please enter valid days for subscription ${i + 1}.`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      let uploadedImageUrl = "";
       if (imageFile) {
-        const imagePic = new FormData();
-        imagePic.append("file", imageFile);
-        response = await handelUplaodFile(imagePic);
-        console.log(response);
+        if (imageFile.uploaded && imageFile.url) {
+          // Image already uploaded during file selection
+          uploadedImageUrl = imageFile.url;
+        } else {
+          // Fallback: upload during submit if not already uploaded
+          try {
+            const imagePic = new FormData();
+            imagePic.append("file", imageFile);
+            const response = await handelUplaodFile(imagePic);
+            uploadedImageUrl = response?.data?.url || "";
+            console.log("Image uploaded successfully:", uploadedImageUrl);
+          } catch (error) {
+            console.error("Error uploading image:", error);
+            toast.error("Failed to upload image");
+            setIsSubmitting(false);
+            return;
+          }
+        }
       }
 
       const body = {
         title: telegramTitle,
         description: telegramDescription,
         subscriptions,
-        coverImage: response?.data?.url || "",
+        coverImage: uploadedImageUrl,
         genre,
         chatId: selectedGroup ? selectedGroup.id : inviteLinkData?.chatId || "",
         channelName: selectedGroup
@@ -484,7 +561,8 @@ const Telgrampage = () => {
             ? `https://t.me/${selectedGroup.username}`
             : inviteLink,
         discounts,
-        sessionString: finalSessionString, // <-- include session string
+        sessionString: finalSessionString,
+        inviteLink: inviteLink || null,
       };
 
       console.log("formBody==>", body);
@@ -564,303 +642,9 @@ const Telgrampage = () => {
     );
   }
 
-  // If not logged in, show login UI
+  // If not logged in, show ConnectTelegramPage
   if (!isTelegramAuthenticated) {
-    return (
-      <>
-        {/* new opt screen starts here */}
-        <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 sm:p-6">
-          {/* Main Card */}
-          <div className="w-2/3 h-full bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-700 relative z-10">
-
-            <TelegramHeader />
-
-            <div className="py-8 px-4 sm:px-8 max-w-md mx-auto relative overflow-hidden">
-              {/* Floating decorative icons */}
-              <motion.div
-                className="absolute top-20 left-10 text-orange-400 opacity-20"
-                variants={float}
-                animate="float"
-              >
-                <Shield className="w-8 h-8" />
-              </motion.div>
-              <motion.div
-                className="absolute bottom-20 right-10 text-orange-300 opacity-20"
-                variants={float}
-                animate="float"
-              >
-                <Key className="w-8 h-8" />
-              </motion.div>
-
-              <motion.div
-                className="relative z-10"
-                variants={container}
-                initial="hidden"
-                animate="visible"
-              >
-                {step === 0 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-600 to-orange-700 rounded-full flex items-center justify-center mb-4"
-                        variants={item}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <MessageSquare className="w-8 h-8 text-white" />
-                      </motion.div>
-                      <motion.p
-                        className="text-gray-400 mb-6 px-4"
-                        variants={item}
-                      >
-                        Securely connect your Telegram account to access premium
-                        features on OneApp
-                      </motion.p>
-                    </div>
-
-                    <motion.button
-                      onClick={handleConnectClick}
-                      className="w-full sm:w-3/4 py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
-                      variants={item}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Connect Accounts
-                    </motion.button>
-
-                    <motion.div
-                      className="mt-6 text-xs text-gray-500 flex flex-col sm:flex-row justify-center gap-2 sm:gap-4"
-                      variants={item}
-                    >
-                      <motion.span
-                        className="flex items-center justify-center"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <Lock className="w-3 h-3 mr-1" />
-                        End-to-end encrypted
-                      </motion.span>
-                      <motion.span
-                        className="flex items-center justify-center"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <Zap className="w-3 h-3 mr-1" />
-                        Instant setup
-                      </motion.span>
-                    </motion.div>
-                  </motion.div>
-                )}
-
-                {step === 1 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700"
-                        variants={item}
-                        whileHover={{ rotate: 10 }}
-                      >
-                        <Phone className="w-6 h-6 text-orange-500" />
-                      </motion.div>
-                      <motion.p
-                        className="text-gray-400 mb-6 px-4"
-                        variants={item}
-                      >
-                        Enter your Telegram mobile number to receive a
-                        verification code
-                      </motion.p>
-                    </div>
-
-                    <div className="w-full sm:w-3/4 space-y-4">
-                      <motion.div className="relative" variants={item}>
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <span className="text-gray-300">+91</span>
-                        </div>
-                        <input
-                          type="tel"
-                          value={mobileNumber}
-                          onChange={(e) => setMobileNumber(e.target.value)}
-                          placeholder="Mobile number"
-                          className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
-                        />
-                      </motion.div>
-                      {error && (
-                        <motion.div
-                          className="text-red-400 text-sm flex items-center justify-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {error}
-                        </motion.div>
-                      )}
-                      <motion.button
-                        //   onClick={handleSendOtp}
-                        onClick={handleSendCode}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
-                        variants={item}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {sendingCode ? "Sending" : "Send OTP"}
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                )}
-
-                {step === 2 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700"
-                        variants={item}
-                        animate={{
-                          rotate: [0, 10, -10, 0],
-                          transition: { duration: 2, repeat: Infinity },
-                        }}
-                      >
-                        <Mail className="w-6 h-6 text-orange-500" />
-                      </motion.div>
-                      <motion.p className="text-gray-400" variants={item}>
-                        Enter the 6-digit code sent to
-                      </motion.p>
-                      <motion.p
-                        className="text-orange-400 font-medium mt-1"
-                        variants={item}
-                        animate={{
-                          scale: [1, 1.05, 1],
-                          transition: { duration: 2, repeat: Infinity },
-                        }}
-                      >
-                        +91 ••• ••• {mobileNumber.slice(-4)}
-                      </motion.p>
-                    </div>
-
-                    <div className="w-full sm:w-3/4 space-y-4">
-                      <motion.div
-                        className="flex justify-center space-x-3"
-                        variants={item}
-                      >
-                        {[0, 1, 2, 3, 4].map((index) => (
-                          <motion.input
-                            key={index}
-                            style={{
-                              color: "white",
-                            }}
-                            type="tel"
-                            maxLength={1}
-                            value={otp[index]}
-                            onChange={(e) =>
-                              handleOtpChange(index, e.target.value)
-                            }
-                            onKeyDown={(e) => handleKeyDown(index, e)}
-                            ref={(el) => (otpInputRefs.current[index] = el)}
-                            className="w-12 h-12 text-center text-xl bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
-                            whileFocus={{ scale: 1.05 }}
-                            variants={item}
-                            transition={{ delay: index * 0.1 }}
-                          />
-                        ))}
-                      </motion.div>
-
-                      {error && (
-                        <motion.div
-                          className="text-red-400 text-sm flex items-center justify-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {error}
-                        </motion.div>
-                      )}
-
-                      <motion.button
-                        //    onClick={handleOtpSubmit}
-                        disabled={
-                          isSubmitting || otp.some((digit) => digit === "")
-                        }
-                        className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${isSubmitting || otp.some((digit) => digit === "")
-                          ? "bg-gray-700 cursor-not-allowed"
-                          : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
-                          }`}
-                        variants={item}
-                        whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-                      >
-                        {verifyingCode ? (
-                          <div className="flex items-center justify-center">
-                            <motion.span
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                ease: "linear",
-                              }}
-                            >
-                              <RotateCw className="w-4 h-4 mr-2 animate-spin" />
-                            </motion.span>
-                            Verifying...
-                          </div>
-                        ) : (
-                          "Verify & Continue"
-                        )}
-                      </motion.button>
-
-                      <motion.div
-                        className="text-center pt-4 border-t border-gray-700"
-                        variants={item}
-                      >
-                        <p className="text-gray-500 text-sm">
-                          {countdown > 0 ? (
-                            <span>
-                              Resend code in{" "}
-                              <span className="text-orange-400">
-                                {countdown}s
-                              </span>
-                            </span>
-                          ) : (
-                            <button
-                              // onClick={handleResendOtp}
-                              className="text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center mx-auto"
-                            >
-                              <Mail className="w-4 h-4 mr-1" />
-                              Resend Verification Code
-                            </button>
-                          )}
-                        </p>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            </div>
-            {/* Card Footer */}
-            <div className="bg-gray-850 py-4 px-6 border-t border-gray-700 text-center">
-              <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} COHTPL •
-                <a
-                  href="#"
-                  className="text-orange-500 hover:text-orange-300 transition-colors mx-1"
-                >
-                  Privacy Policy
-                </a>{" "}
-                •
-                <a
-                  href="#"
-                  className="text-orange-500 hover:text-orange-300 transition-colors mx-1"
-                >
-                  Terms
-                </a>
-              </p>
-            </div>
-          </div>
-        </div>
-
-      </>
-    );
+    return <ConnectPage />;
   }
 
 
@@ -933,13 +717,21 @@ const Telgrampage = () => {
                   )}
                 </div>
 
-                <label className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 cursor-pointer transition duration-200">
-                  Upload Image
+                <label className={`px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 cursor-pointer transition duration-200 flex items-center gap-2 ${isUploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  {isUploadingImage ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} />
+                      Uploading...
+                    </>
+                  ) : (
+                    'Upload Image'
+                  )}
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
                     onChange={handleImageUpload}
+                    disabled={isUploadingImage}
                   />
                 </label>
 
@@ -1151,8 +943,11 @@ const Telgrampage = () => {
                       value={sub.cost}
                       onChange={(e) => {
                         const newSubs = [...subscriptions];
-                        newSubs[index].cost = parseInt(e.target.value);
-                        setSubscriptions(newSubs);
+                        const value = e.target.value;
+                        if (value === '' || parseFloat(value) >= 0) {
+                          newSubs[index].cost = value === '' ? '' : parseFloat(value);
+                          setSubscriptions(newSubs);
+                        }
                       }}
                       className="w-32 px-4 py-2 pl-16 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                     />
@@ -1161,15 +956,18 @@ const Telgrampage = () => {
                     </span>
                   </div>
 
-                  {sub.hasThirdBox && (
+                  {sub.hasThirdBox && !sub.isLifetime && (
                     <input
                       type="number"
                       placeholder="Number of Days"
                       value={sub.days}
                       onChange={(e) => {
                         const newSubs = [...subscriptions];
-                        newSubs[index].days = parseInt(e.target.value);
-                        setSubscriptions(newSubs);
+                        const value = e.target.value;
+                        if (value === '' || parseInt(value) >= 1) {
+                          newSubs[index].days = value === '' ? '' : parseInt(value);
+                          setSubscriptions(newSubs);
+                        }
                       }}
                       className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                     />
@@ -1183,12 +981,13 @@ const Telgrampage = () => {
                         <input
                           type="checkbox"
                           className="sr-only peer"
+                          checked={sub.isLifetime || false}
                           onChange={(e) => {
                             const newSubs = [...subscriptions];
                             newSubs[index].isLifetime = e.target.checked;
-                            newSubs[index].days = null;
-
-
+                            if (e.target.checked) {
+                              newSubs[index].days = null;
+                            }
                             setSubscriptions(newSubs);
                           }}
                         />

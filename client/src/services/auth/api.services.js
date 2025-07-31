@@ -337,11 +337,11 @@ export const fetchTelegram = async (id) => {
   return response;
 };
 
-export const purchaseTelegram = async ({ telegramId, days, subscriptionId }) => {
+export const purchaseTelegram = async ({ telegramId, subscriptionId, couponCode }) => {
   const response = await servicesAxiosInstance.post('/telegram/purchase-telegram', {
     telegramId,
-    days,
     subscriptionId,
+    couponCode,
   });
   return response;
 };
@@ -520,5 +520,66 @@ export const sendTelegramLoginCode = async (phoneNumber) => {
 
 export const signInTelegramClient = async (data) => {
   const response = await servicesAxiosInstance.post('/telegram/sign-in', data);
+  return response;
+};
+
+// Telegram Management APIs
+export const editTelegram = async (telegramId, data) => {
+  const response = await servicesAxiosInstance.patch(`/telegram/${telegramId}`, data);
+  return response;
+};
+
+export const deleteTelegram = async (telegramId) => {
+  const response = await servicesAxiosInstance.delete(`/telegram/${telegramId}`);
+  return response;
+};
+
+// Telegram Discount APIs
+export const createTelegramDiscount = async (telegramId, data) => {
+  const response = await servicesAxiosInstance.post(`/telegram/${telegramId}/discounts`, data);
+  return response;
+};
+
+export const editTelegramDiscount = async (telegramId, discountId, data) => {
+  const response = await servicesAxiosInstance.patch(`/telegram/${telegramId}/discounts/${discountId}`, data);
+  return response;
+};
+
+export const deleteTelegramDiscount = async (telegramId, discountId) => {
+  const response = await servicesAxiosInstance.delete(`/telegram/${telegramId}/discounts/${discountId}`);
+  return response;
+};
+
+// Telegram Subscription APIs
+export const createTelegramSubscription = async (telegramId, data) => {
+  const response = await servicesAxiosInstance.post(`/telegram/${telegramId}/subscriptions`, data);
+  return response;
+};
+
+export const editTelegramSubscription = async (telegramId, subscriptionId, data) => {
+  const response = await servicesAxiosInstance.patch(`/telegram/${telegramId}/subscriptions/${subscriptionId}`, data);
+  return response;
+};
+
+export const deleteTelegramSubscription = async (telegramId, subscriptionId) => {
+  const response = await servicesAxiosInstance.delete(`/telegram/${telegramId}/subscriptions/${subscriptionId}`);
+  return response;
+};
+
+// Telegram Coupon API
+export const applyTelegramCoupon = async (data) => {
+  const response = await servicesAxiosInstance.post('/telegram/apply-coupon', data);
+  return response;
+};
+
+// Telegram Purchase API
+export const purchaseTelegramSubscription = async (data) => {
+  const response = await servicesAxiosInstance.post('/telegram/purchase-telegram', data);
+  return response;
+};
+
+// Telegram Payment Verification API
+export const verifyTelegramPayment = async (data) => {
+  const response = await servicesAxiosInstance.post('/telegram/verify-telegram-payment', data);
   return response;
 };

@@ -105,15 +105,17 @@ export async function createTelegram(req, res) {
         });
       }
 
-      await tx.subscription.createMany({
-        data: subscriptions.map((s) => ({
-          type: s.inputValue,
-          price: s.cost,
-          validDays: s.isLifetime ? null : s.days,
-          isLifetime: s.isLifetime || false,
-          telegramId: newTelegram.id,
-        })),
-      });
+      if (subscriptions && subscriptions.length > 0) {
+        await tx.subscription.createMany({
+          data: subscriptions.map((s) => ({
+            type: s.inputValue || s.type,
+            price: parseFloat(s.cost || s.price || 0),
+            validDays: s.isLifetime ? null : (s.days || s.validDays),
+            isLifetime: s.isLifetime || false,
+            telegramId: newTelegram.id,
+          })),
+        });
+      }
 
       return newTelegram;
     });
@@ -505,7 +507,16 @@ export async function createSubscription(req, res) {
     const isValid = await SchemaValidator(createSubscriptionSchema, req.body, res);
     if (!isValid) return;
 
-    const { type, cost, days, isLifetime } = req.body;
+    const { type, cost, price, days, validDays, isLifetime } = req.body;
+    
+    // Ensure price is provided and valid
+    const subscriptionPrice = parseFloat(cost || price || 0);
+    if (subscriptionPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Price must be greater than 0.',
+      });
+    }
 
     const telegram = await prisma.telegram.findUnique({
       where: { id: telegramId },
@@ -540,8 +551,8 @@ export async function createSubscription(req, res) {
     const subscription = await prisma.subscription.create({
       data: {
         type,
-        price: cost,
-        validDays: isLifetime ? null : days,
+        price: subscriptionPrice,
+        validDays: isLifetime ? null : (days || validDays),
         isLifetime: isLifetime || false,
         telegramId,
       },
@@ -575,7 +586,16 @@ export async function editSubscription(req, res) {
     const isValid = await SchemaValidator(editSubscriptionSchema, req.body, res);
     if (!isValid) return;
 
-    const { type, cost, days, isLifetime } = req.body;
+    const { type, cost, price, days, validDays, isLifetime } = req.body;
+    
+    // Validate price if provided
+    const subscriptionPrice = cost !== undefined ? parseFloat(cost) : price !== undefined ? parseFloat(price) : undefined;
+    if (subscriptionPrice !== undefined && subscriptionPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Price must be greater than 0.',
+      });
+    }
 
     const telegram = await prisma.telegram.findUnique({
       where: { id: telegramId },
@@ -623,8 +643,8 @@ export async function editSubscription(req, res) {
       where: { id: subscriptionId },
       data: {
         type: type !== undefined ? type : undefined,
-        price: cost !== undefined ? cost : undefined,
-        validDays: isLifetime ? null : days !== undefined ? days : undefined,
+        price: subscriptionPrice !== undefined ? subscriptionPrice : undefined,
+        validDays: isLifetime ? null : (days !== undefined ? days : validDays !== undefined ? validDays : undefined),
         isLifetime: isLifetime !== undefined ? isLifetime : undefined,
       },
     });

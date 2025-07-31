@@ -4,9 +4,9 @@ import animation from "../../../../assets/connecting.json";
 import TelegramHeader from "./TelegramHeader";
 import { motion } from "framer-motion";
 import {
-  MessageSquare,
   Shield,
   Key,
+  MessageSquare,
   Lock,
   Zap,
   Phone,
@@ -14,15 +14,37 @@ import {
   Mail,
   RotateCw,
 } from "lucide-react";
+import {
+  sendTelegramLoginCode,
+  signInTelegramClient,
+  fetchOwnedGroups,
+} from "../../../../services/auth/api.services.js";
+import toast from "react-hot-toast";
 
-const ConnectTelegramPage = () => {
+const ConnectTelegramPage = ({ onAuthenticated }) => {
   const [step, setStep] = useState(0);
   const [mobileNumber, setMobileNumber] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", ""]);
   const [countdown, setCountdown] = useState(60);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [phoneCodeHash, setPhoneCodeHash] = useState("");
+  const [loginSessionString, setLoginSessionString] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [finalSessionString, setFinalSessionString] = useState("");
   const otpInputRefs = useRef([]);
+
+  const float = {
+    float: {
+      y: [-5, 5, -5],
+      transition: {
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+      },
+    },
+  };
+
   const container = {
     hidden: { opacity: 0 },
     visible: {
@@ -43,47 +65,6 @@ const ConnectTelegramPage = () => {
     },
   };
 
-  const float = {
-    float: {
-      y: [-5, 5, -5],
-      transition: {
-        duration: 3,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
-  // Initialize OTP input refs
-  useEffect(() => {
-    otpInputRefs.current = otpInputRefs.current.slice(0, 6);
-  }, []);
-
-  const handleConnectClick = () => {
-    setStep(1);
-  };
-
-  const handleSendOtp = () => {
-    if (!mobileNumber.match(/^\d{10}$/)) {
-      setError("Please enter a valid 10-digit mobile number");
-      return;
-    }
-
-    setError("");
-    setCountdown(60);
-    setStep(2);
-
-    // Start countdown
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
   const handleOtpChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
 
@@ -92,13 +73,13 @@ const ConnectTelegramPage = () => {
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value && index < 5) {
+    if (value && index < 4) {
       otpInputRefs.current[index + 1].focus();
     }
 
-    // Auto-submit when all fields are filled
-    if (index === 5 && value && newOtp.every((digit) => digit !== "")) {
-      handleOtpSubmit();
+    // Use newOtp directly instead of outdated state
+    if (index === 4 && value && newOtp.every((digit) => digit !== "")) {
+      handleVerifyCode(newOtp);
     }
   };
 
@@ -109,82 +90,73 @@ const ConnectTelegramPage = () => {
     }
   };
 
-  const handleResendOtp = () => {
-    setCountdown(60);
-    setOtp(["", "", "", "", "", ""]);
-
-    // Restart countdown
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  const handleConnectClick = () => {
+    setStep(1);
   };
 
-  const handleOtpSubmit = () => {
-    const fullOtp = otp.join("");
-    if (fullOtp.length !== 6) {
-      setError("Please enter a 6-digit OTP");
+  const handleSendCode = async () => {
+    if (!mobileNumber) return;
+    setSendingCode(true);
+    try {
+      const res = await sendTelegramLoginCode(`+91 ${mobileNumber}`);
+      setPhoneCodeHash(res.data.payload.phoneCodeHash);
+      setLoginSessionString(res.data.payload.sessionString);
+
+      toast.success("Code sent");
+      setStep(2);
+    } catch {
+      toast.error("Failed to send code");
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async (code) => {
+    const fullOtp = code.join("");
+    if (!fullOtp) {
+      toast.error("Please enter the verification code.");
       return;
     }
+    setVerifyingCode(true);
 
-    setIsSubmitting(true);
-    setError("");
-
-    // Simulate API call
-    setTimeout(() => {
-      console.log("OTP Submitted:", fullOtp);
-      setIsSubmitting(false);
-      // Here you would typically redirect to the success page
-    }, 1500);
+    try {
+      const response = await signInTelegramClient({
+        phoneNumber: `91 ${mobileNumber}`,
+        phoneCodeHash,
+        code: fullOtp,
+        sessionString: loginSessionString,
+      });
+      if (response.data.success && response.data.sessionString) {
+        setFinalSessionString(response.data.sessionString);
+        localStorage.setItem('telegramSession', response.data.sessionString);
+        toast.success("Successfully logged in to Telegram!");
+        // Notify parent component that authentication is complete
+        if (onAuthenticated) {
+          onAuthenticated();
+        }
+        // Refresh the page to show the authenticated state
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      const errorMessage =
+        error.response?.data?.message || "Verification failed.";
+      toast.error(errorMessage);
+      if (errorMessage.includes("PHONE_CODE_EXPIRED")) {
+        setStep(1);
+        setPhoneCodeHash("");
+        setLoginSessionString("");
+      }
+    } finally {
+      setVerifyingCode(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 sm:p-6">
       {/* Main Card */}
       <div className="w-2/3 h-full bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-700 relative z-10">
-        {/* Card Header */}
-        {/* <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-orange-700 py-6 px-4 sm:px-8 text-center relative">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-          <div className="relative">
-            <div className="flex justify-center items-center space-x-4 sm:space-x-8 mb-4">
-              <div className="bg-gray-900 p-2 rounded-lg border border-gray-700">
-                <img 
-                  src="https://www.celsoazevedo.com/files/android/f/telegram-img.png" 
-                  alt="Telegram Logo"
-                  className="w-12 h-12 object-contain"
-                />
-              </div>
-              
-             <Lottie
-          animationData={animation}
-          loop={true}
-          autoplay={true}
-          className="w-1/4"
-        />
-              
-              <div className="bg-gray-900 p-2 rounded-lg border border-gray-700">
-                <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-sm px-2 py-1 rounded">
-                  OneApp
-                </div>
-              </div>
-            </div>
-            
-            <h1 className="text-xl font-bold text-white tracking-tight">
-              {step === 0 
-                ? "Connect Telegram with OneApp" 
-                : step === 1 
-                  ? "Verify Your Identity" 
-                  : "Enter Verification Code"}
-            </h1>
-          </div>
-        </div> */}
         <TelegramHeader />
-        {/* Card Content */}
 
         <div className="py-8 px-4 sm:px-8 max-w-md mx-auto relative overflow-hidden">
           {/* Floating decorative icons */}
@@ -222,7 +194,10 @@ const ConnectTelegramPage = () => {
                   >
                     <MessageSquare className="w-8 h-8 text-white" />
                   </motion.div>
-                  <motion.p className="text-gray-400 mb-6 px-4" variants={item}>
+                  <motion.p
+                    className="text-gray-400 mb-6 px-4"
+                    variants={item}
+                  >
                     Securely connect your Telegram account to access premium
                     features on OneApp
                   </motion.p>
@@ -272,9 +247,12 @@ const ConnectTelegramPage = () => {
                   >
                     <Phone className="w-6 h-6 text-orange-500" />
                   </motion.div>
-                  <motion.p className="text-gray-400 mb-6 px-4" variants={item}>
-                    Enter your Telegram mobile number to receive a verification
-                    code
+                  <motion.p
+                    className="text-gray-400 mb-6 px-4"
+                    variants={item}
+                  >
+                    Enter your Telegram mobile number to receive a
+                    verification code
                   </motion.p>
                 </div>
 
@@ -286,16 +264,11 @@ const ConnectTelegramPage = () => {
                     <input
                       type="tel"
                       value={mobileNumber}
-                      onChange={(e) =>
-                        setMobileNumber(
-                          e.target.value.replace(/\D/g, "").slice(0, 10)
-                        )
-                      }
+                      onChange={(e) => setMobileNumber(e.target.value)}
                       placeholder="Mobile number"
                       className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
                     />
                   </motion.div>
-
                   {error && (
                     <motion.div
                       className="text-red-400 text-sm flex items-center justify-center"
@@ -306,14 +279,13 @@ const ConnectTelegramPage = () => {
                       {error}
                     </motion.div>
                   )}
-
                   <motion.button
-                    onClick={handleSendOtp}
+                    onClick={handleSendCode}
                     className="w-full py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
                     variants={item}
                     whileTap={{ scale: 0.98 }}
                   >
-                    Send Verification Code
+                    {sendingCode ? "Sending" : "Send OTP"}
                   </motion.button>
                 </div>
               </motion.div>
@@ -355,13 +327,18 @@ const ConnectTelegramPage = () => {
                     className="flex justify-center space-x-3"
                     variants={item}
                   >
-                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                    {[0, 1, 2, 3, 4].map((index) => (
                       <motion.input
                         key={index}
+                        style={{
+                          color: "white",
+                        }}
                         type="tel"
                         maxLength={1}
                         value={otp[index]}
-                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleOtpChange(index, e.target.value)
+                        }
                         onKeyDown={(e) => handleKeyDown(index, e)}
                         ref={(el) => (otpInputRefs.current[index] = el)}
                         className="w-12 h-12 text-center text-xl bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
@@ -384,16 +361,17 @@ const ConnectTelegramPage = () => {
                   )}
 
                   <motion.button
-                    onClick={handleOtpSubmit}
-                    disabled={isSubmitting || otp.some((digit) => digit === "")}
-                    className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${isSubmitting || otp.some((digit) => digit === "")
+                    disabled={
+                      verifyingCode || otp.some((digit) => digit === "")
+                    }
+                    className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${verifyingCode || otp.some((digit) => digit === "")
                       ? "bg-gray-700 cursor-not-allowed"
                       : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
                       }`}
                     variants={item}
-                    whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                    whileTap={{ scale: verifyingCode ? 1 : 0.98 }}
                   >
-                    {isSubmitting ? (
+                    {verifyingCode ? (
                       <div className="flex items-center justify-center">
                         <motion.span
                           animate={{ rotate: 360 }}
@@ -420,11 +398,12 @@ const ConnectTelegramPage = () => {
                       {countdown > 0 ? (
                         <span>
                           Resend code in{" "}
-                          <span className="text-orange-400">{countdown}s</span>
+                          <span className="text-orange-400">
+                            {countdown}s
+                          </span>
                         </span>
                       ) : (
                         <button
-                          onClick={handleResendOtp}
                           className="text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center mx-auto"
                         >
                           <Mail className="w-4 h-4 mr-1" />

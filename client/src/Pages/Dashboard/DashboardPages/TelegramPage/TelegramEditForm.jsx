@@ -5,22 +5,87 @@ import {
   X,
   ChevronDown,
   Loader2,
-
 } from "lucide-react";
 import {
   createTelegram,
+  editTelegram,
   handelUplaodFile,
   verifyInviteLink,
   fetchOwnedGroups,
+  editTelegramDiscount,
+  deleteTelegramDiscount,
+  editTelegramSubscription,
+  deleteTelegramSubscription,
+  createTelegramDiscount,
+  createTelegramSubscription,
 } from "../../../../services/auth/api.services.js";
 import toast from "react-hot-toast";
 
+// Confirmation Modal Component
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = "danger" }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md border border-gray-700">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X size={24} />
+          </button>
+        </div>
+
+        <p className="text-gray-300 mb-6">{message}</p>
+
+        <div className="flex gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className={`flex-1 px-4 py-2 rounded-lg transition duration-200 ${type === "danger"
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "bg-orange-600 text-white hover:bg-orange-700"
+              }`}
+          >
+            {type === "danger" ? "Delete" : "Confirm"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Discount Form Component
-const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
+const DiscountForm = ({ isOpen, onClose, onSubmit, editData = null }) => {
   const [discountCode, setDiscountCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("");
+
+  // Update form fields when editData changes
+  useEffect(() => {
+    if (editData) {
+      setDiscountCode(editData.code || "");
+      setDiscountPercent(editData.percent?.toString() || "");
+      setExpiryDate(editData.expiry ? new Date(editData.expiry).toISOString().split('T')[0] : "");
+      setSelectedPlan(editData.plan || "");
+    } else {
+      // Reset form for new discount
+      setDiscountCode("");
+      setDiscountPercent("");
+      setExpiryDate("");
+      setSelectedPlan("");
+    }
+  }, [editData]);
+
+  const isEditing = !!editData;
 
   if (!isOpen) return null;
 
@@ -29,7 +94,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
       <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md border border-gray-700">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">
-            Create New Discount
+            {isEditing ? "Edit Discount" : "Create New Discount"}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             <X size={24} />
@@ -51,15 +116,21 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
 
           <div>
             <label className="block text-sm font-medium text-orange-500 mb-2">
-              Discount Percent
+              Discount Percent (1-99%)
             </label>
             <input
               type="number"
               value={discountPercent}
-              onChange={(e) => setDiscountPercent(e.target.value)}
-              min="0"
-              max="100"
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || (parseFloat(value) >= 1 && parseFloat(value) <= 99)) {
+                  setDiscountPercent(value);
+                }
+              }}
+              min="1"
+              max="99"
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
+              placeholder="Enter percentage (1-99)"
             />
           </div>
 
@@ -71,6 +142,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
               type="date"
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
             />
           </div>
@@ -102,9 +174,28 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
           </button>
           <button
             onClick={() => {
+              // Validation
+              if (!discountCode.trim()) {
+                toast.error("Please enter a discount code");
+                return;
+              }
+              if (!discountPercent || parseFloat(discountPercent) < 1 || parseFloat(discountPercent) > 99) {
+                toast.error("Please enter a valid discount percentage (1-99%)");
+                return;
+              }
+              if (!expiryDate) {
+                toast.error("Please select an expiry date");
+                return;
+              }
+              if (new Date(expiryDate) <= new Date()) {
+                toast.error("Expiry date must be in the future");
+                return;
+              }
+
               onSubmit({
+                id: editData?.id,
                 code: discountCode,
-                percent: discountPercent,
+                percent: parseFloat(discountPercent),
                 expiry: expiryDate,
                 plan: selectedPlan,
               });
@@ -112,7 +203,257 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
             }}
             className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200"
           >
-            Create
+            {isEditing ? "Update" : "Create"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Subscription Edit Form Component
+const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) => {
+  const [subscriptionType, setSubscriptionType] = useState("");
+  const [subscriptionPrice, setSubscriptionPrice] = useState("");
+  const [subscriptionDays, setSubscriptionDays] = useState("");
+  const [isLifetime, setIsLifetime] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+
+  const predefinedTypes = [
+    "Weekly",
+    "Monthly",
+    "Bimonthly",
+    "Quarterly",
+    "Quadrimester",
+    "Half Yearly",
+    "Yearly",
+  ];
+
+  const predefinedDays = {
+    Weekly: 7,
+    Monthly: 30,
+    Bimonthly: 60,
+    Quarterly: 90,
+    Quadrimester: 120,
+    "Half Yearly": 180,
+    Yearly: 365,
+  };
+
+  // Update form fields when editData changes
+  useEffect(() => {
+    if (editData) {
+      setSubscriptionType(editData.type || "");
+      setSubscriptionPrice(editData.price?.toString() || "");
+      setSubscriptionDays(editData.validDays?.toString() || "");
+      setIsLifetime(editData.isLifetime || false);
+    } else {
+      // Reset form for new subscription
+      setSubscriptionType("");
+      setSubscriptionPrice("");
+      setSubscriptionDays("");
+      setIsLifetime(false);
+    }
+  }, [editData]);
+
+  const handleTypeInputChange = (value) => {
+    setSubscriptionType(value);
+    setShowDropdown(true);
+    setShowCreate(
+      !predefinedTypes.some((type) =>
+        type.toLowerCase().includes(value.toLowerCase())
+      ) && value.length > 0
+    );
+  };
+
+  const handleOptionClick = (option) => {
+    setSubscriptionType(option);
+    setSubscriptionDays(predefinedDays[option]?.toString() || "");
+    setShowDropdown(false);
+    setShowCreate(false);
+    setIsLifetime(false);
+  };
+
+  const handleCreateClick = () => {
+    setShowCreate(false);
+    setShowDropdown(false);
+    setSubscriptionDays("");
+  };
+
+  const isEditing = !!editData;
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md border border-gray-700">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-white">
+            {isEditing ? "Edit Subscription" : "Create New Subscription"}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="relative">
+            <label className="block text-sm font-medium text-orange-500 mb-2">
+              Subscription Type
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={subscriptionType}
+                onChange={(e) => handleTypeInputChange(e.target.value)}
+                onClick={() => setShowDropdown(true)}
+                onBlur={(e) => {
+                  // Delay to allow click on dropdown options
+                  setTimeout(() => setShowDropdown(false), 200);
+                }}
+                className="w-full px-4 py-2 pr-8 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
+                placeholder="Select or type subscription type"
+              />
+              <ChevronDown
+                className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${showDropdown ? "transform rotate-180" : ""
+                  }`}
+              />
+            </div>
+
+            {(showDropdown || showCreate) && (
+              <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-orange-600 rounded-lg shadow-lg">
+                {showCreate && (
+                  <div
+                    onClick={handleCreateClick}
+                    className="px-4 py-3 text-sm text-orange-500 bg-gray-900 cursor-pointer hover:bg-gray-700"
+                  >
+                    Create "{subscriptionType}"
+                  </div>
+                )}
+
+                {predefinedTypes.filter((type) =>
+                  type.toLowerCase().includes(subscriptionType.toLowerCase())
+                ).length > 0 && (
+                    <div className="max-h-48 overflow-auto">
+                      {predefinedTypes
+                        .filter((type) =>
+                          type.toLowerCase().includes(subscriptionType.toLowerCase())
+                        )
+                        .map((option) => (
+                          <div
+                            key={option}
+                            className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                            onClick={() => handleOptionClick(option)}
+                          >
+                            {option}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-orange-500 mb-2">
+              Price (INR)
+            </label>
+            <input
+              type="number"
+              value={subscriptionPrice}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || parseFloat(value) >= 0) {
+                  setSubscriptionPrice(value);
+                }
+              }}
+              min="0"
+              className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
+              placeholder="Enter price"
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-orange-500">
+              Lifetime Subscription
+            </span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={isLifetime}
+                onChange={(e) => {
+                  setIsLifetime(e.target.checked);
+                  if (e.target.checked) {
+                    setSubscriptionDays("");
+                  }
+                }}
+              />
+              <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+            </label>
+          </div>
+
+          {!isLifetime && (showCreate || !predefinedTypes.includes(subscriptionType)) && (
+            <div>
+              <label className="block text-sm font-medium text-orange-500 mb-2">
+                Valid Days
+              </label>
+              <input
+                type="number"
+                value={subscriptionDays}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || parseInt(value) >= 1) {
+                    setSubscriptionDays(value);
+                  }
+                }}
+                min="1"
+                className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
+                placeholder="Enter number of days"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-4 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              // Validation
+              if (!subscriptionType.trim()) {
+                toast.error("Please enter a subscription type");
+                return;
+              }
+              if (!subscriptionPrice || parseFloat(subscriptionPrice) <= 0) {
+                toast.error("Please enter a valid price greater than 0");
+                return;
+              }
+              // For predefined types, days are auto-set. For custom types, user must enter days.
+              const isPredefinedType = predefinedTypes.includes(subscriptionType);
+              const finalDays = isPredefinedType ? predefinedDays[subscriptionType] : parseInt(subscriptionDays);
+
+              if (!isLifetime && (!finalDays || finalDays <= 0)) {
+                toast.error("Please enter valid days for non-lifetime subscription");
+                return;
+              }
+
+              onSubmit({
+                id: editData?.id,
+                type: subscriptionType,
+                price: parseFloat(subscriptionPrice),
+                validDays: isLifetime ? null : finalDays,
+                isLifetime,
+              });
+              onClose();
+            }}
+            className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200"
+          >
+            {isEditing ? "Update" : "Create"}
           </button>
         </div>
       </div>
@@ -124,19 +465,7 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../../context/AuthContext.jsx";
 
 
-// Main TelegramsPages Component
 const TelegramsPages = () => {
-  const [subscriptions, setSubscriptions] = useState([
-    {
-      inputValue: "",
-      showDropdown: false,
-      showCreate: false,
-      hasThirdBox: false,
-      selectedValue: "",
-      cost: "",
-      days: "",
-    },
-  ]);
 
   const chatId = useSearchParams()[0].get("chatid");
   console.log("chatId", chatId);
@@ -149,39 +478,20 @@ const TelegramsPages = () => {
   const [enableAffiliate, setEnableAffiliate] = useState(false);
   const [imageAspectRatio, setImageAspectRatio] = useState(null);
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
-  const [discounts, setDiscounts] = useState([]);
-  const [inviteLink, setInviteLink] = useState("");
-  const [inviteLinkData, setInviteLinkData] = useState(null);
-  const [isFetchingInviteLink, setIsFetchingInviteLink] = useState(false);
-  const [telegramTitle, setTelegramTitle] = useState("");
-  const [telegramDescription, setTelegramDescription] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [genre, setGenre] = useState("Education");
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [editingDiscount, setEditingDiscount] = useState(null);
+  const [editingSubscription, setEditingSubscription] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [chatid, setChatid] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState(null);
   const [ownedGroups, setOwnedGroups] = useState([]);
-  const [loadingGroups, setLoadingGroups] = useState(true); // Start with loading true
+  const [loadingGroups, setLoadingGroups] = useState(true);
   const [isTelegramAuthenticated, setIsTelegramAuthenticated] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // new screen states
 
-  const [step, setStep] = useState(0);
-  const [mobileNumber, setMobileNumber] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", ""]);
-  const [countdown, setCountdown] = useState(60);
 
-  const [error, setError] = useState("");
-  const otpInputRefs = useRef([]);
 
-  // Telegram login states
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [phoneCodeHash, setPhoneCodeHash] = useState("");
-  const [loginSessionString, setLoginSessionString] = useState("");
-  const [code, setCode] = useState("");
-  const [loginStage, setLoginStage] = useState("enterPhone"); // enterPhone, enterCode
-  const [sendingCode, setSendingCode] = useState(false);
-  const [verifyingCode, setVerifyingCode] = useState(false);
+
 
   const getInitials = (name) => {
     if (!name) return "USER";
@@ -193,187 +503,155 @@ const TelegramsPages = () => {
     return initials;
   };
 
-  const predefinedTypes = [
-    "Weekly",
-    "Monthly",
-    "Bimonthly",
-    "Quarterly",
-    "Quadrimester",
-    "Half Yearly",
-    "Yearly",
-  ];
-  const subscriptionDays = {
-    Weekly: 7,
-    Monthly: 30,
-    Bimonthly: 60,
-    Quarterly: 90,
-    Quadrimester: 120,
-    "Half Yearly": 180,
-    Yearly: 365,
+
+
+  const handleDiscountSubmit = async (discountData) => {
+    try {
+      if (discountData.id) {
+        // Edit existing discount
+        await editTelegramDiscount(userData.id, discountData.id, discountData);
+        setExistingDiscounts(prev => prev.map(d => d.id === discountData.id ? discountData : d));
+        toast.success("Discount updated successfully");
+        setEditingDiscount(null);
+      } else {
+        // Create new discount
+        const response = await createTelegramDiscount(userData.id, discountData);
+        const newDiscount = response.data.discount || {
+          id: Date.now(), // Temporary ID
+          ...discountData
+        };
+        setExistingDiscounts(prev => [...prev, newDiscount]);
+        toast.success("Discount created successfully");
+      }
+    } catch (error) {
+      console.error("Error with discount:", error);
+      toast.error(discountData.id ? "Failed to update discount" : "Failed to create discount");
+    }
   };
 
-  const handleDiscountSubmit = (discountData) => {
-    setDiscounts([...discounts, discountData]);
+  const handleEditDiscount = (discount) => {
+    setEditingDiscount(discount);
+    setIsDiscountModalOpen(true);
+  };
+
+  const handleDeleteDiscount = (discount) => {
+    setDeleteConfirmModal({
+      isOpen: true,
+      type: 'discount',
+      item: discount,
+      title: 'Delete Discount',
+      message: `Are you sure you want to delete the discount "${discount.code}"? This action cannot be undone.`
+    });
+  };
+
+  const confirmDeleteDiscount = async () => {
+    try {
+      await deleteTelegramDiscount(userData.id, deleteConfirmModal.item.id);
+      setExistingDiscounts(prev => prev.filter(d => d.id !== deleteConfirmModal.item.id));
+      toast.success("Discount deleted successfully");
+    } catch (error) {
+      console.error("Error deleting discount:", error);
+      toast.error("Failed to delete discount");
+    }
+  };
+
+  const handleEditSubscription = (subscription) => {
+    setEditingSubscription(subscription);
+    setIsSubscriptionModalOpen(true);
+  };
+
+  const handleSubscriptionSubmit = async (subscriptionData) => {
+    try {
+      if (subscriptionData.id) {
+        // Edit existing subscription
+        await editTelegramSubscription(userData.id, subscriptionData.id, subscriptionData);
+        setExistingSubscriptions(prev => prev.map(s => s.id === subscriptionData.id ? subscriptionData : s));
+        toast.success("Subscription updated successfully");
+        setEditingSubscription(null);
+      } else {
+        // Create new subscription
+        const response = await createTelegramSubscription(userData.id, subscriptionData);
+        const newSubscription = response.data.subscription || {
+          id: Date.now(), // Temporary ID
+          ...subscriptionData
+        };
+        setExistingSubscriptions(prev => [...prev, newSubscription]);
+        toast.success("Subscription created successfully");
+      }
+    } catch (error) {
+      console.error("Error with subscription:", error);
+      toast.error(subscriptionData.id ? "Failed to update subscription" : "Failed to create subscription");
+    }
+  };
+
+  const handleDeleteSubscription = (subscription) => {
+    setDeleteConfirmModal({
+      isOpen: true,
+      type: 'subscription',
+      item: subscription,
+      title: 'Delete Subscription',
+      message: `Are you sure you want to delete the "${subscription.type}" subscription? This action cannot be undone.`
+    });
+  };
+
+  const confirmDeleteSubscription = async () => {
+    try {
+      await deleteTelegramSubscription(userData.id, deleteConfirmModal.item.id);
+      setExistingSubscriptions(prev => prev.filter(s => s.id !== deleteConfirmModal.item.id));
+      toast.success("Subscription deleted successfully");
+    } catch (error) {
+      console.error("Error deleting subscription:", error);
+      toast.error("Failed to delete subscription");
+    }
   };
 
   const location = useLocation();
   const { state } = location;
 
-  const [userData, setUserData] = useState(state?.data);
-  const [subDropdown, setSubDropDown] = useState(null);
+  const [userData, setUserData] = useState(state?.data || {
+    title: "",
+    description: "",
+    genre: "education",
+    subscriptions: [],
+    discounts: [],
+    coverImage: "",
+    chatId: ""
+  });
+
+  const [existingDiscounts, setExistingDiscounts] = useState(state?.data?.discounts || []);
+  const [existingSubscriptions, setExistingSubscriptions] = useState(state?.data?.subscriptions || []);
+
+  // Confirmation modal states
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState({
+    isOpen: false,
+    type: '', // 'discount' or 'subscription'
+    item: null,
+    title: '',
+    message: ''
+  });
+
+  // Initialize userData.subscriptions if it doesn't exist
+  useEffect(() => {
+    if (!userData?.subscriptions || userData.subscriptions.length === 0) {
+      setUserData(prev => ({
+        ...prev,
+        subscriptions: [{
+          type: "",
+          price: "",
+          validDays: "",
+          isLifetime: false
+        }]
+      }));
+    }
+  }, []);
   console.log("location==>", userData);
 
-  const handleInputChange = (value, index) => {
-    const newSubscriptions = [...subscriptions];
-    newSubscriptions[index] = {
-      ...newSubscriptions[index],
-      inputValue: value,
-      showDropdown: true,
-      showCreate:
-        !predefinedTypes.some((type) =>
-          type.toLowerCase().includes(value.toLowerCase())
-        ) && value.length > 0,
-      selectedValue: "",
-      hasThirdBox: newSubscriptions[index].hasThirdBox,
-    };
-    setSubscriptions(newSubscriptions);
-  };
 
-  const float = {
-    float: {
-      y: [-5, 5, -5],
-      transition: {
-        duration: 3,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
-
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        when: "beforeChildren",
-      },
-    },
-  };
-
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 },
-    },
-  };
-
-  const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (value && index < 4) {
-      otpInputRefs.current[index + 1].focus();
-    }
-
-    // ✅ Use newOtp directly instead of outdated state
-    if (index === 4 && value && newOtp.every((digit) => digit !== "")) {
-      handleVerifyCode(newOtp); // ✅ Pass newOtp, not otp
-    }
-  };
-
-  const handleKeyDown = (index, e) => {
-    // Handle backspace to move to previous input
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpInputRefs.current[index - 1].focus();
-    }
-  };
-  const toggleDropdown = (index) => {
-    setSubDropDown(index);
-  };
-
-  const handleCreateClick = (index) => {
-    const newSubscriptions = [...subscriptions];
-    newSubscriptions[index] = {
-      ...newSubscriptions[index],
-      selectedValue: newSubscriptions[index].inputValue,
-      showCreate: false,
-      showDropdown: false,
-      hasThirdBox: true,
-      days: "",
-    };
-    setSubscriptions(newSubscriptions);
-  };
-
-  const handleConnectClick = () => {
-    setStep(1);
-  };
-
-  const handleOptionClick = (option, id) => {
-    setUserData((prev) => {
-      const updatedData = prev?.subscriptions?.map((data, index) => {
-        if (index == id) {
-          return {
-            ...data,
-            type: option,
-            isLifetime: false,
-            validDays: subscriptionDays[option],
-          };
-        }
-        return data;
-      });
-      return { ...prev, subscriptions: updatedData };
-    });
-    setSubDropDown(null);
-    console.log(userData.subscriptions);
-  };
-
-  const addSubscription = () => {
-    setUserData((prev) => {
-      return {
-        ...prev,
-        subscriptions: [
-          ...prev.subscriptions,
-          {
-            isLifetime: "",
-            price: "",
-            type: "",
-            validDays: "",
-          },
-        ],
-      };
-    });
-  };
-
-  const [showDrop, setShowDrop] = useState(false);
-
-  const filterData = useCallback(
-    (value) => {
-      const valid =
-        !predefinedTypes.some((type) =>
-          type.toLowerCase().includes(value?.toLowerCase())
-        ) && value?.length > 0;
-
-      setShowDrop(valid);
-    },
-    [userData]
-  );
-
-  const deleteSubscription = (index) => {
-    const updatedSubscriptions = subscriptions.filter((_, i) => i !== index);
-    setSubscriptions(updatedSubscriptions);
-  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    // setImageFile(file);
     if (file) {
+      setIsUploadingImage(true);
       const reader = new FileReader();
       reader.onload = () => {
         setUploadedImage(reader.result);
@@ -386,8 +664,13 @@ const TelegramsPages = () => {
         setUserData((prev) => {
           return { ...prev, coverImage: response?.data?.url };
         });
+        toast.success("Image uploaded successfully");
       } catch (error) {
-        console.log("error while uploading image");
+        console.error("Error while uploading image:", error);
+        toast.error("Failed to upload image");
+        setUploadedImage(null);
+      } finally {
+        setIsUploadingImage(false);
       }
     }
   };
@@ -397,30 +680,6 @@ const TelegramsPages = () => {
     setImageAspectRatio(naturalWidth / naturalHeight);
   };
 
-  const handleClickOutside = (e, index) => {
-    setSubDropDown(null);
-  };
-
-  const handleInviteLinkBlur = async () => {
-    try {
-      if (inviteLink === "") return;
-      const match = inviteLink.match(
-        /^(https?:\/\/t\.me\/(\+?[a-zA-Z0-9_-]+))$/
-      );
-
-      if (!match) {
-        toast("Invalid Invite Link.");
-        return;
-      }
-
-      if (inviteLink === "") return;
-      const response = await verifyInviteLink(inviteLink);
-      setInviteLinkData(response.data.channelDetails);
-      console.log(response);
-    } catch (error) {
-      console.error("Error in verify invite link.", error);
-    }
-  };
 
   const loadGroups = async () => {
     setLoadingGroups(true);
@@ -446,69 +705,90 @@ const TelegramsPages = () => {
   }, []);
 
 
-  const handleSubmit = async () => {
+  const handleUpdateTelegram = async () => {
     try {
       setIsSubmitting(true);
 
-      if (selectedGroup) {
-        console.log("Selected Group Details:", selectedGroup);
-      } else if (inviteLink) {
-        console.log("Using invite link.");
-      } else {
-        toast.error("Please select a group or provide an invite link.");
+      // Validate required fields
+      if (!userData?.title?.trim()) {
+        toast.error("Please enter a title for your telegram channel");
         setIsSubmitting(false);
         return;
       }
 
-      let response;
-      if (imageFile) {
-        const imagePic = new FormData();
-        imagePic.append("file", imageFile);
-        response = await handelUplaodFile(imagePic);
-        console.log(response);
+      if (!userData?.description?.trim()) {
+        toast.error("Please enter a description for your telegram channel");
+        setIsSubmitting(false);
+        return;
       }
 
-      const body = {
-        title: telegramTitle,
-        description: telegramDescription,
-        subscriptions,
-        coverImage: response?.data?.url || "",
-        genre,
-        chatId: selectedGroup ? selectedGroup.id : inviteLinkData?.chatId || "",
-        channelName: selectedGroup
-          ? selectedGroup.title
-          : inviteLinkData?.title || "",
-        channelLink:
-          selectedGroup && selectedGroup.username
-            ? `https://t.me/${selectedGroup.username}`
-            : inviteLink,
-        discount: discounts,
+      // Prepare the update data
+      const updateData = {
+        title: userData.title,
+        description: userData.description,
+        genre: userData.genre,
+        coverImage: userData.coverImage,
+        subscriptions: userData.subscriptions?.filter(sub =>
+          (sub.type || sub.inputValue) && (sub.price !== undefined && sub.price !== '') &&
+          (sub.isLifetime || (sub.validDays !== undefined && sub.validDays !== ''))
+        ).map(sub => ({
+          type: sub.type || sub.inputValue,
+          cost: sub.price,
+          price: sub.price,
+          days: sub.validDays,
+          validDays: sub.validDays,
+          isLifetime: sub.isLifetime || false,
+        })) || [],
       };
 
-      await createTelegram(body);
-      window.location.href = "/dashboard/telegram";
-      toast.success("Telegram Is in the Development Phase");
+      // Call the edit API
+      await editTelegram(userData.id, updateData);
+      toast.success("Telegram channel updated successfully!");
+
+      setTimeout(() => {
+        window.location.href = "/dashboard/telegram";
+      }, 500);
     } catch (error) {
-      console.log("Error in creating telegram.", error);
+      console.error("Error updating telegram:", error);
+      toast.error("Failed to update telegram channel");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loadingGroups) {
+  if (loadingGroups && !userData) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <Loader2 className="animate-spin text-orange-500" size={48} />
+        <p className="text-white ml-4">Loading telegram data...</p>
       </div>
     );
   }
+
+  if (!userData && !loadingGroups) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-lg mb-4">No telegram data found</p>
+          <button
+            onClick={() => window.history.back()}
+            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header Section */}
       <div className="w-full h-64 bg-gradient-to-r from-orange-500 to-orange-600 flex justify-center items-center relative">
         <h1 className="font-bold text-white text-3xl md:text-4xl mb-8">
-          Create Subscription
+          Edit Subscription
         </h1>
       </div>
 
@@ -524,17 +804,8 @@ const TelegramsPages = () => {
               {ownedGroups.length > 0 ? (
                 <select
                   value={userData?.chatId}
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const group = ownedGroups.find((g) => g.id === selectedId);
-                    setUserData({
-                      ...userData,
-                      chatId: selectedId,
-                    });
-                    setChatid(selectedId);
-                    setSelectedGroup(group);
-                  }}
-                  className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white"
+                  disabled={true}
+                  className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-800 text-gray-400 cursor-not-allowed"
                 >
                   <option value="" disabled>
                     Choose from your owned groups
@@ -548,10 +819,10 @@ const TelegramsPages = () => {
               ) : (
                 <input
                   type="text"
-                  value={chatid}
-                  onChange={(e) => setChatid(e.target.value)}
-                  className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white placeholder-orange-400"
-                  placeholder="Enter Telegram Group ID"
+                  value={userData?.chatId || chatid}
+                  readOnly={true}
+                  className="w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-800 text-gray-400 cursor-not-allowed placeholder-gray-500"
+                  placeholder="Telegram Group ID (Cannot be changed)"
                 />
               )}
             </div>
@@ -575,13 +846,21 @@ const TelegramsPages = () => {
                   )}
                 </div>
 
-                <label className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 cursor-pointer transition duration-200">
-                  Upload Image
+                <label className={`px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 cursor-pointer transition duration-200 flex items-center gap-2 ${isUploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  {isUploadingImage ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} />
+                      Uploading...
+                    </>
+                  ) : (
+                    'Upload Image'
+                  )}
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
                     onChange={handleImageUpload}
+                    disabled={isUploadingImage}
                   />
                 </label>
 
@@ -598,34 +877,6 @@ const TelegramsPages = () => {
           </div>
           {/* Form Fields */}
           <div className="space-y-1">
-            {/* Session loaded from cookie; no input required */}
-
-            {/* <div className="mb-4">
-              <label className="block text-sm font-medium text-orange-500 mb-2">
-                Provide Public Group Invite Link
-              </label>
-              <input
-                type="text"
-                value={inviteLink}
-                onChange={(e) => {
-                  setInviteLink(e.target.value);
-                  setChatid(""); // Clear selected group when typing invite link
-                  setSelectedGroup(null);
-                }}
-                onBlur={handleInviteLinkBlur}
-                disabled={!!chatid} // Disable if a group is selected from dropdown
-                className="w-full px-4 py-2 border border-orange-600 rounded-lg bg-gray-900 text-white disabled:bg-gray-700"
-                placeholder="e.g., https://t.me/yourchannel"
-              />
-              {isFetchingInviteLink && (
-                <p className="text-orange-400 mt-1">Verifying link...</p>
-              )}
-              {inviteLinkData && (
-                <p className="text-green-500 mt-1">
-                  Verified: {inviteLinkData.title}
-                </p>
-              )}
-            </div> */}
 
             {/* Page Title */}
             <div className="mb-4">
@@ -694,11 +945,11 @@ const TelegramsPages = () => {
                 </label>
               </div>
 
-              {discounts.length > 0 && (
+              {existingDiscounts.length > 0 && (
                 <div className="space-y-2 mb-4">
-                  {discounts.map((discount, index) => (
+                  {existingDiscounts.map((discount, index) => (
                     <div
-                      key={index}
+                      key={discount.id || index}
                       className="flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-orange-600"
                     >
                       <div>
@@ -709,9 +960,25 @@ const TelegramsPages = () => {
                           ({discount.percent}% off)
                         </span>
                       </div>
-                      <div className="text-gray-400 text-sm">
-                        Expires:{" "}
-                        {new Date(discount.expiry).toLocaleDateString()}
+                      <div className="flex items-center space-x-2">
+                        <div className="text-gray-400 text-sm">
+                          Expires:{" "}
+                          {new Date(discount.expiry).toLocaleDateString()}
+                        </div>
+                        <button
+                          onClick={() => handleEditDiscount(discount)}
+                          className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors mr-2"
+                          title="Edit discount"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDiscount(discount)}
+                          className="text-red-400 hover:text-red-300 p-1"
+                          title="Delete discount"
+                        >
+                          <X size={16} />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -729,162 +996,81 @@ const TelegramsPages = () => {
 
               <DiscountForm
                 isOpen={isDiscountModalOpen}
-                onClose={() => setIsDiscountModalOpen(false)}
+                onClose={() => {
+                  setIsDiscountModalOpen(false);
+                  setEditingDiscount(null);
+                }}
                 onSubmit={handleDiscountSubmit}
+                editData={editingDiscount}
               />
             </div>
 
-            {/* Subscriptions */}
+            {/* Existing Subscriptions */}
+            {existingSubscriptions.length > 0 && (
+              <div className="space-y-4 mb-6">
+                <label className="block text-sm font-medium text-orange-500 mb-2">
+                  Current Subscriptions
+                </label>
+                {existingSubscriptions.map((sub) => (
+                  <div key={sub.id} className="flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-orange-600">
+                    <div>
+                      <span className="text-white font-medium">{sub.type}</span>
+                      <span className="text-gray-400 ml-2">₹{sub.price}</span>
+                      {sub.isLifetime ? (
+                        <span className="text-green-400 ml-2">(Lifetime)</span>
+                      ) : (
+                        <span className="text-gray-400 ml-2">({sub.validDays} days)</span>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleEditSubscription(sub)}
+                        className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                        title="Edit subscription"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSubscription(sub)}
+                        className="text-red-400 hover:text-red-300 p-1"
+                        title="Delete subscription"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add New Subscriptions */}
             <div className="space-y-6">
               <label className="block text-sm font-medium text-orange-500 mb-2">
-                Subscriptions <span className="text-red-500">*</span>
+                Add New Subscriptions
               </label>
 
-              {userData?.subscriptions?.map((sub, index) => (
-                <div key={index} className="flex gap-4 items-start relative">
-                  <div className="relative subscription-dropdown">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={sub?.type}
-                        onChange={(e) => {
-                          setUserData((prev) => {
-                            const updatedData = prev?.subscriptions?.map(
-                              (data, i) => {
-                                if (index == i) {
-                                  return {
-                                    ...data,
-                                    type: e.target.value,
-                                  };
-                                }
-                                return data;
-                              }
-                            );
-                            return { ...prev, subscriptions: updatedData };
-                          });
-                          filterData(e.target.value);
-                        }}
-                        onClick={() => toggleDropdown(index)}
-                        //onBlur={(e) => handleClickOutside(e, index)}
-                        placeholder="Select type"
-                        className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white pr-8"
-                      />
-                      <ChevronDown
-                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${sub.showDropdown ? "transform rotate-180" : ""
-                          }`}
-                      />
-                    </div>
 
-                    {subDropdown === index && (
-                      <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-orange-600 rounded-lg shadow-lg">
-                        {showDrop && (
-                          <div
-                            onClick={() => handleCreateClick(index)}
-                            className="px-4 py-3 text-sm text-orange-500 bg-gray-900 cursor-pointer hover:bg-gray-700"
-                          >
-                            Create "{sub?.type}"
-                          </div>
-                        )}
 
-                        {predefinedTypes.filter((type) =>
-                          type.toLowerCase().includes(sub?.type.toLowerCase())
-                        ).length > 0 && (
-                            <div className="max-h-48 overflow-auto">
-                              {predefinedTypes
-                                .filter((type) =>
-                                  type
-                                    .toLowerCase()
-                                    .includes(sub?.type.toLowerCase())
-                                )
-                                .map((option) => (
-                                  <div
-                                    key={option}
-                                    className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                                    onClick={() => {
-                                      handleOptionClick(option, index);
-                                    }}
-                                  >
-                                    {option}
-                                  </div>
-                                ))}
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
+              <div className="flex gap-4">
 
-                  <div className="relative">
-                    <input
-                      type="number"
-                      placeholder="Cost"
-                      value={sub?.price}
-                      onChange={(e) => {
-                        setUserData((prev) => {
-                          const updatedData = prev?.subscriptions?.map(
-                            (data, i) => {
-                              if (index == i) {
-                                return {
-                                  ...data,
-                                  price: parseInt(e.target.value),
-                                };
-                              }
-                              return data;
-                            }
-                          );
-                          return { ...prev, subscriptions: updatedData };
-                        });
-                      }}
-                      className="w-32 px-4 py-2 pl-16 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                    />
-                    <span className="absolute left-4 top-2 text-gray-400">
-                      INR
-                    </span>
-                  </div>
 
-                  {(!predefinedTypes.some(
-                    (type) => type.toLowerCase() === sub?.type.toLowerCase()
-                  ) ||
-                    sub?.type === "") && (
-                      <input
-                        type="number"
-                        placeholder="Number of Days"
-                        value={sub?.validDays}
-                        onChange={(e) => {
-                          setUserData((prev) => {
-                            const updatedData = prev?.subscriptions?.map(
-                              (data, i) => {
-                                if (index == i) {
-                                  return {
-                                    ...data,
-                                    validDays: parseInt(e.target.value),
-                                  };
-                                }
-                                return data;
-                              }
-                            );
-                            return { ...prev, subscriptions: updatedData };
-                          });
-                        }}
-                        className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                      />
-                    )}
+                <button
+                  onClick={() => setIsSubscriptionModalOpen(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 text-sm"
+                >
+                  Create Subscription
+                </button>
+              </div>
 
-                  <button
-                    onClick={() => deleteSubscription(index)}
-                    className="text-gray-400 hover:text-gray-200 transition duration-200 mt-1"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-              ))}
-
-              <button
-                onClick={addSubscription}
-                className="flex items-center text-orange-500 hover:text-orange-400 text-sm transition duration-200"
-              >
-                <PlusCircle className="w-4 h-4 mr-1" />
-                Add Subscription
-              </button>
+              <SubscriptionEditForm
+                isOpen={isSubscriptionModalOpen}
+                onClose={() => {
+                  setIsSubscriptionModalOpen(false);
+                  setEditingSubscription(null);
+                }}
+                onSubmit={handleSubscriptionSubmit}
+                editData={editingSubscription}
+              />
             </div>
 
             {/* Toggle Switches */}
@@ -940,15 +1126,25 @@ const TelegramsPages = () => {
           {/* Submit Button */}
           <div className="mt-8">
             <button
-              onClick={handleSubmit}
+              onClick={handleUpdateTelegram}
               disabled={isSubmitting}
               className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200 disabled:cursor-not-allowed"
             >
-              Create Subscription Page
+              {isSubmitting ? "Updating..." : "Update Telegram Channel"}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteConfirmModal.isOpen}
+        onClose={() => setDeleteConfirmModal({ ...deleteConfirmModal, isOpen: false })}
+        onConfirm={deleteConfirmModal.type === 'discount' ? confirmDeleteDiscount : confirmDeleteSubscription}
+        title={deleteConfirmModal.title}
+        message={deleteConfirmModal.message}
+        type="danger"
+      />
     </div>
   );
 };
