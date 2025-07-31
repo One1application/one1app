@@ -12,11 +12,12 @@ import {
   editTelegram,
   getCreatorTelegram,
   getOwnedGroups,
-  getTelegramById,
+  getCreatorTelegramById,
   purchaseTelegramSubscription,
   sendLoginCode,
   signInTelegram,
   verifyTelegramPaymentCallback,
+  getTelegramById,
 } from '../controllers/telegramController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
@@ -33,7 +34,8 @@ telegramRouter.patch('/:telegramId/subscriptions/:subscriptionId', authMiddlewar
 telegramRouter.delete('/:telegramId/subscriptions/:subscriptionId', authMiddleware, deleteSubscription);
 
 telegramRouter.get('/get-creator-telegrams', authMiddleware, getCreatorTelegram);
-telegramRouter.get('/get-telegram-by-id/:telegramId', authMiddleware, getTelegramById);
+telegramRouter.get('/get-creator-telegram-by-id/:telegramId', authMiddleware, getCreatorTelegramById);
+telegramRouter.get('/get-telegram-by-id/:telegramId', getTelegramById);
 
 telegramRouter.post('/purchase-telegram', authMiddleware, purchaseTelegramSubscription);
 telegramRouter.post('/verify-telegram-payment', authMiddleware, verifyTelegramPaymentCallback);

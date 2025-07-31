@@ -1,16 +1,12 @@
-/* eslint-disable react/no-unescaped-entities */
 import toast from "react-hot-toast";
-// import Card from "../../../../components/Cards/Card";
 import NoContentComponent from "../../../../components/NoContent/NoContentComponent";
 import Table from "../../../../components/Table/TableComponent";
 import pagesConfig from "../pagesConfig";
 import { useState, useEffect } from "react";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
-import { Trash2, X } from "lucide-react";
-
+import { Copy, Trash2, X } from "lucide-react";
 import {
   fetchAllTelegramData,
-  fetchTelegram,
   deleteTelegram,
 } from "../../../../services/auth/api.services";
 import { useNavigate } from "react-router-dom";
@@ -26,7 +22,6 @@ const TelegramPage = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [telegramToDelete, setTelegramToDelete] = useState(null);
   const navigate = useNavigate();
-  const [chatid, setChatid] = useState(false);
 
   const { title, button, bgGradient, noContent, tabs, cardData } =
     pagesConfig.telegramPage;
@@ -112,12 +107,10 @@ const TelegramPage = () => {
                 type="button"
                 onClick={() =>
                   navigate(
-                    chatid
-                      ? `/app/create-telegram?chatid=${chatid}`
-                      : `/app/create-telegram`
+                    `/app/create-telegram`
                   )
                 }
-                className="bg-white text-orange-600 hover:bg-orange-50 font-semibold px-6 py-3 rounded-lg shadow-lg transition duration-200 flex items-center gap-2"
+                className=" bg-orange-600 text-white rounded-full text-xs md:text-sm px-4 md:px-6 py-2 transition duration-200 md:w-auto hover:bg-orange-700 fixed z-50 top-4 right-4 md:top-5 md:right-10 flex justify-center items-center gap-1"
                 aria-label={button.ariaLabel}
               >
                 <button.icon size={20} />
@@ -183,6 +176,18 @@ const TelegramPage = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(
+                                  `${window.location.origin}/app/telegram?id=${telegram.id}`
+                                );
+                                toast.success("Link copied to clipboard");
+                              }}
+                              className="text-blue-600 hover:text-blue-700 text-sm"
+                            >
+                              <Copy className="h-4 w-4 ml-1" />
+                            </button>
+                            <button
                               onClick={() => navigate(`/app/edit-telegram?telegramId=${telegram.id}`, { state: { data: telegram } })}
                               className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
                             >
@@ -217,56 +222,58 @@ const TelegramPage = () => {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Delete Telegram Channel</h3>
-              <button
-                onClick={handleDeleteCancel}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={24} />
-              </button>
-            </div>
+      {
+        deleteModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Delete Telegram Channel</h3>
+                <button
+                  onClick={handleDeleteCancel}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
 
-            <div className="mb-6">
-              <p className="text-gray-600">
-                Are you sure you want to delete "<span className="font-semibold">{telegramToDelete?.title}</span>"?
-                This action cannot be undone and will permanently remove all associated subscriptions and data.
-              </p>
-            </div>
+              <div className="mb-6">
+                <p className="text-gray-600">
+                  Are you sure you want to delete "<span className="font-semibold">{telegramToDelete?.title}</span>"?
+                  This action cannot be undone and will permanently remove all associated subscriptions and data.
+                </p>
+              </div>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={handleDeleteCancel}
-                disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 flex items-center space-x-2"
-              >
-                {isDeleting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={16} />
-                    <span>Delete</span>
-                  </>
-                )}
-              </button>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleDeleteCancel}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 flex items-center space-x-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      <span>Delete</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

@@ -18,7 +18,7 @@ import {
   deleteTelegramSubscription,
   createTelegramDiscount,
   createTelegramSubscription,
-  getTelegramById,
+  getCreatorTelegramById,
 } from "../../../../services/auth/api.services.js";
 import toast from "react-hot-toast";
 
@@ -663,7 +663,7 @@ const TelegramsPages = () => {
 
     try {
       setIsLoadingData(true);
-      const response = await getTelegramById(telegramId);
+      const response = await getCreatorTelegramById(telegramId);
       const telegramData = response.data.payload.telegram;
 
       // Set the main user data

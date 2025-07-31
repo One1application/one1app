@@ -789,7 +789,7 @@ export async function getCreatorTelegram(req, res) {
   }
 }
 
-export async function getTelegramById(req, res) {
+export async function getCreatorTelegramById(req, res) {
   try {
     const { telegramId } = req.params;
     const user = req.user;
@@ -813,6 +813,64 @@ export async function getTelegramById(req, res) {
             percent: true,
             expiry: true,
             plan: true,
+          },
+        },
+        subscriptions: {
+          select: {
+            id: true,
+            type: true,
+            price: true,
+            validDays: true,
+            isLifetime: true,
+          },
+        },
+        _count: {
+          select: {
+            telegramSubscriptions: true,
+          },
+        },
+      },
+    });
+
+    if (!telegram) {
+      return res.status(404).json({
+        success: false,
+        message: 'Telegram not found.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Telegram fetched successfully.',
+      payload: {
+        telegram,
+      },
+    });
+  } catch (error) {
+    console.error('Error in fetching telegram by ID:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error.',
+    });
+  }
+}
+
+
+export async function getTelegramById(req, res) {
+  try {
+    const { telegramId } = req.params;
+
+
+    const isValid = await SchemaValidator(getTelegramByIdSchema, { telegramId }, res);
+    if (!isValid) return;
+
+    const telegram = await prisma.telegram.findUnique({
+      where: { id: telegramId },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
           },
         },
         subscriptions: {

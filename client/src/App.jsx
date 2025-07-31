@@ -26,6 +26,7 @@ import SuperLinkPage from "./Pages/Dashboard/DashboardPages/SuperLinkPage/SuperL
 import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramForm.jsx";
 import TelegramFormPrev from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramFormPrev.jsx";
 import TelegramPage from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramPage.jsx";
+import AddTelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/AddTelegramForm.jsx";
 import AllTransactionsPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/AllTransactionsPage.jsx";
 import KYCpage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/KYCpage.jsx";
 import WithdrawalPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/WithdrawalPage.jsx";
@@ -130,6 +131,7 @@ const App = () => {
 
 
             <Route path="create-telegram" element={<TelegramForm />} />
+            <Route path="add-telegram" element={<AddTelegramForm />} />
             <Route path="edit-telegram" element={<EditTelegram />} />
 
             <Route
@@ -162,6 +164,9 @@ const App = () => {
 
 
         <Route path="/unsubscribe/:email" element={<Unsubscribe />} />
+        <Route path="*" element={<div className="w-screen h-screen flex items-center justify-center">
+          <h1 className="text-5xl font-[800]">Page Not Found</h1>
+        </div>} />
       </Routes>
     </>
   );

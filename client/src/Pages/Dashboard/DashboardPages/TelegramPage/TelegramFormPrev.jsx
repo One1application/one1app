@@ -1,4 +1,3 @@
-// import React from 'react';
 import { Antenna, CreditCard, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -6,7 +5,11 @@ import { useSearchParams } from 'react-router-dom';
 import ProfileImg from '../../../../assets/oneapp.jpeg';
 import SigninModal from '../../../../components/Modal/SigninModal';
 import SignupModal from '../../../../components/Modal/SignupModal';
-import { fetchTelegram, purchaseTelegram } from '../../../../services/auth/api.services';
+import {
+  getTelegramById, applyTelegramCoupon,
+  purchaseTelegramSubscription,
+  verifyTelegramPayment
+} from '../../../../services/auth/api.services';
 
 const TelegramFormPrev = () => {
   // Mock Data
@@ -127,12 +130,11 @@ const TelegramFormPrev = () => {
     };
   }, []);
   useEffect(() => {
-    console.log('aaya');
 
     if (!telegramId) return;
     const telegramDetails = async () => {
       try {
-        const response = await fetchTelegram(telegramId);
+        const response = await getTelegramById(telegramId);
         console.log('prevForm==>', response);
         setdata(response.data.payload.telegram);
       } catch (error) {
@@ -150,7 +152,7 @@ const TelegramFormPrev = () => {
   const handlePayment = async (plan) => {
     console.log('PLAN', plan);
     try {
-      const res = await purchaseTelegram({
+      const res = await purchaseTelegramSubscription({
         telegramId: data.id,
         days: plan.days,
         subscriptionId: plan.id,

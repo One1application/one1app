@@ -332,19 +332,9 @@ export const fetchAllTelegramData = async () => {
   return response;
 };
 
-export const fetchTelegram = async (id) => {
-  const response = await servicesAxiosInstance.get(`/telegram/get-telegram-by-id/${id}`);
-  return response;
-};
 
-export const purchaseTelegram = async ({ telegramId, subscriptionId, couponCode }) => {
-  const response = await servicesAxiosInstance.post('/telegram/purchase-telegram', {
-    telegramId,
-    subscriptionId,
-    couponCode,
-  });
-  return response;
-};
+
+
 
 export const editPayingUp = async (payingUpId, data) => {
   const response = await servicesAxiosInstance.post(`/payingup/edit-payingup/${payingUpId}`, data);
@@ -566,11 +556,18 @@ export const deleteTelegramSubscription = async (telegramId, subscriptionId) => 
   return response;
 };
 
-// Get Telegram by ID
+// Get Creator Telegram by ID
+export const getCreatorTelegramById = async (telegramId) => {
+  const response = await servicesAxiosInstance.get(`/telegram/get-creator-telegram-by-id/${telegramId}`);
+  return response;
+};
+
+//Get Telegram By Id
 export const getTelegramById = async (telegramId) => {
   const response = await servicesAxiosInstance.get(`/telegram/get-telegram-by-id/${telegramId}`);
   return response;
 };
+
 
 // Telegram Coupon API
 export const applyTelegramCoupon = async (data) => {
