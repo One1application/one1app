@@ -150,15 +150,15 @@ const TelegramPage = () => {
             </div>
 
             {/* Content */}
-            <div className="min-h-[400px] flex items-center justify-center">
+            <div className="py-4 flex items-center justify-center">
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-12">
+                <div className="flex flex-col items-center justify-center py-4">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4"></div>
                   <p className="text-gray-500">Loading your channels...</p>
                 </div>
               ) : telegramData.length > 0 ? (
                 <div className="w-full">
-                  <div className="space-y-4 p-6">
+                  <div className="space-y-4 p-3">
                     {telegramData.map((telegram) => (
                       <div key={telegram.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
@@ -183,7 +183,7 @@ const TelegramPage = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => navigate(`/app/edit-telegram?${telegram.id}`, { state: { data: telegram } })}
+                              onClick={() => navigate(`/app/edit-telegram?telegramId=${telegram.id}`, { state: { data: telegram } })}
                               className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
                             >
                               Edit

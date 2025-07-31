@@ -42,7 +42,7 @@ export async function createTelegram(req, res) {
       gstDetails,
       courseDetails,
       inviteLink,
-      sessionString, // <-- accept sessionString
+      sessionString,
     } = req.body;
 
     const user = req.user;
@@ -508,7 +508,7 @@ export async function createSubscription(req, res) {
     if (!isValid) return;
 
     const { type, cost, price, days, validDays, isLifetime } = req.body;
-    
+
     // Ensure price is provided and valid
     const subscriptionPrice = parseFloat(cost || price || 0);
     if (subscriptionPrice <= 0) {
@@ -587,7 +587,7 @@ export async function editSubscription(req, res) {
     if (!isValid) return;
 
     const { type, cost, price, days, validDays, isLifetime } = req.body;
-    
+
     // Validate price if provided
     const subscriptionPrice = cost !== undefined ? parseFloat(cost) : price !== undefined ? parseFloat(price) : undefined;
     if (subscriptionPrice !== undefined && subscriptionPrice <= 0) {
@@ -792,12 +792,13 @@ export async function getCreatorTelegram(req, res) {
 export async function getTelegramById(req, res) {
   try {
     const { telegramId } = req.params;
+    const user = req.user;
 
     const isValid = await SchemaValidator(getTelegramByIdSchema, { telegramId }, res);
     if (!isValid) return;
 
     const telegram = await prisma.telegram.findUnique({
-      where: { id: telegramId },
+      where: { id: telegramId, createdById: user?.id },
       include: {
         createdBy: {
           select: {

@@ -33,7 +33,7 @@ telegramRouter.patch('/:telegramId/subscriptions/:subscriptionId', authMiddlewar
 telegramRouter.delete('/:telegramId/subscriptions/:subscriptionId', authMiddleware, deleteSubscription);
 
 telegramRouter.get('/get-creator-telegrams', authMiddleware, getCreatorTelegram);
-telegramRouter.get('/get-telegram-by-id/:telegramId', getTelegramById);
+telegramRouter.get('/get-telegram-by-id/:telegramId', authMiddleware, getTelegramById);
 
 telegramRouter.post('/purchase-telegram', authMiddleware, purchaseTelegramSubscription);
 telegramRouter.post('/verify-telegram-payment', authMiddleware, verifyTelegramPaymentCallback);

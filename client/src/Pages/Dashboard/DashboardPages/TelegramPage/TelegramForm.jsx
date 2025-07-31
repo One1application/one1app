@@ -142,7 +142,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
                 toast.error("Expiry date must be in the future");
                 return;
               }
-              
+
               onSubmit({
                 code: discountCode,
                 percent: parseFloat(discountPercent),
@@ -183,18 +183,16 @@ const Telgrampage = () => {
   const chatId = useSearchParams()[0].get("chatid");
   console.log("chatId", chatId);
   const { userDetails } = useAuth();
-  const [freeDays, setFreeDays] = useState("");
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [isFormVisible, setFormVisible] = useState(false);
+  const [gstDetails, setGstDetails] = useState("");
   const [gstInfoRequired, setGstInfoRequired] = useState(false);
   const [courseAccess, setCourseAccess] = useState(false);
-  const [enableAffiliate, setEnableAffiliate] = useState(false);
+  const [courseDetails, setCourseDetails] = useState("");
   const [imageAspectRatio, setImageAspectRatio] = useState(null);
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   const [discounts, setDiscounts] = useState([]);
   const [inviteLink, setInviteLink] = useState("");
   const [inviteLinkData, setInviteLinkData] = useState(null);
-  const [isFetchingInviteLink, setIsFetchingInviteLink] = useState(false);
   const [telegramTitle, setTelegramTitle] = useState("");
   const [telegramDescription, setTelegramDescription] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -276,61 +274,9 @@ const Telgrampage = () => {
     setSubscriptions(newSubscriptions);
   };
 
-  const float = {
-    float: {
-      y: [-5, 5, -5],
-      transition: {
-        duration: 3,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
 
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        when: "beforeChildren",
-      },
-    },
-  };
 
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 },
-    },
-  };
 
-  const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (value && index < 4) {
-      otpInputRefs.current[index + 1].focus();
-    }
-
-    // ✅ Use newOtp directly instead of outdated state
-    if (index === 4 && value && newOtp.every((digit) => digit !== "")) {
-      handleVerifyCode(newOtp); // ✅ Pass newOtp, not otp
-    }
-  };
-
-  const handleKeyDown = (index, e) => {
-    // Handle backspace to move to previous input
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpInputRefs.current[index - 1].focus();
-    }
-  };
   const toggleDropdown = (index) => {
     const newSubscriptions = [...subscriptions];
     newSubscriptions[index] = {
@@ -360,9 +306,6 @@ const Telgrampage = () => {
     setSubscriptions(newSubscriptions);
   };
 
-  const handleConnectClick = () => {
-    setStep(1);
-  };
 
   const handleOptionClick = (option, index) => {
     const newSubscriptions = [...subscriptions];
@@ -404,7 +347,7 @@ const Telgrampage = () => {
     if (file) {
       setImageFile(file);
       setIsUploadingImage(true);
-      
+
       // Show preview immediately
       const reader = new FileReader();
       reader.onload = () => {
@@ -417,7 +360,7 @@ const Telgrampage = () => {
         const imagePic = new FormData();
         imagePic.append("file", file);
         const response = await handelUplaodFile(imagePic);
-        
+
         if (response?.data?.url) {
           // Store the uploaded URL for later use
           setImageFile({ url: response.data.url, uploaded: true });
@@ -472,7 +415,6 @@ const Telgrampage = () => {
   };
 
   useEffect(() => {
-    // On initial mount, try to load groups to check for an existing session.
     loadGroups();
   }, []);
 
@@ -562,6 +504,8 @@ const Telgrampage = () => {
             : inviteLink,
         discounts,
         sessionString: finalSessionString,
+        gstDetails,
+        courseDetails,
         inviteLink: inviteLink || null,
       };
 
@@ -1034,6 +978,8 @@ const Telgrampage = () => {
               {gstInfoRequired && (
                 <input
                   type="text"
+                  value={gstDetails}
+                  onChange={(e) => setGstDetails(e.target.value)}
                   placeholder="Enter GST Information"
                   className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                 />
@@ -1042,7 +988,7 @@ const Telgrampage = () => {
               {/* Course Access */}
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-orange-500">
-                  Give course access to members
+                  Enter course access details
                 </span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -1057,6 +1003,8 @@ const Telgrampage = () => {
               {courseAccess && (
                 <input
                   type="text"
+                  value={courseDetails}
+                  onChange={(e) => setCourseDetails(e.target.value)}
                   placeholder="Enter course access details"
                   className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
                 />

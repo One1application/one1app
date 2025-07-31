@@ -566,6 +566,12 @@ export const deleteTelegramSubscription = async (telegramId, subscriptionId) => 
   return response;
 };
 
+// Get Telegram by ID
+export const getTelegramById = async (telegramId) => {
+  const response = await servicesAxiosInstance.get(`/telegram/get-telegram-by-id/${telegramId}`);
+  return response;
+};
+
 // Telegram Coupon API
 export const applyTelegramCoupon = async (data) => {
   const response = await servicesAxiosInstance.post('/telegram/apply-coupon', data);
