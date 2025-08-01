@@ -1,14 +1,14 @@
-import { axiosInstance } from "./config";
+import { axiosInstance } from './config';
 
 export const adminLogin = async (phoneNumber) => {
-  const response = await axiosInstance.post("/auth/admin/login", {
+  const response = await axiosInstance.post('/auth/admin/login', {
     phoneNumber,
   });
   return response.data;
 };
 
 export const verifyAdminOtp = async (phoneNumber, otp) => {
-  const response = await axiosInstance.post("/auth/admin/login/verify-otp", {
+  const response = await axiosInstance.post('/auth/admin/login/verify-otp', {
     phoneNumber,
     otp,
   });
@@ -16,27 +16,20 @@ export const verifyAdminOtp = async (phoneNumber, otp) => {
 };
 
 export const selfIdentification = async () => {
-  const response = await axiosInstance.get("/admin/details");
+  const response = await axiosInstance.get('/admin/details');
   return response.data;
 };
 
 //
 
-export const getProductsApiService = async ({
-  page = 1,
-  limit = 10,
-  productType = "",
-} = {}) => {
-  const response = await axiosInstance.get("/admin/products", {
+export const getProductsApiService = async ({ page = 1, limit = 10, productType = '' } = {}) => {
+  const response = await axiosInstance.get('/admin/products', {
     params: { page, limit, productType },
   });
   return response.data;
 };
 
-export const toggleProductVerificationApiService = async ({
-  id,
-  productType,
-}) => {
+export const toggleProductVerificationApiService = async ({ id, productType }) => {
   const response = await axiosInstance.put(`admin/products/verify`, {
     id,
     productType,
@@ -47,14 +40,14 @@ export const toggleProductVerificationApiService = async ({
 // admin related routes
 
 export const getAdminApiService = async ({ page = 1, limit = 10 } = {}) => {
-  const response = await axiosInstance.get("/admin/admins", {
+  const response = await axiosInstance.get('/admin/admins', {
     params: { page, limit },
   });
   return response.data;
 };
 
 export const createAdminApiService = async (adminData) => {
-  const response = await axiosInstance.post("/admin/admins", adminData);
+  const response = await axiosInstance.post('/admin/admins', adminData);
   return response.data;
 };
 
@@ -68,15 +61,15 @@ export const deleteAdminApiService = async (id) => {
   return response.data;
 };
 
-export const getUsers = async ({ page = 1, limit = 10, role = "" } = {}) => {
-  const response = await axiosInstance.get("/admin/users", {
+export const getUsers = async ({ page = 1, limit = 10, role = '' } = {}) => {
+  const response = await axiosInstance.get('/admin/users', {
     params: { page, limit, role },
   });
   return response.data;
 };
 
 export const createUserApi = async (userData) => {
-  const response = await axiosInstance.post("/admin/users", userData);
+  const response = await axiosInstance.post('/admin/users', userData);
   return response.data;
 };
 
@@ -90,21 +83,15 @@ export const deleteUserApi = async (id) => {
   return response.data;
 };
 
-export const dashboardData = async (period = "today") => {
-  const response = await axiosInstance.get("/admin/dashboard", {
+export const dashboardData = async (period = 'today') => {
+  const response = await axiosInstance.get('/admin/dashboard', {
     params: { period },
   });
   return response.data;
 };
 
-export const getCreatorReport = async ({
-  page = 1,
-  limit = 10,
-  search = "",
-  kycStatus = "",
-  verifiedStatus = "",
-} = {}) => {
-  const response = await axiosInstance.get("/admin/creator/report", {
+export const getCreatorReport = async ({ page = 1, limit = 10, search = '', kycStatus = '', verifiedStatus = '' } = {}) => {
+  const response = await axiosInstance.get('/admin/creator/report', {
     params: { page, limit, search, kycStatus, verifiedStatus },
   });
   return response.data;
@@ -115,10 +102,7 @@ export const getCreatorDetails = async (id) => {
   return response.data;
 };
 
-export const toggleCreatorKycStatus = async (
-  id,
-  { status, rejectionReason }
-) => {
+export const toggleCreatorKycStatus = async (id, { status, rejectionReason }) => {
   const response = await axiosInstance.patch(`/admin/creator/${id}/kyc`, {
     status,
     rejectionReason,
@@ -128,7 +112,7 @@ export const toggleCreatorKycStatus = async (
 
 export const updateCreatorPersonalDetails = async (
   id,
-  { name, email, phone, socialMedia, goals, heardAboutUs, creatorComission }
+  { name, email, phone, socialMedia, goals, heardAboutUs, creatorComission, paymentProvider }
 ) => {
   const response = await axiosInstance.patch(`/admin/creator/${id}/personal`, {
     name,
@@ -138,6 +122,7 @@ export const updateCreatorPersonalDetails = async (
     goals,
     heardAboutUs,
     creatorComission,
+    paymentProvider,
   });
   return response.data;
 };
@@ -146,31 +131,24 @@ export const getCreatorWithdrawals = async (id) => {
   return response.data;
 };
 
-export const updateWithdrawalStatus = async (
-  withdrawalId,
-  status,
-  failedReason
-) => {
-  const response = await axiosInstance.patch(
-    `/admin/withdrawal/${withdrawalId}/status`,
-    {
-      status,
-      failedReason,
-    }
-  );
+export const updateWithdrawalStatus = async (withdrawalId, status, failedReason) => {
+  const response = await axiosInstance.patch(`/admin/withdrawal/${withdrawalId}/status`, {
+    status,
+    failedReason,
+  });
   return response.data;
 };
 
 export const getPaymentsApiService = async ({
   page = 1,
   limit = 10,
-  search = "",
-  status = "",
-  productType = "",
-  sortBy = "createdAt",
-  sortOrder = "desc",
+  search = '',
+  status = '',
+  productType = '',
+  sortBy = 'createdAt',
+  sortOrder = 'desc',
 } = {}) => {
-  const response = await axiosInstance.get("/admin/payments", {
+  const response = await axiosInstance.get('/admin/payments', {
     params: { page, limit, search, status, productType, sortBy, sortOrder },
   });
   return response.data;

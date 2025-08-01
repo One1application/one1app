@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, IdCard, Briefcase, CreditCard, Globe, Target, Ear, Coins, Filter, Search, Wallet, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { getCreatorDetails, getCreatorWithdrawals, toggleCreatorKycStatus, updateCreatorPersonalDetails, updateWithdrawalStatus } from '../../services/api-service';
-import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+import { Briefcase, Clock, Coins, CreditCard, Ear, Filter, Globe, IdCard, Mail, Phone, Search, Target, User, Wallet, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import {
+  getCreatorDetails,
+  getCreatorWithdrawals,
+  toggleCreatorKycStatus,
+  updateCreatorPersonalDetails,
+  updateWithdrawalStatus,
+} from '../../services/api-service';
 const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
   const [activeTab, setActiveTab] = useState('personalInfo');
   const [creator, setCreator] = useState(null);
@@ -17,7 +23,8 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
     socialMedia: '',
     goals: [],
     heardAboutUs: '',
-    creatorComission: null
+    creatorComission: null,
+    paymentProvider: '',
   });
   const [kycForm, setKycForm] = useState({ status: '', rejectionReason: '' });
   const [creatorWithdrawalsDetails, setCreatorWithdrawalsDetails] = useState([]);
@@ -37,6 +44,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
     setLoading(true);
     try {
       const data = await getCreatorDetails(creatorId);
+      console.log('DATA', data);
       const withdrawalsDetails = await getCreatorWithdrawals(creatorId);
       setCreatorWithdrawalsDetails(withdrawalsDetails.withdrawalsDetails);
       setCreator(data);
@@ -47,7 +55,8 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
         socialMedia: data.socialMedia || '',
         goals: data.goals || [],
         heardAboutUs: data.heardAboutUs || '',
-        creatorComission: data.creatorComission
+        creatorComission: data.creatorComission,
+        paymentProvider: data.paymentProvider || '',
       });
       setKycForm({
         status: data.kycRecords?.status || 'PENDING',
@@ -80,6 +89,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
   };
 
   const handlePersonalUpdate = async () => {
+    console.log('FORM DATA', formData);
     try {
       await updateCreatorPersonalDetails(creatorId, formData);
       await fetchCreatorDetails();
@@ -129,11 +139,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
 
     const color = statusColors[creator.kycRecords?.status?.toLowerCase()] || 'bg-gray-100 text-gray-800';
 
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase ${color}`}>
-        {creator.kycRecords?.status || 'Unknown'}
-      </span>
-    );
+    return <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase ${color}`}>{creator.kycRecords?.status || 'Unknown'}</span>;
   };
 
   const DetailRow = ({ icon, label, value }) => (
@@ -218,9 +224,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
           )}
           <div>
             <p className="text-sm text-gray-600">Status</p>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[withdrawal.status]}`}>
-              {withdrawal.status}
-            </span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[withdrawal.status]}`}>{withdrawal.status}</span>
           </div>
         </div>
         {withdrawal.status === 'PENDING' && (
@@ -267,9 +271,10 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
 
   const filteredWithdrawals = creatorWithdrawalsDetails.filter((withdrawal) => {
     const matchesStatus = withdrawalFilter === 'ALL' || withdrawal.status === withdrawalFilter;
-    const matchesSearch = withdrawal.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (withdrawal.bankDetails?.accountNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (withdrawal.upi?.upiId?.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch =
+      withdrawal.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      withdrawal.bankDetails?.accountNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      withdrawal.upi?.upiId?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -335,13 +340,26 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-sm text-gray-600 font-medium">CreatorComission</label>
+              <label className="block text-sm text-gray-600 font-medium">Creator Commission</label>
               <input
                 type="number"
                 value={formData.creatorComission}
                 onChange={(e) => setFormData({ ...formData, creatorComission: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 font-medium">Payment Provider</label>
+              <select
+                value={formData.paymentProvider}
+                onChange={(e) => setFormData({ ...formData, paymentProvider: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              >
+                <option value="">Select Payment Provider</option>
+                <option value="Razorpay">Razorpay</option>
+
+                <option value="PhonePay">PhonePe</option>
+              </select>
             </div>
             <div className="flex justify-end gap-2">
               <button
@@ -350,61 +368,24 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
               >
                 Cancel
               </button>
-              <button
-                onClick={handlePersonalUpdate}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
+              <button onClick={handlePersonalUpdate} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
                 Save
               </button>
             </div>
           </div>
         ) : (
           <div>
-            <DetailRow
-              icon={<User className="text-blue-500" size={20} />}
-              label="Creator ID"
-              value={creator.id}
-            />
-            <DetailRow
-              icon={<User className="text-blue-500" size={20} />}
-              label="Full Name"
-              value={creator.name}
-            />
-            <DetailRow
-              icon={<Mail className="text-green-500" size={20} />}
-              label="Email Address"
-              value={creator.email}
-            />
-            <DetailRow
-              icon={<Phone className="text-purple-500" size={20} />}
-              label="Mobile Number"
-              value={creator.phone}
-            />
-            <DetailRow
-              icon={<Globe className="text-teal-500" size={20} />}
-              label="Social Media"
-              value={creator.socialMedia}
-            />
-            <DetailRow
-              icon={<Target className="text-orange-500" size={20} />}
-              label="Goals"
-              value={creator.goals?.join(', ')}
-            />
-            <DetailRow
-              icon={<Ear className="text-pink-500" size={20} />}
-              label="Heard About Us"
-              value={creator.heardAboutUs}
-            />
-            <DetailRow
-              icon={<Coins className="text-black" size={20} />}
-              label="Creator Comission"
-              value={creator.creatorComission}
-            />
+            <DetailRow icon={<User className="text-blue-500" size={20} />} label="Creator ID" value={creator.id} />
+            <DetailRow icon={<User className="text-blue-500" size={20} />} label="Full Name" value={creator.name} />
+            <DetailRow icon={<Mail className="text-green-500" size={20} />} label="Email Address" value={creator.email} />
+            <DetailRow icon={<Phone className="text-purple-500" size={20} />} label="Mobile Number" value={creator.phone} />
+            <DetailRow icon={<Globe className="text-teal-500" size={20} />} label="Social Media" value={creator.socialMedia} />
+            <DetailRow icon={<Target className="text-orange-500" size={20} />} label="Goals" value={creator.goals?.join(', ')} />
+            <DetailRow icon={<Ear className="text-pink-500" size={20} />} label="Heard About Us" value={creator.heardAboutUs} />
+            <DetailRow icon={<Coins className="text-black" size={20} />} label="Creator Commission" value={creator.creatorComission} />
+            <DetailRow icon={<CreditCard className="text-indigo-500" size={20} />} label="Payment Provider" value={creator.paymentProvider} />
             <div className="flex justify-end p-4">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
+              <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
                 Edit Details
               </button>
             </div>
@@ -415,16 +396,8 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
         return creator.hasKyc ? (
           <div className="p-6 bg-gray-50 rounded-lg max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailRow
-                icon={<IdCard className="text-teal-500" size={20} />}
-                label="KYC Status"
-                value={creator?.kycRecords?.status}
-              />
-              <DetailRow
-                icon={<IdCard className="text-teal-500" size={20} />}
-                label="Aadhaar Number"
-                value={creator?.kycRecords?.aadhaarNumber}
-              />
+              <DetailRow icon={<IdCard className="text-teal-500" size={20} />} label="KYC Status" value={creator?.kycRecords?.status} />
+              <DetailRow icon={<IdCard className="text-teal-500" size={20} />} label="Aadhaar Number" value={creator?.kycRecords?.aadhaarNumber} />
             </div>
             <div className="mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Documents</h3>
@@ -434,44 +407,29 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                   label="Aadhaar Front Card"
                   value={creator?.kycRecords?.aadhaarFront}
                 />
-                <DetailRow
-                  icon={<IdCard className="text-teal-500" size={20} />}
-                  label="Aadhaar Back Card"
-                  value={creator?.kycRecords?.aadhaarBack}
-                />
-                <DetailRow
-                  icon={<IdCard className="text-teal-500" size={20} />}
-                  label="PAN Card"
-                  value={creator?.kycRecords?.panCard}
-                />
-                <DetailRow
-                  icon={<IdCard className="text-teal-500" size={20} />}
-                  label="Selfie Card"
-                  value={creator?.kycRecords?.selfie}
-                />
+                <DetailRow icon={<IdCard className="text-teal-500" size={20} />} label="Aadhaar Back Card" value={creator?.kycRecords?.aadhaarBack} />
+                <DetailRow icon={<IdCard className="text-teal-500" size={20} />} label="PAN Card" value={creator?.kycRecords?.panCard} />
+                <DetailRow icon={<IdCard className="text-teal-500" size={20} />} label="Selfie Card" value={creator?.kycRecords?.selfie} />
               </div>
             </div>
             <div className="mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Social Media</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(creator?.kycRecords?.socialMedia || {}).map(([platform, link]) => (
-                  link && (
-                    <DetailRow
-                      key={platform}
-                      icon={<IdCard className="text-teal-500" size={20} />}
-                      label={platform.charAt(0).toUpperCase() + platform.slice(1)}
-                      value={link}
-                    />
-                  )
-                ))}
+                {Object.entries(creator?.kycRecords?.socialMedia || {}).map(
+                  ([platform, link]) =>
+                    link && (
+                      <DetailRow
+                        key={platform}
+                        icon={<IdCard className="text-teal-500" size={20} />}
+                        label={platform.charAt(0).toUpperCase() + platform.slice(1)}
+                        value={link}
+                      />
+                    )
+                )}
               </div>
             </div>
             {creator?.kycRecords?.rejectionReason && (
-              <DetailRow
-                icon={<IdCard className="text-teal-500" size={20} />}
-                label="Rejection Reason"
-                value={creator?.kycRecords.rejectionReason}
-              />
+              <DetailRow icon={<IdCard className="text-teal-500" size={20} />} label="Rejection Reason" value={creator?.kycRecords.rejectionReason} />
             )}
             <div className="mt-8">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Update KYC Status</h3>
@@ -501,10 +459,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                   </div>
                 )}
                 <div className="flex justify-end">
-                  <button
-                    onClick={handleKycUpdate}
-                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
+                  <button onClick={handleKycUpdate} className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
                     Update KYC
                   </button>
                 </div>
@@ -512,89 +467,47 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
             </div>
           </div>
         ) : (
-          <div className="p-6 text-center text-gray-500">
-            No KYC details available for this creator.
-          </div>
+          <div className="p-6 text-center text-gray-500">No KYC details available for this creator.</div>
         );
 
       case 'businessInfo':
         return creator.hasBusinessInfo ? (
           <div className="p-6 bg-gray-50 rounded-lg">
-            <DetailRow
-              icon={<Briefcase className="text-orange-500" size={20} />}
-              label="First Name"
-              value={creator.businessInfo?.firstName}
-            />
-            <DetailRow
-              icon={<Briefcase className="text-orange-500" size={20} />}
-              label="Last Name"
-              value={creator.businessInfo?.lastName}
-            />
+            <DetailRow icon={<Briefcase className="text-orange-500" size={20} />} label="First Name" value={creator.businessInfo?.firstName} />
+            <DetailRow icon={<Briefcase className="text-orange-500" size={20} />} label="Last Name" value={creator.businessInfo?.lastName} />
             <DetailRow
               icon={<Briefcase className="text-orange-500" size={20} />}
               label="Business Structure"
               value={creator.businessInfo?.businessStructure}
             />
-            <DetailRow
-              icon={<Briefcase className="text-orange-500" size={20} />}
-              label="GST Number"
-              value={creator.businessInfo?.gstNumber}
-            />
-            <DetailRow
-              icon={<Briefcase className="text-orange-500" size={20} />}
-              label="SEBI Number"
-              value={creator.businessInfo?.sebiNumber}
-            />
+            <DetailRow icon={<Briefcase className="text-orange-500" size={20} />} label="GST Number" value={creator.businessInfo?.gstNumber} />
+            <DetailRow icon={<Briefcase className="text-orange-500" size={20} />} label="SEBI Number" value={creator.businessInfo?.sebiNumber} />
           </div>
         ) : (
-          <div className="p-6 text-center text-gray-500">
-            No business information available for this creator.
-          </div>
+          <div className="p-6 text-center text-gray-500">No business information available for this creator.</div>
         );
 
       case 'bankDetails':
         return creator.hasBankDetails ? (
           <div className="p-6 rounded-lg flex flex-col gap-4">
-            <h2 className='uppercase font-bold text-3xl text-black my-3'>CREATOR BANK ACCOUNTS</h2>
+            <h2 className="uppercase font-bold text-3xl text-black my-3">CREATOR BANK ACCOUNTS</h2>
             {creator.BankAccounts?.map((bank) => (
               <div key={bank.id} className="mb-4 pb-4 bg-gray-50 px-2">
-                <DetailRow
-                  icon={<CreditCard className="text-purple-500" size={20} />}
-                  label="Account Holder Name"
-                  value={bank.accountHolderName}
-                />
-                <DetailRow
-                  icon={<CreditCard className="text-purple-500" size={20} />}
-                  label="Account Number"
-                  value={bank.accountNumber}
-                />
-                <DetailRow
-                  icon={<CreditCard className="text-purple-500" size={20} />}
-                  label="IFSC Code"
-                  value={bank.ifscCode}
-                />
-                <DetailRow
-                  icon={<CreditCard className="text-purple-500" size={20} />}
-                  label="Primary"
-                  value={bank.primary ? 'Yes' : 'No'}
-                />
+                <DetailRow icon={<CreditCard className="text-purple-500" size={20} />} label="Account Holder Name" value={bank.accountHolderName} />
+                <DetailRow icon={<CreditCard className="text-purple-500" size={20} />} label="Account Number" value={bank.accountNumber} />
+                <DetailRow icon={<CreditCard className="text-purple-500" size={20} />} label="IFSC Code" value={bank.ifscCode} />
+                <DetailRow icon={<CreditCard className="text-purple-500" size={20} />} label="Primary" value={bank.primary ? 'Yes' : 'No'} />
               </div>
             ))}
-            <h2 className='uppercase font-bold text-3xl text-black my-3'>Creator UPI IDS</h2>
+            <h2 className="uppercase font-bold text-3xl text-black my-3">Creator UPI IDS</h2>
             {creator.upiIds?.map((upi) => (
               <div key={upi.id} className="mb-4 px-3 bg-gray-50">
-                <DetailRow
-                  icon={<CreditCard className="text-purple-500" size={20} />}
-                  label="UPI ID"
-                  value={upi.upiId}
-                />
+                <DetailRow icon={<CreditCard className="text-purple-500" size={20} />} label="UPI ID" value={upi.upiId} />
               </div>
             ))}
           </div>
         ) : (
-          <div className="p-6 text-center text-gray-500">
-            No bank details or UPI IDs available for this creator.
-          </div>
+          <div className="p-6 text-center text-gray-500">No bank details or UPI IDs available for this creator.</div>
         );
 
       case 'withdrawals':
@@ -627,13 +540,9 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
               </div>
             </div>
             {filteredWithdrawals.length > 0 ? (
-              filteredWithdrawals.map((withdrawal) => (
-                <WithdrawalCard key={withdrawal.id} withdrawal={withdrawal} />
-              ))
+              filteredWithdrawals.map((withdrawal) => <WithdrawalCard key={withdrawal.id} withdrawal={withdrawal} />)
             ) : (
-              <div className="text-center text-gray-500 py-8">
-                No withdrawals found matching the current filters.
-              </div>
+              <div className="text-center text-gray-500 py-8">No withdrawals found matching the current filters.</div>
             )}
           </div>
         );
@@ -643,16 +552,8 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
           <div className="p-6 bg-gray-50 rounded-lg">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Wallet Details</h2>
             <div className="grid grid-cols-1  gap-6">
-              <DetailRow
-                icon={<Wallet className="text-green-500" size={20} />}
-                label="Wallet ID"
-                value={creator.wallet.id}
-              />
-              <DetailRow
-                icon={<Coins className="text-yellow-500" size={20} />}
-                label="Balance"
-                value={`₹${creator.wallet.balance.toFixed(2)}`}
-              />
+              <DetailRow icon={<Wallet className="text-green-500" size={20} />} label="Wallet ID" value={creator.wallet.id} />
+              <DetailRow icon={<Coins className="text-yellow-500" size={20} />} label="Balance" value={`₹${creator.wallet.balance.toFixed(2)}`} />
               <DetailRow
                 icon={<Coins className="text-yellow-500" size={20} />}
                 label="Total Earnings"
@@ -667,10 +568,11 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
                 icon={<IdCard className="text-blue-500" size={20} />}
                 label="KYC Verified"
                 value={
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${creator.wallet.isKycVerified
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                    }`}>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      creator.wallet.isKycVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}
+                  >
                     {creator.wallet.isKycVerified ? 'Verified' : 'Unverified'}
                   </span>
                 }
@@ -688,9 +590,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
             </div>
           </div>
         ) : (
-          <div className="p-6 text-center text-gray-500">
-            No wallet details available for this creator.
-          </div>
+          <div className="p-6 text-center text-gray-500">No wallet details available for this creator.</div>
         );
 
       default:
@@ -709,10 +609,7 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
         transition={{ duration: 0.3 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto  relative"
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 z-10"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 z-10">
           <X size={24} />
         </button>
         <div className="bg-gradient-to-r from-orange-500 to-yellow-600 text-white p-6 rounded-t-2xl">
@@ -725,17 +622,15 @@ const UserDetailsModal = ({ creatorId, isOpen, onClose, onUpdate }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 text-center mx-5 md:mx-3 font-semibold ${activeTab === tab.id
-                ? 'text-orange-600 border-b-2 border-orange-600'
-                : 'text-gray-600 hover:text-orange-500'
-                } transition-colors`}
+              className={`flex-1 py-3 text-center mx-5 md:mx-3 font-semibold ${
+                activeTab === tab.id ? 'text-orange-600 border-b-2 border-orange-600' : 'text-gray-600 hover:text-orange-500'
+              } transition-colors`}
             >
               {tab.label}
             </button>
           ))}
         </div>
         <div className="p-6">{renderTabContent()}</div>
-
       </motion.div>
     </div>
   );
