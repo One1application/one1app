@@ -562,6 +562,7 @@ const TelegramsPages = () => {
           ? error?.response?.data?.message || `Failed to update discount`
           : error?.response?.data?.message || "Failed to create discount"
       );
+
     }
   };
 

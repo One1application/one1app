@@ -1095,6 +1095,7 @@ export async function purchaseTelegramSubscription(req, res) {
     });
     console.log("TELEGRAM IS", telegram);
 
+
     const creator = await prisma.telegram.findFirst({
       where: {
         id: telegramId,
@@ -1423,6 +1424,7 @@ export async function purchaseTelegramSubscription(req, res) {
     console.log(error);
 
     console.log("Error in purchaseTelegramSubscription:", {
+
       error: error.message,
       stack: error.stack,
       requestBody: req.body,
@@ -1549,6 +1551,7 @@ export async function verifyTelegramPaymentCallback(req, res) {
     });
   }
 }
+
 
 // ******************* Telegram Bot Related API************************
 //subscription record and invitekink  created at walletController

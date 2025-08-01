@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, ChevronRight, ShieldCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -35,7 +36,7 @@ export default function PaymentInterface() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [isVerifyingCoupon, setIsVerifyingCoupon] = useState(false);
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
-  console.log("PRODUCT data", productData);
+
   useEffect(() => {
     const loadRazorpayScript = () => {
       return new Promise((resolve) => {
@@ -51,7 +52,7 @@ export default function PaymentInterface() {
         script.async = true;
 
         script.onload = () => {
-          console.log("Razorpay script loaded successfully");
+
           setIsRazorpayLoaded(true);
           resolve(true);
         };
@@ -79,6 +80,7 @@ export default function PaymentInterface() {
   useEffect(() => {
     if (location.state) {
       setBaseAmount(Math.round(location.state.baseAmount) || 0);
+
       setProductTitle(location.state.title || "product");
       setProductId(location.state.id || "");
       setCourseType(location.state.courseType || "");
@@ -218,6 +220,21 @@ export default function PaymentInterface() {
           }
           break;
 
+        case 'telegram':
+          res = await applyTelegramCoupon({
+            telegramId: productData.telegramId || productId,
+            subscriptionId: productData.subscriptionId,
+            couponCode,
+          });
+          if (res?.data?.success) {
+
+            setDiscountAmount(parseFloat((res.data.payload.discountPrice || 0).toFixed(2)));
+            setDiscountApplied(true);
+            setShowCoupon(false);
+            toast.success('Coupon applied successfully');
+          }
+          break;
+
         default:
           toast.error("Invalid Product type");
           break;
@@ -304,21 +321,16 @@ export default function PaymentInterface() {
               const params = new URLSearchParams();
 
               // Add only the relevant ID based on courseType
-              if (courseType === "course") params.append("courseId", productId);
-              if (courseType === "payingUp")
-                params.append("payingUpId", productId);
-              if (courseType === "webinar")
-                params.append("webinarId", productId);
-              if (courseType === "premiumcontent")
-                params.append("contentId", productId);
+
+              if (courseType === 'course') params.append('courseId', productId);
+              if (courseType === 'payingUp') params.append('payingUpId', productId);
+              if (courseType === 'webinar') params.append('webinarId', productId);
+              if (courseType === 'premiumcontent') params.append('contentId', productId);
 
               // Add telegram specific parameters
-              if (courseType === "telegram") {
-                params.append(
-                  "telegramId",
-                  productData.telegramId || productId
-                );
-                params.append("subscriptionId", productData.subscriptionId);
+              if (courseType === 'telegram') {
+                params.append('telegramId', productData.telegramId || productId);
+                params.append('subscriptionId', productData.subscriptionId);
               }
 
               // Add payment-related fields only if present
@@ -534,6 +546,7 @@ export default function PaymentInterface() {
                     {courseType === "payingUp" && "Paying Up"}
                     {courseType === "premiumcontent" && "Premium Content"}
                     {courseType === "telegram" && "Telegram Subscription"}
+
                   </span>
 
                   <motion.div
