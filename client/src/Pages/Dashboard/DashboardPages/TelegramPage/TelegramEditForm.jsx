@@ -1,29 +1,28 @@
-
-import { useState, useEffect, useRef, useCallback } from "react";
+import { ChevronDown, Loader2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import {
-  PlusCircle,
-  X,
-  ChevronDown,
-  Loader2,
-} from "lucide-react";
-import {
-  createTelegram,
-  editTelegram,
-  handelUplaodFile,
-  verifyInviteLink,
-  fetchOwnedGroups,
-  editTelegramDiscount,
-  deleteTelegramDiscount,
-  editTelegramSubscription,
-  deleteTelegramSubscription,
   createTelegramDiscount,
   createTelegramSubscription,
+  deleteTelegramDiscount,
+  deleteTelegramSubscription,
+  editTelegram,
+  editTelegramDiscount,
+  editTelegramSubscription,
+  fetchOwnedGroups,
   getCreatorTelegramById,
+  handelUplaodFile,
 } from "../../../../services/auth/api.services.js";
-import toast from "react-hot-toast";
 
 // Confirmation Modal Component
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = "danger" }) => {
+const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  type = "danger",
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -50,10 +49,11 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = 
               onConfirm();
               onClose();
             }}
-            className={`flex-1 px-4 py-2 rounded-lg transition duration-200 ${type === "danger"
-              ? "bg-red-600 text-white hover:bg-red-700"
-              : "bg-orange-600 text-white hover:bg-orange-700"
-              }`}
+            className={`flex-1 px-4 py-2 rounded-lg transition duration-200 ${
+              type === "danger"
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "bg-orange-600 text-white hover:bg-orange-700"
+            }`}
           >
             {type === "danger" ? "Delete" : "Confirm"}
           </button>
@@ -75,7 +75,11 @@ const DiscountForm = ({ isOpen, onClose, onSubmit, editData = null }) => {
     if (editData) {
       setDiscountCode(editData.code || "");
       setDiscountPercent(editData.percent?.toString() || "");
-      setExpiryDate(editData.expiry ? new Date(editData.expiry).toISOString().split('T')[0] : "");
+      setExpiryDate(
+        editData.expiry
+          ? new Date(editData.expiry).toISOString().split("T")[0]
+          : ""
+      );
       setSelectedPlan(editData.plan || "");
     } else {
       // Reset form for new discount
@@ -124,7 +128,10 @@ const DiscountForm = ({ isOpen, onClose, onSubmit, editData = null }) => {
               value={discountPercent}
               onChange={(e) => {
                 const value = e.target.value;
-                if (value === '' || (parseFloat(value) >= 1 && parseFloat(value) <= 99)) {
+                if (
+                  value === "" ||
+                  (parseFloat(value) >= 1 && parseFloat(value) <= 99)
+                ) {
                   setDiscountPercent(value);
                 }
               }}
@@ -143,7 +150,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit, editData = null }) => {
               type="date"
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
             />
           </div>
@@ -180,7 +187,11 @@ const DiscountForm = ({ isOpen, onClose, onSubmit, editData = null }) => {
                 toast.error("Please enter a discount code");
                 return;
               }
-              if (!discountPercent || parseFloat(discountPercent) < 1 || parseFloat(discountPercent) > 99) {
+              if (
+                !discountPercent ||
+                parseFloat(discountPercent) < 1 ||
+                parseFloat(discountPercent) > 99
+              ) {
                 toast.error("Please enter a valid discount percentage (1-99%)");
                 return;
               }
@@ -213,7 +224,12 @@ const DiscountForm = ({ isOpen, onClose, onSubmit, editData = null }) => {
 };
 
 // Subscription Edit Form Component
-const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) => {
+const SubscriptionEditForm = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  editData = null,
+}) => {
   const [subscriptionType, setSubscriptionType] = useState("");
   const [subscriptionPrice, setSubscriptionPrice] = useState("");
   const [subscriptionDays, setSubscriptionDays] = useState("");
@@ -316,8 +332,9 @@ const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) =>
                 placeholder="Select or type subscription type"
               />
               <ChevronDown
-                className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${showDropdown ? "transform rotate-180" : ""
-                  }`}
+                className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                  showDropdown ? "transform rotate-180" : ""
+                }`}
               />
             </div>
 
@@ -335,22 +352,24 @@ const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) =>
                 {predefinedTypes.filter((type) =>
                   type.toLowerCase().includes(subscriptionType.toLowerCase())
                 ).length > 0 && (
-                    <div className="max-h-48 overflow-auto">
-                      {predefinedTypes
-                        .filter((type) =>
-                          type.toLowerCase().includes(subscriptionType.toLowerCase())
-                        )
-                        .map((option) => (
-                          <div
-                            key={option}
-                            className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                            onClick={() => handleOptionClick(option)}
-                          >
-                            {option}
-                          </div>
-                        ))}
-                    </div>
-                  )}
+                  <div className="max-h-48 overflow-auto">
+                    {predefinedTypes
+                      .filter((type) =>
+                        type
+                          .toLowerCase()
+                          .includes(subscriptionType.toLowerCase())
+                      )
+                      .map((option) => (
+                        <div
+                          key={option}
+                          className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                          onClick={() => handleOptionClick(option)}
+                        >
+                          {option}
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -364,7 +383,7 @@ const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) =>
               value={subscriptionPrice}
               onChange={(e) => {
                 const value = e.target.value;
-                if (value === '' || parseFloat(value) >= 0) {
+                if (value === "" || parseFloat(value) >= 0) {
                   setSubscriptionPrice(value);
                 }
               }}
@@ -397,26 +416,27 @@ const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) =>
             </div>
           )}
 
-          {!isLifetime && (showCreate || !predefinedTypes.includes(subscriptionType)) && (
-            <div>
-              <label className="block text-sm font-medium text-orange-500 mb-2">
-                Valid Days
-              </label>
-              <input
-                type="number"
-                value={subscriptionDays}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || parseInt(value) >= 1) {
-                    setSubscriptionDays(value);
-                  }
-                }}
-                min="1"
-                className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
-                placeholder="Enter number of days"
-              />
-            </div>
-          )}
+          {!isLifetime &&
+            (showCreate || !predefinedTypes.includes(subscriptionType)) && (
+              <div>
+                <label className="block text-sm font-medium text-orange-500 mb-2">
+                  Valid Days
+                </label>
+                <input
+                  type="number"
+                  value={subscriptionDays}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || parseInt(value) >= 1) {
+                      setSubscriptionDays(value);
+                    }
+                  }}
+                  min="1"
+                  className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
+                  placeholder="Enter number of days"
+                />
+              </div>
+            )}
         </div>
 
         <div className="flex gap-4 mt-6">
@@ -438,7 +458,8 @@ const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) =>
                 return;
               }
               // For predefined types, days are auto-set and lifetime is not allowed. For custom types, user must enter days.
-              const isPredefinedType = predefinedTypes.includes(subscriptionType);
+              const isPredefinedType =
+                predefinedTypes.includes(subscriptionType);
               let finalDays;
               let finalIsLifetime = false;
 
@@ -451,7 +472,9 @@ const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) =>
               }
 
               if (!finalIsLifetime && (!finalDays || finalDays <= 0)) {
-                toast.error("Please enter valid days for non-lifetime subscription");
+                toast.error(
+                  "Please enter valid days for non-lifetime subscription"
+                );
                 return;
               }
 
@@ -474,9 +497,8 @@ const SubscriptionEditForm = ({ isOpen, onClose, onSubmit, editData = null }) =>
   );
 };
 
-import { useLocation, useSearchParams, useParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../../context/AuthContext.jsx";
-
 
 const TelegramsPages = () => {
   const telegramId = useSearchParams()[0].get("telegramId");
@@ -499,7 +521,6 @@ const TelegramsPages = () => {
   const [isTelegramAuthenticated, setIsTelegramAuthenticated] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-
   const getInitials = (name) => {
     if (!name) return "USER";
     const names = name.split(" ");
@@ -515,23 +536,32 @@ const TelegramsPages = () => {
       if (discountData.id) {
         // Edit existing discount
         await editTelegramDiscount(userData.id, discountData.id, discountData);
-        setExistingDiscounts(prev => prev.map(d => d.id === discountData.id ? discountData : d));
+        setExistingDiscounts((prev) =>
+          prev.map((d) => (d.id === discountData.id ? discountData : d))
+        );
         toast.success("Discount updated successfully");
         setEditingDiscount(null);
       } else {
         // Create new discount
-        const response = await createTelegramDiscount(userData.id, discountData);
+        const response = await createTelegramDiscount(
+          userData.id,
+          discountData
+        );
         const newDiscount = response.data.discount || {
           id: Date.now(), // Temporary ID
-          ...discountData
+          ...discountData,
         };
-        setExistingDiscounts(prev => [...prev, newDiscount]);
+        setExistingDiscounts((prev) => [...prev, newDiscount]);
         toast.success("Discount created successfully");
       }
-      loadTelegramData()
+      loadTelegramData();
     } catch (error) {
       console.error("Error with discount:", error);
-      toast.error(discountData.id ? "Failed to update discount" : "Failed to create discount");
+      toast.error(
+        discountData.id
+          ? error?.response?.data?.message || `Failed to update discount`
+          : error?.response?.data?.message || "Failed to create discount"
+      );
     }
   };
 
@@ -548,10 +578,10 @@ const TelegramsPages = () => {
 
     setDeleteConfirmModal({
       isOpen: true,
-      type: 'discount',
+      type: "discount",
       item: discount,
-      title: 'Delete Discount',
-      message: `Are you sure you want to delete the discount "${discount.code}"? This action cannot be undone.`
+      title: "Delete Discount",
+      message: `Are you sure you want to delete the discount "${discount.code}"? This action cannot be undone.`,
     });
   };
 
@@ -565,7 +595,7 @@ const TelegramsPages = () => {
 
     try {
       await deleteTelegramDiscount(userData.id, discountId);
-      setExistingDiscounts(prev => prev.filter(d => d.id !== discountId));
+      setExistingDiscounts((prev) => prev.filter((d) => d.id !== discountId));
       toast.success("Discount deleted successfully");
     } catch (error) {
       console.error("Error deleting discount:", error);
@@ -582,24 +612,37 @@ const TelegramsPages = () => {
     try {
       if (subscriptionData.id) {
         // Edit existing subscription
-        await editTelegramSubscription(userData.id, subscriptionData.id, subscriptionData);
-        setExistingSubscriptions(prev => prev.map(s => s.id === subscriptionData.id ? subscriptionData : s));
+        await editTelegramSubscription(
+          userData.id,
+          subscriptionData.id,
+          subscriptionData
+        );
+        setExistingSubscriptions((prev) =>
+          prev.map((s) => (s.id === subscriptionData.id ? subscriptionData : s))
+        );
         toast.success("Subscription updated successfully");
         setEditingSubscription(null);
       } else {
         // Create new subscription
-        const response = await createTelegramSubscription(userData.id, subscriptionData);
+        const response = await createTelegramSubscription(
+          userData.id,
+          subscriptionData
+        );
         const newSubscription = response.data.subscription || {
           id: Date.now(), // Temporary ID
-          ...subscriptionData
+          ...subscriptionData,
         };
-        setExistingSubscriptions(prev => [...prev, newSubscription]);
+        setExistingSubscriptions((prev) => [...prev, newSubscription]);
         toast.success("Subscription created successfully");
       }
-      loadTelegramData()
+      loadTelegramData();
     } catch (error) {
       console.error("Error with subscription:", error);
-      toast.error(subscriptionData.id ? "Failed to update subscription" : "Failed to create subscription");
+      toast.error(
+        subscriptionData.id
+          ? "Failed to update subscription"
+          : "Failed to create subscription"
+      );
     }
   };
 
@@ -611,10 +654,10 @@ const TelegramsPages = () => {
 
     setDeleteConfirmModal({
       isOpen: true,
-      type: 'subscription',
+      type: "subscription",
       item: subscription,
-      title: 'Delete Subscription',
-      message: `Are you sure you want to delete the "${subscription.type}" subscription? This action cannot be undone.`
+      title: "Delete Subscription",
+      message: `Are you sure you want to delete the "${subscription.type}" subscription? This action cannot be undone.`,
     });
   };
 
@@ -628,7 +671,9 @@ const TelegramsPages = () => {
 
     try {
       await deleteTelegramSubscription(userData.id, subscriptionId);
-      setExistingSubscriptions(prev => prev.filter(s => s.id !== subscriptionId));
+      setExistingSubscriptions((prev) =>
+        prev.filter((s) => s.id !== subscriptionId)
+      );
       toast.success("Subscription deleted successfully");
     } catch (error) {
       console.error("Error deleting subscription:", error);
@@ -643,7 +688,7 @@ const TelegramsPages = () => {
     subscriptions: [],
     discounts: [],
     coverImage: "",
-    chatId: ""
+    chatId: "",
   });
 
   const [existingDiscounts, setExistingDiscounts] = useState([]);
@@ -652,14 +697,14 @@ const TelegramsPages = () => {
 
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({
     isOpen: false,
-    type: '',
+    type: "",
     item: null,
-    title: '',
-    message: ''
+    title: "",
+    message: "",
   });
 
   const loadTelegramData = async () => {
-    if (!telegramId) return
+    if (!telegramId) return;
 
     try {
       setIsLoadingData(true);
@@ -699,7 +744,6 @@ const TelegramsPages = () => {
       if (telegramData.coverImage) {
         setUploadedImage(telegramData.coverImage);
       }
-
     } catch (error) {
       console.error("Error loading telegram data:", error);
       toast.error("Failed to load telegram data");
@@ -714,19 +758,19 @@ const TelegramsPages = () => {
 
   useEffect(() => {
     if (!userData?.subscriptions || userData.subscriptions.length === 0) {
-      setUserData(prev => ({
+      setUserData((prev) => ({
         ...prev,
-        subscriptions: [{
-          type: "",
-          price: "",
-          validDays: "",
-          isLifetime: false
-        }]
+        subscriptions: [
+          {
+            type: "",
+            price: "",
+            validDays: "",
+            isLifetime: false,
+          },
+        ],
       }));
     }
   }, [userData?.subscriptions]);
-
-
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -759,7 +803,6 @@ const TelegramsPages = () => {
     setImageAspectRatio(naturalWidth / naturalHeight);
   };
 
-
   const loadGroups = async () => {
     setLoadingGroups(true);
     try {
@@ -781,7 +824,6 @@ const TelegramsPages = () => {
   useEffect(() => {
     loadGroups();
   }, []);
-
 
   const handleUpdateTelegram = async () => {
     try {
@@ -806,17 +848,24 @@ const TelegramsPages = () => {
         coverImage: userData.coverImage,
         gstDetails: gstInfoRequired ? gstDetails : null,
         courseDetails: courseAccess ? courseDetails : null,
-        subscriptions: userData.subscriptions?.filter(sub =>
-          (sub.type || sub.inputValue) && (sub.price !== undefined && sub.price !== '') &&
-          (sub.isLifetime || (sub.validDays !== undefined && sub.validDays !== ''))
-        ).map(sub => ({
-          type: sub.type || sub.inputValue,
-          cost: sub.price,
-          price: sub.price,
-          days: sub.validDays,
-          validDays: sub.validDays,
-          isLifetime: sub.isLifetime || false,
-        })) || [],
+        subscriptions:
+          userData.subscriptions
+            ?.filter(
+              (sub) =>
+                (sub.type || sub.inputValue) &&
+                sub.price !== undefined &&
+                sub.price !== "" &&
+                (sub.isLifetime ||
+                  (sub.validDays !== undefined && sub.validDays !== ""))
+            )
+            .map((sub) => ({
+              type: sub.type || sub.inputValue,
+              cost: sub.price,
+              price: sub.price,
+              days: sub.validDays,
+              validDays: sub.validDays,
+              isLifetime: sub.isLifetime || false,
+            })) || [],
       };
 
       await editTelegram(userData.id, updateData);
@@ -857,8 +906,6 @@ const TelegramsPages = () => {
       </div>
     );
   }
-
-
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -922,14 +969,18 @@ const TelegramsPages = () => {
                   )}
                 </div>
 
-                <label className={`px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 cursor-pointer transition duration-200 flex items-center gap-2 ${isUploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <label
+                  className={`px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 cursor-pointer transition duration-200 flex items-center gap-2 ${
+                    isUploadingImage ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
                   {isUploadingImage ? (
                     <>
                       <Loader2 className="animate-spin" size={16} />
                       Uploading...
                     </>
                   ) : (
-                    'Upload Image'
+                    "Upload Image"
                   )}
                   <input
                     type="file"
@@ -953,7 +1004,6 @@ const TelegramsPages = () => {
           </div>
           {/* Form Fields */}
           <div className="space-y-1">
-
             {/* Page Title */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-orange-500 mb-2">
@@ -1088,14 +1138,19 @@ const TelegramsPages = () => {
                   Current Subscriptions
                 </label>
                 {existingSubscriptions.map((sub) => (
-                  <div key={sub.id} className="flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-orange-600">
+                  <div
+                    key={sub.id}
+                    className="flex justify-between items-center p-3 bg-gray-800 rounded-lg border border-orange-600"
+                  >
                     <div>
                       <span className="text-white font-medium">{sub.type}</span>
                       <span className="text-gray-400 ml-2">₹{sub.price}</span>
                       {sub.isLifetime ? (
                         <span className="text-green-400 ml-2">(Lifetime)</span>
                       ) : (
-                        <span className="text-gray-400 ml-2">({sub.validDays} days)</span>
+                        <span className="text-gray-400 ml-2">
+                          ({sub.validDays} days)
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
@@ -1209,8 +1264,14 @@ const TelegramsPages = () => {
       {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={deleteConfirmModal.isOpen}
-        onClose={() => setDeleteConfirmModal({ ...deleteConfirmModal, isOpen: false })}
-        onConfirm={deleteConfirmModal.type === 'discount' ? confirmDeleteDiscount : confirmDeleteSubscription}
+        onClose={() =>
+          setDeleteConfirmModal({ ...deleteConfirmModal, isOpen: false })
+        }
+        onConfirm={
+          deleteConfirmModal.type === "discount"
+            ? confirmDeleteDiscount
+            : confirmDeleteSubscription
+        }
         title={deleteConfirmModal.title}
         message={deleteConfirmModal.message}
         type="danger"

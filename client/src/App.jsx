@@ -3,6 +3,8 @@ import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import AuthenticatedRoutes from "./components/AuthenticatedRoutes/AuthenticatedRoutes.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
+import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
+import PaymentInterface from "./newPurchase/PaymentInterface.jsx";
 import SignInPage from "./Pages/Authentication/SigninPage/SignInPage.jsx";
 import SignUpPage from "./Pages/Authentication/SignupPage/SignUpPage.jsx";
 import DashboardPage from "./Pages/Dashboard/DashboardPage.jsx";
@@ -15,18 +17,21 @@ import NewCourse from "./Pages/Dashboard/DashboardPages/CoursesPage/NewCourse.js
 import DiscordPage from "./Pages/Dashboard/DashboardPages/DiscordPage/DiscordPage.jsx";
 import HomePage from "./Pages/Dashboard/DashboardPages/HomePage/HomePage.jsx";
 import CreateLockedContentPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/CreateLockedContentPage.jsx";
+import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
 import LockedContentPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentPage.jsx";
 import MyStorePage from "./Pages/Dashboard/DashboardPages/MyStorePage/MyStorePage.jsx";
 import CreatePayUp from "./Pages/Dashboard/DashboardPages/PayingUpPage/CreatePayUp.jsx";
 import PayingUpPage from "./Pages/Dashboard/DashboardPages/PayingUpPage/PayingUpPage.jsx";
 import PayingUpPages from "./Pages/Dashboard/DashboardPages/PayingUpPage/PayingUpPages.jsx";
 import PluginPage from "./Pages/Dashboard/DashboardPages/PluginPage/PluginPage.jsx";
+import CreatorProductsShowcase from "./Pages/Dashboard/DashboardPages/ProfilePage/components/CreatorProductsShowcase.jsx";
 import ProfilePage from "./Pages/Dashboard/DashboardPages/ProfilePage/ProfilePage.jsx";
 import SuperLinkPage from "./Pages/Dashboard/DashboardPages/SuperLinkPage/SuperLinkPage.jsx";
+import AddTelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/AddTelegramForm.jsx";
+import EditTelegram from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramEditForm.jsx";
 import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramForm.jsx";
 import TelegramFormPrev from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramFormPrev.jsx";
 import TelegramPage from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramPage.jsx";
-import AddTelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/AddTelegramForm.jsx";
 import AllTransactionsPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/AllTransactionsPage.jsx";
 import KYCpage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/KYCpage.jsx";
 import WithdrawalPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/WithdrawalPage.jsx";
@@ -36,7 +41,9 @@ import WebinarPage from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPag
 import WebinarPages from "./Pages/Dashboard/DashboardPages/WebinarPage/WebinarPages.jsx";
 import WhatsAppPage from "./Pages/Dashboard/DashboardPages/WhatsAppPage/WhatsAppPage.jsx";
 import AudiencePage from "./Pages/Dashboard/DashboardPages/YourCustomerPage/YourCustomerPage.jsx";
+import HelpCenterBanner from "./Pages/HelpCenter/HelpCenterComingSoon.jsx";
 import PaymentPage from "./Pages/payment/page.jsx";
+import TelegramSuccess from "./Pages/telegram-success/page.jsx";
 import AboutUsPage from "./Pages/Welcome/AboutUsPage/AboutUsPage.jsx";
 import ContactUsPage from "./Pages/Welcome/ContactUsPage/ContactUsPage.jsx";
 import HiringPage from "./Pages/Welcome/HiringPage/HiringPage.jsx";
@@ -46,13 +53,6 @@ import TelegramsPages from "./Pages/Welcome/Telegrams/TelegramsPages.jsx";
 import Disclaimer from "./Pages/Welcome/Terms&Policy/Disclaimer.jsx";
 import PrivacyPolicy from "./Pages/Welcome/Terms&Policy/PrivacyPolicy.jsx";
 import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
-import LockedContentDisplayPage from "./Pages/Dashboard/DashboardPages/LockedContentPage/LockedContentDisplayPage.jsx";
-import Unsubscribe from "./components/Unsubscribe/Unsubscribe.jsx";
-import PaymentInterface from "./newPurchase/PaymentInterface.jsx";
-import HelpCenterBanner from "./Pages/HelpCenter/HelpCenterComingSoon.jsx";
-import ConnectPage from "./Pages/Dashboard/DashboardPages/TelegramPage/ConnectTelegramPage.jsx";
-import CreatorProductsShowcase from "./Pages/Dashboard/DashboardPages/ProfilePage/components/CreatorProductsShowcase.jsx";
-import EditTelegram from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramEditForm.jsx";
 
 const App = () => {
   const { userRole, authenticated, logout, loading } = useAuth();
@@ -73,6 +73,7 @@ const App = () => {
             )
           }
         />
+        <Route path="/telegram/success" element={<TelegramSuccess />} />
         <Route path="plugins" element={<PluginsPage />} />
         <Route path="TelegramsPages" element={<TelegramsPages />} />
         <Route path="/about-us" element={<AboutUsPage />} />
@@ -129,7 +130,6 @@ const App = () => {
             <Route path="create-pay-up" element={<CreatePayUp />} />
             <Route path="edit-payingup" element={<CreatePayUp />} />
 
-
             <Route path="create-telegram" element={<TelegramForm />} />
             <Route path="add-telegram" element={<AddTelegramForm />} />
             <Route path="edit-telegram" element={<EditTelegram />} />
@@ -161,12 +161,15 @@ const App = () => {
           <Route path="course/lessons" element={<LessonsPage />} />
         </Route>
 
-
-
         <Route path="/unsubscribe/:email" element={<Unsubscribe />} />
-        <Route path="*" element={<div className="w-screen h-screen flex items-center justify-center">
-          <h1 className="text-5xl font-[800]">Page Not Found</h1>
-        </div>} />
+        <Route
+          path="*"
+          element={
+            <div className="w-screen h-screen flex items-center justify-center">
+              <h1 className="text-5xl font-[800]">Page Not Found</h1>
+            </div>
+          }
+        />
       </Routes>
     </>
   );
