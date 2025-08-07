@@ -8,6 +8,7 @@ import { fetchPaymentDetails } from "../config/razorpay.js";
 import prisma from "../db/dbClient.js";
 import { sendOtp } from "../utils/sendOtp.js";
 import { calculateExpiryDate } from "./telegramController.js";
+import { getInviteLink } from "../services/bot-service.js";
 
 dotenv.config();
 
@@ -218,7 +219,7 @@ export async function verifyPayment(req, res) {
           const commissionAmount =
             Math.round(
               ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
+              100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -434,7 +435,7 @@ export async function verifyPayment(req, res) {
           const commissionAmount =
             Math.round(
               ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
+              100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -520,7 +521,7 @@ export async function verifyPayment(req, res) {
           const commissionAmount =
             Math.round(
               ((creator.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
+              100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -629,7 +630,7 @@ export async function verifyPayment(req, res) {
           const commissionAmount =
             Math.round(
               ((telegram.createdBy.creatorComission * amountToBeAdded) / 100) *
-                100
+              100
             ) / 100;
           const gstOnCommission =
             Math.round(commissionAmount * GST_RATE * 100) / 100;
@@ -672,7 +673,7 @@ export async function verifyPayment(req, res) {
             // Extend existing subscription
             expireDate = new Date(
               existingSubscription.expireDate.getTime() +
-                newValidDays * 24 * 60 * 60 * 1000
+              newValidDays * 24 * 60 * 60 * 1000
             );
           } else {
             // Create new subscription from now
@@ -818,9 +819,22 @@ export async function verifyPayment(req, res) {
 
       try {
         // Generate invite link via bot server
-        const response = await axios.get(
-          `${process.env.BOT_SERVER_URL}/channel/generate-invite?channelId=${channelId}&boughtById=${user.id}`
-        );
+        // const response = await axios.get(
+        //   `${process.env.BOT_SERVER_URL}/channel/generate-invite?channelId=${channelId}&boughtById=${user.id}`
+        // );
+
+        const telegram = await prisma.telegram.findUnique({
+          id: telegramId
+        })
+
+        if (!telegram) {
+          throw new Error("Telegram Not Present")
+        }
+        const response = await getInviteLink(telegram.chatId, user.id)
+        console.log("TELEGRAM RESPOSNE GET LINK", response);
+
+        console.log(response);
+
 
         // Update telegram with invite link
         await prisma.telegram.update({
@@ -841,13 +855,14 @@ export async function verifyPayment(req, res) {
           },
         });
       } catch (error) {
-        console.error("Error generating invite link:", error);
+        console.log(error);
+
         return res.status(200).json({
           success: true,
           message:
             "Telegram subscription purchased successfully, but invite link generation failed.",
           payload: {
-            redirectUrl: process.env.FRONTEND_URL + "telegram/success",
+            redirectUrl: process.env.FRONTEND_URL + "/telegram/success",
             telegramInvitelink: null,
           },
         });
@@ -857,7 +872,7 @@ export async function verifyPayment(req, res) {
     return res.status(200).json({
       success: true,
       message: "Purchase completed successfully.",
-      redirectUrl: process.env.FRONTEND_URL + "/telegram/success",
+      redirectUrl: `${process.env.FRONTEND_URL}/telegram/success`,
     });
   } catch (error) {
     console.error("Error in verifying payment.", error);

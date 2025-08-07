@@ -586,3 +586,14 @@ export const verifyTelegramPayment = async (data) => {
   const response = await servicesAxiosInstance.post('/telegram/verify-telegram-payment', data);
   return response;
 };
+
+// Telegram Analytics APIs
+export const getTelegramAnalytics = async (telegramId, period = 'month') => {
+  const response = await servicesAxiosInstance.get(`/telegram/analytics/${telegramId}?period=${period}`);
+  return response;
+};
+
+export const getTelegramDashboardAnalytics = async (period = 'month') => {
+  const response = await servicesAxiosInstance.get(`/telegram/dashboard-analytics?period=${period}`);
+  return response;
+};

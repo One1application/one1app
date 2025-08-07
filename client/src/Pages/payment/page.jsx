@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { verifyPayment } from "../../services/auth/api.services";
 
 export default function PaymentPage() {
-  console.log("afafa");
+
   const [status, setStatus] = useState("verifying"); // verifying, success, error
   const [errorMessage, setErrorMessage] = useState("");
   const [searchParams] = useSearchParams();
@@ -50,9 +50,8 @@ export default function PaymentPage() {
 
           if (courseId || webinarId || payingUpId) {
             setTimeout(() => {
-              window.location.href = `${
-                import.meta.env.VITE_FRONTEND_URL || "https://one1app.com"
-              }/user/dashboard`;
+              window.location.href = `${import.meta.env.VITE_FRONTEND_URL || "https://one1app.com"
+                }/user/dashboard`;
             }, 3000);
           }
         } else {

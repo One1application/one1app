@@ -18,6 +18,8 @@ import {
   signInTelegram,
   verifyTelegramPaymentCallback,
   getTelegramById,
+  getTelegramAnalytics,
+  getTelegramDashboardAnalytics,
 } from '../controllers/telegramController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
@@ -46,3 +48,7 @@ telegramRouter.get('/get-owned-groups', authMiddleware, getOwnedGroups);
 // Telegram session login endpoints
 telegramRouter.post('/send-login-code', sendLoginCode);
 telegramRouter.post('/sign-in', signInTelegram);
+
+// Analytics routes
+telegramRouter.get('/analytics/:telegramId', authMiddleware, getTelegramAnalytics);
+telegramRouter.get('/dashboard-analytics', authMiddleware, getTelegramDashboardAnalytics);

@@ -262,7 +262,7 @@ app.use("/channel", channelRouter);
 app.use("/notify", notifyRouter);
 app.use("/contact", contactRouter);
 app.use("/otp", otpRouter);
-app.use("/notify", notifyRouter); // Mount root POST /notify
+app.use("/notify", notifyRouter);
 
 app.post("/verify-channel", async (req, res) => {
   try {
@@ -333,7 +333,7 @@ app.post("/check-admin-status", async (req, res) => {
     }
 
     const botInfo = await axios.get(`${TELEGRAM_API}/getMe`);
-    
+
 
     const botId = botInfo.data.result.id;
 
@@ -442,7 +442,7 @@ requiredEnv.forEach((name) => {
 import TelegramBotLib from "node-telegram-bot-api";
 // Start polling if in non-production
 if (process.env.NODE_ENV !== 'production') {
-  const pollingBot = new TelegramBotLib(token, { polling: { allowed_updates: ['message','chat_member','my_chat_member'] } });
+  const pollingBot = new TelegramBotLib(token, { polling: { allowed_updates: ['message', 'chat_member', 'my_chat_member'] } });
 
   pollingBot.onText(/\/ping$/, (msg) => {
     pollingBot.sendMessage(msg.chat.id, "pong");

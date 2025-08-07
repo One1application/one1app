@@ -354,9 +354,9 @@ export default function PaymentInterface() {
                 params.append("razorpay_order_id", response.razorpay_order_id);
               }
               setShowPaymentModal(false);
-              window.location.href = `${
-                res.data.payload.redirectUrl
-              }?${params.toString()}`;
+
+              window.location.href = `${res.data.payload.redirectUrl
+                }?${params.toString()}`;
             },
             prefill: {
               name: res.data.payload.customerName || "",

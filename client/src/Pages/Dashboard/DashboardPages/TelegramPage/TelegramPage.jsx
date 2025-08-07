@@ -4,10 +4,12 @@ import Table from "../../../../components/Table/TableComponent";
 import pagesConfig from "../pagesConfig";
 import { useState, useEffect } from "react";
 import PaymentGraph from "../../../../components/PaymentGraph/PaymentGraph";
-import { Copy, Trash2, X } from "lucide-react";
+import TelegramAnalyticsChart from "../../../../components/TelegramAnalyticsChart/TelegramAnalyticsChart";
+import { Copy, Trash2, X, Users, TrendingUp, IndianRupee, Activity, BarChart3 } from "lucide-react";
 import {
   fetchAllTelegramData,
   deleteTelegram,
+  getTelegramDashboardAnalytics,
 } from "../../../../services/auth/api.services";
 import { useNavigate } from "react-router-dom";
 import { use } from "react";
@@ -21,6 +23,9 @@ const TelegramPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [telegramToDelete, setTelegramToDelete] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [period, setPeriod] = useState('month');
   const navigate = useNavigate();
 
   const { title, button, bgGradient, noContent, tabs, cardData } =
@@ -55,6 +60,25 @@ const TelegramPage = () => {
     }
   };
 
+  const getAnalyticsData = async (selectedPeriod = period) => {
+    setAnalyticsLoading(true);
+    try {
+      const response = await getTelegramDashboardAnalytics(selectedPeriod);
+      console.log('Analytics data:', response.data);
+      setAnalyticsData(response.data.payload);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      toast.error("Failed to load analytics data");
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const handlePeriodChange = (newPeriod) => {
+    setPeriod(newPeriod);
+    getAnalyticsData(newPeriod);
+  };
+
   const handleDeleteClick = (telegram) => {
     setTelegramToDelete(telegram);
     setDeleteModalOpen(true);
@@ -85,6 +109,7 @@ const TelegramPage = () => {
 
   useEffect(() => {
     getTelegramData();
+    getAnalyticsData();
   }, []);
 
   return (
@@ -123,7 +148,162 @@ const TelegramPage = () => {
 
       {/* Stats Cards */}
       <div className="px-6 -mt-8 relative z-10 mb-8">
-        <PaymentGraph cardData={cardData} />
+        <div className="max-w-7xl mx-auto">
+          {/* Analytics Period Selector */}
+          <div className="mb-4 flex justify-end">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+              {['day', 'week', 'month', 'year'].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => handlePeriodChange(p)}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${period === p
+                    ? 'bg-orange-500 text-white'
+                    : 'text-gray-600 hover:text-orange-500'
+                    }`}
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Analytics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Total Telegrams Card */}
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium">Total Channels</p>
+                  <p className="text-2xl font-bold">
+                    {analyticsLoading ? "..." : analyticsData?.overviewStats?.total_telegrams || 0}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center">
+                  <Activity className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Total Subscribers Card */}
+            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm font-medium">Total Subscribers</p>
+                  <p className="text-2xl font-bold">
+                    {analyticsLoading ? "..." : analyticsData?.overviewStats?.total_subscribers || 0}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-green-400 rounded-full flex items-center justify-center">
+                  <Users className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Active Subscribers Card */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm font-medium">Active Subscribers</p>
+                  <p className="text-2xl font-bold">
+                    {analyticsLoading ? "..." : analyticsData?.overviewStats?.active_subscribers || 0}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-purple-400 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Total Revenue Card */}
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm font-medium">Total Revenue</p>
+                  <p className="text-2xl font-bold">
+                    ₹{analyticsLoading ? "..." : (analyticsData?.overviewStats?.total_revenue || 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center">
+                  <IndianRupee className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm font-medium">Total Earning After Commission</p>
+                  <p className="text-2xl font-bold">
+                    ₹{analyticsLoading ? "..." : (analyticsData?.overviewStats?.totalEarnings || 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center">
+                  <IndianRupee className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Transaction Trends Chart */}
+          <TelegramAnalyticsChart
+            chartData={analyticsData?.chartData || []}
+            period={period}
+            isLoading={analyticsLoading}
+          />
+
+          {/* Performance Chart */}
+          {analyticsData?.telegramPerformance && analyticsData.telegramPerformance.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-8 mt-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Channel Performance</h3>
+              <div className="space-y-4">
+                {analyticsData.telegramPerformance.map((telegram, index) => (
+                  <div key={telegram.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span className="text-orange-600 font-semibold text-lg">
+                          {telegram.title?.charAt(0).toUpperCase() || '#'}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{telegram.title}</h4>
+                        <p className="text-sm text-gray-500">{telegram.subscribers} subscribers</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900">₹{telegram.revenue?.toLocaleString() || 0}</p>
+                      <p className="text-sm text-gray-500">{telegram.active_subscribers} active</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Activity */}
+          {analyticsData?.recentActivity && analyticsData.recentActivity.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+              <div className="space-y-3">
+                {analyticsData.recentActivity.slice(0, 5).map((activity, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">
+                        <span className="font-medium">{activity.subscriber_name}</span> subscribed to{' '}
+                        <span className="font-medium">{activity.telegram_title}</span>
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {activity.subscription_type} - ₹{activity.price}
+                      </p>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {new Date(activity.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Content */}
@@ -169,8 +349,21 @@ const TelegramPage = () => {
                                   {telegram.genre}
                                 </span>
                                 <span className="text-xs text-gray-500">
-                                  {telegram._count?.telegramSubscriptions || 0} subscribers
+                                  {telegram.analytics?.totalSubscribers || telegram._count?.telegramSubscriptions || 0} subscribers
                                 </span>
+                                {telegram.analytics && (
+                                  <>
+                                    <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                      {telegram.analytics.activeSubscribers} active
+                                    </span>
+                                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                      ₹{telegram.analytics.totalRevenue?.toLocaleString() || 0} revenue
+                                    </span>
+                                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                      ₹{telegram.analytics.totalEarnings?.toLocaleString() || 0} Earning
+                                    </span>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -184,8 +377,17 @@ const TelegramPage = () => {
                                 toast.success("Link copied to clipboard");
                               }}
                               className="text-blue-600 hover:text-blue-700 text-sm"
+                              title="Copy share link"
                             >
                               <Copy className="h-4 w-4 ml-1" />
+                            </button>
+                            <button
+                              onClick={() => navigate(`/app/telegram-analytics/${telegram.id}`)}
+                              className="px-3 py-1 text-sm bg-orange-50 text-orange-600 rounded-md hover:bg-orange-100 transition-colors flex items-center space-x-1"
+                              title="View Analytics"
+                            >
+                              <BarChart3 size={14} />
+                              <span>Analytics</span>
                             </button>
                             <button
                               onClick={() => navigate(`/app/edit-telegram?telegramId=${telegram.id}`, { state: { data: telegram } })}

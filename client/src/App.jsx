@@ -32,6 +32,7 @@ import EditTelegram from "./Pages/Dashboard/DashboardPages/TelegramPage/Telegram
 import TelegramForm from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramForm.jsx";
 import TelegramFormPrev from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramFormPrev.jsx";
 import TelegramPage from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramPage.jsx";
+import TelegramAnalyticsPage from "./Pages/Dashboard/DashboardPages/TelegramPage/TelegramAnalyticsPage.jsx";
 import AllTransactionsPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/AllTransactionsPage.jsx";
 import KYCpage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/KYCpage.jsx";
 import WithdrawalPage from "./Pages/Dashboard/DashboardPages/WalletPage/SubWalletPages/WithdrawalPage.jsx";
@@ -133,6 +134,7 @@ const App = () => {
             <Route path="create-telegram" element={<TelegramForm />} />
             <Route path="add-telegram" element={<AddTelegramForm />} />
             <Route path="edit-telegram" element={<EditTelegram />} />
+            <Route path="telegram-analytics/:telegramId" element={<TelegramAnalyticsPage />} />
 
             <Route
               path="create-premium-content"

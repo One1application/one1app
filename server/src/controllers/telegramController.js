@@ -619,8 +619,8 @@ export async function editSubscription(req, res) {
       cost !== undefined
         ? parseFloat(cost)
         : price !== undefined
-        ? parseFloat(price)
-        : undefined;
+          ? parseFloat(price)
+          : undefined;
     if (subscriptionPrice !== undefined && subscriptionPrice <= 0) {
       return res.status(400).json({
         success: false,
@@ -679,10 +679,10 @@ export async function editSubscription(req, res) {
         validDays: isLifetime
           ? null
           : days !== undefined
-          ? days
-          : validDays !== undefined
-          ? validDays
-          : undefined,
+            ? days
+            : validDays !== undefined
+              ? validDays
+              : undefined,
         isLifetime: isLifetime !== undefined ? isLifetime : undefined,
       },
     });
@@ -801,6 +801,23 @@ export async function getCreatorTelegram(req, res) {
             isLifetime: true,
           },
         },
+        telegramSubscriptions: {
+          include: {
+            subscription: {
+              select: {
+                type: true,
+                price: true,
+              },
+            },
+            boughtBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             telegramSubscriptions: true,
@@ -812,11 +829,67 @@ export async function getCreatorTelegram(req, res) {
       },
     });
 
+    // Calculate analytics for each telegram
+    const telegramsWithAnalytics = await Promise.all(
+      telegrams.map(async (telegram) => {
+        // Get total revenue from transactions
+        const transactions = await prisma.transaction.findMany({
+          where: {
+            productId: telegram.id,
+            productType: "TELEGRAM",
+            status: "COMPLETED",
+            creatorId: user.id,
+          },
+          select: {
+            amount: true,
+            amountAfterFee: true,
+            createdAt: true,
+          },
+        });
+
+        const totalRevenue = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+        const totalEarnings = transactions.reduce((sum, transaction) => sum + (transaction.amountAfterFee || 0), 0);
+
+        // Calculate subscription stats
+        const activeSubscriptions = telegram.telegramSubscriptions.filter(sub => !sub.isExpired).length;
+        const expiredSubscriptions = telegram.telegramSubscriptions.filter(sub => sub.isExpired).length;
+        const lifetimeSubscriptions = telegram.telegramSubscriptions.filter(sub => sub.isLifetime).length;
+
+        // Get subscription type breakdown
+        const subscriptionBreakdown = {};
+        telegram.telegramSubscriptions.forEach(sub => {
+          const type = sub.subscription.type;
+          if (!subscriptionBreakdown[type]) {
+            subscriptionBreakdown[type] = {
+              count: 0,
+              revenue: 0,
+            };
+          }
+          subscriptionBreakdown[type].count++;
+          subscriptionBreakdown[type].revenue += sub.subscription.price;
+        });
+
+        return {
+          ...telegram,
+          analytics: {
+            totalSubscribers: telegram.telegramSubscriptions.length,
+            activeSubscribers: activeSubscriptions,
+            expiredSubscribers: expiredSubscriptions,
+            lifetimeSubscribers: lifetimeSubscriptions,
+            totalRevenue,
+            totalEarnings,
+            subscriptionBreakdown,
+            recentTransactions: transactions.slice(0, 5),
+          },
+        };
+      })
+    );
+
     return res.status(200).json({
       success: true,
       message: "Telegrams fetched successfully.",
       payload: {
-        telegrams,
+        telegrams: telegramsWithAnalytics,
       },
     });
   } catch (error) {
@@ -1340,7 +1413,7 @@ export async function purchaseTelegramSubscription(req, res) {
         message: "Payment initiated successfully.",
         payload: {
           razorpayOrderId: razorpayOrder.id,
-          redirectUrl: `${process.env.FRONTEND_URL}payment/verify`,
+          redirectUrl: `${process.env.FRONTEND_URL}/payment/verify`,
           amount: totalAmount * 100, // Amount in paise for frontend
           currency: "INR",
           paymentProvider: "Razorpay",
@@ -1532,6 +1605,7 @@ export async function verifyTelegramPaymentCallback(req, res) {
       //   throw new Error('Failed to generate invite link.');
       // }
     });
+    console.log("PAYMENT DOEN");
 
     return res.status(200).json({
       success: true,
@@ -1552,6 +1626,530 @@ export async function verifyTelegramPaymentCallback(req, res) {
   }
 }
 
+// Get detailed analytics for charts
+export async function getTelegramAnalytics(req, res) {
+  try {
+    const { telegramId } = req.params;
+    const { user } = req;
+    const { period = 'month' } = req.query;
+
+    // Validate period to prevent SQL injection
+    const validPeriods = ['day', 'week', 'month', 'year'];
+    if (!validPeriods.includes(period)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid period. Must be one of: day, week, month, year.',
+      });
+    }
+
+    // Validate telegramId format (UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(telegramId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid telegramId format. Must be a valid UUID.',
+      });
+    }
+
+    // Verify ownership
+    const telegram = await prisma.telegram.findUnique({
+      where: { id: telegramId, createdById: user.id },
+    });
+
+    if (!telegram) {
+      return res.status(404).json({
+        success: false,
+        message: 'Telegram not found or access denied.',
+      });
+    }
+
+    // Calculate date range based on period
+    const now = new Date();
+    const startDate = new Date(now);
+
+    switch (period) {
+      case 'day':
+        startDate.setDate(now.getDate() - 30); // Last 30 days
+        break;
+      case 'week':
+        startDate.setDate(now.getDate() - 84); // 12 weeks
+        break;
+      case 'month':
+        startDate.setMonth(now.getMonth() - 12); // 12 months
+        break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear() - 5); // 5 years
+        break;
+      default:
+        startDate.setMonth(now.getMonth() - 12); // Default to 12 months
+    }
+
+    // Fixed subscription trends query - construct the SQL string properly
+    let subscriptionTrends;
+
+    if (period === 'day') {
+      subscriptionTrends = await prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC('day', ts."createdAt") as period,
+          COUNT(*)::integer as subscriptions,
+          COALESCE(SUM(s.price), 0)::float as revenue,
+          COUNT(CASE WHEN ts."isLifetime" = true THEN 1 END)::integer as lifetime_subs,
+          COUNT(CASE WHEN ts."isExpired" = false THEN 1 END)::integer as active_subs
+        FROM "TelegramSubscription" ts
+        JOIN "Subscription" s ON ts."subscriptionId" = s.id
+        WHERE ts."telegramId" = ${telegramId}
+          AND ts."createdAt" >= ${startDate}
+        GROUP BY DATE_TRUNC('day', ts."createdAt")
+        ORDER BY period ASC
+      `;
+    } else if (period === 'week') {
+      subscriptionTrends = await prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC('week', ts."createdAt") as period,
+          COUNT(*)::integer as subscriptions,
+          COALESCE(SUM(s.price), 0)::float as revenue,
+          COUNT(CASE WHEN ts."isLifetime" = true THEN 1 END)::integer as lifetime_subs,
+          COUNT(CASE WHEN ts."isExpired" = false THEN 1 END)::integer as active_subs
+        FROM "TelegramSubscription" ts
+        JOIN "Subscription" s ON ts."subscriptionId" = s.id
+        WHERE ts."telegramId" = ${telegramId}
+          AND ts."createdAt" >= ${startDate}
+        GROUP BY DATE_TRUNC('week', ts."createdAt")
+        ORDER BY period ASC
+      `;
+    } else if (period === 'month') {
+      subscriptionTrends = await prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC('month', ts."createdAt") as period,
+          COUNT(*)::integer as subscriptions,
+          COALESCE(SUM(s.price), 0)::float as revenue,
+          COUNT(CASE WHEN ts."isLifetime" = true THEN 1 END)::integer as lifetime_subs,
+          COUNT(CASE WHEN ts."isExpired" = false THEN 1 END)::integer as active_subs
+        FROM "TelegramSubscription" ts
+        JOIN "Subscription" s ON ts."subscriptionId" = s.id
+        WHERE ts."telegramId" = ${telegramId}
+          AND ts."createdAt" >= ${startDate}
+        GROUP BY DATE_TRUNC('month', ts."createdAt")
+        ORDER BY period ASC
+      `;
+    } else {
+      // year
+      subscriptionTrends = await prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC('year', ts."createdAt") as period,
+          COUNT(*)::integer as subscriptions,
+          COALESCE(SUM(s.price), 0)::float as revenue,
+          COUNT(CASE WHEN ts."isLifetime" = true THEN 1 END)::integer as lifetime_subs,
+          COUNT(CASE WHEN ts."isExpired" = false THEN 1 END)::integer as active_subs
+        FROM "TelegramSubscription" ts
+        JOIN "Subscription" s ON ts."subscriptionId" = s.id
+        WHERE ts."telegramId" = ${telegramId}
+          AND ts."createdAt" >= ${startDate}
+        GROUP BY DATE_TRUNC('year', ts."createdAt")
+        ORDER BY period ASC
+      `;
+    }
+
+    // Get revenue by payment method
+    const revenueByPayment = await prisma.transaction.groupBy({
+      by: ['modeOfPayment'],
+      where: {
+        productId: telegramId,
+        productType: 'TELEGRAM',
+        status: 'COMPLETED',
+        creatorId: user.id,
+        createdAt: {
+          gte: startDate,
+        },
+      },
+      _sum: {
+        amount: true,
+        amountAfterFee: true,
+      },
+      _count: {
+        _all: true,
+      },
+    });
+
+    // Get subscription type breakdown
+    const subscriptionTypeBreakdown = await prisma.telegramSubscription.groupBy({
+      by: ['subscriptionId'],
+      where: {
+        telegramId,
+        createdAt: {
+          gte: startDate,
+        },
+      },
+      _count: {
+        _all: true,
+      },
+    });
+
+    // Get subscription details with proper error handling
+    const subscriptionBreakdownWithDetails = await Promise.all(
+      subscriptionTypeBreakdown.map(async (item) => {
+        try {
+          const subscription = await prisma.subscription.findUnique({
+            where: { id: item.subscriptionId },
+            select: { type: true, price: true },
+          });
+
+          const details = await prisma.telegramSubscription.findMany({
+            where: {
+              telegramId,
+              subscriptionId: item.subscriptionId,
+              createdAt: { gte: startDate },
+            },
+            select: { isExpired: true },
+          });
+
+          return {
+            type: subscription?.type || 'Unknown',
+            total_subscriptions: item._count._all,
+            active_subscriptions: details.filter((d) => !d.isExpired).length,
+            total_revenue: (subscription?.price || 0) * item._count._all,
+            avg_price: subscription?.price || 0,
+          };
+        } catch (error) {
+          console.error('Error processing subscription breakdown:', error);
+          return {
+            type: 'Unknown',
+            total_subscriptions: item._count._all,
+            active_subscriptions: 0,
+            total_revenue: 0,
+            avg_price: 0,
+          };
+        }
+      })
+    );
+
+    const finalSubscriptionTypeBreakdown = subscriptionBreakdownWithDetails.sort(
+      (a, b) => b.total_subscriptions - a.total_subscriptions
+    );
+
+    // Get top subscribers by spending
+    const topSubscribersData = await prisma.telegramSubscription.findMany({
+      where: {
+        telegramId,
+        createdAt: {
+          gte: startDate,
+        },
+      },
+      include: {
+        boughtBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        subscription: {
+          select: {
+            price: true,
+          },
+        },
+      },
+    });
+
+    // Group by user and calculate totals
+    const userSpendingMap = {};
+    topSubscribersData.forEach((sub) => {
+      const userId = sub.boughtBy.id;
+      if (!userSpendingMap[userId]) {
+        userSpendingMap[userId] = {
+          name: sub.boughtBy.name,
+          email: sub.boughtBy.email,
+          subscription_count: 0,
+          total_spent: 0,
+          last_purchase: sub.createdAt,
+        };
+      }
+      userSpendingMap[userId].subscription_count++;
+      userSpendingMap[userId].total_spent += sub.subscription.price;
+      if (new Date(sub.createdAt) > new Date(userSpendingMap[userId].last_purchase)) {
+        userSpendingMap[userId].last_purchase = sub.createdAt;
+      }
+    });
+
+    const topSubscribers = Object.values(userSpendingMap)
+      .sort((a, b) => b.total_spent - a.total_spent)
+      .slice(0, 10);
+
+    // Fixed overall stats query - removed the problematic JOIN and made it simpler
+    const overallStats = await prisma.$queryRaw`
+      SELECT 
+        COUNT(DISTINCT ts."boughtById")::integer as unique_subscribers,
+        COUNT(ts.id)::integer as total_subscriptions,
+        COUNT(CASE WHEN ts."isExpired" = false THEN 1 END)::integer as active_subscriptions,
+        COUNT(CASE WHEN ts."isLifetime" = true THEN 1 END)::integer as lifetime_subscriptions,
+        COALESCE(AVG(s.price), 0)::float as avg_subscription_price
+      FROM "TelegramSubscription" ts
+      LEFT JOIN "Subscription" s ON ts."subscriptionId" = s.id
+      WHERE ts."telegramId" = ${telegramId}
+        AND ts."createdAt" >= ${startDate}
+    `;
+
+    // Get revenue data separately to avoid complex joins
+    const revenueStats = await prisma.transaction.aggregate({
+      where: {
+        productId: telegramId,
+        productType: 'TELEGRAM',
+        status: 'COMPLETED',
+        creatorId: user.id,
+        createdAt: {
+          gte: startDate,
+        },
+      },
+      _sum: {
+        amount: true,
+        amountAfterFee: true,
+      },
+    });
+
+    // Combine overall stats with revenue stats
+    const combinedOverallStats = {
+      ...overallStats[0],
+      total_revenue: revenueStats._sum.amount || 0,
+      total_earnings: revenueStats._sum.amountAfterFee || 0,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: 'Telegram analytics fetched successfully.',
+      payload: {
+        telegramId,
+        period,
+        dateRange: {
+          startDate,
+          endDate: now,
+        },
+        overallStats: combinedOverallStats || {},
+        subscriptionTrends: subscriptionTrends || [],
+        revenueByPayment: revenueByPayment || [],
+        subscriptionTypeBreakdown: finalSubscriptionTypeBreakdown || [],
+        topSubscribers: topSubscribers || [],
+      },
+    });
+  } catch (error) {
+    console.error('Error in fetching telegram analytics:', error.message, error.stack);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+}
+// Get dashboard overview analytics for all telegrams
+export async function getTelegramDashboardAnalytics(req, res) {
+  try {
+    const user = req.user;
+    const { period = 'month' } = req.query;
+
+    // Calculate date range
+    const now = new Date();
+    let startDate = new Date();
+    console.log(period);
+
+    switch (period) {
+      case 'day':
+        startDate.setDate(now.getDate() - 1);
+        break;
+      case 'week':
+        startDate.setDate(now.getDate() - 84);
+        break;
+      case 'month':
+        startDate.setMonth(now.getMonth() - 12);
+        break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear() - 5);
+        break;
+      default:
+        startDate.setMonth(now.getMonth() - 12);
+    }
+
+    // Get overview stats for all user's telegrams
+    const overviewStats = await prisma.$queryRaw`
+      SELECT 
+        COUNT(DISTINCT t.id)::int as total_telegrams,
+        COUNT(DISTINCT ts."boughtById")::int as total_subscribers,
+        COUNT(CASE WHEN ts."isExpired" = false THEN 1 END)::int as active_subscribers,
+        COALESCE(SUM(tr.amount), 0)::float as total_revenue,
+        COALESCE(SUM(tr."amountAfterFee"), 0)::float as "totalEarnings"
+      FROM "Telegram" t
+      LEFT JOIN "TelegramSubscription" ts ON t.id = ts."telegramId"
+      LEFT JOIN "Transaction" tr ON tr."productId" = t.id 
+        AND tr."productType" = 'TELEGRAM'
+        AND tr.status = 'COMPLETED'
+      WHERE t."createdById" = ${user.id}
+        AND (ts."createdAt" >= ${startDate} OR ts."createdAt" IS NULL)
+    `;
+
+    // Get daily transaction trends for chart
+    const dailyTransactionTrends = await prisma.$queryRaw`
+      SELECT 
+        DATE_TRUNC('day', tr."createdAt") as transaction_date,
+        COUNT(tr.id)::int as transaction_count,
+        COALESCE(SUM(tr.amount), 0)::float as daily_revenue,
+        COALESCE(SUM(tr."amountAfterFee"), 0)::float as daily_earnings,
+        COUNT(DISTINCT tr."buyerId")::int as unique_buyers
+      FROM "Transaction" tr
+      JOIN "Telegram" t ON tr."productId" = t.id
+      WHERE t."createdById" = ${user.id}
+        AND tr."productType" = 'TELEGRAM'
+        AND tr.status = 'COMPLETED'
+        AND tr."createdAt" >= ${startDate}
+      GROUP BY DATE_TRUNC('day', tr."createdAt")
+      ORDER BY transaction_date ASC
+    `;
+
+    // Get weekly transaction trends (for better visualization when period is week/month)
+    const weeklyTransactionTrends = await prisma.$queryRaw`
+      SELECT 
+        DATE_TRUNC('week', tr."createdAt") as transaction_week,
+        COUNT(tr.id)::int as transaction_count,
+        COALESCE(SUM(tr.amount), 0)::float as weekly_revenue,
+        COALESCE(SUM(tr."amountAfterFee"), 0)::float as weekly_earnings,
+        COUNT(DISTINCT tr."buyerId")::int as unique_buyers
+      FROM "Transaction" tr
+      JOIN "Telegram" t ON tr."productId" = t.id
+      WHERE t."createdById" = ${user.id}
+        AND tr."productType" = 'TELEGRAM'
+        AND tr.status = 'COMPLETED'
+        AND tr."createdAt" >= ${startDate}
+      GROUP BY DATE_TRUNC('week', tr."createdAt")
+      ORDER BY transaction_week ASC
+    `;
+
+    // Get monthly transaction trends
+    const monthlyTransactionTrends = await prisma.$queryRaw`
+      SELECT 
+        DATE_TRUNC('month', tr."createdAt") as transaction_month,
+        COUNT(tr.id)::int as transaction_count,
+        COALESCE(SUM(tr.amount), 0)::float as monthly_revenue,
+        COALESCE(SUM(tr."amountAfterFee"), 0)::float as monthly_earnings,
+        COUNT(DISTINCT tr."buyerId")::int as unique_buyers
+      FROM "Transaction" tr
+      JOIN "Telegram" t ON tr."productId" = t.id
+      WHERE t."createdById" = ${user.id}
+        AND tr."productType" = 'TELEGRAM'
+        AND tr.status = 'COMPLETED'
+        AND tr."createdAt" >= ${startDate}
+      GROUP BY DATE_TRUNC('month', tr."createdAt")
+      ORDER BY transaction_month ASC
+    `;
+
+    // Get performance by telegram
+    const telegramPerformance = await prisma.$queryRaw`
+      SELECT 
+        t.id,
+        t.title,
+        t."coverImage",
+        COUNT(DISTINCT ts."boughtById")::int as subscribers,
+        COUNT(CASE WHEN ts."isExpired" = false THEN 1 END)::int as active_subscribers,
+        COALESCE(SUM(tr.amount), 0)::float as revenue,
+        COALESCE(AVG(s.price), 0)::float as avg_price
+      FROM "Telegram" t
+      LEFT JOIN "TelegramSubscription" ts ON t.id = ts."telegramId"
+      LEFT JOIN "Subscription" s ON ts."subscriptionId" = s.id
+      LEFT JOIN "Transaction" tr ON tr."productId" = t.id 
+        AND tr."productType" = 'TELEGRAM'
+        AND tr.status = 'COMPLETED'
+      WHERE t."createdById" = ${user.id}
+        AND (ts."createdAt" >= ${startDate} OR ts."createdAt" IS NULL)
+      GROUP BY t.id, t.title, t."coverImage"
+      ORDER BY revenue DESC
+    `;
+
+    // Get recent activity
+    const recentActivity = await prisma.$queryRaw`
+      SELECT 
+        ts.id,
+        t.title as telegram_title,
+        u.name as subscriber_name,
+        s.type as subscription_type,
+        s.price,
+        ts."createdAt"
+      FROM "TelegramSubscription" ts
+      JOIN "Telegram" t ON ts."telegramId" = t.id
+      JOIN "User" u ON ts."boughtById" = u.id
+      JOIN "Subscription" s ON ts."subscriptionId" = s.id
+      WHERE t."createdById" = ${user.id}
+      ORDER BY ts."createdAt" DESC
+      LIMIT 10
+    `;
+
+    // Choose appropriate chart data based on period
+    let chartData = [];
+    switch (period) {
+      case 'week':
+        chartData = dailyTransactionTrends.map(item => ({
+          date: new Date(item.transaction_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          fullDate: item.transaction_date,
+          transactions: item.transaction_count,
+          revenue: item.daily_revenue,
+          earnings: item.daily_earnings,
+          buyers: item.unique_buyers
+        }));
+        break;
+      case 'month':
+        chartData = weeklyTransactionTrends.map(item => ({
+          date: `Week of ${new Date(item.transaction_week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+          fullDate: item.transaction_week,
+          transactions: item.transaction_count,
+          revenue: item.weekly_revenue,
+          earnings: item.weekly_earnings,
+          buyers: item.unique_buyers
+        }));
+        break;
+      case 'year':
+        chartData = monthlyTransactionTrends.map(item => ({
+          date: new Date(item.transaction_month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          fullDate: item.transaction_month,
+          transactions: item.transaction_count,
+          revenue: item.monthly_revenue,
+          earnings: item.monthly_earnings,
+          buyers: item.unique_buyers
+        }));
+        break;
+      default:
+        chartData = weeklyTransactionTrends.map(item => ({
+          date: `Week of ${new Date(item.transaction_week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+          fullDate: item.transaction_week,
+          transactions: item.transaction_count,
+          revenue: item.weekly_revenue,
+          earnings: item.weekly_earnings,
+          buyers: item.unique_buyers
+        }));
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Dashboard analytics fetched successfully.",
+      payload: {
+        period,
+        dateRange: {
+          startDate,
+          endDate: now,
+        },
+        overviewStats: overviewStats[0] || {},
+        telegramPerformance: telegramPerformance || [],
+        recentActivity: recentActivity || [],
+        chartData: chartData || [],
+        transactionTrends: {
+          daily: dailyTransactionTrends || [],
+          weekly: weeklyTransactionTrends || [],
+          monthly: monthlyTransactionTrends || []
+        }
+      },
+    });
+  } catch (error) {
+    console.error("Error in fetching dashboard analytics:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+}
 
 // ******************* Telegram Bot Related API************************
 //subscription record and invitekink  created at walletController
