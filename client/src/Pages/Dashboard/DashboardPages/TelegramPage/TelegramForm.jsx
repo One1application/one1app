@@ -60,7 +60,16 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
               value={discountCode}
               onChange={(e) => setDiscountCode(e.target.value)}
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
+              placeholder="Enter discount code (3-20 characters)"
+              minLength={3}
+              maxLength={20}
+              pattern="[a-zA-Z0-9_-]+"
+              title="Only letters, numbers, hyphens, and underscores allowed"
+              required
             />
+            <div className="text-xs text-gray-400 mt-1">
+              {discountCode.length}/20 characters
+            </div>
           </div>
 
           <div>
@@ -71,10 +80,11 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
               type="number"
               value={discountPercent}
               onChange={(e) => setDiscountPercent(e.target.value)}
-              min="0"
-              max="100"
+              min="1"
+              max="99"
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
               placeholder="Enter percentage (1-99)"
+              required
             />
           </div>
 
@@ -87,6 +97,8 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
               className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-800 text-white"
+              min={new Date().toISOString().split('T')[0]}
+              required
             />
           </div>
 
@@ -117,12 +129,43 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
           </button>
           <button
             onClick={() => {
+              // Validate before submitting
+              if (!discountCode.trim() || discountCode.trim().length < 3) {
+                toast.error('Discount code must be at least 3 characters long');
+                return;
+              }
+              if (!/^[a-zA-Z0-9_-]+$/.test(discountCode.trim())) {
+                toast.error('Discount code can only contain letters, numbers, hyphens, and underscores');
+                return;
+              }
+              if (!discountPercent || parseFloat(discountPercent) <= 0 || parseFloat(discountPercent) > 100) {
+                toast.error('Discount percentage must be between 1 and 100');
+                return;
+              }
+              if (!expiryDate) {
+                toast.error('Expiry date is required');
+                return;
+              }
+              const expiry = new Date(expiryDate);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              if (expiry <= today) {
+                toast.error('Expiry date must be in the future');
+                return;
+              }
+
               onSubmit({
-                code: discountCode,
+                code: discountCode.trim(),
                 percent: parseFloat(discountPercent),
                 expiry: expiryDate,
                 plan: selectedPlan,
               });
+
+              // Reset form
+              setDiscountCode('');
+              setDiscountPercent('');
+              setExpiryDate('');
+              setSelectedPlan('');
               onClose();
             }}
             className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-200"
@@ -138,6 +181,7 @@ const DiscountForm = ({ isOpen, onClose, onSubmit }) => {
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../../context/AuthContext.jsx";
 import TelegramHeader from "./TelegramHeader.jsx";
+import ConnectTelegramPage from "./ConnectTelegramPage.jsx";
 
 // Main TelegramsPages Component
 const Telgrampage = () => {
@@ -179,24 +223,8 @@ const Telgrampage = () => {
   const [finalSessionString, setFinalSessionString] = useState("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // new screen states
 
-  const [step, setStep] = useState(0);
-  const [mobileNumber, setMobileNumber] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", ""]);
-  const [countdown, setCountdown] = useState(60);
 
-  const [error, setError] = useState("");
-  const otpInputRefs = useRef([]);
-
-  // Telegram login states
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [phoneCodeHash, setPhoneCodeHash] = useState("");
-  const [loginSessionString, setLoginSessionString] = useState("");
-  const [code, setCode] = useState("");
-  const [loginStage, setLoginStage] = useState("enterPhone"); // enterPhone, enterCode
-  const [sendingCode, setSendingCode] = useState(false);
-  const [verifyingCode, setVerifyingCode] = useState(false);
 
   const getInitials = (name) => {
     if (!name) return "USER";
@@ -247,61 +275,7 @@ const Telgrampage = () => {
     setSubscriptions(newSubscriptions);
   };
 
-  const float = {
-    float: {
-      y: [-5, 5, -5],
-      transition: {
-        duration: 3,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
 
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        when: "beforeChildren",
-      },
-    },
-  };
-
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 },
-    },
-  };
-
-  const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (value && index < 4) {
-      otpInputRefs.current[index + 1].focus();
-    }
-
-    // ✅ Use newOtp directly instead of outdated state
-    if (index === 4 && value && newOtp.every((digit) => digit !== "")) {
-      handleVerifyCode(newOtp); // ✅ Pass newOtp, not otp
-    }
-  };
-
-  const handleKeyDown = (index, e) => {
-    // Handle backspace to move to previous input
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpInputRefs.current[index - 1].focus();
-    }
-  };
   const toggleDropdown = (index) => {
     const newSubscriptions = [...subscriptions];
     newSubscriptions[index] = {
@@ -420,6 +394,7 @@ const Telgrampage = () => {
   const loadGroups = async () => {
     setLoadingGroups(true);
     try {
+
       const res = await fetchOwnedGroups();
       const groups = res.data.payload.groups || [];
       // The backend already sends a unique list, so no client-side deduplication is needed.
@@ -440,20 +415,203 @@ const Telgrampage = () => {
     loadGroups();
   }, []);
 
+  // Validation helper functions
+  const validateTitle = (title) => {
+    if (!title.trim()) {
+      return "Title is required";
+    }
+    if (title.trim().length < 3) {
+      return "Title must be at least 3 characters long";
+    }
+    if (title.trim().length > 75) {
+      return "Title must not exceed 75 characters";
+    }
+    return null;
+  };
+
+  const validateDescription = (description) => {
+    if (!description.trim()) {
+      return "Description is required";
+    }
+    if (description.trim().length < 10) {
+      return "Description must be at least 10 characters long";
+    }
+    if (description.trim().length > 500) {
+      return "Description must not exceed 500 characters";
+    }
+    return null;
+  };
+
+  const validateSubscriptions = (subscriptions) => {
+    if (!subscriptions || subscriptions.length === 0) {
+      return "At least one subscription plan is required";
+    }
+
+    for (let i = 0; i < subscriptions.length; i++) {
+      const sub = subscriptions[i];
+
+      if (!sub.selectedValue && !sub.inputValue) {
+        return `Subscription ${i + 1}: Type is required`;
+      }
+
+      if (!sub.cost || parseFloat(sub.cost) <= 0) {
+        return `Subscription ${i + 1}: Cost must be greater than 0`;
+      }
+
+      if (parseFloat(sub.cost) > 100000) {
+        return `Subscription ${i + 1}: Cost cannot exceed ₹100,000`;
+      }
+
+      if (!sub.isLifetime && (!sub.days || parseInt(sub.days) <= 0)) {
+        return `Subscription ${i + 1}: Valid days must be greater than 0`;
+      }
+
+      if (!sub.isLifetime && parseInt(sub.days) > 3650) {
+        return `Subscription ${i + 1}: Valid days cannot exceed 3650 (10 years)`;
+      }
+    }
+
+    // Check for duplicate subscription types
+    const types = subscriptions.map(sub => (sub.selectedValue || sub.inputValue).toLowerCase());
+    const duplicates = types.filter((type, index) => types.indexOf(type) !== index);
+    if (duplicates.length > 0) {
+      return `Duplicate subscription types found: ${[...new Set(duplicates)].join(', ')}`;
+    }
+
+    return null;
+  };
+
+  const validateDiscounts = (discounts) => {
+    for (let i = 0; i < discounts.length; i++) {
+      const discount = discounts[i];
+
+      if (!discount.code || discount.code.trim().length < 3) {
+        return `Discount ${i + 1}: Code must be at least 3 characters long`;
+      }
+
+      if (discount.code.trim().length > 20) {
+        return `Discount ${i + 1}: Code must not exceed 20 characters`;
+      }
+
+      if (!/^[a-zA-Z0-9_-]+$/.test(discount.code.trim())) {
+        return `Discount ${i + 1}: Code can only contain letters, numbers, hyphens, and underscores`;
+      }
+
+      if (!discount.percent || discount.percent <= 0 || discount.percent > 100) {
+        return `Discount ${i + 1}: Percentage must be between 1 and 100`;
+      }
+
+      if (!discount.expiry) {
+        return `Discount ${i + 1}: Expiry date is required`;
+      }
+
+      const expiryDate = new Date(discount.expiry);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (expiryDate <= today) {
+        return `Discount ${i + 1}: Expiry date must be in the future`;
+      }
+    }
+
+    // Check for duplicate discount codes
+    const codes = discounts.map(discount => discount.code.toLowerCase());
+    const duplicateCodes = codes.filter((code, index) => codes.indexOf(code) !== index);
+    if (duplicateCodes.length > 0) {
+      return `Duplicate discount codes found: ${[...new Set(duplicateCodes)].join(', ')}`;
+    }
+
+    return null;
+  };
+
+  const validateGSTDetails = (gstDetails, gstInfoRequired) => {
+    if (gstInfoRequired && (!gstDetails || gstDetails.trim().length === 0)) {
+      return "GST details are required when GST info is enabled";
+    }
+
+    if (gstDetails && gstDetails.trim().length > 200) {
+      return "GST details must not exceed 200 characters";
+    }
+
+    return null;
+  };
+
+  const validateCourseDetails = (courseDetails, courseAccess) => {
+    if (courseAccess && (!courseDetails || courseDetails.trim().length === 0)) {
+      return "Course access details are required when course access is enabled";
+    }
+
+    if (courseDetails && courseDetails.trim().length > 500) {
+      return "Course access details must not exceed 500 characters";
+    }
+
+    return null;
+  };
+
   const handleSubmit = async () => {
     console.log("discounts=-=>", discounts);
     try {
       setIsSubmitting(true);
 
-      // Validation
-      if (!telegramTitle.trim()) {
-        toast.error("Please enter a title for your Telegram channel.");
+      // Comprehensive validation
+      const titleError = validateTitle(telegramTitle);
+      if (titleError) {
+        toast.error(titleError);
         setIsSubmitting(false);
         return;
       }
 
-      if (!telegramDescription.trim()) {
-        toast.error("Please enter a description for your Telegram channel.");
+      const descriptionError = validateDescription(telegramDescription);
+      if (descriptionError) {
+        toast.error(descriptionError);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Group/Chat validation
+      if (!selectedGroup && !inviteLink) {
+        toast.error("Please select a group or provide an invite link.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Subscription validation
+      const subscriptionError = validateSubscriptions(subscriptions);
+      if (subscriptionError) {
+        toast.error(subscriptionError);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Discount validation
+      if (discounts.length > 0) {
+        const discountError = validateDiscounts(discounts);
+        if (discountError) {
+          toast.error(discountError);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // GST validation
+      const gstError = validateGSTDetails(gstDetails, gstInfoRequired);
+      if (gstError) {
+        toast.error(gstError);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Course details validation
+      const courseError = validateCourseDetails(courseDetails, courseAccess);
+      if (courseError) {
+        toast.error(courseError);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Genre validation
+      if (!genre || genre.trim().length === 0) {
+        toast.error("Please select a genre");
         setIsSubmitting(false);
         return;
       }
@@ -469,6 +627,7 @@ const Telgrampage = () => {
       }
 
       let response;
+      let uploadedImageUrl = null
       if (imageFile) {
         if (imageFile.uploaded && imageFile.url) {
           // Image already uploaded during file selection
@@ -522,57 +681,6 @@ const Telgrampage = () => {
     }
   };
 
-  const handleSendCode = async () => {
-    if (!mobileNumber) return;
-    //console.log("phoneNumber==>", mobileNumber);
-    setSendingCode(true);
-    try {
-      const res = await sendTelegramLoginCode(`+91 ${mobileNumber}`);
-      setPhoneCodeHash(res.data.payload.phoneCodeHash);
-      setLoginSessionString(res.data.payload.sessionString);
-
-      toast.success("Code sent");
-      setStep(2);
-    } catch {
-      toast.error("Failed to send code");
-    } finally {
-      setSendingCode(false);
-    }
-  };
-
-  const handleVerifyCode = async (code) => {
-    const fullOtp = code.join("");
-    console.log(fullOtp, phoneCodeHash, loginSessionString);
-    if (!fullOtp) {
-      toast.error("Please enter the verification code.");
-      return;
-    }
-    setVerifyingCode(true);
-
-    try {
-      const response = await signInTelegramClient({
-        phoneNumber: `91 ${mobileNumber}`,
-        phoneCodeHash,
-        code: fullOtp,
-        sessionString: loginSessionString,
-      });
-      toast.success("Successfully logged in to Telegram!");
-      setOwnedGroups([]); // Clear the list before fetching new groups
-      loadGroups(); // Fetch groups directly after successful login
-    } catch (error) {
-      console.error("Error verifying code:", error);
-      const errorMessage =
-        error.response?.data?.message || "Verification failed.";
-      toast.error(errorMessage);
-      if (errorMessage.includes("PHONE_CODE_EXPIRED")) {
-        setLoginStage("enterPhone");
-        setPhoneCodeHash("");
-        setLoginSessionString("");
-      }
-    } finally {
-      setVerifyingCode(false);
-    }
-  };
 
   if (loadingGroups) {
     return (
@@ -584,381 +692,7 @@ const Telgrampage = () => {
 
   // If not logged in, show ConnectTelegramPage
   if (!isTelegramAuthenticated) {
-    return (
-      <>
-        {/* new opt screen starts here */}
-        <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 sm:p-6">
-          {/* Main Card */}
-          <div className="w-2/3 h-full bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-700 relative z-10">
-            {/* Card Header */}
-            {/* <div className="bg-gradient-to-r from-orange-700 via-orange-600 to-orange-700 py-6 px-4 sm:px-8 text-center relative">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-          <div className="relative">
-            <div className="flex justify-center items-center space-x-4 sm:space-x-8 mb-4">
-              <div className="bg-gray-900 p-2 rounded-lg border border-gray-700">
-                <img 
-                  src="https://www.celsoazevedo.com/files/android/f/telegram-img.png" 
-                  alt="Telegram Logo"
-                  className="w-12 h-12 object-contain"
-                />
-              </div>
-              
-             <Lottie
-          animationData={animation}
-          loop={true}
-          autoplay={true}
-          className="w-1/4"
-        />
-              
-              <div className="bg-gray-900 p-2 rounded-lg border border-gray-700">
-                <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold text-sm px-2 py-1 rounded">
-                  OneApp
-                </div>
-              </div>
-            </div>
-            
-            <h1 className="text-xl font-bold text-white tracking-tight">
-              {step === 0 
-                ? "Connect Telegram with OneApp" 
-                : step === 1 
-                  ? "Verify Your Identity" 
-                  : "Enter Verification Code"}
-            </h1>
-          </div>
-        </div> */}
-            <TelegramHeader />
-            {/* Card Content */}
-
-            <div className="py-8 px-4 sm:px-8 max-w-md mx-auto relative overflow-hidden">
-              {/* Floating decorative icons */}
-              <motion.div
-                className="absolute top-20 left-10 text-orange-400 opacity-20"
-                variants={float}
-                animate="float"
-              >
-                <Shield className="w-8 h-8" />
-              </motion.div>
-              <motion.div
-                className="absolute bottom-20 right-10 text-orange-300 opacity-20"
-                variants={float}
-                animate="float"
-              >
-                <Key className="w-8 h-8" />
-              </motion.div>
-
-              <motion.div
-                className="relative z-10"
-                variants={container}
-                initial="hidden"
-                animate="visible"
-              >
-                {step === 0 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-16 h-16 mx-auto bg-gradient-to-r from-orange-600 to-orange-700 rounded-full flex items-center justify-center mb-4"
-                        variants={item}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <MessageSquare className="w-8 h-8 text-white" />
-                      </motion.div>
-                      <motion.p
-                        className="text-gray-400 mb-6 px-4"
-                        variants={item}
-                      >
-                        Securely connect your Telegram account to access premium
-                        features on OneApp
-                      </motion.p>
-                    </div>
-
-                    <motion.button
-                      onClick={handleConnectClick}
-                      className="w-full sm:w-3/4 py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
-                      variants={item}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Connect Accounts
-                    </motion.button>
-
-                    <motion.div
-                      className="mt-6 text-xs text-gray-500 flex flex-col sm:flex-row justify-center gap-2 sm:gap-4"
-                      variants={item}
-                    >
-                      <motion.span
-                        className="flex items-center justify-center"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <Lock className="w-3 h-3 mr-1" />
-                        End-to-end encrypted
-                      </motion.span>
-                      <motion.span
-                        className="flex items-center justify-center"
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <Zap className="w-3 h-3 mr-1" />
-                        Instant setup
-                      </motion.span>
-                    </motion.div>
-                  </motion.div>
-                )}
-
-                {step === 1 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700"
-                        variants={item}
-                        whileHover={{ rotate: 10 }}
-                      >
-                        <Phone className="w-6 h-6 text-orange-500" />
-                      </motion.div>
-                      <motion.p
-                        className="text-gray-400 mb-6 px-4"
-                        variants={item}
-                      >
-                        Enter your Telegram mobile number to receive a
-                        verification code
-                      </motion.p>
-                    </div>
-
-                    <div className="w-full sm:w-3/4 space-y-4">
-                      <motion.div className="relative" variants={item}>
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <span className="text-gray-300">+91</span>
-                        </div>
-                        <input
-                          type="tel"
-                          value={mobileNumber}
-                          onChange={(e) => setMobileNumber(e.target.value)}
-                          placeholder="Mobile number"
-                          className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
-                        />
-                      </motion.div>
-                      {error && (
-                        <motion.div
-                          className="text-red-400 text-sm flex items-center justify-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {error}
-                        </motion.div>
-                      )}
-                      <motion.button
-                        //   onClick={handleSendOtp}
-                        onClick={handleSendCode}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg shadow-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
-                        variants={item}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {sendingCode ? "Sending" : "Send OTP"}
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                )}
-
-                {step === 2 && (
-                  <motion.div
-                    className="flex flex-col items-center"
-                    variants={container}
-                  >
-                    <div className="mb-8 text-center">
-                      <motion.div
-                        className="w-14 h-14 mx-auto bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-700"
-                        variants={item}
-                        animate={{
-                          rotate: [0, 10, -10, 0],
-                          transition: { duration: 2, repeat: Infinity },
-                        }}
-                      >
-                        <Mail className="w-6 h-6 text-orange-500" />
-                      </motion.div>
-                      <motion.p className="text-gray-400" variants={item}>
-                        Enter the 6-digit code sent to
-                      </motion.p>
-                      <motion.p
-                        className="text-orange-400 font-medium mt-1"
-                        variants={item}
-                        animate={{
-                          scale: [1, 1.05, 1],
-                          transition: { duration: 2, repeat: Infinity },
-                        }}
-                      >
-                        +91 ••• ••• {mobileNumber.slice(-4)}
-                      </motion.p>
-                    </div>
-
-                    <div className="w-full sm:w-3/4 space-y-4">
-                      <motion.div
-                        className="flex justify-center space-x-3"
-                        variants={item}
-                      >
-                        {[0, 1, 2, 3, 4].map((index) => (
-                          <motion.input
-                            key={index}
-                            style={{
-                              color: "white",
-                            }}
-                            type="tel"
-                            maxLength={1}
-                            value={otp[index]}
-                            onChange={(e) =>
-                              handleOtpChange(index, e.target.value)
-                            }
-                            onKeyDown={(e) => handleKeyDown(index, e)}
-                            ref={(el) => (otpInputRefs.current[index] = el)}
-                            className="w-12 h-12 text-center text-xl bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30"
-                            whileFocus={{ scale: 1.05 }}
-                            variants={item}
-                            transition={{ delay: index * 0.1 }}
-                          />
-                        ))}
-                      </motion.div>
-
-                      {error && (
-                        <motion.div
-                          className="text-red-400 text-sm flex items-center justify-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {error}
-                        </motion.div>
-                      )}
-
-                      <motion.button
-                        //    onClick={handleOtpSubmit}
-                        disabled={
-                          isSubmitting || otp.some((digit) => digit === "")
-                        }
-                        className={`w-full py-3 px-6 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 ${
-                          isSubmitting || otp.some((digit) => digit === "")
-                            ? "bg-gray-700 cursor-not-allowed"
-                            : "bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
-                        }`}
-                        variants={item}
-                        whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-                      >
-                        {verifyingCode ? (
-                          <div className="flex items-center justify-center">
-                            <motion.span
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                ease: "linear",
-                              }}
-                            >
-                              <RotateCw className="w-4 h-4 mr-2 animate-spin" />
-                            </motion.span>
-                            Verifying...
-                          </div>
-                        ) : (
-                          "Verify & Continue"
-                        )}
-                      </motion.button>
-
-                      <motion.div
-                        className="text-center pt-4 border-t border-gray-700"
-                        variants={item}
-                      >
-                        <p className="text-gray-500 text-sm">
-                          {countdown > 0 ? (
-                            <span>
-                              Resend code in{" "}
-                              <span className="text-orange-400">
-                                {countdown}s
-                              </span>
-                            </span>
-                          ) : (
-                            <button
-                              // onClick={handleResendOtp}
-                              className="text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center mx-auto"
-                            >
-                              <Mail className="w-4 h-4 mr-1" />
-                              Resend Verification Code
-                            </button>
-                          )}
-                        </p>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            </div>
-            {/* Card Footer */}
-            <div className="bg-gray-850 py-4 px-6 border-t border-gray-700 text-center">
-              <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} COHTPL •
-                <a
-                  href="#"
-                  className="text-orange-500 hover:text-orange-300 transition-colors mx-1"
-                >
-                  Privacy Policy
-                </a>{" "}
-                •
-                <a
-                  href="#"
-                  className="text-orange-500 hover:text-orange-300 transition-colors mx-1"
-                >
-                  Terms
-                </a>
-              </p>
-            </div>
-          </div>
-        </div>
-        {/* <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-          <div className="bg-gray-800 p-6 rounded-lg w-full  space-y-4">
-            {loginStage === "enterPhone" && (
-              <>
-                <label className="block text-sm text-white">Phone Number</label>
-                <input
-                  type="text"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded"
-                  placeholder="e.g. +123456789"
-                />
-                <button
-                  //  onClick={handleSendCode}
-                  disabled={sendingCode}
-                  className="w-full bg-orange-600 py-2 rounded text-white"
-                >
-                  {sendingCode ? "Sending..." : "Send Login Code"}
-                </button>
-
-               
-              </>
-            )} */}
-        {/* {loginStage === "enterCode" && (
-              <>
-                <label className="block text-sm text-white">Enter Code</label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded"
-                  placeholder="Code from Telegram"
-                />
-                <button
-                  onClick={handleVerifyCode}
-                  disabled={verifyingCode}
-                  className="w-full bg-orange-600 py-2 rounded text-white"
-                >
-                  {verifyingCode ? "Verifying..." : "Verify Code"}
-                </button>
-              </>
-            )} */}
-        {/* </div>
-        </div> */}
-      </>
-    );
+    return <ConnectTelegramPage />
   }
 
   return (
@@ -1093,8 +827,12 @@ const Telgrampage = () => {
                 value={telegramTitle}
                 onChange={(e) => setTelegramTitle(e.target.value)}
                 className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                placeholder="Enter page title"
+                placeholder="Enter page title (3-75 characters)"
+                required
               />
+              <div className="text-xs text-gray-400 mt-1">
+                {telegramTitle.length}/75 characters
+              </div>
             </div>
 
             {/* Description */}
@@ -1106,8 +844,13 @@ const Telgrampage = () => {
                 value={telegramDescription}
                 onChange={(e) => setTelegramDescription(e.target.value)}
                 className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent h-32 bg-gray-900 text-white"
-                placeholder="Enter description"
+                placeholder="Enter description (10-500 characters)"
+                maxLength={500}
+                required
               />
+              <div className="text-xs text-gray-400 mt-1">
+                {telegramDescription.length}/500 characters
+              </div>
             </div>
 
             {/* Genre */}
@@ -1196,9 +939,8 @@ const Telgrampage = () => {
                         className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white pr-8"
                       />
                       <ChevronDown
-                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                          sub.showDropdown ? "transform rotate-180" : ""
-                        }`}
+                        className={`absolute right-2 top-3 w-4 h-4 text-gray-400 transition-transform duration-200 ${sub.showDropdown ? "transform rotate-180" : ""
+                          }`}
                       />
                     </div>
 
@@ -1218,26 +960,26 @@ const Telgrampage = () => {
                             .toLowerCase()
                             .includes(sub.inputValue.toLowerCase())
                         ).length > 0 && (
-                          <div className="max-h-48 overflow-auto">
-                            {predefinedTypes
-                              .filter((type) =>
-                                type
-                                  .toLowerCase()
-                                  .includes(sub.inputValue.toLowerCase())
-                              )
-                              .map((option) => (
-                                <div
-                                  key={option}
-                                  className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
-                                  onClick={() =>
-                                    handleOptionClick(option, index)
-                                  }
-                                >
-                                  {option}
-                                </div>
-                              ))}
-                          </div>
-                        )}
+                            <div className="max-h-48 overflow-auto">
+                              {predefinedTypes
+                                .filter((type) =>
+                                  type
+                                    .toLowerCase()
+                                    .includes(sub.inputValue.toLowerCase())
+                                )
+                                .map((option) => (
+                                  <div
+                                    key={option}
+                                    className="px-4 py-2 text-sm text-white cursor-pointer hover:bg-gray-700"
+                                    onClick={() =>
+                                      handleOptionClick(option, index)
+                                    }
+                                  >
+                                    {option}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
@@ -1247,12 +989,15 @@ const Telgrampage = () => {
                       type="number"
                       placeholder="Cost"
                       value={sub.cost}
+                      min="1"
+                      max="100000"
                       onChange={(e) => {
                         const newSubs = [...subscriptions];
-                        newSubs[index].cost = parseInt(e.target.value);
+                        newSubs[index].cost = e.target.value === '' ? '' : parseInt(e.target.value);
                         setSubscriptions(newSubs);
                       }}
                       className="w-32 px-4 py-2 pl-16 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
+                      required
                     />
                     <span className="absolute left-4 top-2 text-gray-400">
                       INR
@@ -1264,12 +1009,15 @@ const Telgrampage = () => {
                       type="number"
                       placeholder="Number of Days"
                       value={sub.days}
+                      min="1"
+                      max="3650"
                       onChange={(e) => {
                         const newSubs = [...subscriptions];
-                        newSubs[index].days = parseInt(e.target.value);
+                        newSubs[index].days = e.target.value === '' ? '' : parseInt(e.target.value);
                         setSubscriptions(newSubs);
                       }}
                       className="w-64 px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
+                      required
                     />
                   )}
                   {sub.hasThirdBox && (
@@ -1334,13 +1082,20 @@ const Telgrampage = () => {
                 </label>
               </div>
               {gstInfoRequired && (
-                <input
-                  type="text"
-                  value={gstDetails}
-                  onChange={(e) => setGstDetails(e.target.value)}
-                  placeholder="Enter GST Information"
-                  className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                />
+                <>
+                  <input
+                    type="text"
+                    value={gstDetails}
+                    onChange={(e) => setGstDetails(e.target.value)}
+                    placeholder="Enter GST Information"
+                    maxLength={200}
+                    className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
+                    required={gstInfoRequired}
+                  />
+                  <div className="text-xs text-gray-400 mt-1">
+                    {gstDetails.length}/200 characters
+                  </div>
+                </>
               )}
 
               {/* Course Access */}
@@ -1359,13 +1114,20 @@ const Telgrampage = () => {
                 </label>
               </div>
               {courseAccess && (
-                <input
-                  type="text"
-                  value={courseDetails}
-                  onChange={(e) => setCourseDetails(e.target.value)}
-                  placeholder="Enter course access details"
-                  className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
-                />
+                <>
+                  <input
+                    type="text"
+                    value={courseDetails}
+                    onChange={(e) => setCourseDetails(e.target.value)}
+                    placeholder="Enter course access details"
+                    maxLength={500}
+                    className="w-full px-4 py-2 border border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-900 text-white"
+                    required={courseAccess}
+                  />
+                  <div className="text-xs text-gray-400 mt-1">
+                    {courseDetails.length}/500 characters
+                  </div>
+                </>
               )}
             </div>
           </div>

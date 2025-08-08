@@ -46,6 +46,152 @@ export async function createTelegram(req, res) {
 
     const user = req.user;
 
+    // Additional server-side validation beyond schema
+    
+    // Validate title
+    if (!title || title.trim().length < 3 || title.trim().length > 75) {
+      return res.status(400).json({
+        success: false,
+        message: "Title must be between 3 and 75 characters"
+      });
+    }
+
+    // Validate description
+    if (!description || description.trim().length < 10 || description.trim().length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "Description must be between 10 and 500 characters"
+      });
+    }
+
+    // Validate subscriptions
+    if (!subscriptions || subscriptions.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one subscription is required"
+      });
+    }
+
+    // Validate subscription data
+    for (let i = 0; i < subscriptions.length; i++) {
+      const sub = subscriptions[i];
+      const subType = sub.inputValue || sub.type || sub.selectedValue;
+      const subCost = parseFloat(sub.cost || sub.price || 0);
+      const subDays = parseInt(sub.days || sub.validDays || 0);
+
+      if (!subType || subType.trim().length < 3 || subType.trim().length > 50) {
+        return res.status(400).json({
+          success: false,
+          message: `Subscription ${i + 1}: Type must be between 3 and 50 characters`
+        });
+      }
+
+      if (subCost <= 0 || subCost > 100000) {
+        return res.status(400).json({
+          success: false,
+          message: `Subscription ${i + 1}: Cost must be between ₹1 and ₹100,000`
+        });
+      }
+
+      if (!sub.isLifetime && (subDays <= 0 || subDays > 3650)) {
+        return res.status(400).json({
+          success: false,
+          message: `Subscription ${i + 1}: Days must be between 1 and 3650 for non-lifetime subscriptions`
+        });
+      }
+    }
+
+    // Validate discounts if provided
+    if (discounts && discounts.length > 0) {
+      for (let i = 0; i < discounts.length; i++) {
+        const discount = discounts[i];
+
+        if (!discount.code || discount.code.trim().length < 3 || discount.code.trim().length > 20) {
+          return res.status(400).json({
+            success: false,
+            message: `Discount ${i + 1}: Code must be between 3 and 20 characters`
+          });
+        }
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(discount.code.trim())) {
+          return res.status(400).json({
+            success: false,
+            message: `Discount ${i + 1}: Code can only contain letters, numbers, hyphens, and underscores`
+          });
+        }
+
+        if (!discount.percent || discount.percent <= 0 || discount.percent > 100) {
+          return res.status(400).json({
+            success: false,
+            message: `Discount ${i + 1}: Percentage must be between 1 and 100`
+          });
+        }
+
+        if (!discount.expiry) {
+          return res.status(400).json({
+            success: false,
+            message: `Discount ${i + 1}: Expiry date is required`
+          });
+        }
+
+        const expiryDate = new Date(discount.expiry);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (expiryDate <= today) {
+          return res.status(400).json({
+            success: false,
+            message: `Discount ${i + 1}: Expiry date must be in the future`
+          });
+        }
+      }
+
+      // Check for duplicate discount codes (case-insensitive)
+      const discountCodes = discounts.map(d => d.code.toLowerCase().trim());
+      const uniqueCodes = new Set(discountCodes);
+      if (uniqueCodes.size !== discountCodes.length) {
+        return res.status(400).json({
+          success: false,
+          message: "Discount codes must be unique"
+        });
+      }
+    }
+
+    // Check for duplicate subscription types (case-insensitive)
+    const subTypes = subscriptions.map(sub => (sub.inputValue || sub.type || sub.selectedValue).toLowerCase().trim());
+    const uniqueSubTypes = new Set(subTypes);
+    if (uniqueSubTypes.size !== subTypes.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Subscription types must be unique"
+      });
+    }
+
+    // Validate GST details if provided
+    if (gstDetails && gstDetails.trim().length > 200) {
+      return res.status(400).json({
+        success: false,
+        message: "GST details must not exceed 200 characters"
+      });
+    }
+
+    // Validate course details if provided
+    if (courseDetails && courseDetails.trim().length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "Course details must not exceed 500 characters"
+      });
+    }
+
+    // Validate genre
+    const validGenres = ['education', 'entertainment', 'marketing'];
+    if (!genre || !validGenres.includes(genre.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: "Genre must be education, entertainment, or marketing"
+      });
+    }
+
     console.log({
       coverImage,
       title,
