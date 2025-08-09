@@ -36,6 +36,7 @@ export default function PaymentInterface() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [isVerifyingCoupon, setIsVerifyingCoupon] = useState(false);
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
+  const [renewalError, setRenewalError] = useState(null);
 
   useEffect(() => {
     const loadRazorpayScript = () => {
@@ -378,7 +379,28 @@ export default function PaymentInterface() {
       }
     } catch (error) {
       console.error("Payment error:", error);
-      toast.error("Failed to initialize payment");
+      
+      // Handle specific error messages from server
+      const errorMessage = error.response?.data?.message || "Failed to initialize payment";
+      
+      // Check if it's a subscription renewal validation error
+      if (errorMessage.includes("Cannot purchase subscription") && errorMessage.includes("within the last 5 days")) {
+        // Set renewal error state for prominent display
+        setRenewalError(errorMessage);
+        
+        // Also display toast for immediate feedback
+        toast.error(errorMessage, {
+          duration: 6000, // Show for 6 seconds
+          style: {
+            background: '#1f2937',
+            color: '#f3f4f6',
+            maxWidth: '500px',
+          }
+        });
+      } else {
+        toast.error(errorMessage);
+      }
+      
       setShowPaymentModal(false);
     }
   };
@@ -641,17 +663,49 @@ export default function PaymentInterface() {
                 </div>
               </motion.div>
 
+              {/* Renewal Error Display */}
+              {renewalError && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 bg-red-900 bg-opacity-30 border border-red-500 rounded-xl p-4"
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <X className="w-5 h-5 text-red-400 mt-0.5" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-red-400 font-semibold mb-1">Cannot Purchase Subscription</h4>
+                      <p className="text-red-300 text-sm leading-relaxed">
+                        {renewalError}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setRenewalError(null)}
+                      className="flex-shrink-0 text-red-400 hover:text-red-300"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Pay Button */}
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handlePayment}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl text-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
+                whileHover={{ scale: renewalError ? 1 : 1.02 }}
+                whileTap={{ scale: renewalError ? 1 : 0.98 }}
+                onClick={renewalError ? null : handlePayment}
+                disabled={renewalError}
+                className={`w-full py-4 rounded-xl text-lg font-semibold transition-all ${
+                  renewalError 
+                    ? "bg-gray-600 text-gray-400 cursor-not-allowed" 
+                    : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+                }`}
               >
-                Pay ₹{totalAmount} and start subscription
+                {renewalError ? "Cannot Purchase" : `Pay ₹${totalAmount} and start subscription`}
               </motion.button>
             </motion.div>
           </div>

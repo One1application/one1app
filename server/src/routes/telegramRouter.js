@@ -16,7 +16,6 @@ import {
   purchaseTelegramSubscription,
   sendLoginCode,
   signInTelegram,
-  verifyTelegramPaymentCallback,
   getTelegramById,
   getTelegramAnalytics,
   getTelegramDashboardAnalytics,
@@ -40,7 +39,8 @@ telegramRouter.get('/get-creator-telegram-by-id/:telegramId', authMiddleware, ge
 telegramRouter.get('/get-telegram-by-id/:telegramId', getTelegramById);
 
 telegramRouter.post('/purchase-telegram', authMiddleware, purchaseTelegramSubscription);
-telegramRouter.post('/verify-telegram-payment', authMiddleware, verifyTelegramPaymentCallback);
+
+
 telegramRouter.post('/apply-coupon', authMiddleware, applyCoupon);
 
 // Add route to fetch owned telegram groups

@@ -382,7 +382,7 @@ model Telegram {
   subscriptions         Subscription[]         @relation("TelegramSubscriptions")
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
-  inviteLink            String?
+
 }
 
 model TelegramSubscription {
@@ -401,8 +401,8 @@ model TelegramSubscription {
   orderId        String?      @unique
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  inviteLink            String?
 
-  @@unique([telegramId, boughtById, isExpired]) // Prevent active duplicate subscriptions
 }
 
 model Discount {

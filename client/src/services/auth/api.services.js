@@ -581,11 +581,6 @@ export const purchaseTelegramSubscription = async (data) => {
   return response;
 };
 
-// Telegram Payment Verification API
-export const verifyTelegramPayment = async (data) => {
-  const response = await servicesAxiosInstance.post('/telegram/verify-telegram-payment', data);
-  return response;
-};
 
 // Telegram Analytics APIs
 export const getTelegramAnalytics = async (telegramId, period = 'month') => {

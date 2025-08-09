@@ -1,15 +1,34 @@
 import { ArrowRight, CheckCircle, MessageCircle, Sparkles } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function TelegramSuccess() {
   const [isVisible, setIsVisible] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [telegramInviteLink, setTelegramInviteLink] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setIsVisible(true);
     const timer = setTimeout(() => setShowConfetti(true), 500);
+    
+    // Get invite link from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteLink = urlParams.get('telegramInvitelink');
+    setTelegramInviteLink(inviteLink);
+    
     return () => clearTimeout(timer);
   }, []);
+
+  const handleJoinTelegram = () => {
+    if (telegramInviteLink) {
+      window.open(telegramInviteLink, '_blank');
+    }
+  };
+
+  const handleGoToDashboard = () => {
+    navigate('/dashboard');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -66,28 +85,51 @@ function TelegramSuccess() {
         <div className="mb-8 space-y-4">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">Success! 🎉</h1>
           <h2 className="text-xl font-semibold text-blue-600 mb-4">
-            Telegram Connected
+            Telegram Subscription Purchased
           </h2>
           <p className="text-gray-600 leading-relaxed">
-            Your Telegram integration has been successfully configured. You're
-            all set to receive notifications and updates directly in your
-            Telegram account.
+            {telegramInviteLink && telegramInviteLink !== 'null' 
+              ? "Your Telegram subscription is ready! Click the join button below to access your exclusive channel."
+              : "Your Telegram subscription has been purchased successfully. You can find the invite link in your dashboard."
+            }
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-4">
-          <button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-2 group">
-            <span>Open Telegram</span>
-            <ArrowRight
-              className="group-hover:translate-x-1 transition-transform"
-              size={20}
-            />
-          </button>
+          {telegramInviteLink && telegramInviteLink !== 'null' ? (
+            <>
+              <button 
+                onClick={handleJoinTelegram}
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-2 group"
+              >
+                <MessageCircle size={20} />
+                <span>Join Telegram Channel</span>
+                <ArrowRight
+                  className="group-hover:translate-x-1 transition-transform"
+                  size={20}
+                />
+              </button>
 
-          <button className="w-full bg-white text-gray-700 font-medium py-3 px-6 rounded-xl border-2 border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200">
-            Return to Dashboard
-          </button>
+              <button 
+                onClick={handleGoToDashboard}
+                className="w-full bg-white text-gray-700 font-medium py-3 px-6 rounded-xl border-2 border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200"
+              >
+                Return to Dashboard
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={handleGoToDashboard}
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-2 group"
+            >
+              <span>Go to Dashboard</span>
+              <ArrowRight
+                className="group-hover:translate-x-1 transition-transform"
+                size={20}
+              />
+            </button>
+          )}
         </div>
 
         {/* Status Indicators */}

@@ -47,7 +47,7 @@ export async function createTelegram(req, res) {
     const user = req.user;
 
     // Additional server-side validation beyond schema
-    
+
     // Validate title
     if (!title || title.trim().length < 3 || title.trim().length > 75) {
       return res.status(400).json({
@@ -1312,7 +1312,6 @@ export async function purchaseTelegramSubscription(req, res) {
         },
       },
     });
-    console.log("TELEGRAM IS", telegram);
 
 
     const creator = await prisma.telegram.findFirst({
@@ -1344,9 +1343,7 @@ export async function purchaseTelegramSubscription(req, res) {
         message: "You cannot purchase your own Telegram subscription.",
       });
     }
-    console.log("telegramId", telegramId);
-    console.log("subscriptionId", subscriptionId);
-    // Fix the subscription query - use findFirst instead of findUnique
+
     const subscription = await prisma.subscription.findUnique({
       where: {
         id: subscriptionId,
@@ -1379,9 +1376,9 @@ export async function purchaseTelegramSubscription(req, res) {
     let CheckExistingSubcriptionTransactionStatus = null;
     if (existingSubscription) {
       CheckExistingSubcriptionTransactionStatus =
-        await prisma.transaction.findUnique({
+        await prisma.transaction.findFirst({
           where: {
-            id: existingSubscription.paymentId,
+            txnID: existingSubscription.paymentId,
           },
         });
 
@@ -1402,6 +1399,24 @@ export async function purchaseTelegramSubscription(req, res) {
           data: {
             status: "FAILED",
           },
+        });
+      }
+    }
+
+
+
+    // Check if user can purchase/renew - only allow if within 5 days of expiration
+    if (existingSubscription &&
+      CheckExistingSubcriptionTransactionStatus?.status === "COMPLETED") {
+      const now = new Date();
+      const expireDate = new Date(existingSubscription.expireDate);
+      const timeDifferenceMs = expireDate.getTime() - now.getTime();
+      const daysUntilExpiry = Math.ceil(timeDifferenceMs / (1000 * 60 * 60 * 24));
+
+      if (daysUntilExpiry > 5) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot purchase subscription. You can only renew or upgrade within the last 5 days of your subscription. Your subscription expires in ${daysUntilExpiry} days.`,
         });
       }
     }
@@ -1654,123 +1669,7 @@ export async function purchaseTelegramSubscription(req, res) {
     });
   }
 }
-export async function verifyTelegramPaymentCallback(req, res) {
-  try {
-    const { paymentId, transactionId } = req.body;
 
-    if (!paymentId || !transactionId) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid callback data.",
-      });
-    }
-
-    const transaction = await prisma.transaction.findFirst({
-      where: { id: paymentId, phonePayTransId: transactionId },
-      include: {
-        wallet: { select: { userId: true } },
-        creator: { select: { creatorComission: true } },
-      },
-    });
-
-    if (!transaction) {
-      return res.status(404).json({
-        success: false,
-        message: "Transaction not found.",
-      });
-    }
-
-    if (transaction.status !== "PENDING") {
-      return res.status(400).json({
-        success: false,
-        message: "Transaction already processed.",
-      });
-    }
-
-    // Verify payment with PhonePe
-    const paymentDetails = await PhonePayClient.getOrderStatus(
-      transaction.phonePayTransId
-    );
-
-    if (!paymentDetails || paymentDetails.state === "FAILED") {
-      // Handle failed payment
-      await prisma.$transaction(async (tx) => {
-        // Update transaction to FAILED
-        await tx.transaction.update({
-          where: { id: transaction.id },
-          data: { status: "FAILED", updatedAt: new Date() },
-        });
-
-        // Mark subscription as expired
-        await tx.telegramSubscription.update({
-          where: { paymentId: transaction.id },
-          data: { isExpired: true, updatedAt: new Date() },
-        });
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: "Payment callback processed successfully (failed payment).",
-      });
-    }
-
-    // Handle successful payment
-    await prisma.$transaction(async (tx) => {
-      // Update transaction to COMPLETED
-      await tx.transaction.update({
-        where: { id: transaction.id },
-        data: { status: "COMPLETED", updatedAt: new Date() },
-      });
-
-      // Update creator's wallet
-      await tx.wallet.update({
-        where: { userId: transaction.creatorId },
-        data: {
-          balance: { increment: transaction.amountAfterFee },
-          totalEarnings: { increment: transaction.amountAfterFee },
-          updatedAt: new Date(),
-        },
-      });
-
-      // // Generate and update Telegram invite link
-      // const telegram = await tx.telegram.findUnique({
-      //   where: { id: transaction.productId },
-      //   select: { chatId: true },
-      // });
-
-      // try {
-      //   const response = await axios.get(
-      //     `${process.env.BOT_SERVER_URL}/channel/generate-invite?channelId=${telegram.chatId}&boughtById=${transaction.buyerId}`
-      //   );
-      //   await tx.telegram.update({
-      //     where: { id: transaction.productId },
-      //     data: { inviteLink: response.data.payload.inviteLink },
-      //   });
-      // } catch (error) {
-      //   logger.error('Failed to generate Telegram invite link:', { error: error.message });
-      //   throw new Error('Failed to generate invite link.');
-      // }
-    });
-    console.log("PAYMENT DOEN");
-
-    return res.status(200).json({
-      success: true,
-      message: "Payment callback processed successfully.",
-      payload: {
-        telegramId: transaction.productId,
-      },
-    });
-  } catch (error) {
-    console.log("Error in verifyTelegramPaymentCallback:", {
-      error: error.message,
-      stack: error.stack,
-    });
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error.",
-    });
-  }
-}
 
 // Get detailed analytics for charts
 export async function getTelegramAnalytics(req, res) {
@@ -2094,7 +1993,6 @@ export async function getTelegramDashboardAnalytics(req, res) {
     // Calculate date range
     const now = new Date();
     let startDate = new Date();
-    console.log(period);
 
     switch (period) {
       case 'day':

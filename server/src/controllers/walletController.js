@@ -72,7 +72,6 @@ export async function getWalletDetails(req, res) {
       0
     );
 
-    console.log("totalWithdrawals", totalWithdrawals);
 
     return res.status(200).json({
       success: true,
@@ -98,7 +97,6 @@ export async function getWalletDetails(req, res) {
 }
 
 export async function verifyPayment(req, res) {
-  console.log("INSIDE VERIFY PAYMENT");
   try {
     const {
       webinarId,
@@ -138,7 +136,7 @@ export async function verifyPayment(req, res) {
       !webinarId &&
       !payingUpId &&
       !telegramId &&
-      !premiumContentId
+      !premiumContentId && !subscriptionId
     ) {
       return res.status(400).json({
         success: false,
@@ -151,7 +149,6 @@ export async function verifyPayment(req, res) {
     let orderId;
     let paymentMode;
     let paymentStatus;
-    console.log("Payment Provider", paymentProvider);
 
     if (paymentProvider === "Razorpay") {
       const generatedSignature = crypto
@@ -178,7 +175,6 @@ export async function verifyPayment(req, res) {
           message: "Payment not captured",
         });
       }
-      console.log("RAZORPAY SUCCESS");
     } else {
       paymentDetails = await PhonePayClient.getOrderStatus(phonePayOrderId);
 
@@ -270,7 +266,6 @@ export async function verifyPayment(req, res) {
           },
         });
 
-        console.log("transaction", transaction);
         if (!transaction) {
           return res.status(400).json({
             success: false,
@@ -294,12 +289,10 @@ export async function verifyPayment(req, res) {
             .status(400)
             .json({ success: false, message: "Creator not found." });
         }
-        console.log("creatorCOURSE", creator);
 
         let amountToBeAdded = discountedPrice
           ? parseFloat(discountedPrice)
           : creator.price;
-        console.log("amount", amountToBeAdded);
         if (creator.creator.creatorComission) {
           const commissionAmount =
             Math.round(
@@ -330,7 +323,6 @@ export async function verifyPayment(req, res) {
           },
         });
 
-        console.log("existingPurchase", existingPurchase);
         if (existingPurchase) {
           let calculateExpiry = calculateExpiryDate(
             creator?.validity,
@@ -349,7 +341,6 @@ export async function verifyPayment(req, res) {
               paymentId: transactionId,
             },
           });
-          console.log("renewalRecord", renewal);
 
           const updateCoursePurchase = await prisma.coursePurchasers.update({
             where: {
@@ -361,7 +352,6 @@ export async function verifyPayment(req, res) {
               updatedAt: new Date(),
             },
           });
-          console.log("updateCourse", updateCoursePurchase);
         } else {
           const calculateExpiry = calculateExpiryDate(creator.validity);
           const course = await prisma.coursePurchasers.create({
@@ -406,7 +396,6 @@ export async function verifyPayment(req, res) {
       }
 
       if (payingUpId) {
-        console.log("payingUpId", payingUpId);
         const creator = await prisma.payingUp.findFirst({
           where: {
             id: payingUpId,
@@ -418,7 +407,6 @@ export async function verifyPayment(req, res) {
           },
         });
 
-        console.log("cre", creator);
 
         if (!creator) {
           return res
@@ -587,11 +575,7 @@ export async function verifyPayment(req, res) {
 
       // FIXED TELEGRAM PAYMENT VERIFICATION
       if (telegramId && subscriptionId) {
-        console.log(
-          "INSIDE TELEGRAM ID AND SUBSCRIPTION ID",
-          telegramId,
-          subscriptionId
-        );
+
 
         // Fetch telegram channel and subscription details
         const telegram = await prisma.telegram.findUnique({
@@ -656,6 +640,7 @@ export async function verifyPayment(req, res) {
           await prisma.telegramSubscription.findFirst({
             where: {
               telegramId: telegramId,
+              subscriptionId: subscription.id,
               boughtById: user.id,
               isExpired: false,
             },
@@ -682,6 +667,7 @@ export async function verifyPayment(req, res) {
             );
           }
         }
+
 
         // Mark existing subscription as expired if applicable
         if (existingSubscription) {
@@ -815,54 +801,63 @@ export async function verifyPayment(req, res) {
     }
 
     if (telegramId && subscriptionId) {
-      console.log("GENERATING TELEGRAM INVITE LINK");
 
       try {
-        // Generate invite link via bot server
-        // const response = await axios.get(
-        //   `${process.env.BOT_SERVER_URL}/channel/generate-invite?channelId=${channelId}&boughtById=${user.id}`
-        // );
 
-        const telegram = await prisma.telegram.findUnique({
-          id: telegramId
+        const telegram = await prisma.telegram.findFirst({
+          where: {
+            id: telegramId,
+
+          }
         })
 
         if (!telegram) {
           throw new Error("Telegram Not Present")
         }
         const response = await getInviteLink(telegram.chatId, user.id)
-        console.log("TELEGRAM RESPOSNE GET LINK", response);
-
-        console.log(response);
 
 
-        // Update telegram with invite link
-        await prisma.telegram.update({
+
+        // Update telegram with invite link - find the latest non-expired subscription
+        const latestSubscription = await prisma.telegramSubscription.findFirst({
           where: {
-            id: telegramId,
+            telegramId: telegramId,
+            subscriptionId: subscriptionId,
+            boughtById: user.id,
+            isExpired: false
           },
-          data: {
-            inviteLink: response.data.payload.inviteLink,
-          },
+          orderBy: {
+            createdAt: 'desc'
+          }
         });
+
+        if (latestSubscription) {
+          await prisma.telegramSubscription.update({
+            where: {
+              id: latestSubscription.id,
+            },
+            data: {
+              inviteLink: response.data.payload.inviteLink,
+            },
+          });
+        }
 
         return res.status(200).json({
           success: true,
           message: "Telegram subscription purchased successfully.",
           payload: {
-            redirectUrl: process.env.FRONTEND_URL + "/telegram/success",
+            redirectUrl: process.env.FRONTEND_URL + `/telegram/success?telegramInvitelink=${encodeURIComponent(response.data.payload.inviteLink)}`,
             telegramInvitelink: response.data.payload.inviteLink,
           },
         });
       } catch (error) {
-        console.log(error);
 
         return res.status(200).json({
           success: true,
           message:
             "Telegram subscription purchased successfully, but invite link generation failed.",
           payload: {
-            redirectUrl: process.env.FRONTEND_URL + "/telegram/success",
+            redirectUrl: process.env.FRONTEND_URL + `/telegram/success?telegramInvitelink=${null}`,
             telegramInvitelink: null,
           },
         });
@@ -1425,7 +1420,6 @@ export async function getKycDetails(req, res) {
         .json({ success: false, message: "KYC details not found." });
     }
 
-    console.log(kyc);
 
     return res.status(200).json({
       success: true,
@@ -1566,7 +1560,6 @@ export async function updateBankDetails(req, res) {
         .status(400)
         .json({ success: false, message: "Bank details id required." });
     }
-    console.log("bankDetailsId", bankDetailsId);
 
     if (
       !ifscCode &&
@@ -1626,7 +1619,6 @@ export async function updateBankDetails(req, res) {
         userId: user.id,
       },
     });
-    console.log("existingupi records", existingUpiRecords);
 
     //update bank details
     const updatedBankDetails = await prisma.bankDetails.update({
@@ -1716,7 +1708,6 @@ export async function getBankDetails(req, res) {
         upiIds: true,
       },
     });
-    console.log("bankDetails", bankDetails);
 
     const kycRecord = await prisma.kycRecords.findFirst({
       where: {
@@ -2807,7 +2798,6 @@ export async function setMPIN(req, res) {
     // const otp = Math.floor(1000 + Math.random() * 9000);
     // mpinOtpMap[user.id] = { mpin, otp };
     const otp = await sendOtp(phone);
-    console.log("mpin setup otp --", otp);
 
     //send otp to user using twilio, yet to implement
 
@@ -3112,8 +3102,6 @@ export async function getFilterEarningsAndWithdrawal(req, res) {
 
     const totalEarnings = totalEarningsData._sum.amountAfterFee || 0;
     const totalWithdrawals = totalWithdrawalsData._sum.amount || 0;
-    console.log("totalEarnings", totalEarnings);
-    console.log(totalWithdrawals);
     return res.status(200).json({
       success: true,
       payload: {
