@@ -40,7 +40,6 @@ export async function createTelegram(req, res) {
       genre,
       gstDetails,
       courseDetails,
-      inviteLink,
       sessionString,
     } = req.body;
 
@@ -202,7 +201,6 @@ export async function createTelegram(req, res) {
       genre,
       gstDetails,
       courseDetails,
-      inviteLink,
       sessionString, // <-- log it for now
     });
 
@@ -220,7 +218,10 @@ export async function createTelegram(req, res) {
           isGroupMonitored = botHaveAdmin;
         }
       } catch (error) {
-        console.error("Error checking bot admin status:");
+        return res.status(403).json({
+          success: false,
+          message: "Add Our Bot As A Admin To Group",
+        });
       }
     }
 
@@ -235,7 +236,6 @@ export async function createTelegram(req, res) {
           genre,
           gstDetails: gstDetails || null,
           courseDetails: courseDetails || null,
-          inviteLink: inviteLink || null,
           createdById: user.id,
           isGroupMonitored,
         },
@@ -319,7 +319,6 @@ export async function editTelegram(req, res) {
       genre,
       gstDetails,
       courseDetails,
-      inviteLink,
     } = req.body;
 
     const telegram = await prisma.telegram.findUnique({
@@ -350,7 +349,6 @@ export async function editTelegram(req, res) {
         genre,
         gstDetails: gstDetails !== undefined ? gstDetails : undefined,
         courseDetails: courseDetails !== undefined ? courseDetails : undefined,
-        inviteLink: inviteLink !== undefined ? inviteLink : undefined,
       },
     });
 

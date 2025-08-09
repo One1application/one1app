@@ -667,7 +667,6 @@ const Telgrampage = () => {
         sessionString: finalSessionString,
         gstDetails,
         courseDetails,
-        inviteLink: inviteLink || null,
       };
 
       console.log("formBody==>", body);
@@ -675,6 +674,7 @@ const Telgrampage = () => {
       window.location.href = "/dashboard/telegram";
       toast.success("Telegram Is in the Development Phase");
     } catch (error) {
+      toast.error(error?.response.data?.message || "Something Went Wrong")
       console.log("Error in creating telegram.", error);
     } finally {
       setIsSubmitting(false);
