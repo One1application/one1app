@@ -7,7 +7,7 @@ import {
   fetchWithdrawalPage,
 } from "../../services/auth/api.services.js";
 import toast from "react-hot-toast";
- 
+
 const initialState = {
   user: {
     username: "Manish",
@@ -25,7 +25,7 @@ const initialState = {
   links: [],
 };
 
-const transactions =  []
+const transactions = []
 const withdrawals = [];
 
 export const StoreProvider = ({ children }) => {
@@ -44,19 +44,19 @@ export const StoreProvider = ({ children }) => {
   const [CurrentWithdrawalPage, setCurrentWithdrawalPage] = useState(1);
 
   const getNextTransactionPage = async (page) => {
-       
-      const requestPage = page || CurrentTransactionPage;
-      console.log("Fetching transaction page:", requestPage);
+
+    const requestPage = page || CurrentTransactionPage;
+    console.log("Fetching transaction page:", requestPage);
 
     try {
       const response = await fetchTransactionsPage({ page: requestPage });
-      console.log("Transaction",response);
+      console.log("Transaction", response);
       if (response?.status == 200) {
-        setAllTransaction(response?.data?.payload.transactions|| []);
+        setAllTransaction(response?.data?.payload.transactions || []);
         setTotalTransactionPages(response?.data?.payload.totalPages || 1);
         setCurrentTransactionPage(page);
         return response.data.payload;
-        
+
       } else {
         console.log("No more data to show", response.data.message);
         return null;
@@ -74,13 +74,13 @@ export const StoreProvider = ({ children }) => {
       const response = await fetchTransactionsPage(data);
       if (response?.status == 200) {
         setAllTransaction(response?.data?.payload?.transactions);
-         setCurrentTransactionPage(CurrentTransactionPage - 1 || 1);
+        setCurrentTransactionPage(CurrentTransactionPage - 1 || 1);
         setTotalTransactionPages(response.data.payload.totalPages || 1);
         if (response.data.payload.transactions.length == 0) {
           toast.error("NO TRANSACTION FOUND");
           return;
         }
-       
+
       } else {
         console.log("No more data to show");
         toast.error(response.data.message);
@@ -92,19 +92,19 @@ export const StoreProvider = ({ children }) => {
 
   const getNextWithdrawalPage = async (page) => {
     const requestPage = page || CurrentWithdrawalPage;
-    
+
     try {
-      const response = await fetchWithdrawalPage({page: requestPage});
-      
+      const response = await fetchWithdrawalPage({ page: requestPage });
+
       if (response.status == 200) {
-        setAllWithdrawals(response.data.payload.withdrawals|| []);
+        setAllWithdrawals(response.data.payload.withdrawals || []);
         setCurrentWithdrawalPage(requestPage);
         setTotalWithdrawalPages(response.data.payload.totalPages || 1);
         return response.data.payload;
       } else {
-        
+
         return null;
-       
+
       }
     } catch (error) {
       console.error(error);
@@ -121,14 +121,14 @@ export const StoreProvider = ({ children }) => {
       if (response.status == 200) {
         setAllWithdrawals(response.data.payload.withdrawals);
         if (response.data.payload.withdrawals.length == 0) {
-          
+
           return;
         }
         setCurrentWithdrawalPage(CurrentWithdrawalPage - 1 || 1);
         setTotalWithdrawalPages(response.data.payload.totalPages || 1);
       } else {
-         toast.error(response.data.message);
-        
+        toast.error(response.data.message);
+
       }
     } catch (error) {
       console.error(error);

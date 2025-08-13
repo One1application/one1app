@@ -110,9 +110,8 @@ const WalletPage = () => {
       else if (filterType === "Last Year") fetchRange = "LastYear";
       else if (filterType === "All Time") fetchRange = "AllTime";
       else if (filterType === "Custom Range" && customDates) {
-        fetchRange = `CustomRange=${
-          customDates[0].toISOString().split("T")[0]
-        },${customDates[1].toISOString().split("T")[0]}`;
+        fetchRange = `CustomRange=${customDates[0].toISOString().split("T")[0]
+          },${customDates[1].toISOString().split("T")[0]}`;
       }
       const response = await fetchFilterEarningsAndWithdrawals({ fetchRange });
       if (response?.data?.success)
@@ -133,9 +132,8 @@ const WalletPage = () => {
       else if (filterType === "Last Year") fetchRange = "LastYear";
       else if (filterType === "All Time") fetchRange = "AllTime";
       else if (filterType === "Custom Range" && customDates) {
-        fetchRange = `CustomRange=${
-          customDates[0].toISOString().split("T")[0]
-        },${customDates[1].toISOString().split("T")[0]}`;
+        fetchRange = `CustomRange=${customDates[0].toISOString().split("T")[0]
+          },${customDates[1].toISOString().split("T")[0]}`;
       }
       const response = await fetchFilterEarningsAndWithdrawals({ fetchRange });
       if (response?.data?.success)
@@ -190,27 +188,27 @@ const WalletPage = () => {
   const openWithdrawalModal = () => {
     return userDetails?.verified
       ? (() => {
-          setOpenWithdrawal(true);
-          setOpenModal(false);
-        })()
+        setOpenWithdrawal(true);
+        setOpenModal(false);
+      })()
       : toast.error("Please complete your KYC verification first!");
   };
 
   const openUPIModal = () => {
     return userDetails?.verified
       ? (() => {
-          setOpenUPI(true);
-          setOpenModal(false);
-        })()
+        setOpenUPI(true);
+        setOpenModal(false);
+      })()
       : toast.error("Please complete your KYC verification first!");
   };
 
   const openMPINModal = () => {
     return userDetails?.verified
       ? (() => {
-          setOpenMPIN(true);
-          setOpenModal(false);
-        })()
+        setOpenMPIN(true);
+        setOpenModal(false);
+      })()
       : toast.error("Please complete your KYC verification first!");
   };
 
@@ -559,30 +557,29 @@ const WalletPage = () => {
                   {status === "NULL"
                     ? "Please update your KYC to withdraw your wallet amount!"
                     : status === "PENDING"
-                    ? reson
                       ? reson
-                      : "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
-                    : status === "REJECTED"
-                    ? reson
-                      ? reson
-                      : "Your KYC was rejected. Please update your details!"
-                    : status === "VERIFIED"
-                    ? "Your KYC is verified. You can now withdraw your wallet amount."
-                    : null}
+                        ? reson
+                        : "Your KYC is Pending, complete it ASAP to withdraw your wallet amount!"
+                      : status === "REJECTED"
+                        ? reson
+                          ? reson
+                          : "Your KYC was rejected. Please update your details!"
+                        : status === "VERIFIED"
+                          ? "Your KYC is verified. You can now withdraw your wallet amount."
+                          : null}
                 </p>
               </div>
               {status === "PENDING" || status === "REJECTED" ? (
                 <Link
                   to="/dashboard/kyc-setting"
-                  className={`${
-                    status === "NULL"
+                  className={`${status === "NULL"
                       ? "bg-orange-600 hover:bg-orange-700"
                       : status === "PENDING"
-                      ? "bg-yellow-500 hover:bg-yellow-700"
-                      : status === "REJECTED"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-green-600 hover:bg-green-700"
-                  }
+                        ? "bg-yellow-500 hover:bg-yellow-700"
+                        : status === "REJECTED"
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-green-600 hover:bg-green-700"
+                    }
                    py-2 px-3 text-sm rounded-md text-white font-poppins`}
                 >
                   {status === "NULL" ? (
@@ -593,15 +590,14 @@ const WalletPage = () => {
                 </Link>
               ) : (
                 <div
-                  className={`${
-                    status === "NULL"
+                  className={`${status === "NULL"
                       ? "bg-orange-600 hover:bg-orange-700"
                       : status === "PENDING"
-                      ? "bg-yellow-500 hover:bg-yellow-700"
-                      : status === "REJECTED"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-green-600 hover:bg-green-700"
-                  }
+                        ? "bg-yellow-500 hover:bg-yellow-700"
+                        : status === "REJECTED"
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-green-600 hover:bg-green-700"
+                    }
                    py-2 px-3 text-sm rounded-md text-white font-poppins`}
                 >
                   {status === "NULL" ? (
@@ -630,9 +626,8 @@ const WalletPage = () => {
             <p className="font-poppins tracking-tight text-white">Amount</p>
           </div>
           <div
-            className={`flex flex-col gap-6 mt-3 ${
-              AllWithdrawals.length === 0 && "h-[90%]"
-            }`}
+            className={`flex flex-col gap-6 mt-3 ${AllWithdrawals.length === 0 && "h-[90%]"
+              }`}
           >
             {AllWithdrawals.length == 0 ? (
               <div className="flex justify-center h-full items-center">

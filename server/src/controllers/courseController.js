@@ -431,10 +431,10 @@ export const getCourseById = async (req, res) => {
         lessons: true,
         purchasedBy: user
           ? {
-              where: {
-                purchaserId: user.id,
-              },
-            }
+            where: {
+              purchaserId: user.id,
+            },
+          }
           : false,
       },
     });
@@ -455,13 +455,13 @@ export const getCourseById = async (req, res) => {
           ...course,
           ...(sendFiles
             ? {
-                products: course.products,
-                lessons: course.lessons,
-              }
+              products: course.products,
+              lessons: course.lessons,
+            }
             : {
-                products: null,
-                lessons: null,
-              }),
+              products: null,
+              lessons: null,
+            }),
         },
       },
     });
@@ -494,14 +494,16 @@ export const purchaseCourse = async (req, res) => {
       include: {
         products: true,
         lessons: true,
+
         purchasedBy: user
           ? {
-              where: {
-                purchaserId: user.id,
-              },
-            }
+            where: {
+              purchaserId: user.id,
+            },
+          }
           : false,
         creator: true,
+
       },
     });
 
@@ -578,7 +580,7 @@ export const purchaseCourse = async (req, res) => {
       });
     }
 
-    if (course.createdBy.paymentProvider === 'PhonePay') {
+    if (course.creator.paymentProvider === 'PhonePay') {
       const orderId = randomUUID();
       console.log('orderId', orderId);
       const request = StandardCheckoutPayRequest.builder()
@@ -599,7 +601,7 @@ export const purchaseCourse = async (req, res) => {
           discountPrice,
         },
       });
-    } else if (content.createdBy.paymentProvider === 'Razorpay') {
+    } else if (course.creator.paymentProvider === 'Razorpay') {
       console.log('INSISE razorPay', process.env.RAZORPAY_KEY_ID);
 
       const razorpayOrder = await razorpay.orders.create({
@@ -675,10 +677,10 @@ export const renewalCourse = async (req, res) => {
         lessons: true,
         purchasedBy: user
           ? {
-              where: {
-                purchaserId: user.id,
-              },
-            }
+            where: {
+              purchaserId: user.id,
+            },
+          }
           : false,
         creator: true,
       },
