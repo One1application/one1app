@@ -153,3 +153,34 @@ export const getPaymentsApiService = async ({
   });
   return response.data;
 };
+
+
+
+export const fetchTransactionsService = async ({
+  page,
+  limit,
+  dateRange,
+  startDate,
+  endDate,
+  role,
+  userId,
+  search,
+  productType,
+  status
+}) => {
+  const response = await axiosInstance.get('/admin/transactions', {
+    params: {
+      page,
+      limit,
+      dateRange,
+      startDate,
+      endDate,
+      role,
+      userId,
+      search,
+      productType,
+      status
+    }
+  });
+  return response.data;
+};

@@ -1,4 +1,5 @@
 import prisma from '../db/dbClient.js';
+import moment from "moment"
 
 export const adminSelfIdentification = async (req, res) => {
   try {
@@ -428,12 +429,9 @@ export const getProducts = async (req, res) => {
           select: {
             id: true,
             coverImage: true,
-            inviteLink: true, // Changed from channelLink to inviteLink
             title: true,
             description: true,
             genre: true,
-            discount: true,
-            subscription: true,
             isVerified: true,
             createdBy: {
               select: {
@@ -442,6 +440,36 @@ export const getProducts = async (req, res) => {
                 email: true,
                 name: true,
               },
+            },
+            discounts: {
+              select: {
+                id: true,
+                code: true,
+                percent: true,
+                expiry: true,
+              },
+            },
+            telegramSubscriptions: { // Changed to telegramSubscriptions to match schema
+              select: {
+                id: true,
+                inviteLink: true,
+                validDays: true,
+                isLifetime: true,
+                isExpired: true,
+                subscription: {
+                  select: {
+                    id: true,
+                    type: true,
+                    price: true,
+                    validDays: true,
+                    isLifetime: true,
+                  },
+                },
+              },
+              where: {
+                isExpired: false, // Filter non-expired TelegramSubscription records
+              },
+              take: 1, // Fetch the first active subscription
             },
           },
         }),
@@ -591,11 +619,11 @@ export const getProducts = async (req, res) => {
         PaymentPage: true,
         Details: {
           CoverImage: telegram.coverImage,
-          InviteLink: telegram.inviteLink, // Changed from ChannelLink to InviteLink
+          InviteLink: telegram.telegramSubscriptions[0]?.inviteLink || null, // Use inviteLink from TelegramSubscription
           Description: telegram.description,
           Genre: telegram.genre,
-          Discount: telegram.discount,
-          Subscription: telegram.subscription,
+          Discounts: telegram.discounts.length > 0 ? telegram.discounts : null, // Map discounts relation
+          Subscription: telegram.telegramSubscriptions[0]?.subscription || null, // Map first subscription
           Verified: telegram.isVerified,
         },
       })),
@@ -659,12 +687,12 @@ export const getProducts = async (req, res) => {
       ? productType === 'Course'
         ? coursesCount
         : productType === 'Webinar'
-        ? webinarsCount
-        : productType === 'Telegram'
-        ? telegramsCount
-        : productType === 'PayingUp'
-        ? payingUpsCount
-        : premiumContentsCount
+          ? webinarsCount
+          : productType === 'Telegram'
+            ? telegramsCount
+            : productType === 'PayingUp'
+              ? payingUpsCount
+              : premiumContentsCount
       : coursesCount + webinarsCount + telegramsCount + payingUpsCount + premiumContentsCount;
 
     return res.status(200).json({
@@ -1090,10 +1118,10 @@ export const getCreatorReport = async (req, res) => {
       role: 'Creator',
       OR: searchTerm
         ? [
-            { name: { contains: searchTerm, mode: 'insensitive' } },
-            { email: { contains: searchTerm, mode: 'insensitive' } },
-            { phone: { contains: searchTerm, mode: 'insensitive' } },
-          ]
+          { name: { contains: searchTerm, mode: 'insensitive' } },
+          { email: { contains: searchTerm, mode: 'insensitive' } },
+          { phone: { contains: searchTerm, mode: 'insensitive' } },
+        ]
         : undefined,
       kycRecords: kycStatus ? { status: kycStatus.toUpperCase() } : undefined,
       verified: verifiedStatus ? verifiedStatus === 'true' : undefined,
@@ -1569,5 +1597,159 @@ export const getPayments = async (req, res) => {
       message: 'Failed to fetch payments',
       error: 'Internal Server Error',
     });
+  }
+};
+
+
+// Transaction Management
+
+export const getTransactions = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      dateRange = 'today',
+      startDate,
+      endDate,
+      role = 'all',
+      userId = '',
+      search = '',
+      productType = 'all',
+      status = 'all'
+    } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    let where = {};
+
+    // Date range filter
+    const now = moment();
+    if (dateRange === 'custom' && startDate && endDate) {
+      where.createdAt = {
+        gte: new Date(startDate),
+        lte: new Date(endDate)
+      };
+    } else if (dateRange === '7days') {
+      where.createdAt = {
+        gte: now.clone().subtract(7, 'days').startOf('day').toDate(),
+        lte: now.endOf('day').toDate()
+      };
+    } else if (dateRange === '30days') {
+      where.createdAt = {
+        gte: now.clone().subtract(30, 'days').startOf('day').toDate(),
+        lte: now.endOf('day').toDate()
+      };
+    } else {
+      where.createdAt = {
+        gte: now.startOf('day').toDate(),
+        lte: now.endOf('day').toDate()
+      };
+    }
+
+    // Role and user filter
+    if (role !== 'all' && userId) {
+      where[role === 'Creator' ? 'creatorId' : 'buyerId'] = userId;
+    }
+
+    // Product type filter
+    if (productType !== 'all') {
+      where.productType = productType;
+    }
+
+    // Status filter
+    if (status !== 'all') {
+      where.status = status;
+    }
+
+    // Search filter
+    if (search) {
+      where.OR = [
+        { id: { contains: search } },
+        { txnID: { contains: search } },
+        { productId: { contains: search } }
+      ];
+    }
+
+    // Fetch transactions
+    const transactions = await prisma.transaction.findMany({
+      where,
+      skip,
+      take: parseInt(limit),
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        txnID: true,
+        buyer: { select: { name: true } },
+        creator: { select: { name: true } },
+        productId: true,
+        productType: true,
+        amount: true,
+        amountAfterFee: true,
+        modeOfPayment: true,
+        status: true,
+        createdAt: true
+      }
+    });
+
+    // Calculate total pages
+    const totalTransactions = await prisma.transaction.count({ where });
+    const totalPages = Math.ceil(totalTransactions / limit);
+
+    // Analytics
+    const totalAgg = await prisma.transaction.aggregate({
+      where,
+      _sum: { amount: true, amountAfterFee: true }
+    });
+
+    const todayAgg = await prisma.transaction.aggregate({
+      where: {
+        ...where,
+        createdAt: {
+          gte: now.startOf('day').toDate(),
+          lte: now.endOf('day').toDate()
+        }
+      },
+      _sum: { amount: true, amountAfterFee: true }
+    });
+
+    const todayTransactions = await prisma.transaction.count({
+      where: {
+        ...where,
+        createdAt: {
+          gte: now.startOf('day').toDate(),
+          lte: now.endOf('day').toDate()
+        }
+      }
+    });
+
+    // Daily transaction data for chart
+    const dailyData = await prisma.transaction.groupBy({
+      by: ['createdAt'],
+      where,
+      _sum: { amount: true, amountAfterFee: true },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    const formattedDailyData = dailyData.map(item => ({
+      date: moment(item.createdAt).format('YYYY-MM-DD'),
+      totalAmount: item._sum.amount || 0,
+      totalAmountAfterFee: item._sum.amountAfterFee || 0
+    }));
+
+    res.json({
+      transactions,
+      totalPages,
+      analytics: {
+        totalTransactions,
+        totalAmount: totalAgg._sum.amount || 0,
+        totalAmountAfterFee: totalAgg._sum.amountAfterFee || 0,
+        todayTransactions,
+        todayAmount: todayAgg._sum.amount || 0,
+        todayAmountAfterFee: todayAgg._sum.amountAfterFee || 0,
+        dailyData: formattedDailyData
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

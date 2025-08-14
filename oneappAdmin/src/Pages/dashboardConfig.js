@@ -67,9 +67,9 @@ export const dashboardConfig = {
       roles: [ROLES.Admin, ROLES.SuperAdmin],
     },
     {
-      label: "Wallet",
+      label: "Transaction Management",
       icon: FaWallet,
-      path: "/dashboard/wallet",
+      path: "/dashboard/transactions",
       sublabels: [],
       roles: [ROLES.Admin, ROLES.SuperAdmin],
     },

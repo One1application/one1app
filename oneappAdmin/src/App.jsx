@@ -15,12 +15,12 @@ import StatisticsPage from "./Pages/Statistics/StatisticsPage";
 import AdminAccessPage from "./Pages/AdminAccess/AdminAccessPage";
 import EmployeesPage from "./Pages/Employees/EmployeesPage";
 import UsersPage from "./Pages/Users/UsersPage";
-import WalletPage from "./Pages/Wallet/WalletPage";
 import ProductsPage from "./Pages/Products/ProductsPage";
 import OneLinkPage from "./Pages/OneLink/OneLinkPage";
 import HelpPage from "./Pages/Help/HelpPage";
 import LogoutPage from "./Pages/Logout/LogoutPage";
 import { ROLES } from "./utils/constant";
+import TransactionPage from "./Pages/TransactionManagement/TransactionPage";
 
 
 
@@ -56,8 +56,8 @@ const dashboardRoutesConfig = [
     roles: [ROLES.Admin, ROLES.SuperAdmin],
   },
   {
-    path: "/dashboard/wallet",
-    element: <WalletPage />,
+    path: "/dashboard/transactions",
+    element: <TransactionPage />,
     roles: [ROLES.Admin, ROLES.SuperAdmin],
   },
   {

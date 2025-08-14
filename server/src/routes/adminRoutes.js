@@ -12,6 +12,7 @@ import {
   getDashboardData,
   getPayments,
   getProducts,
+  getTransactions,
   getUsers,
   toggleCreatorKycStatus,
   toggleProductVerification,
@@ -49,3 +50,5 @@ adminRouter.post('/admins', createAdmin);
 adminRouter.get('/admins', getAdmins);
 adminRouter.put('/admins/:id', updateAdmin);
 adminRouter.delete('/admins/:id', deleteAdmin);
+
+adminRouter.get('/transactions', getTransactions);
