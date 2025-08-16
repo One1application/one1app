@@ -107,7 +107,7 @@ const HelpPage = () => {
       {/* Queries Section */}
       <div className="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h2 className="text-xl font-bold text-white">Customer Queries</h2>
+          <h2 className="text-xl font-bold text-white">Creator Queries</h2>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* Export CSV Button */}
