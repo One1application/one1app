@@ -72,6 +72,62 @@ export const generativeDescription = async (data) => {
 
 // ends here
 
+
+// for raise query
+export const raiseQuery = async (data) =>{
+
+  console.log(data)
+
+  try {
+    const response = await servicesAxiosInstance.post('query/raise', data , {
+      headers : {
+        "Content-Type" : "multipart/form-data"
+      },
+
+       
+    });
+    return {
+      status : true,
+      data : response,
+      message : "Query raised successfully"
+    };
+  } catch (error) {
+    console.log(error || error?.message || 'Something went wrong !');
+    return {
+      success : false,
+      message : error
+    };
+  }
+}
+
+
+ 
+export const getallQueries = async (status = "") => {
+  try {
+    const response = await servicesAxiosInstance.get("/query/all-queries", {
+      params: {
+        status: status || undefined  
+      }
+    });
+
+    console.log(response)
+
+    return {
+      success: true,
+      data: response?.data,
+    };
+  } catch (error) {
+    console.error(error?.response?.data?.message || error?.message || 'Something went wrong!');
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to get queries"
+    };
+  }
+};
+
+
+
+
 export const signInUser = async (data) => {
   console.log(data);
   const response = await servicesAxiosInstance.post('auth/login', data);
