@@ -95,6 +95,7 @@ model User {
   userImage                   String?
   telegramUserId              String?
   publictelegram              TelegramChannelForPublic?
+  RaiseQuery                  RaiseQuery[]
 }
 
 model OTPStore {
@@ -382,7 +383,6 @@ model Telegram {
   subscriptions         Subscription[]         @relation("TelegramSubscriptions")
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
-
 }
 
 model TelegramSubscription {
@@ -401,8 +401,7 @@ model TelegramSubscription {
   orderId        String?      @unique
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  inviteLink            String?
-
+  inviteLink     String?
 }
 
 model Discount {
@@ -494,4 +493,19 @@ model TelegramChannelForPublic {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+// Raise query 
+
+model RaiseQuery {
+  id        String   @id @default(uuid())
+  phone     String
+  query     String
+  status    String   @default("Pending")
+  name      String
+  images    String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

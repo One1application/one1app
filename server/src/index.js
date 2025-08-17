@@ -30,6 +30,9 @@ import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 import { productRouter } from "./routes/productRoutes.js";
 import airouter from "./routes/routes.ai.js"
 
+// query router
+
+import queryRoutes from "./routes/Quaries.routes.js"
 
 
 dotenv.config();
@@ -83,6 +86,7 @@ app.use("/admin", adminRouter);
 app.use('/product', productRouter)
 app.use("/AI", airouter)
 app.use("/telegram", createTelegrampromotionachannel)
+app.use("/query", queryRoutes)
 
 
 const Port = process.env.SERVER_PORT || 5000;

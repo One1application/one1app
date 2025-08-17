@@ -2,8 +2,8 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Dashboard from "./Pages/Dashboard";
-import Home from './Pages/Home/HomePage';
-import LoginPage from './Pages/Login/LoginPage';
+import Home from "./Pages/Home/HomePage";
+import LoginPage from "./Pages/Login/LoginPage";
 import { useEffect } from "react";
 import { selfIdentification } from "./services/api-service";
 import { useAuthStore } from "./store/authStore";
@@ -21,8 +21,6 @@ import HelpPage from "./Pages/Help/HelpPage";
 import LogoutPage from "./Pages/Logout/LogoutPage";
 import { ROLES } from "./utils/constant";
 import TransactionPage from "./Pages/TransactionManagement/TransactionPage";
-
-
 
 const dashboardRoutesConfig = [
   {
@@ -83,31 +81,27 @@ const dashboardRoutesConfig = [
 ];
 
 const App = () => {
-  const navigate = useNavigate()
-  const { isloading, setUser, setLoading } = useAuthStore()
+  const navigate = useNavigate();
+  const { isloading, setUser, setLoading } = useAuthStore();
   const getSelfDetails = async () => {
-
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await selfIdentification()
+      const data = await selfIdentification();
       if (data.success === true) {
-        setUser(data.userDetails)
-        navigate("/dashboard")
+        setUser(data.userDetails);
+        navigate("/dashboard");
       } else {
-        navigate('/')
+        navigate("/");
       }
-
     } catch (error) {
       console.log("ERRROR", error);
-
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-
-  }
+  };
   useEffect(() => {
-    getSelfDetails()
-  }, [])
+    getSelfDetails();
+  }, []);
   return (
     <>
       <ToastContainer
@@ -133,7 +127,9 @@ const App = () => {
               path={path}
               element={
                 roles?.length > 0 ? (
-                  <ProtectedRoute allowedRoles={roles}>{element}</ProtectedRoute>
+                  <ProtectedRoute allowedRoles={roles}>
+                    {element}
+                  </ProtectedRoute>
                 ) : (
                   element
                 )

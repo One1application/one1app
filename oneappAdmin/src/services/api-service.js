@@ -7,6 +7,51 @@ export const adminLogin = async (phoneNumber) => {
   return response.data;
 };
 
+
+// Getting all queries 
+export const getallQueries = async (status = "") => {
+  try {
+    const response = await axiosInstance.get("/query/all-queries", {
+      params: {
+        status: status || undefined  
+      }
+    });
+    
+
+    return {
+      success: true,
+      data: response?.data,
+    };
+  } catch (error) {
+    console.error(error?.response?.data?.message || error?.message || 'Something went wrong!');
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to get queries"
+    };
+  }
+};
+
+//toggle between pending and resolved
+
+export const toggleQueryStatus = async(queryId) =>{
+  try {
+    const response = await axiosInstance.patch(`query/toggle/${queryId}`)
+    console.log(response);
+    return {
+      success : true,
+      data : response?.data?.data,
+      message : response?.data?.message
+    }
+  } catch (error) {
+    console.log("Something went wrong" , error?.message)
+    return{
+      success : false,
+      message : error?.response?.data?.message || "Something went wrong"
+    }
+  }
+}
+
+
 export const verifyAdminOtp = async (phoneNumber, otp) => {
   const response = await axiosInstance.post('/auth/admin/login/verify-otp', {
     phoneNumber,
