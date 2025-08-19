@@ -42,17 +42,14 @@ export default function PaymentPage() {
         if (response?.data?.success) {
           setStatus('success');
 
-          if (courseId || webinarId || payingUpId || contentId) {
-            console.log('INSIDE');
-            setTimeout(() => {
-              window.location.href = `${import.meta.env.VITE_ONEAPP_USER_URL || 'https://one1app.com'}/user/dashboard`;
-            }, 3000);
+          if (contentId) {
+            window.location.href = `${import.meta.env.VITE_FRONTEND_URL}app/premium-content?id=${contentId}`;
             return;
           }
         } else {
           throw new Error(response?.message || 'Payment verification failed');
         }
-        if (response?.data?.payload.redirectUrl) {
+        if (response?.data?.payload?.redirectUrl) {
           setTimeout(() => {
             window.location.href = response?.data?.payload.redirectUrl;
           }, 3000);
@@ -91,7 +88,17 @@ export default function PaymentPage() {
               </div>
             </div>
             <h2 className="text-xl font-semibold text-green-600 mb-2">Payment Successful!</h2>
-            <p className="text-gray-600">Thank you for your purchase. You will be redirected to your course shortly.</p>
+            <p className="text-gray-600">
+              Thank you for your purchase
+              <button>
+                <a
+                  href={`${import.meta.env.VITE_ONEAPP_USER_URL || 'https://one1app.com'}/user/`}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+                >
+                  Go to Dashboard
+                </a>
+              </button>
+            </p>
           </div>
         );
       case 'error':
