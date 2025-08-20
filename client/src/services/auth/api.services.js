@@ -362,6 +362,7 @@ export const purchasePayingUp = async (data) => {
 export const verifyPayment = async (body) => {
   console.log('INSIDE VERIFY PAYMENT');
   const response = await servicesAxiosInstance.post('wallet/verify-payment', body);
+  console.log(response)
   return response;
 };
 
@@ -409,6 +410,7 @@ export const fetchUserDetails = async () => {
 
 export const fetchCustomers = async (page = 1) => {
   const response = await servicesAxiosInstance.get(`/self/customers/`, page);
+  console.log(response)
   return response;
 };
 
