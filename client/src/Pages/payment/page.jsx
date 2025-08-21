@@ -62,9 +62,10 @@ export default function PaymentPage() {
         // fallback;
 
         setTimeout(() => {
-          window.location.hostname === "localhost"
-            ? "http://localhost:5174/user/dashboard"
-            : (window.location.href = "https://one1app.com/user/dashboard");
+          window.location.href =
+            window.location.hostname === "localhost"
+              ? "http://localhost:5174/user/dashboard"
+              : "https://one1app.com/user/dashboard";
         }, 2000);
       } catch (error) {
         console.error("Payment verification error:", error);
