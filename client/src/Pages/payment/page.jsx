@@ -38,14 +38,15 @@ export default function PaymentPage() {
           razorpay_payment_id,
           razorpay_order_id,
         });
-        console.log("response pelam-pel", response);
+        console.log('response', response);
         if (response?.data?.success) {
           setStatus("success");
 
-          if (contentId) {
-            window.location.href = `${
-              import.meta.env.VITE_FRONTEND_URL
-            }app/premium-content?id=${contentId}`;
+          if (courseId || webinarId || payingUpId || contentId) {
+            console.log('INSIDE');
+            setTimeout(() => {
+              window.location.href = `${import.meta.env.VITE_ONEAPP_USER_URL || 'https://one1app.com'}/user/dashboard`;
+            }, 3000);
             return;
           }
         } else {

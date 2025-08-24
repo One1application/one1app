@@ -360,7 +360,10 @@ export default function PaymentInterface() {
               }
               setShowPaymentModal(false);
 
+<<<<<<< Updated upstream
               console.log("aa gya re ", res.data.payload.redirectUrl);
+=======
+>>>>>>> Stashed changes
               window.location.href = `${
                 res.data.payload.redirectUrl
               }?${params.toString()}`;
@@ -489,6 +492,7 @@ export default function PaymentInterface() {
                   transition={{ delay: 0.3 }}
                   className="flex items-center justify-between mb-4"
                 >
+<<<<<<< Updated upstream
                   {/* Left: Secure text with rounded shield */}
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 flex items-center justify-center rounded-full bg-green-100 shadow-sm">
@@ -536,6 +540,26 @@ export default function PaymentInterface() {
                           />
                         </svg>
                       </div>
+=======
+                  <div className="flex items-center">
+                    <ShieldCheck className="w-5 h-5 text-green-500" />
+                    <span className="text-sm">
+                      Guaranteed safe & secure payment
+                    </span>
+                  </div>
+                  <div className="text-xs bg-gray-700 px-2 py-1 rounded text-white flex items-center gap-1">
+                    <span>powered by</span>
+                    <div className="w-8 h-8 flex items-center justify-center">
+                      {typeof paymentMethods[3].icon === "string" ? (
+                        <img
+                          src={paymentMethods[3].icon}
+                          alt="Payment Provider"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        paymentMethods[3].icon
+                      )}
+>>>>>>> Stashed changes
                     </div>
                   </div>
                 </motion.div>
@@ -582,6 +606,7 @@ export default function PaymentInterface() {
               className="lg:w-1/2 p-6"
             >
               {/* Plan Selection  yo wassup malik */}
+<<<<<<< Updated upstream
               {courseType === "telegram" && (
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-4 p-1">
@@ -596,6 +621,34 @@ export default function PaymentInterface() {
                       Change plan
                     </motion.button>
                   </div>
+=======
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4 p-1">
+                  <span className="text-white text-lg font-medium">
+                    Selected Plan
+                  </span>
+                  <motion.button
+                    onClick={goBack}
+                    whileHover={{ scale: 1.05 }}
+                    className="text-blue-400 text-sm hover:text-blue-300 mr-2"
+                  >
+                    Change plan
+                  </motion.button>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex items-center justify-between"
+                >
+                  <span className="text-white">
+                    {courseType === "course" && "Course"}
+                    {courseType === "webinar" && "Webinar"}
+                    {courseType === "payingUp" && "Paying Up"}
+                    {courseType === "premiumcontent" && "Premium Content"}
+                    {courseType === "telegram" && "Telegram Subscription"}
+                  </span>
+>>>>>>> Stashed changes
 
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
