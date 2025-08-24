@@ -64,10 +64,10 @@ const App = () => {
 
   return (
     <>
-      <IndependenceDayBanner />
+      {/* <IndependenceDayBanner /> */}
       <Toaster reverseOrder={false} />
 
-      <div className="pt-10">
+      <div className="">
         <Routes>
           {/* Welcome Page */}
           <Route
