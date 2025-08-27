@@ -57,14 +57,14 @@ import TermCondition from "./Pages/Welcome/Terms&Policy/TermCondition.jsx";
 
 // Offer banner
 
-import IndependenceDayBanner from "../src/Offer/IndependenceDayBanner.jsx";
+ 
 
 const App = () => {
   const { userRole, authenticated } = useAuth();
 
   return (
     <>
-      {/* <IndependenceDayBanner /> */}
+    
       <Toaster reverseOrder={false} />
 
       <div className="">
